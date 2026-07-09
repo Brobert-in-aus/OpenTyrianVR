@@ -75,7 +75,11 @@ extern "C" {
 #define OTYR_BUTTON_UI_PAUSE       (1u << 11)  /* P */
 
 /* OtyrConfig.flags bits. */
-#define OTYR_CONFIG_ENABLE_AUDIO   (1u << 0)
+#define OTYR_CONFIG_ENABLE_AUDIO           (1u << 0)
+#define OTYR_CONFIG_SUPPRESS_ENTITY_DRAW   (1u << 1) /* legacy frame shows only
+                                                        backgrounds/HUD; host
+                                                        renders entities from
+                                                        the snapshot (v6) */
 
 typedef struct OtyrConfig
 {
@@ -114,6 +118,7 @@ typedef struct OtyrFrame
 	uint32_t height;        /* OTYR_FRAME_HEIGHT */
 	uint8_t  pixels[OTYR_FRAME_WIDTH * OTYR_FRAME_HEIGHT]; /* palette indices */
 	uint32_t palette[256];  /* 0xAARRGGBB, A always 0xFF */
+	uint32_t level_tick;    /* gameplay tick this present belongs to (v6) */
 } OtyrFrame;
 
 typedef struct OtyrPlayerState
@@ -166,7 +171,7 @@ typedef struct OtyrSnapshotSprite
 	int16_t  x, y;          /* legacy frame coordinates at draw time */
 	uint16_t index;         /* sprite index within the sheet (1-based) */
 	uint8_t  sheet_id;      /* OTYR_SHEET_* or OTYR_SHEET_INVALID */
-	uint8_t  reserved[3];
+	uint8_t  reserved[5];   /* pads the struct to exactly 16 bytes */
 } OtyrSnapshotSprite;
 
 typedef struct OtyrSnapshot

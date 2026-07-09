@@ -174,12 +174,53 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 		return;
 	}
 
-	present_record(enemy_band_category, PRESENT_BLIT_SPRITE2,
-	               enemy[i].filter != 0 ? PRESENT_FLAG_FILTER : 0, enemy[i].filter,
-	               enemy[i].sprite2s,
-	               enemy[i].ex + x_offset + tempMapXOfs,
-	               enemy[i].ey + y_offset,
-	               enemy[i].egr[enemy[i].enemycycle - 1] + sprite_offset);
+	const Uint16 base_index = enemy[i].egr[enemy[i].enemycycle - 1];
+	const Uint16 cell_index = base_index + sprite_offset;
+
+	/* Classify the WHOLE enemy as terrain art if any of its cells is fully
+	   opaque (baked backdrop), so multi-cell structures never tear between
+	   the flat frame and the floating 3D layer. */
+	Uint8 terrain_art = enemy[i].enemyground ? 1 : 0;
+	if (!terrain_art)
+	{
+		if (enemy[i].size == 1)
+			terrain_art = (otyr_host_cell_is_opaque(enemy[i].sprite2s, base_index) ||
+			               otyr_host_cell_is_opaque(enemy[i].sprite2s, base_index + 1) ||
+			               otyr_host_cell_is_opaque(enemy[i].sprite2s, base_index + 19) ||
+			               otyr_host_cell_is_opaque(enemy[i].sprite2s, base_index + 20)) ? 1 : 0;
+		else
+			terrain_art = otyr_host_cell_is_opaque(enemy[i].sprite2s, base_index) ? 1 : 0;
+	}
+
+	/* Surface riders: a slow-moving enemy whose center sits on terrain-paint
+	   recorded earlier this tick (e.g., tanks on floating platforms) is
+	   grounded on that surface, not flying above it. */
+	if (!terrain_art && otyr_hosted &&
+	    abs(enemy[i].exc) <= 1 && abs(enemy[i].eyc) <= 1)
+	{
+		const Sint16 center_x = enemy[i].ex + x_offset + tempMapXOfs + 6;
+		const Sint16 center_y = enemy[i].ey + y_offset + 7;
+		for (unsigned int r = 0; r < present_sprite_count; ++r)
+		{
+			const PresentSprite *other = &present_sprites[r];
+			if (other->aux == 0 || other->category > PRESENT_ENEMY_GROUND_B)
+				continue;
+			if (center_x >= other->x && center_x < other->x + 12 &&
+			    center_y >= other->y && center_y < other->y + 14)
+			{
+				terrain_art = 1;
+				break;
+			}
+		}
+	}
+
+	present_record_aux(enemy_band_category, PRESENT_BLIT_SPRITE2,
+	                   enemy[i].filter != 0 ? PRESENT_FLAG_FILTER : 0, enemy[i].filter,
+	                   terrain_art,
+	                   enemy[i].sprite2s,
+	                   enemy[i].ex + x_offset + tempMapXOfs,
+	                   enemy[i].ey + y_offset,
+	                   cell_index);
 }
 
 /* Simulates one enemy band for this tick, recording (not performing) the

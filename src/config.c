@@ -29,6 +29,7 @@
 #include "opentyr.h"
 #include "otyr_host_internal.h"
 #include "player.h"
+#include "present_frame.h"
 #include "varz.h"
 #include "vga256d.h"
 #include "video.h"

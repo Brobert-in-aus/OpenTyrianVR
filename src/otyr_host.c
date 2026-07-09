@@ -65,6 +65,13 @@ static void win32_keep_timer_resolution(void)
 
 bool otyr_hosted = false;
 
+/* ABI layout guards: a host reading these structs assumes exactly these
+ * sizes (foundation rule: size asserts on both sides of the boundary). */
+typedef char otyr_assert_sprite_size[sizeof(OtyrSnapshotSprite) == 16 ? 1 : -1];
+typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 36 + 1024 * 16 ? 1 : -1];
+typedef char otyr_assert_sheet_size[sizeof(OtyrSpriteSheet) == 12 + 1024 * 12 * 14 ? 1 : -1];
+typedef char otyr_assert_frame_size[sizeof(OtyrFrame) == 16 + 320 * 200 + 1024 + 4 ? 1 : -1];
+
 /* The game core is a global-state singleton, so exactly one session. */
 #define SESSION_HANDLE 1ull
 
@@ -94,6 +101,7 @@ static struct
 
 	/* latest published frame */
 	uint32_t frame_number;
+	uint32_t frame_level_tick;
 	uint8_t pixels[OTYR_FRAME_WIDTH * OTYR_FRAME_HEIGHT];
 	uint32_t palette_argb[256];
 
@@ -120,6 +128,9 @@ static struct
 	uint32_t sheet_epoch;
 	uint32_t sheet_cell_count[OTYR_SHEET_COUNT];
 	uint8_t (*sheet_cells)[OTYR_SHEET_CELL_MAX * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H];
+
+	/* per-cell "fully opaque" flags (game-thread only): baked terrain art */
+	uint8_t sheet_cell_opaque[OTYR_SHEET_COUNT][OTYR_SHEET_CELL_MAX];
 } session;
 
 /* Registry mapping sheet ids to the game's sheet globals. */
@@ -257,8 +268,19 @@ void otyr_host_capture_sheets(void)
 				count = OTYR_SHEET_CELL_MAX;
 
 			for (uint32_t i = 0; i < count; ++i)
-				rasterize_cell(sheet, i,
-				               session.sheet_cells[id] + i * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H);
+			{
+				uint8_t *cell = session.sheet_cells[id] + i * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H;
+				rasterize_cell(sheet, i, cell);
+
+				unsigned int opaque = 0;
+				for (unsigned int p = 0; p < OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H; ++p)
+					if (cell[p] != 0)
+						++opaque;
+				/* ~98%+: baked terrain backdrops; real flyers always have
+				   transparent corners. */
+				session.sheet_cell_opaque[id][i] =
+					opaque >= OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H - 4;
+			}
 		}
 
 		session.sheet_cell_count[id] = count;
@@ -295,6 +317,16 @@ void otyr_host_game_input(struct GameInput *input)
 const char *otyr_host_user_dir(void)
 {
 	return session.user_dir;
+}
+
+bool otyr_host_cell_is_opaque(const void *sheet, Uint16 index)
+{
+	if (session.state != SESSION_RUNNING || index == 0)
+		return false;
+	uint8_t id = sheet_id_for((const Sprite2_array *)sheet);
+	if (id >= OTYR_SHEET_COUNT || index - 1u >= session.sheet_cell_count[id])
+		return false;
+	return session.sheet_cell_opaque[id][index - 1] != 0;
 }
 
 int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
@@ -383,6 +415,7 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 
 	otyr_hosted = true;
 	windowHasFocus = true;  /* no window: the host always "has focus" */
+	present_suppress_entity_draw = (config->flags & OTYR_CONFIG_SUPPRESS_ENTITY_DRAW) != 0;
 
 	session.state = SESSION_RUNNING;
 	session.thread = SDL_CreateThreadWithStackSize(game_thread_main,
@@ -499,6 +532,7 @@ int32_t otyr_session_acquire_frame(uint64_t handle, OtyrFrame *frame,
 			frame->height = OTYR_FRAME_HEIGHT;
 			memcpy(frame->pixels, session.pixels, sizeof(session.pixels));
 			memcpy(frame->palette, session.palette_argb, sizeof(session.palette_argb));
+			frame->level_tick = session.frame_level_tick;
 			result = OTYR_OK;
 			break;
 		}
@@ -684,6 +718,7 @@ void otyr_host_present(SDL_Surface *screen)
 	session.player_state.y_velocity = player[0].y_velocity;
 
 	++session.frame_number;
+	session.frame_level_tick = session.level_tick;
 
 	/* Publish the presentation snapshot for this tick (records complete by
 	   present time; sheet pointers resolve to stable ids). */
@@ -709,6 +744,7 @@ void otyr_host_present(SDL_Surface *screen)
 		out->index = in->index;
 		out->sheet_id = in->sheet != NULL ? sheet_id_for(in->sheet) : OTYR_SHEET_INVALID;
 		memset(out->reserved, 0, sizeof(out->reserved));
+		out->reserved[0] = in->aux;
 	}
 
 	unsigned int sound_count = present_sound_count;

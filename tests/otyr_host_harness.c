@@ -242,6 +242,93 @@ int main(void)
 	if (snapshot->sprite_count == 0)
 		die("snapshot has no sprites during demo gameplay");
 
+	/* Phase 4b: mechanically verify snapshot records against the legacy
+	 * frame: reconstruct every record's pixels from the rasterized sheets
+	 * and compare with what the legacy renderer actually drew at that
+	 * position in the same tick.  Any record whose opaque pixels mismatch
+	 * badly points at a decode/index bug. */
+	OtyrSpriteSheet *sheets = calloc(OTYR_SHEET_COUNT, sizeof(OtyrSpriteSheet));
+	for (uint32_t id = 0; id < OTYR_SHEET_COUNT; ++id)
+	{
+		sheets[id].struct_size = sizeof(OtyrSpriteSheet);
+		if (p_sprite_sheet(g_session, id, &sheets[id], sizeof(OtyrSpriteSheet)) != OTYR_OK)
+			die("sprite_sheet fetch for verify");
+	}
+
+	/* Pair a frame and snapshot from the same tick.  With smooth scroll two
+	 * presents share a tick; entity pixels are identical in both. */
+	for (int attempt = 0; ; ++attempt)
+	{
+		if (attempt > 200)
+			die("could not pair frame and snapshot ticks");
+		if (p_acquire_frame(g_session, frame, sizeof(OtyrFrame), 1000) != OTYR_OK)
+			die("frame for verify");
+		if (p_snapshot(g_session, snapshot, sizeof(OtyrSnapshot), 1000) != OTYR_OK)
+			die("snapshot for verify");
+		if (frame->level_tick == snapshot->level_tick)
+			break;
+		snapshot->level_tick = 0;  /* re-read until they land on one tick */
+	}
+
+	unsigned int bad_records = 0, checked_records = 0;
+	for (uint32_t i = 0; i < snapshot->sprite_count; ++i)
+	{
+		const OtyrSnapshotSprite *rec = &snapshot->sprites[i];
+		if (rec->sheet_id >= OTYR_SHEET_COUNT || rec->index == 0 || rec->flags != 0)
+			continue;  /* only plain blits are directly comparable */
+		if (rec->kind != 0 && rec->kind != 1)
+			continue;
+
+		unsigned int pieces = rec->kind == 1 ? 4 : 1;
+		static const int piece_dx[4] = { 0, 12, 0, 12 };
+		static const int piece_dy[4] = { 0, 0, 14, 14 };
+		static const int piece_di[4] = { 0, 1, 19, 20 };
+
+		unsigned int opaque = 0, match = 0;
+		for (unsigned int p = 0; p < pieces; ++p)
+		{
+			uint32_t cell = rec->index + piece_di[p] - 1;
+			if (cell >= sheets[rec->sheet_id].cell_count)
+				continue;
+			const uint8_t *cell_px = sheets[rec->sheet_id].pixels + cell * 12 * 14;
+
+			for (int y = 0; y < 14; ++y)
+				for (int x = 0; x < 12; ++x)
+				{
+					uint8_t v = cell_px[y * 12 + x];
+					if (v == 0)
+						continue;
+					int fx = rec->x + piece_dx[p] + x;
+					int fy = rec->y + piece_dy[p] + y;
+					if (fx < 0 || fx >= 320 || fy < 0 || fy >= 200)
+						continue;
+					++opaque;
+					/* Frame pixels are game_screen composited -24; but the
+					 * exported frame is the composited VGAScreenSeg, so
+					 * compare at fx-24 within the 264-wide play area. */
+					int cx = fx - 24;
+					if (cx < 0 || cx >= 264)
+						continue;
+					if (frame->pixels[fy * 320 + cx] == v)
+						++match;
+				}
+		}
+
+		if (opaque >= 20)
+		{
+			++checked_records;
+			if (match * 100 < opaque * 60)  /* under 60% agreement */
+			{
+				if (++bad_records <= 10)
+					printf("  MISMATCH cat %u kind %u sheet %u index %u at (%d,%d): %u/%u px\n",
+					       rec->category, rec->kind, rec->sheet_id, rec->index,
+					       rec->x, rec->y, match, opaque);
+			}
+		}
+	}
+	printf("record verify: %u checked, %u bad\n", checked_records, bad_records);
+	free(sheets);
+
 	OtyrSpriteSheet *sheet = calloc(1, sizeof(OtyrSpriteSheet));
 	sheet->struct_size = sizeof(OtyrSpriteSheet);
 	printf("sheets:");

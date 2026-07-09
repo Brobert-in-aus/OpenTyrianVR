@@ -44,6 +44,11 @@ void otyr_host_level_tick(void);
  * rasterizes all sheets into the session cache and bumps the epoch. */
 void otyr_host_capture_sheets(void);
 
+/* True when the cell is (near-)fully opaque: baked terrain art that must
+ * stay in the legacy frame rather than float as a 3D sprite.  sheet is a
+ * const Sprite2_array *. */
+bool otyr_host_cell_is_opaque(const void *sheet, Uint16 index);
+
 /* Fills the gameplay input frame from the host's submitted state; consumed
  * by the player-movement tick in place of local device sampling. */
 struct GameInput;

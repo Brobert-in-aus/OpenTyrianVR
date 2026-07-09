@@ -43,9 +43,9 @@ void present_sound(Uint8 channel, Uint8 sample)
 	}
 }
 
-unsigned int present_record(PresentCategory category, PresentBlitKind kind,
-                            Uint8 flags, Uint8 filter_color,
-                            Sprite2_array *sheet, Sint16 x, Sint16 y, Uint16 index)
+unsigned int present_record_aux(PresentCategory category, PresentBlitKind kind,
+                                Uint8 flags, Uint8 filter_color, Uint8 aux,
+                                Sprite2_array *sheet, Sint16 x, Sint16 y, Uint16 index)
 {
 	assert(present_sprite_count < PRESENT_SPRITE_MAX);
 	if (present_sprite_count >= PRESENT_SPRITE_MAX)
@@ -56,6 +56,7 @@ unsigned int present_record(PresentCategory category, PresentBlitKind kind,
 	sprite->kind = (Uint8)kind;
 	sprite->flags = flags;
 	sprite->filter_color = filter_color;
+	sprite->aux = aux;
 	sprite->x = x;
 	sprite->y = y;
 	sprite->index = index;
@@ -63,10 +64,33 @@ unsigned int present_record(PresentCategory category, PresentBlitKind kind,
 	return present_sprite_count++;
 }
 
+unsigned int present_record(PresentCategory category, PresentBlitKind kind,
+                            Uint8 flags, Uint8 filter_color,
+                            Sprite2_array *sheet, Sint16 x, Sint16 y, Uint16 index)
+{
+	return present_record_aux(category, kind, flags, filter_color, 0,
+	                          sheet, x, y, index);
+}
+
+bool present_suppress_entity_draw = false;
+
 void present_draw_from(SDL_Surface *surface, unsigned int from)
 {
 	for (unsigned int i = from; i < present_sprite_count; i++)
 	{
+		/* In suppress mode the host renders entities in 3D -- except art
+		   that is really terrain paint: ground-flagged enemy sprites (baked
+		   tile backdrops, must layer under clouds/text) and shadows (depth
+		   cues cast onto the terrain).  Those keep drawing into the frame. */
+		if (present_suppress_entity_draw)
+		{
+			const bool terrain_paint =
+				present_sprites[i].category == PRESENT_SHADOW ||
+				(present_sprites[i].category <= PRESENT_ENEMY_GROUND_B &&
+				 present_sprites[i].aux != 0);
+			if (!terrain_paint)
+				continue;
+		}
 		const PresentSprite *sprite = &present_sprites[i];
 
 		if (sprite->kind == PRESENT_BLIT_SPRITE2)

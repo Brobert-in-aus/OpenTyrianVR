@@ -74,6 +74,8 @@ typedef struct PresentSprite
 	Uint8 kind;                     /* PresentBlitKind */
 	Uint8 flags;
 	Uint8 filter_color;
+	Uint8 aux;                      /* per-category metadata; for enemies the
+	                                   enemyground flag (terrain-baked art) */
 	Sint16 x, y;                    /* frame coordinates at record time */
 	Uint16 index;                   /* sprite index within the sheet */
 	Sprite2_array *sheet;
@@ -92,6 +94,11 @@ extern unsigned int present_sound_count;
 
 void present_sound(Uint8 channel, Uint8 sample);
 
+/* When set (hosted VR mode), present_draw_from becomes a no-op: entities are
+ * rendered by the host from the snapshot instead, and the legacy framebuffer
+ * carries only backgrounds, HUD, and text. */
+extern bool present_suppress_entity_draw;
+
 /* Clears the record list; called once at the top of each gameplay tick. */
 void present_frame_reset(void);
 
@@ -100,6 +107,11 @@ void present_frame_reset(void);
 unsigned int present_record(PresentCategory category, PresentBlitKind kind,
                             Uint8 flags, Uint8 filter_color,
                             Sprite2_array *sheet, Sint16 x, Sint16 y, Uint16 index);
+
+/* As present_record, with per-category aux metadata. */
+unsigned int present_record_aux(PresentCategory category, PresentBlitKind kind,
+                                Uint8 flags, Uint8 filter_color, Uint8 aux,
+                                Sprite2_array *sheet, Sint16 x, Sint16 y, Uint16 index);
 
 /* Replays records [from, count) onto the surface; each subsystem calls this
  * for its own slice at its original draw point in the tick. */
