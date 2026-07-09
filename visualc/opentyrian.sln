@@ -10,6 +10,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opentyrian", "opentyrian.vcxproj", "{F0FF290F-887C-4E70-8BF0-F5F45ADA8432}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "opentyrian-core", "opentyrian-core.vcxproj", "{A3E8F2C1-5D94-4B7E-9C31-7E2A84D6B0F5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -26,6 +28,12 @@ Global
 		{F0FF290F-887C-4E70-8BF0-F5F45ADA8432}.Release|x64.Build.0 = Release|x64
 		{F0FF290F-887C-4E70-8BF0-F5F45ADA8432}.Release|x86.ActiveCfg = Release|Win32
 		{F0FF290F-887C-4E70-8BF0-F5F45ADA8432}.Release|x86.Build.0 = Release|Win32
+		{A3E8F2C1-5D94-4B7E-9C31-7E2A84D6B0F5}.Debug|x64.ActiveCfg = Debug|x64
+		{A3E8F2C1-5D94-4B7E-9C31-7E2A84D6B0F5}.Debug|x64.Build.0 = Debug|x64
+		{A3E8F2C1-5D94-4B7E-9C31-7E2A84D6B0F5}.Debug|x86.ActiveCfg = Debug|x64
+		{A3E8F2C1-5D94-4B7E-9C31-7E2A84D6B0F5}.Release|x64.ActiveCfg = Release|x64
+		{A3E8F2C1-5D94-4B7E-9C31-7E2A84D6B0F5}.Release|x64.Build.0 = Release|x64
+		{A3E8F2C1-5D94-4B7E-9C31-7E2A84D6B0F5}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

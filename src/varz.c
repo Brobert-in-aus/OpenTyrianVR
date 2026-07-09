@@ -18,6 +18,8 @@
  */
 #include "varz.h"
 
+#include "otyr_host_internal.h"
+
 #include "config.h"
 #include "editship.h"
 #include "episodes.h"
@@ -495,6 +497,10 @@ void JE_tyrianHalt(JE_byte code)
 	}
 
 	SDL_Quit();
+
+	if (otyr_hosted)
+		otyr_host_thread_exit(code);  /* does not return */
+
 	exit(code);
 }
 

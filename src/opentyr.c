@@ -18,6 +18,8 @@
  */
 #include "opentyr.h"
 
+#include "otyr_host_internal.h"
+
 #include "config.h"
 #include "destruct.h"
 #include "editship.h"
@@ -747,6 +749,11 @@ void setupMenu(void)
 }
 
 int main(int argc, char *argv[])
+{
+	return opentyrian_main(argc, argv);
+}
+
+int opentyrian_main(int argc, char *argv[])
 {
 	mt_srand(time(NULL));
 

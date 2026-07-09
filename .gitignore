@@ -8,7 +8,21 @@
 
 # Hash logs and scratch recordings (committed captures are added explicitly)
 /captures/*.log
+/captures/*.bmp
 /demorec.*
+
+# Test harness build output
+/tests/*.exe
+/tests/*.obj
+
+# Core DLL build output
+/opentyrian-core-*.dll
+/opentyrian-core-*.lib
+/opentyrian-core-*.exp
+/opentyrian-core-*.pdb
+/opentyrian-core-*.ilk
+/opentyrian-core-*.iobj
+/opentyrian-core-*.ipdb
 
 opentyrian.cfg
 tyrian.cfg

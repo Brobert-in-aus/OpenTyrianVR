@@ -20,6 +20,7 @@
 
 #include "keyboard.h"
 #include "opentyr.h"
+#include "otyr_host_internal.h"
 #include "palette.h"
 #include "video_scale.h"
 
@@ -86,6 +87,14 @@ void init_video(void)
 
 	JE_clr256(VGAScreen);
 
+	if (otyr_hosted)
+	{
+		// No window or renderer; frames are handed to the host instead.
+		// rgb_palette mapping still needs a pixel format.
+		main_window_tex_format = SDL_AllocFormat(SDL_PIXELFORMAT_RGB888);
+		return;
+	}
+
 	// Create the window with a temporary initial size, hidden until we set up the
 	// scaler and find the true window size
 	main_window = SDL_CreateWindow("OpenTyrian",
@@ -112,6 +121,19 @@ void init_video(void)
 
 void deinit_video(void)
 {
+	if (otyr_hosted)
+	{
+		SDL_FreeFormat(main_window_tex_format);
+		main_window_tex_format = NULL;
+
+		SDL_FreeSurface(VGAScreenSeg);
+		SDL_FreeSurface(VGAScreen2);
+		SDL_FreeSurface(game_screen);
+
+		SDL_QuitSubSystem(SDL_INIT_VIDEO);
+		return;
+	}
+
 	deinit_texture();
 	deinit_renderer();
 
@@ -311,9 +333,15 @@ void JE_clr256(SDL_Surface *screen)
 	SDL_FillRect(screen, NULL, 0);
 }
 
-void JE_showVGA(void) 
-{ 
-	scale_and_flip(VGAScreen); 
+void JE_showVGA(void)
+{
+	if (otyr_hosted)
+	{
+		otyr_host_present(VGAScreen);
+		return;
+	}
+
+	scale_and_flip(VGAScreen);
 }
 
 static void calc_dst_render_rect(SDL_Surface *const src_surface, SDL_Rect *const dst_rect)

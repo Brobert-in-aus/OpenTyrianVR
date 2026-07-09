@@ -23,6 +23,8 @@
 #include "network.h"
 #include "nortsong.h"
 #include "opentyr.h"
+#include "otyr_host_internal.h"
+#include "varz.h"
 #include "video.h"
 #include "video_scale.h"
 
@@ -364,6 +366,8 @@ void handleSdlEvents(void)
 				break;
 
 			case SDL_QUIT:
+				if (otyr_hosted)
+					JE_tyrianHalt(0);  /* cleans up, then exits the game thread */
 				exit(0);
 				break;
 		}
