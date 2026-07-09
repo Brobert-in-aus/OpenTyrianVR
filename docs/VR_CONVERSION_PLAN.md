@@ -390,8 +390,8 @@ legacy surface until individually redesigned.
 
 ## 7. Decisions to make after the spike
 
-- preferred control metaphor: thumbstick, hand-position steering, pointer aim,
-  or selectable modes;
+- preferred control metaphor: **decided — hand-position steering is the goal**
+  (thumbstick stays as the implemented fallback and accessibility mode);
 - canonical play posture: seated tabletop, standing cabinet, or both;
 - ship motion mapping: direct position, velocity, or hybrid;
 - whether player-controlled near/far movement changes only screen Y or also

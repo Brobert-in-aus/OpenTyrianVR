@@ -159,7 +159,7 @@ public partial class Main : Node3D
             throw new InvalidOperationException($"native ABI {nativeAbi}, expected {OtyrNative.AbiVersion}");
 
         string dataDir = Path.GetFullPath(Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "tyrian21"));
-        var config = OtyrNative.Config.Create(dataDir);
+        var config = OtyrNative.Config.Create(dataDir, OtyrNative.ConfigFlags.EnableAudio);
 
         int rc = OtyrNative.SessionCreate(in config, (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.Config>(), out _session);
         if (rc != OtyrNative.Ok)
