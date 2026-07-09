@@ -93,23 +93,43 @@ public partial class Main : Node3D
         _playfieldRoot.RotationDegrees = new Vector3(-42f, 0f, 0f);
         AddChild(_playfieldRoot);
 
-        _image = Image.CreateEmpty(OtyrNative.FrameWidth, OtyrNative.FrameHeight, false, Image.Format.Rgba8);
+        _image = Image.CreateEmpty(OtyrNative.FrameWidth, OtyrNative.FrameHeight, true, Image.Format.Rgba8);
         _texture = ImageTexture.CreateFromImage(_image);
 
-        var material = new StandardMaterial3D
+        // Anti-aliased point sampling: linear filtering with the UVs snapped
+        // to texel centers except in a fwidth-wide band at texel edges.
+        // Crisp pixel art without the shimmer of raw nearest at an angle.
+        var shader = new Shader
         {
-            AlbedoTexture = _texture,
-            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-            TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest,
+            Code = """
+                shader_type spatial;
+                render_mode unshaded;
+
+                uniform sampler2D frame : source_color, filter_linear_mipmap_anisotropic;
+
+                void fragment() {
+                    vec2 size = vec2(textureSize(frame, 0));
+                    vec2 pixel = UV * size;
+                    vec2 seam = floor(pixel + 0.5);
+                    vec2 dudv = fwidth(pixel);
+                    pixel = seam + clamp((pixel - seam) / dudv, -0.5, 0.5);
+                    ALBEDO = texture(frame, pixel / size).rgb;
+                }
+                """,
         };
+        var material = new ShaderMaterial { Shader = shader };
+        material.SetShaderParameter("frame", _texture);
 
         var lane = new MeshInstance3D
         {
             Name = "Lane",
-            Mesh = new QuadMesh { Size = new Vector2(1.28f, 0.8f) },  // 320:200
+            Mesh = new QuadMesh { Size = new Vector2(1.0f, 0.625f) },  // 320:200
             MaterialOverride = material,
         };
         _playfieldRoot.AddChild(lane);
+
+        GetViewport().Msaa3D = Viewport.Msaa.Msaa4X;
+        GetViewport().Scaling3DScale = 1.4f;
 
         _diagnostics = new Label3D
         {
@@ -179,6 +199,7 @@ public partial class Main : Node3D
         }
 
         _image.SetData(OtyrNative.FrameWidth, OtyrNative.FrameHeight, false, Image.Format.Rgba8, _rgba);
+        _image.GenerateMipmaps();
         _texture.Update(_image);
     }
 
@@ -201,19 +222,22 @@ public partial class Main : Node3D
         // VR controllers (Godot's default OpenXR action map).
         if (_xrActive && _leftHand != null && _rightHand != null)
         {
-            Vector2 stick = _leftHand.GetVector2("primary");
+            // Either stick moves, either trigger fires.
+            Vector2 stick = _leftHand.GetVector2("primary") + _rightHand.GetVector2("primary");
             const float deadzone = 0.4f;
             if (stick.Y > deadzone) buttons |= OtyrNative.Buttons.Up;
             if (stick.Y < -deadzone) buttons |= OtyrNative.Buttons.Down;
             if (stick.X < -deadzone) buttons |= OtyrNative.Buttons.Left;
             if (stick.X > deadzone) buttons |= OtyrNative.Buttons.Right;
 
-            if (_rightHand.GetFloat("trigger") > 0.55f) buttons |= OtyrNative.Buttons.Fire;
+            if (Math.Max(_rightHand.GetFloat("trigger"), _leftHand.GetFloat("trigger")) > 0.55f)
+                buttons |= OtyrNative.Buttons.Fire;
             if (_rightHand.GetFloat("grip") > 0.6f) buttons |= OtyrNative.Buttons.RightSidekick;
             if (_leftHand.GetFloat("grip") > 0.6f) buttons |= OtyrNative.Buttons.LeftSidekick;
 
             if (_rightHand.IsButtonPressed("ax_button")) buttons |= OtyrNative.Buttons.UiConfirm;
             if (_rightHand.IsButtonPressed("by_button")) buttons |= OtyrNative.Buttons.UiCancel;
+            if (_leftHand.IsButtonPressed("ax_button")) buttons |= OtyrNative.Buttons.UiSpace;
             if (_leftHand.IsButtonPressed("by_button")) buttons |= OtyrNative.Buttons.ChangeFire;
 
             // Left menu button: recenter, and pause the game.
@@ -227,6 +251,7 @@ public partial class Main : Node3D
         if (buttons == _lastButtons)
             return;
         _lastButtons = buttons;
+        GD.Print($"OpenTyrianVR: input -> 0x{(uint)buttons:x3}");
 
         var input = OtyrNative.InputFrame.Create(buttons);
         OtyrNative.SubmitInput(_session, in input, input.StructSize);
@@ -245,11 +270,21 @@ public partial class Main : Node3D
         };
         OtyrNative.GetPlayerState(_session, ref state, state.StructSize);
 
+        string inputProbe = "";
+        if (_xrActive && _leftHand != null && _rightHand != null)
+        {
+            Vector2 stick = _leftHand.GetVector2("primary");
+            inputProbe =
+                $"\nstick ({stick.X:0.00},{stick.Y:0.00})  trig {_rightHand.GetFloat("trigger"):0.00}  " +
+                $"A:{(_rightHand.IsButtonPressed("ax_button") ? 1 : 0)} B:{(_rightHand.IsButtonPressed("by_button") ? 1 : 0)}  " +
+                $"buttons {(uint)_lastButtons:x3}";
+        }
+
         _diagnostics.Text =
             $"{(_xrActive ? "XR" : "FLAT")}  render {Engine.GetFramesPerSecond():0} fps  " +
             $"game frame {_frame.FrameNumber}\n" +
             $"pos ({state.X},{state.Y})  shield {state.Shield}  armor {state.Armor}  " +
-            $"cash {state.Cash}  lives {state.Lives}";
+            $"cash {state.Cash}  lives {state.Lives}" + inputProbe;
     }
 
     public override void _ExitTree()

@@ -241,6 +241,8 @@ int32_t otyr_session_destroy(uint64_t handle)
 	return halted ? OTYR_OK : OTYR_TIMEOUT;
 }
 
+static void apply_pending_input_locked(void);
+
 int32_t otyr_session_submit_input(uint64_t handle, const OtyrInputFrame *input,
                                   uint32_t input_size)
 {
@@ -250,8 +252,12 @@ int32_t otyr_session_submit_input(uint64_t handle, const OtyrInputFrame *input,
 	    input->struct_size < sizeof(OtyrInputFrame))
 		return OTYR_INVALID_ARGUMENT;
 
+	/* Push the key events immediately (SDL_PushEvent is thread-safe).
+	   Applying them lazily at present time deadlocks in menus: they block
+	   waiting for input without redrawing, so no present ever happens. */
 	SDL_LockMutex(session.mutex);
 	session.pending_buttons = input->buttons;
+	apply_pending_input_locked();
 	SDL_UnlockMutex(session.mutex);
 	return OTYR_OK;
 }
@@ -383,8 +389,6 @@ void otyr_host_present(SDL_Surface *screen)
 	session.player_state.is_alive = player[0].is_alive;
 
 	++session.frame_number;
-
-	apply_pending_input_locked();
 
 	SDL_CondBroadcast(session.frame_ready);
 	SDL_UnlockMutex(session.mutex);
