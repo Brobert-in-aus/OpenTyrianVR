@@ -25,6 +25,8 @@ public partial class Main : Node3D
     private ImageTexture _texture = null!;
     private OtyrNative.Frame _frame;
     private readonly byte[] _rgba = new byte[OtyrNative.FrameWidth * OtyrNative.FrameHeight * 4];
+    private readonly uint[] _palette = new uint[256];
+    private SnapshotLayer _snapshotLayer = null!;
 
     private OtyrNative.Buttons _lastButtons;
     private double _statusAccumulator;
@@ -160,6 +162,9 @@ public partial class Main : Node3D
 
         BuildHandSteering();
 
+        _snapshotLayer = new SnapshotLayer { Name = "SnapshotLayer" };
+        _playfieldRoot.AddChild(_snapshotLayer);
+
         GetViewport().Msaa3D = Viewport.Msaa.Msaa4X;
         GetViewport().Scaling3DScale = 1.4f;
 
@@ -246,7 +251,9 @@ public partial class Main : Node3D
 
         string dataDir = Path.GetFullPath(Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "tyrian21"));
         string userDir = ProjectSettings.GlobalizePath("user://");
-        var config = OtyrNative.Config.Create(dataDir, OtyrNative.ConfigFlags.EnableAudio, userDir: userDir);
+        var config = OtyrNative.Config.Create(dataDir,
+            OtyrNative.ConfigFlags.EnableAudio | OtyrNative.ConfigFlags.SuppressEntityDraw,
+            userDir: userDir);
 
         int rc = OtyrNative.SessionCreate(in config, (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.Config>(), out _session);
         if (rc != OtyrNative.Ok)
@@ -264,6 +271,7 @@ public partial class Main : Node3D
 
         PollFrame();
         PollPlayerState();
+        _snapshotLayer.Poll(_session, _palette);
         SubmitInput();
         UpdateDiagnostics(delta);
     }
@@ -301,6 +309,9 @@ public partial class Main : Node3D
 
         fixed (OtyrNative.Frame* frame = &_frame)
         {
+            for (int p = 0; p < 256; ++p)
+                _palette[p] = frame->Palette[p];
+
             for (int i = 0; i < OtyrNative.FrameWidth * OtyrNative.FrameHeight; ++i)
             {
                 uint argb = frame->Palette[frame->Pixels[i]];

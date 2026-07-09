@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 5;
+    public const uint AbiVersion = 6;
 
     public const int FrameWidth = 320;
     public const int FrameHeight = 200;
@@ -44,6 +44,56 @@ public static unsafe class OtyrNative
     {
         None = 0,
         EnableAudio = 1 << 0,
+        // Legacy frame shows only backgrounds/HUD; entities come from the snapshot.
+        SuppressEntityDraw = 1 << 1,
+    }
+
+    // Presentation snapshot (ABI v6).
+    public const int SnapshotSpriteMax = 1024;
+    public const int SnapshotSoundMax = 8;
+    public const int SheetCount = 9;
+    public const int SheetCellW = 12;
+    public const int SheetCellH = 14;
+    public const int SheetCellMax = 1024;
+    public const byte SheetInvalid = 0xff;
+
+    public enum Category : byte
+    {
+        EnemySky = 0, EnemyGroundA, EnemyTop, EnemyGroundB,
+        EnemyShot, PlayerShot, Player, Shadow, Sidekick, Explosion, Superpixel,
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct SnapshotSprite
+    {
+        public byte Category, Kind, Flags, FilterColor;
+        public short X, Y;
+        public ushort Index;   // 1-based cell index within the sheet
+        public byte SheetId;
+        public byte Aux;  // per-category metadata; enemies: enemyground flag
+        public byte R1, R2, R3, R4;  // pads to exactly 16 bytes
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct Snapshot
+    {
+        public uint StructSize;
+        public uint LevelTick;
+        public uint SheetEpoch;
+        public uint SpriteCount;
+        public uint SoundCount;
+        public fixed byte SoundChannel[SnapshotSoundMax];
+        public fixed byte SoundSample[SnapshotSoundMax];
+        public fixed byte SpritesRaw[SnapshotSpriteMax * 16];  // SnapshotSprite[1024]
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct SpriteSheet
+    {
+        public uint StructSize;
+        public uint SheetEpoch;
+        public uint CellCount;
+        public fixed byte Pixels[SheetCellMax * SheetCellW * SheetCellH];
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -126,6 +176,7 @@ public static unsafe class OtyrNative
         public uint Height;
         public fixed byte Pixels[FrameWidth * FrameHeight];
         public fixed uint Palette[256];  // 0xAARRGGBB
+        public uint LevelTick;  // gameplay tick this present belongs to (v6)
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -166,6 +217,14 @@ public static unsafe class OtyrNative
     [DllImport(Dll, EntryPoint = "otyr_session_player_state")]
     public static extern int GetPlayerState(ulong session, ref PlayerState state, uint stateSize);
 
+    // Pointer signatures: these structs exceed the interop marshaller's size
+    // limit for by-ref parameters; raw pointers bypass marshalling entirely.
+    [DllImport(Dll, EntryPoint = "otyr_session_snapshot")]
+    public static extern int GetSnapshot(ulong session, Snapshot* snapshot, uint snapshotSize, uint timeoutMs);
+
+    [DllImport(Dll, EntryPoint = "otyr_sprite_sheet")]
+    public static extern int GetSpriteSheet(ulong session, uint sheetId, SpriteSheet* sheet, uint sheetSize);
+
     public static string LastError()
     {
         var buffer = stackalloc byte[256];
@@ -180,6 +239,13 @@ public static unsafe class OtyrNative
     /// </summary>
     public static void RegisterResolver()
     {
+        // ABI layout guards (mirrors the native static asserts).
+        if (sizeof(SnapshotSprite) != 16 ||
+            sizeof(Snapshot) != 36 + SnapshotSpriteMax * 16 ||
+            sizeof(SpriteSheet) != 12 + SheetCellMax * SheetCellW * SheetCellH ||
+            sizeof(Frame) != 16 + FrameWidth * FrameHeight + 1024 + 4)
+            throw new InvalidOperationException("ABI struct layout mismatch");
+
         NativeLibrary.SetDllImportResolver(typeof(OtyrNative).Assembly, (name, assembly, searchPath) =>
         {
             if (name != Dll)
