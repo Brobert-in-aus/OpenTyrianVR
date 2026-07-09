@@ -3346,6 +3346,37 @@ void JE_pauseGame(void)
 	mouseSetRelative(true);
 }
 
+/* One axis of absolute-target pursuit: desired speed scales with remaining
+   distance (slow arrival), a +1-per-tick ramp accelerates from rest (slow
+   departure), and the step is clamped to the remaining distance so the ship
+   stops exactly on the target.  ramp holds the signed current speed. */
+static JE_integer target_ease_step(JE_integer dist, int *ramp, JE_integer max_speed)
+{
+	if (dist == 0)
+	{
+		*ramp = 0;
+		return 0;
+	}
+
+	JE_integer dir = dist > 0 ? 1 : -1;
+	JE_integer adist = abs(dist);
+
+	JE_integer desired = (adist + 2) / 3;
+	if (desired > max_speed)
+		desired = max_speed;
+
+	JE_integer speed = *ramp * dir;  /* current speed toward the target */
+	if (speed < 0)
+		speed = 0;  /* direction change: restart the ramp */
+	++speed;
+	if (speed > desired)
+		speed = desired;
+
+	JE_integer step = speed < adist ? speed : adist;
+	*ramp = dir * speed;
+	return dir * step;
+}
+
 void JE_playerMovement(Player *this_player,
                        JE_byte inputDevice,
                        JE_byte playerNum_,
@@ -3387,9 +3418,10 @@ redo:
 	bool link_gun_analog = false;
 	float link_gun_angle = 0;
 
-	/* Target-following softens the banking sprite on short corrections so
+	/* Target-following drives the banking sprite from its own step size so
 	   small hand adjustments read as a slight lean, not a full snap. */
-	JE_integer bank_limit = 2;
+	bool target_banking_active = false;
+	JE_integer target_banking = 0;
 
 	/* Draw Player */
 	if (!this_player->is_alive)
@@ -3559,27 +3591,33 @@ redo:
 
 				if (input.has_target)
 				{
-					JE_integer speed = input.target_speed > 0 ? input.target_speed : 2;
+					/* Absolute-target pursuit with a symmetric ease profile:
+					   desired speed scales with remaining distance (so the
+					   last pixels are slow), a per-tick ramp accelerates from
+					   rest (so the first pixels are slow), and the step never
+					   exceeds the remaining distance (exact stop, never
+					   overshoots).  The generic velocity/friction inertia is
+					   disconnected in this mode -- it models keyboard feel
+					   and fights absolute positional input. */
+					JE_integer max_speed = input.target_speed > 0 ? input.target_speed : 5;
 
-					JE_integer dx = input.target_x - this_player->x;
+					JE_integer step_x = target_ease_step(
+						input.target_x - this_player->x,
+						&this_player->target_ramp_x, max_speed);
+					this_player->x += step_x;
 
-					/* Short sideways corrections get only the first lean
-					   sprite; sustained travel banks fully. */
-					if (abs(dx) < 8)
-						bank_limit = 1;
+					this_player->y += target_ease_step(
+						input.target_y - this_player->y,
+						&this_player->target_ramp_y, max_speed);
 
-					if (dx > speed)
-						dx = speed;
-					else if (dx < -speed)
-						dx = -speed;
-					this_player->x += dx;
-
-					JE_integer dy = input.target_y - this_player->y;
-					if (dy > speed)
-						dy = speed;
-					else if (dy < -speed)
-						dy = -speed;
-					this_player->y += dy;
+					/* Lean from the actual sideways step. */
+					target_banking_active = true;
+					if (abs(step_x) >= 4)
+						target_banking = step_x > 0 ? 2 : -2;
+					else if (abs(step_x) >= 2)
+						target_banking = step_x > 0 ? 1 : -1;
+					else
+						target_banking = 0;
 				}
 
 				button[0] |= input.fire;
@@ -3596,8 +3634,13 @@ redo:
 					mouseYC = -mouseYC;
 				}
 
-				accelXC += this_player->x - *mouseX_;
-				accelYC += this_player->y - *mouseY_;
+				/* Target mode replaces the velocity/friction inertia with
+				   its own ease profile; don't feed the accelerators. */
+				if (!input.has_target)
+				{
+					accelXC += this_player->x - *mouseX_;
+					accelYC += this_player->y - *mouseY_;
+				}
 
 				if (mouseXC > 30)
 					mouseXC = 30;
@@ -3945,7 +3988,9 @@ redo:
 
 		// Determines the ship banking sprite to display, depending on horizontal velocity and acceleration
 		int ship_banking = this_player->x_velocity / 2 + (this_player->x - *mouseX_) / 6;
-		ship_banking = MAX(-bank_limit, MIN(ship_banking, bank_limit));
+		ship_banking = MAX(-2, MIN(ship_banking, 2));
+		if (target_banking_active)
+			ship_banking = target_banking;
 
 		int ship_sprite = ship_banking * 2 + shipGr_;
 

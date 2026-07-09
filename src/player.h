@@ -89,6 +89,10 @@ typedef struct
 	
 	int x_velocity, y_velocity;
 	uint x_friction_ticks, y_friction_ticks;  // ticks until friction is applied
+
+	// Target-following ease state (signed current speed per axis); replaces
+	// the velocity/friction inertia while an absolute target drives the ship.
+	int target_ramp_x, target_ramp_y;
 	
 	int delta_x_shot_move, delta_y_shot_move;
 	
