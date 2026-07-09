@@ -3387,6 +3387,10 @@ redo:
 	bool link_gun_analog = false;
 	float link_gun_angle = 0;
 
+	/* Target-following softens the banking sprite on short corrections so
+	   small hand adjustments read as a slight lean, not a full snap. */
+	JE_integer bank_limit = 2;
+
 	/* Draw Player */
 	if (!this_player->is_alive)
 	{
@@ -3558,6 +3562,12 @@ redo:
 					JE_integer speed = input.target_speed > 0 ? input.target_speed : 2;
 
 					JE_integer dx = input.target_x - this_player->x;
+
+					/* Short sideways corrections get only the first lean
+					   sprite; sustained travel banks fully. */
+					if (abs(dx) < 8)
+						bank_limit = 1;
+
 					if (dx > speed)
 						dx = speed;
 					else if (dx < -speed)
@@ -3935,7 +3945,7 @@ redo:
 
 		// Determines the ship banking sprite to display, depending on horizontal velocity and acceleration
 		int ship_banking = this_player->x_velocity / 2 + (this_player->x - *mouseX_) / 6;
-		ship_banking = MAX(-2, MIN(ship_banking, 2));
+		ship_banking = MAX(-bank_limit, MIN(ship_banking, bank_limit));
 
 		int ship_sprite = ship_banking * 2 + shipGr_;
 

@@ -51,7 +51,10 @@ public partial class Main : Node3D
     private const float GameMinX = 40f, GameMaxX = 256f;
     private const float GameMinY = 10f, GameMaxY = 160f;
     private const float LaneWidth = 1.0f, LaneHeight = 0.625f;
-    private const byte HandTargetSpeed = 2;  // px per tick
+    // Matches the mouse's direct max speed (the fastest stock input), for
+    // balance parity; the sim's inertia system stacks on all input modes
+    // equally.
+    private const byte HandTargetSpeed = 8;  // px per tick
     private bool _handTargetActive;
     private short _handTargetX, _handTargetY;
     private bool _lastTargetActive;
