@@ -56,7 +56,7 @@
 #include <string.h>
 #include <stdint.h>
 
-inline static void blit_enemy(SDL_Surface *surface, unsigned int i, signed int x_offset, signed int y_offset, signed int sprite_offset);
+inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed int y_offset, signed int sprite_offset);
 
 boss_bar_t boss_bar[2];
 
@@ -159,25 +159,54 @@ void JE_starShowVGA(void)
 	skipStarShowVGA = false;
 }
 
-inline static void blit_enemy(SDL_Surface *surface, unsigned int i, signed int x_offset, signed int y_offset, signed int sprite_offset)
+/* Enemy drawing is split from the enemy update (VR_CONVERSION_PLAN.md
+ * Phase 2 step 3): the update records blit parameters at the exact moment
+ * the legacy code drew (positions are pre-integration, filters pre-clear),
+ * and a pure draw pass replays them.  The record list is the embryo of the
+ * presentation snapshot. */
+typedef struct EnemyBlit
+{
+	Sprite2_array *sheet;
+	Sint16 x, y;
+	Uint16 index;
+	Uint8 filter;
+} EnemyBlit;
+
+static EnemyBlit enemy_blits[25 * 4];
+static unsigned int enemy_blit_count;
+
+inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed int y_offset, signed int sprite_offset)
 {
 	if (enemy[i].sprite2s == NULL)
 	{
 		fprintf(stderr, "warning: enemy %d sprite missing\n", i);
 		return;
 	}
-	
-	const int x = enemy[i].ex + x_offset + tempMapXOfs,
-	          y = enemy[i].ey + y_offset;
-	const unsigned int index = enemy[i].egr[enemy[i].enemycycle - 1] + sprite_offset;
 
-	if (enemy[i].filter != 0)
-		blit_sprite2_filter(surface, x, y, *enemy[i].sprite2s, index, enemy[i].filter);
-	else
-		blit_sprite2(surface, x, y, *enemy[i].sprite2s, index);
+	assert(enemy_blit_count < COUNTOF(enemy_blits));
+	EnemyBlit *blit = &enemy_blits[enemy_blit_count++];
+	blit->sheet = enemy[i].sprite2s;
+	blit->x = enemy[i].ex + x_offset + tempMapXOfs;
+	blit->y = enemy[i].ey + y_offset;
+	blit->index = enemy[i].egr[enemy[i].enemycycle - 1] + sprite_offset;
+	blit->filter = enemy[i].filter;
 }
 
-void JE_drawEnemy(int enemyOffset) // actually does a whole lot more than just drawing
+static void draw_recorded_enemy_blits(SDL_Surface *surface)
+{
+	for (unsigned int b = 0; b < enemy_blit_count; b++)
+	{
+		const EnemyBlit *blit = &enemy_blits[b];
+		if (blit->filter != 0)
+			blit_sprite2_filter(surface, blit->x, blit->y, *blit->sheet, blit->index, blit->filter);
+		else
+			blit_sprite2(surface, blit->x, blit->y, *blit->sheet, blit->index);
+	}
+}
+
+/* Simulates one enemy band for this tick, recording (not performing) the
+ * blits.  FKA the update half of JE_drawEnemy. */
+static void JE_updateEnemies(int enemyOffset)
 {
 	player[0].x -= 25;
 
@@ -234,19 +263,19 @@ void JE_drawEnemy(int enemyOffset) // actually does a whole lot more than just d
 				{
 					if (enemy[i].ey > -13)
 					{
-						blit_enemy(VGAScreen, i, -6, -7, 0);
-						blit_enemy(VGAScreen, i,  6, -7, 1);
+						record_enemy_blit(i, -6, -7, 0);
+						record_enemy_blit(i,  6, -7, 1);
 					}
 					if (enemy[i].ey > -26 && enemy[i].ey < 182)
 					{
-						blit_enemy(VGAScreen, i, -6,  7, 19);
-						blit_enemy(VGAScreen, i,  6,  7, 20);
+						record_enemy_blit(i, -6,  7, 19);
+						record_enemy_blit(i,  6,  7, 20);
 					}
 				}
 				else
 				{
 					if (enemy[i].ey > -13)
-						blit_enemy(VGAScreen, i, 0, 0, 0);
+						record_enemy_blit(i, 0, 0, 0);
 				}
 
 				enemy[i].filter = 0;
@@ -621,6 +650,13 @@ draw_enemy_end:
 	}
 
 	player[0].x += 25;
+}
+
+void JE_drawEnemy(int enemyOffset)
+{
+	enemy_blit_count = 0;
+	JE_updateEnemies(enemyOffset);
+	draw_recorded_enemy_blits(VGAScreen);
 }
 
 enum LevelTickResult
