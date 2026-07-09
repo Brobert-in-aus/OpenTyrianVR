@@ -44,6 +44,7 @@
 #include "pcxmast.h"
 #include "picload.h"
 #include "player.h"
+#include "present_frame.h"
 #include "shots.h"
 #include "sndmast.h"
 #include "sprite.h"
@@ -3387,6 +3388,12 @@ void JE_playerMovement(Player *this_player,
 	JE_integer mouseXC, mouseYC;
 	JE_integer accelXC, accelYC;
 
+	/* Ship/shadow/trail/sidekick draws are recorded during the update and
+	   replayed immediately after each draw group (Phase 2 step 5 split):
+	   recording keeps them in the presentation snapshot, replaying in place
+	   preserves layering against draws not yet converted. */
+	unsigned int player_draw_mark;
+
 	if (playerNum_ == 2 || !twoPlayerMode)
 	{
 		tempW = weaponPort[this_player->items.weapon[REAR_WEAPON].id].opnum;
@@ -3830,6 +3837,7 @@ redo:
 				trail_spacing++;
 			}
 
+			player_draw_mark = present_sprite_count;
 			for (int i = 1; i < num_trails; i++)
 			{
 				trail_y -= trail_spacing;
@@ -3839,20 +3847,21 @@ redo:
 				{
 					if (shipGr_ == 0)
 					{
-						blit_sprite2x2(VGAScreen, this_player->x - 17, trail_y - 7, *shipGrPtr_, 13);
-						blit_sprite2x2(VGAScreen, this_player->x + 7 , trail_y - 7, *shipGrPtr_, 51);
+						present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x - 17, trail_y - 7, 13);
+						present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x + 7 , trail_y - 7, 51);
 					}
 					else if (shipGr_ == 1)
 					{
-						blit_sprite2x2(VGAScreen, this_player->x - 17, trail_y - 7, *shipGrPtr_, 220);
-						blit_sprite2x2(VGAScreen, this_player->x + 7 , trail_y - 7, *shipGrPtr_, 222);
+						present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x - 17, trail_y - 7, 220);
+						present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x + 7 , trail_y - 7, 222);
 					}
 					else
 					{
-						blit_sprite2x2(VGAScreen, this_player->x - 5, trail_y - 7, *shipGrPtr_, shipGr_);
+						present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x - 5, trail_y - 7, shipGr_);
 					}
 				}
 			}
+			present_draw_from(VGAScreen, player_draw_mark);
 		}
 	}
 
@@ -4003,16 +4012,22 @@ redo:
 		this_player->last_x_explosion_follow = this_player->x;
 		this_player->last_y_explosion_follow = this_player->y;
 
+#define RECORD_SHIP_SHADOW(px, py, idx) \
+	present_record(PRESENT_SHADOW, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_DARKEN, 0, \
+	               shipGrPtr_, (px), (py), (idx))
+
+		player_draw_mark = present_sprite_count;
+
 		if (shipGr_ == 0)
 		{
 			if (background2)
 			{
-				blit_sprite2x2_darken(VGAScreen, this_player->x - 17 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, *shipGrPtr_, ship_sprite + 13);
-				blit_sprite2x2_darken(VGAScreen, this_player->x + 7 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, *shipGrPtr_, ship_sprite + 51);
+				RECORD_SHIP_SHADOW(this_player->x - 17 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, ship_sprite + 13);
+				RECORD_SHIP_SHADOW(this_player->x + 7 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, ship_sprite + 51);
 				if (superWild)
 				{
-					blit_sprite2x2_darken(VGAScreen, this_player->x - 16 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, *shipGrPtr_, ship_sprite + 13);
-					blit_sprite2x2_darken(VGAScreen, this_player->x + 6 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, *shipGrPtr_, ship_sprite + 51);
+					RECORD_SHIP_SHADOW(this_player->x - 16 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, ship_sprite + 13);
+					RECORD_SHIP_SHADOW(this_player->x + 6 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, ship_sprite + 51);
 				}
 			}
 		}
@@ -4020,21 +4035,22 @@ redo:
 		{
 			if (background2)
 			{
-				blit_sprite2x2_darken(VGAScreen, this_player->x - 17 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, *shipGrPtr_, 220);
-				blit_sprite2x2_darken(VGAScreen, this_player->x + 7 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, *shipGrPtr_, 222);
+				RECORD_SHIP_SHADOW(this_player->x - 17 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, 220);
+				RECORD_SHIP_SHADOW(this_player->x + 7 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, 222);
 			}
 		}
 		else
 		{
 			if (background2)
 			{
-				blit_sprite2x2_darken(VGAScreen, this_player->x - 5 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, *shipGrPtr_, ship_sprite);
+				RECORD_SHIP_SHADOW(this_player->x - 5 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, ship_sprite);
 				if (superWild)
 				{
-					blit_sprite2x2_darken(VGAScreen, this_player->x - 4 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, *shipGrPtr_, ship_sprite);
+					RECORD_SHIP_SHADOW(this_player->x - 4 - mapX2Ofs + 30, this_player->y - 7 + shadowYDist, ship_sprite);
 				}
 			}
 		}
+#undef RECORD_SHIP_SHADOW
 
 		if (this_player->invulnerable_ticks > 0)
 		{
@@ -4042,39 +4058,39 @@ redo:
 
 			if (shipGr_ == 0)
 			{
-				blit_sprite2x2_blend(VGAScreen, this_player->x - 17, this_player->y - 7, *shipGrPtr_, ship_sprite + 13);
-				blit_sprite2x2_blend(VGAScreen, this_player->x + 7 , this_player->y - 7, *shipGrPtr_, ship_sprite + 51);
+				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, shipGrPtr_, this_player->x - 17, this_player->y - 7, ship_sprite + 13);
+				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, shipGrPtr_, this_player->x + 7 , this_player->y - 7, ship_sprite + 51);
 			}
 			else if (shipGr_ == 1)
 			{
-				blit_sprite2x2_blend(VGAScreen, this_player->x - 17, this_player->y - 7, *shipGrPtr_, 220);
-				blit_sprite2x2_blend(VGAScreen, this_player->x + 7 , this_player->y - 7, *shipGrPtr_, 222);
+				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, shipGrPtr_, this_player->x - 17, this_player->y - 7, 220);
+				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, shipGrPtr_, this_player->x + 7 , this_player->y - 7, 222);
 			}
 			else
-				blit_sprite2x2_blend(VGAScreen, this_player->x - 5, this_player->y - 7, *shipGrPtr_, ship_sprite);
+				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, shipGrPtr_, this_player->x - 5, this_player->y - 7, ship_sprite);
 		}
 		else
 		{
 			if (shipGr_ == 0)
 			{
-				blit_sprite2x2(VGAScreen, this_player->x - 17, this_player->y - 7, *shipGrPtr_, ship_sprite + 13);
-				blit_sprite2x2(VGAScreen, this_player->x + 7, this_player->y - 7, *shipGrPtr_, ship_sprite + 51);
+				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x - 17, this_player->y - 7, ship_sprite + 13);
+				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x + 7, this_player->y - 7, ship_sprite + 51);
 			}
 			else if (shipGr_ == 1)
 			{
-				blit_sprite2x2(VGAScreen, this_player->x - 17, this_player->y - 7, *shipGrPtr_, 220);
-				blit_sprite2x2(VGAScreen, this_player->x + 7, this_player->y - 7, *shipGrPtr_, 222);
+				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x - 17, this_player->y - 7, 220);
+				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x + 7, this_player->y - 7, 222);
 
 				int ship_banking = 0;
 				switch (ship_sprite)
 				{
 				case 5:
-					blit_sprite2(VGAScreen, this_player->x - 17, this_player->y + 7, *shipGrPtr_, 40);
+					present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, shipGrPtr_, this_player->x - 17, this_player->y + 7, 40);
 					tempW = this_player->x - 7;
 					ship_banking = -2;
 					break;
 				case 3:
-					blit_sprite2(VGAScreen, this_player->x - 17, this_player->y + 7, *shipGrPtr_, 39);
+					present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, shipGrPtr_, this_player->x - 17, this_player->y + 7, 39);
 					tempW = this_player->x - 7;
 					ship_banking = -1;
 					break;
@@ -4082,12 +4098,12 @@ redo:
 					ship_banking = 0;
 					break;
 				case -1:
-					blit_sprite2(VGAScreen, this_player->x + 19, this_player->y + 7, *shipGrPtr_, 58);
+					present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, shipGrPtr_, this_player->x + 19, this_player->y + 7, 58);
 					tempW = this_player->x + 9;
 					ship_banking = 1;
 					break;
 				case -3:
-					blit_sprite2(VGAScreen, this_player->x + 19, this_player->y + 7, *shipGrPtr_, 59);
+					present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, shipGrPtr_, this_player->x + 19, this_player->y + 7, 59);
 					tempW = this_player->x + 9;
 					ship_banking = 2;
 					break;
@@ -4107,9 +4123,11 @@ redo:
 			}
 			else
 			{
-				blit_sprite2x2(VGAScreen, this_player->x - 5, this_player->y - 7, *shipGrPtr_, ship_sprite);
+				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x - 5, this_player->y - 7, ship_sprite);
 			}
 		}
+
+		present_draw_from(VGAScreen, player_draw_mark);
 
 		/*Options Location*/
 		if (playerNum_ == 2 && shipGr_ == 0)  // if dragonwing
@@ -4210,7 +4228,11 @@ redo:
 				{
 
 					if (!twoPlayerLinked)
-						blit_sprite2(VGAScreen, this_player->x + (shipGr_ == 0) + 1, this_player->y - 13, spriteSheet10, 77 + chargeLevel + chargeGr * 19);
+					{
+						player_draw_mark = present_sprite_count;
+						present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, &spriteSheet10, this_player->x + (shipGr_ == 0) + 1, this_player->y - 13, 77 + chargeLevel + chargeGr * 19);
+						present_draw_from(VGAScreen, player_draw_mark);
+					}
 
 					if (chargeGrWait > 0)
 					{
@@ -4476,6 +4498,7 @@ redo:
 	// draw sidekicks
 	if ((playerNum_ == 2 || !twoPlayerMode) && !endLevel)
 	{
+		player_draw_mark = present_sprite_count;
 		for (uint i = 0; i < COUNTOF(this_player->sidekick); ++i)
 		{
 			JE_OptionType *this_option = &options[this_player->items.sidekick[i]];
@@ -4496,9 +4519,9 @@ redo:
 				const uint sprite = this_option->gr[this_player->sidekick[i].animation_frame] + this_player->sidekick[i].charge;
 
 				if (this_player->sidekick[i].style == 1 || this_player->sidekick[i].style == 2)
-					blit_sprite2x2(VGAScreen, x - 6, y, spriteSheet10, sprite);
+					present_record(PRESENT_SIDEKICK, PRESENT_BLIT_SPRITE2X2, 0, 0, &spriteSheet10, x - 6, y, sprite);
 				else
-					blit_sprite2(VGAScreen, x, y, spriteSheet9, sprite);
+					present_record(PRESENT_SIDEKICK, PRESENT_BLIT_SPRITE2, 0, 0, &spriteSheet9, x, y, sprite);
 			}
 
 			if (--this_player->sidekick[i].charge_ticks == 0)
@@ -4508,6 +4531,7 @@ redo:
 				this_player->sidekick[i].charge_ticks = 20;
 			}
 		}
+		present_draw_from(VGAScreen, player_draw_mark);
 	}
 }
 
