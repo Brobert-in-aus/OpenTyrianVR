@@ -1175,9 +1175,10 @@ void JE_drawSP(void)
 
 			if (superpixels[i].x < (unsigned)VGAScreen->w && superpixels[i].y < (unsigned)VGAScreen->h)
 			{
-				present_record(PRESENT_SUPERPIXEL, PRESENT_PIXEL_GLOW, 0, superpixels[i].z,
-				               NULL, (Sint16)superpixels[i].x, (Sint16)superpixels[i].y,
-				               superpixels[i].color);
+				present_record_id(PRESENT_SUPERPIXEL, PRESENT_PIXEL_GLOW, 0, superpixels[i].z, 0,
+				                  (Uint16)(0x6000 | i),
+				                  NULL, (Sint16)superpixels[i].x, (Sint16)superpixels[i].y,
+				                  superpixels[i].color);
 			}
 
 			superpixels[i].z--;

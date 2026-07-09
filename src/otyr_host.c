@@ -743,8 +743,9 @@ void otyr_host_present(SDL_Surface *screen)
 		out->y = in->y;
 		out->index = in->index;
 		out->sheet_id = in->sheet != NULL ? sheet_id_for(in->sheet) : OTYR_SHEET_INVALID;
+		out->aux = in->aux;
+		out->source_id = in->source_id;
 		memset(out->reserved, 0, sizeof(out->reserved));
-		out->reserved[0] = in->aux;
 	}
 
 	unsigned int sound_count = present_sound_count;

@@ -43,9 +43,10 @@ void present_sound(Uint8 channel, Uint8 sample)
 	}
 }
 
-unsigned int present_record_aux(PresentCategory category, PresentBlitKind kind,
-                                Uint8 flags, Uint8 filter_color, Uint8 aux,
-                                Sprite2_array *sheet, Sint16 x, Sint16 y, Uint16 index)
+unsigned int present_record_id(PresentCategory category, PresentBlitKind kind,
+                               Uint8 flags, Uint8 filter_color, Uint8 aux,
+                               Uint16 source_id,
+                               Sprite2_array *sheet, Sint16 x, Sint16 y, Uint16 index)
 {
 	assert(present_sprite_count < PRESENT_SPRITE_MAX);
 	if (present_sprite_count >= PRESENT_SPRITE_MAX)
@@ -60,8 +61,17 @@ unsigned int present_record_aux(PresentCategory category, PresentBlitKind kind,
 	sprite->x = x;
 	sprite->y = y;
 	sprite->index = index;
+	sprite->source_id = source_id;
 	sprite->sheet = sheet;
 	return present_sprite_count++;
+}
+
+unsigned int present_record_aux(PresentCategory category, PresentBlitKind kind,
+                                Uint8 flags, Uint8 filter_color, Uint8 aux,
+                                Sprite2_array *sheet, Sint16 x, Sint16 y, Uint16 index)
+{
+	return present_record_id(category, kind, flags, filter_color, aux,
+	                         PRESENT_NO_SOURCE, sheet, x, y, index);
 }
 
 unsigned int present_record(PresentCategory category, PresentBlitKind kind,

@@ -294,16 +294,18 @@ bool player_shot_move_and_draw(
 				if (background2 && *out_shoty + shadowYDist < 190 && tmp_shotXM < 100)
 					present_record(PRESENT_SHADOW, PRESENT_BLIT_SPRITE2, PRESENT_FLAG_DARKEN, 0,
 					               &spriteSheet12, *out_shotx+1, *out_shoty + shadowYDist, sprite_frame - 500);
-				present_record(PRESENT_PLAYER_SHOT, PRESENT_BLIT_SPRITE2, 0, 0,
-				               &spriteSheet12, *out_shotx+1, *out_shoty, sprite_frame - 500);
+				present_record_id(PRESENT_PLAYER_SHOT, PRESENT_BLIT_SPRITE2, 0, 0, 0,
+				                  (Uint16)(0x3000 | shot_id),
+				                  &spriteSheet12, *out_shotx+1, *out_shoty, sprite_frame - 500);
 			}
 			else
 			{
 				if (background2 && *out_shoty + shadowYDist < 190 && tmp_shotXM < 100)
 					present_record(PRESENT_SHADOW, PRESENT_BLIT_SPRITE2, PRESENT_FLAG_DARKEN, 0,
 					               &spriteSheet8, *out_shotx+1, *out_shoty + shadowYDist, sprite_frame);
-				present_record(PRESENT_PLAYER_SHOT, PRESENT_BLIT_SPRITE2, 0, 0,
-				               &spriteSheet8, *out_shotx+1, *out_shoty, sprite_frame);
+				present_record_id(PRESENT_PLAYER_SHOT, PRESENT_BLIT_SPRITE2, 0, 0, 0,
+				                  (Uint16)(0x3000 | shot_id),
+				                  &spriteSheet8, *out_shotx+1, *out_shoty, sprite_frame);
 			}
 		}
 	}

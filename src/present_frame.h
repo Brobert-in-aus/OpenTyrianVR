@@ -78,8 +78,13 @@ typedef struct PresentSprite
 	                                   enemyground flag (terrain-baked art) */
 	Sint16 x, y;                    /* frame coordinates at record time */
 	Uint16 index;                   /* sprite index within the sheet */
+	Uint16 source_id;               /* stable entity identity across ticks
+	                                   (slot-based) for host interpolation;
+	                                   PRESENT_NO_SOURCE for transient art */
 	Sprite2_array *sheet;
 } PresentSprite;
+
+#define PRESENT_NO_SOURCE 0xffffu
 
 #define PRESENT_SPRITE_MAX 1024
 #define PRESENT_SOUND_MAX 8
@@ -112,6 +117,12 @@ unsigned int present_record(PresentCategory category, PresentBlitKind kind,
 unsigned int present_record_aux(PresentCategory category, PresentBlitKind kind,
                                 Uint8 flags, Uint8 filter_color, Uint8 aux,
                                 Sprite2_array *sheet, Sint16 x, Sint16 y, Uint16 index);
+
+/* Full-parameter variant with a stable source identity for interpolation. */
+unsigned int present_record_id(PresentCategory category, PresentBlitKind kind,
+                               Uint8 flags, Uint8 filter_color, Uint8 aux,
+                               Uint16 source_id,
+                               Sprite2_array *sheet, Sint16 x, Sint16 y, Uint16 index);
 
 /* Replays records [from, count) onto the surface; each subsystem calls this
  * for its own slice at its original draw point in the tick. */

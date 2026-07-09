@@ -3847,17 +3847,17 @@ redo:
 				{
 					if (shipGr_ == 0)
 					{
-						present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x - 17, trail_y - 7, 13);
-						present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x + 7 , trail_y - 7, 51);
+						present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x - 17, trail_y - 7, 13);
+						present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x + 7 , trail_y - 7, 51);
 					}
 					else if (shipGr_ == 1)
 					{
-						present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x - 17, trail_y - 7, 220);
-						present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x + 7 , trail_y - 7, 222);
+						present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x - 17, trail_y - 7, 220);
+						present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x + 7 , trail_y - 7, 222);
 					}
 					else
 					{
-						present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x - 5, trail_y - 7, shipGr_);
+						present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x - 5, trail_y - 7, shipGr_);
 					}
 				}
 			}
@@ -4058,39 +4058,39 @@ redo:
 
 			if (shipGr_ == 0)
 			{
-				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, shipGrPtr_, this_player->x - 17, this_player->y - 7, ship_sprite + 13);
-				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, shipGrPtr_, this_player->x + 7 , this_player->y - 7, ship_sprite + 51);
+				present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x - 17, this_player->y - 7, ship_sprite + 13);
+				present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x + 7 , this_player->y - 7, ship_sprite + 51);
 			}
 			else if (shipGr_ == 1)
 			{
-				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, shipGrPtr_, this_player->x - 17, this_player->y - 7, 220);
-				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, shipGrPtr_, this_player->x + 7 , this_player->y - 7, 222);
+				present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x - 17, this_player->y - 7, 220);
+				present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x + 7 , this_player->y - 7, 222);
 			}
 			else
-				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, shipGrPtr_, this_player->x - 5, this_player->y - 7, ship_sprite);
+				present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, PRESENT_FLAG_BLEND, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x - 5, this_player->y - 7, ship_sprite);
 		}
 		else
 		{
 			if (shipGr_ == 0)
 			{
-				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x - 17, this_player->y - 7, ship_sprite + 13);
-				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x + 7, this_player->y - 7, ship_sprite + 51);
+				present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x - 17, this_player->y - 7, ship_sprite + 13);
+				present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x + 7, this_player->y - 7, ship_sprite + 51);
 			}
 			else if (shipGr_ == 1)
 			{
-				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x - 17, this_player->y - 7, 220);
-				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x + 7, this_player->y - 7, 222);
+				present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x - 17, this_player->y - 7, 220);
+				present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x + 7, this_player->y - 7, 222);
 
 				int ship_banking = 0;
 				switch (ship_sprite)
 				{
 				case 5:
-					present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, shipGrPtr_, this_player->x - 17, this_player->y + 7, 40);
+					present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x - 17, this_player->y + 7, 40);
 					tempW = this_player->x - 7;
 					ship_banking = -2;
 					break;
 				case 3:
-					present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, shipGrPtr_, this_player->x - 17, this_player->y + 7, 39);
+					present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x - 17, this_player->y + 7, 39);
 					tempW = this_player->x - 7;
 					ship_banking = -1;
 					break;
@@ -4098,12 +4098,12 @@ redo:
 					ship_banking = 0;
 					break;
 				case -1:
-					present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, shipGrPtr_, this_player->x + 19, this_player->y + 7, 58);
+					present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x + 19, this_player->y + 7, 58);
 					tempW = this_player->x + 9;
 					ship_banking = 1;
 					break;
 				case -3:
-					present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, shipGrPtr_, this_player->x + 19, this_player->y + 7, 59);
+					present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x + 19, this_player->y + 7, 59);
 					tempW = this_player->x + 9;
 					ship_banking = 2;
 					break;
@@ -4123,7 +4123,7 @@ redo:
 			}
 			else
 			{
-				present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, shipGrPtr_, this_player->x - 5, this_player->y - 7, ship_sprite);
+				present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2X2, 0, 0, 0, (Uint16)(0x4000 | playerNum_), shipGrPtr_, this_player->x - 5, this_player->y - 7, ship_sprite);
 			}
 		}
 
@@ -4230,7 +4230,7 @@ redo:
 					if (!twoPlayerLinked)
 					{
 						player_draw_mark = present_sprite_count;
-						present_record(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, &spriteSheet10, this_player->x + (shipGr_ == 0) + 1, this_player->y - 13, 77 + chargeLevel + chargeGr * 19);
+						present_record_id(PRESENT_PLAYER, PRESENT_BLIT_SPRITE2, 0, 0, 0, (Uint16)(0x4100 | playerNum_), &spriteSheet10, this_player->x + (shipGr_ == 0) + 1, this_player->y - 13, 77 + chargeLevel + chargeGr * 19);
 						present_draw_from(VGAScreen, player_draw_mark);
 					}
 
@@ -4519,9 +4519,9 @@ redo:
 				const uint sprite = this_option->gr[this_player->sidekick[i].animation_frame] + this_player->sidekick[i].charge;
 
 				if (this_player->sidekick[i].style == 1 || this_player->sidekick[i].style == 2)
-					present_record(PRESENT_SIDEKICK, PRESENT_BLIT_SPRITE2X2, 0, 0, &spriteSheet10, x - 6, y, sprite);
+					present_record_id(PRESENT_SIDEKICK, PRESENT_BLIT_SPRITE2X2, 0, 0, 0, (Uint16)(0x4200 | (playerNum_ << 4) | i), &spriteSheet10, x - 6, y, sprite);
 				else
-					present_record(PRESENT_SIDEKICK, PRESENT_BLIT_SPRITE2, 0, 0, &spriteSheet9, x, y, sprite);
+					present_record_id(PRESENT_SIDEKICK, PRESENT_BLIT_SPRITE2, 0, 0, 0, (Uint16)(0x4200 | (playerNum_ << 4) | i), &spriteSheet9, x, y, sprite);
 			}
 
 			if (--this_player->sidekick[i].charge_ticks == 0)

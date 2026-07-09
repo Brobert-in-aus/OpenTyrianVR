@@ -44,13 +44,20 @@ public unsafe partial class SnapshotLayer : Node3D
     private OtyrNative.SpriteSheet _sheet;
     private uint _sheetEpoch;
     private uint _lastRenderedTick;
+    private ulong _snapshotArrivalUsec;
+    private double _snapshotPeriod = 0.02875;  // nominal 35 Hz tick
 
-    private readonly MultiMesh[] _multiMesh = new MultiMesh[OtyrNative.SheetCount];
+    // Layers 0..SheetCount-1 are sprite sheets; the last is the glow layer
+    // (superpixel debris as small palette-colored quads).
+    private const int GlowLayer = OtyrNative.SheetCount;
+    private const int LayerCount = OtyrNative.SheetCount + 1;
+
+    private readonly MultiMesh[] _multiMesh = new MultiMesh[LayerCount];
     private readonly ImageTexture[] _atlas = new ImageTexture[OtyrNative.SheetCount];
     private ImageTexture _paletteTexture = null!;
     private Image _paletteImage = null!;
     private readonly byte[] _paletteRgba = new byte[256 * 4];
-    private readonly int[] _instanceCount = new int[OtyrNative.SheetCount];
+    private readonly int[] _instanceCount = new int[LayerCount];
 
     public override void _Ready()
     {
@@ -70,9 +77,13 @@ public unsafe partial class SnapshotLayer : Node3D
                 uniform sampler2D palette : filter_nearest;
 
                 varying float cell;
+                varying float v_flags;
+                varying float v_filter;
 
                 void vertex() {
                     cell = INSTANCE_CUSTOM.x;
+                    v_flags = INSTANCE_CUSTOM.y;
+                    v_filter = INSTANCE_CUSTOM.z;
                 }
 
                 void fragment() {
@@ -81,11 +92,17 @@ public unsafe partial class SnapshotLayer : Node3D
                     vec2 cell_origin_px = vec2(mod(cell, 32.0) * 12.0, floor(cell / 32.0) * 14.0);
                     vec2 cell_px = clamp(UV * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));
                     vec2 uv = (cell_origin_px + cell_px) / vec2(384.0, 448.0);
-                    float idx = texture(atlas, uv).r * 255.0;
+                    float idx = floor(texture(atlas, uv).r * 255.0 + 0.5);
                     if (idx < 0.5)
                         discard;
+                    // Hit-flash / ice tint: exact legacy hue swap,
+                    // out = (idx & 0x0f) | filter.
+                    if (mod(v_flags, 2.0) >= 1.0)
+                        idx = mod(idx, 16.0) + v_filter;
                     ALBEDO = texture(palette, vec2((idx + 0.5) / 256.0, 0.5)).rgb;
-                    ALPHA = 1.0;
+                    // Legacy blend variants (transparent explosions,
+                    // invulnerable ship) approximate as 55% alpha.
+                    ALPHA = mod(floor(v_flags / 2.0), 2.0) >= 1.0 ? 0.55 : 1.0;
                 }
                 """,
         };
@@ -122,6 +139,44 @@ public unsafe partial class SnapshotLayer : Node3D
                 MaterialOverride = material,
             });
         }
+
+        // Glow layer: superpixel debris as small palette-colored quads.
+        var glowShader = new Shader
+        {
+            Code = """
+                shader_type spatial;
+                render_mode unshaded, cull_disabled;
+
+                uniform sampler2D palette : filter_nearest;
+
+                varying float pal_index;
+
+                void vertex() {
+                    pal_index = INSTANCE_CUSTOM.x;
+                }
+
+                void fragment() {
+                    ALBEDO = texture(palette, vec2((pal_index + 0.5) / 256.0, 0.5)).rgb;
+                }
+                """,
+        };
+        var glowMaterial = new ShaderMaterial { Shader = glowShader };
+        glowMaterial.SetShaderParameter("palette", _paletteTexture);
+
+        _multiMesh[GlowLayer] = new MultiMesh
+        {
+            TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
+            UseCustomData = true,
+            Mesh = new QuadMesh { Size = new Vector2(2f * PxToMeters, 2f * PxToMeters) },
+            InstanceCount = OtyrNative.SnapshotSpriteMax,
+            VisibleInstanceCount = 0,
+        };
+        AddChild(new MultiMeshInstance3D
+        {
+            Name = "GlowLayer",
+            Multimesh = _multiMesh[GlowLayer],
+            MaterialOverride = glowMaterial,
+        });
     }
 
     /// <summary>Polls for a new snapshot and updates the sprite quads.
@@ -131,20 +186,31 @@ public unsafe partial class SnapshotLayer : Node3D
         int rc;
         fixed (OtyrNative.Snapshot* snapshotPtr = &_snapshot)
             rc = OtyrNative.GetSnapshot(session, snapshotPtr, _snapshot.StructSize, 0);
-        if (rc != OtyrNative.Ok)
-            return;
-        if (_snapshot.LevelTick == _lastRenderedTick)
-            return;
-        _lastRenderedTick = _snapshot.LevelTick;
-
-        if (_snapshot.SheetEpoch != _sheetEpoch)
+        if (rc == OtyrNative.Ok && _snapshot.LevelTick != _lastRenderedTick)
         {
-            _sheetEpoch = _snapshot.SheetEpoch;
-            FetchAtlases(session);
+            _lastRenderedTick = _snapshot.LevelTick;
+
+            if (_snapshot.SheetEpoch != _sheetEpoch)
+            {
+                _sheetEpoch = _snapshot.SheetEpoch;
+                FetchAtlases(session);
+            }
+
+            UpdatePalette(paletteArgb);
+            BuildSprites();
+
+            // Smoothed snapshot period for interpolation pacing.
+            ulong now = Time.GetTicksUsec();
+            if (_snapshotArrivalUsec != 0)
+            {
+                double dt = (now - _snapshotArrivalUsec) / 1_000_000.0;
+                if (dt > 0.001 && dt < 0.25)
+                    _snapshotPeriod = _snapshotPeriod * 0.8 + dt * 0.2;
+            }
+            _snapshotArrivalUsec = now;
         }
 
-        UpdatePalette(paletteArgb);
-        UpdateInstances();
+        WriteTransforms();
     }
 
     private void FetchAtlases(ulong session)
@@ -199,9 +265,41 @@ public unsafe partial class SnapshotLayer : Node3D
         _paletteTexture.Update(_paletteImage);
     }
 
-    private void UpdateInstances()
+    private struct RenderCell
     {
-        Array.Clear(_instanceCount);
+        public int SheetId;
+        public int CellIndex;      // 0-based atlas cell
+        public byte Flags, FilterColor;
+        public float Z;            // lane-local height incl. order bias
+        public Vector2 CurrPx;     // cell center, frame pixels
+        public Vector2 PrevPx;     // previous-tick center (== CurrPx if new)
+        public bool HasPrev;
+    }
+
+    private RenderCell[] _cells = new RenderCell[OtyrNative.SnapshotSpriteMax * 4];
+    private int _cellCount;
+    private RenderCell[] _prevCells = new RenderCell[OtyrNative.SnapshotSpriteMax * 4];
+    private int _prevCellCount;
+    // Pairing: (source_id, per-source ordinal) of each cell this tick.
+    private uint[] _cellKeys = new uint[OtyrNative.SnapshotSpriteMax * 4];
+    private uint[] _prevCellKeys = new uint[OtyrNative.SnapshotSpriteMax * 4];
+    private readonly System.Collections.Generic.Dictionary<uint, int> _prevByKey = new();
+    private readonly System.Collections.Generic.Dictionary<ushort, int> _sourceOrdinal = new();
+
+    private const float TeleportGuardPx = 32f;
+
+    private void BuildSprites()
+    {
+        // Rotate current -> previous.
+        (_prevCells, _cells) = (_cells, _prevCells);
+        (_prevCellKeys, _cellKeys) = (_cellKeys, _prevCellKeys);
+        _prevCellCount = _cellCount;
+        _cellCount = 0;
+
+        _prevByKey.Clear();
+        for (int i = 0; i < _prevCellCount; i++)
+            _prevByKey.TryAdd(_prevCellKeys[i], i);
+        _sourceOrdinal.Clear();
 
         fixed (OtyrNative.Snapshot* snapshot = &_snapshot)
         {
@@ -210,8 +308,15 @@ public unsafe partial class SnapshotLayer : Node3D
             for (uint i = 0; i < snapshot->SpriteCount; i++)
             {
                 var sprite = sprites[i];
+
+                if (sprite.Kind == 3)  // PIXEL_GLOW: palette-colored debris quad
+                {
+                    AddGlow(sprite, i);
+                    continue;
+                }
+
                 if (sprite.SheetId >= OtyrNative.SheetCount || sprite.Index == 0)
-                    continue;  // glow pixels / old-table blits: not yet rendered
+                    continue;  // old-table blend blits: not yet rendered
                 if (sprite.Category == (byte)OtyrNative.Category.Shadow)
                     continue;  // stays in the legacy frame (terrain paint)
                 if (sprite.Aux != 0 && sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB)
@@ -230,40 +335,130 @@ public unsafe partial class SnapshotLayer : Node3D
                 }
             }
         }
+    }
 
-        for (int id = 0; id < OtyrNative.SheetCount; id++)
-            _multiMesh[id].VisibleInstanceCount = _instanceCount[id];
+    private void AddGlow(in OtyrNative.SnapshotSprite sprite, uint recordIndex)
+    {
+        if (_cellCount >= _cells.Length)
+            return;
+
+        // Legacy writes (bg & 0x0f + z) >> 1 + color; approximate the read-
+        // modify-write against a mid-brightness background.
+        int intensity = Math.Min(15, (7 + sprite.FilterColor) / 2);
+        int paletteIndex = Math.Min(255, sprite.Index + intensity);
+
+        ref RenderCell cell = ref _cells[_cellCount];
+        cell.SheetId = GlowLayer;
+        cell.CellIndex = paletteIndex;
+        cell.Flags = 0;
+        cell.FilterColor = 0;
+        cell.Z = BandHeight[(byte)OtyrNative.Category.Superpixel] + recordIndex * OrderBias;
+        cell.CurrPx = new Vector2(sprite.X, sprite.Y);
+        cell.PrevPx = cell.CurrPx;
+        cell.HasPrev = false;
+
+        if (sprite.SourceId != OtyrNative.NoSource)
+        {
+            uint key = (uint)sprite.SourceId << 8;
+            _cellKeys[_cellCount] = key;
+            if (_prevByKey.TryGetValue(key, out int prevIdx) &&
+                _prevCells[prevIdx].CurrPx.DistanceTo(cell.CurrPx) <= TeleportGuardPx)
+            {
+                cell.PrevPx = _prevCells[prevIdx].CurrPx;
+                cell.HasPrev = true;
+            }
+        }
+        else
+        {
+            _cellKeys[_cellCount] = 0xffffffff;
+        }
+
+        ++_cellCount;
     }
 
     private void AddCell(in OtyrNative.SnapshotSprite sprite, uint recordIndex, int cellIndex, int pixelOffsetX, int pixelOffsetY)
     {
-        // Record coordinates are game_screen pixels (top-left of the cell);
-        // the composited lane frame is shifted left by 24.
-        float centerX = sprite.X + pixelOffsetX + OtyrNative.SheetCellW / 2f - 24f;
+        if (_cellCount >= _cells.Length)
+            return;
+
+        float centerX = sprite.X + pixelOffsetX + OtyrNative.SheetCellW / 2f;
         float centerY = sprite.Y + pixelOffsetY + OtyrNative.SheetCellH / 2f;
 
-        float laneX = (centerX / 320f - 0.5f) * LaneWidth;
-        float laneY = (0.5f - centerY / 200f) * LaneHeight;
+        ref RenderCell cell = ref _cells[_cellCount];
+        cell.SheetId = sprite.SheetId;
+        cell.CellIndex = cellIndex - 1;
+        cell.Flags = sprite.Flags;
+        cell.FilterColor = sprite.FilterColor;
+        cell.Z = BandHeight[Math.Min(sprite.Category, (byte)(BandHeight.Length - 1))]
+               + recordIndex * OrderBias;
+        cell.CurrPx = new Vector2(centerX, centerY);
+        cell.PrevPx = cell.CurrPx;
+        cell.HasPrev = false;
 
-        // Terrain-baked art (enemyground structures) must stay pixel-coplanar
-        // with the lane regardless of which slot band the level spawned it in.
-        bool groundArt = sprite.Aux != 0 &&
-            (sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB);
-        float laneZ = (groundArt ? 0.0008f
-                                 : BandHeight[Math.Min(sprite.Category, (byte)(BandHeight.Length - 1))])
-                    + recordIndex * OrderBias;
-
-        int id = sprite.SheetId;
-        int instance = _instanceCount[id]++;
-        if (instance >= OtyrNative.SnapshotSpriteMax)
+        // Pair with last tick: same source id, k-th occurrence (emit order is
+        // deterministic per source).
+        if (sprite.SourceId != OtyrNative.NoSource)
         {
-            _instanceCount[id] = OtyrNative.SnapshotSpriteMax;
-            return;
+            _sourceOrdinal.TryGetValue(sprite.SourceId, out int ordinal);
+            _sourceOrdinal[sprite.SourceId] = ordinal + 1;
+            uint key = (uint)sprite.SourceId << 8 | (uint)(ordinal & 0xff);
+            _cellKeys[_cellCount] = key;
+
+            if (_prevByKey.TryGetValue(key, out int prevIdx))
+            {
+                Vector2 prev = _prevCells[prevIdx].CurrPx;
+                if (prev.DistanceTo(cell.CurrPx) <= TeleportGuardPx)
+                {
+                    cell.PrevPx = prev;
+                    cell.HasPrev = true;
+                }
+            }
+        }
+        else
+        {
+            _cellKeys[_cellCount] = 0xffffffff;
         }
 
-        _multiMesh[id].SetInstanceTransform(instance,
-            new Transform3D(Basis.Identity, new Vector3(laneX, laneY, laneZ)));
-        _multiMesh[id].SetInstanceCustomData(instance,
-            new Color(cellIndex - 1, sprite.Flags, sprite.FilterColor, 0));
+        ++_cellCount;
+    }
+
+    private void WriteTransforms()
+    {
+        // Interpolation phase within the snapshot interval.
+        float t = 1f;
+        if (_snapshotArrivalUsec != 0)
+        {
+            double elapsed = (Time.GetTicksUsec() - _snapshotArrivalUsec) / 1_000_000.0;
+            t = (float)Mathf.Clamp(elapsed / _snapshotPeriod, 0.0, 1.0);
+        }
+
+        Array.Clear(_instanceCount);
+
+        for (int i = 0; i < _cellCount; i++)
+        {
+            ref readonly RenderCell cell = ref _cells[i];
+
+            Vector2 px = cell.HasPrev ? cell.PrevPx.Lerp(cell.CurrPx, t) : cell.CurrPx;
+
+            // Frame pixels (game_screen, composited -24) -> lane local.
+            float laneX = ((px.X - 24f) / 320f - 0.5f) * LaneWidth;
+            float laneY = (0.5f - px.Y / 200f) * LaneHeight;
+
+            int id = cell.SheetId;
+            int instance = _instanceCount[id]++;
+            if (instance >= OtyrNative.SnapshotSpriteMax)
+            {
+                _instanceCount[id] = OtyrNative.SnapshotSpriteMax;
+                continue;
+            }
+
+            _multiMesh[id].SetInstanceTransform(instance,
+                new Transform3D(Basis.Identity, new Vector3(laneX, laneY, cell.Z)));
+            _multiMesh[id].SetInstanceCustomData(instance,
+                new Color(cell.CellIndex, cell.Flags, cell.FilterColor, 0));
+        }
+
+        for (int id = 0; id < LayerCount; id++)
+            _multiMesh[id].VisibleInstanceCount = _instanceCount[id];
     }
 }

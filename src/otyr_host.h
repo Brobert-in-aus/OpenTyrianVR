@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 6u
+#define OTYR_ABI_VERSION 7u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -171,7 +171,10 @@ typedef struct OtyrSnapshotSprite
 	int16_t  x, y;          /* legacy frame coordinates at draw time */
 	uint16_t index;         /* sprite index within the sheet (1-based) */
 	uint8_t  sheet_id;      /* OTYR_SHEET_* or OTYR_SHEET_INVALID */
-	uint8_t  reserved[5];   /* pads the struct to exactly 16 bytes */
+	uint8_t  aux;           /* per-category metadata (enemies: terrain art) */
+	uint16_t source_id;     /* stable entity id across ticks (0xffff none);
+	                           same-id records pair by emit order (v7) */
+	uint8_t  reserved[2];   /* pads the struct to exactly 16 bytes */
 } OtyrSnapshotSprite;
 
 typedef struct OtyrSnapshot

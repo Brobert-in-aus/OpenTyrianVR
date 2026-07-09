@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 6;
+    public const uint AbiVersion = 7;
 
     public const int FrameWidth = 320;
     public const int FrameHeight = 200;
@@ -70,9 +70,12 @@ public static unsafe class OtyrNative
         public short X, Y;
         public ushort Index;   // 1-based cell index within the sheet
         public byte SheetId;
-        public byte Aux;  // per-category metadata; enemies: enemyground flag
-        public byte R1, R2, R3, R4;  // pads to exactly 16 bytes
+        public byte Aux;  // per-category metadata; enemies: terrain-art flag
+        public ushort SourceId;  // stable entity id across ticks; 0xffff none
+        public byte R3, R4;  // pads to exactly 16 bytes
     }
+
+    public const ushort NoSource = 0xffff;
 
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct Snapshot

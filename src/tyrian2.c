@@ -214,13 +214,14 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 		}
 	}
 
-	present_record_aux(enemy_band_category, PRESENT_BLIT_SPRITE2,
-	                   enemy[i].filter != 0 ? PRESENT_FLAG_FILTER : 0, enemy[i].filter,
-	                   terrain_art,
-	                   enemy[i].sprite2s,
-	                   enemy[i].ex + x_offset + tempMapXOfs,
-	                   enemy[i].ey + y_offset,
-	                   cell_index);
+	present_record_id(enemy_band_category, PRESENT_BLIT_SPRITE2,
+	                  enemy[i].filter != 0 ? PRESENT_FLAG_FILTER : 0, enemy[i].filter,
+	                  terrain_art,
+	                  (Uint16)(0x1000 | i),
+	                  enemy[i].sprite2s,
+	                  enemy[i].ex + x_offset + tempMapXOfs,
+	                  enemy[i].ey + y_offset,
+	                  cell_index);
 }
 
 /* Simulates one enemy band for this tick, recording (not performing) the
@@ -1480,13 +1481,15 @@ draw_player_shot_loop_end:
 						}
 
 						if (enemyShot[z].sgr >= 500)
-							present_record(PRESENT_ENEMY_SHOT, PRESENT_BLIT_SPRITE2, 0, 0,
-							               &spriteSheet12, enemyShot[z].sx, enemyShot[z].sy,
-							               enemyShot[z].sgr + enemyShot[z].animate - 500);
+							present_record_id(PRESENT_ENEMY_SHOT, PRESENT_BLIT_SPRITE2, 0, 0, 0,
+							                  (Uint16)(0x2000 | z),
+							                  &spriteSheet12, enemyShot[z].sx, enemyShot[z].sy,
+							                  enemyShot[z].sgr + enemyShot[z].animate - 500);
 						else
-							present_record(PRESENT_ENEMY_SHOT, PRESENT_BLIT_SPRITE2, 0, 0,
-							               &spriteSheet8, enemyShot[z].sx, enemyShot[z].sy,
-							               enemyShot[z].sgr + enemyShot[z].animate);
+							present_record_id(PRESENT_ENEMY_SHOT, PRESENT_BLIT_SPRITE2, 0, 0, 0,
+							                  (Uint16)(0x2000 | z),
+							                  &spriteSheet8, enemyShot[z].sx, enemyShot[z].sy,
+							                  enemyShot[z].sgr + enemyShot[z].animate);
 					}
 				}
 
@@ -1588,10 +1591,11 @@ draw_player_shot_loop_end:
 			}
 			else
 			{
-				present_record(PRESENT_EXPLOSION, PRESENT_BLIT_SPRITE2,
-				               explosionTransparent ? PRESENT_FLAG_BLEND : 0, 0,
-				               &explosionSpriteSheet, explosions[j].x, explosions[j].y,
-				               explosions[j].sprite + 1);
+				present_record_id(PRESENT_EXPLOSION, PRESENT_BLIT_SPRITE2,
+				                  explosionTransparent ? PRESENT_FLAG_BLEND : 0, 0, 0,
+				                  (Uint16)(0x5000 | j),
+				                  &explosionSpriteSheet, explosions[j].x, explosions[j].y,
+				                  explosions[j].sprite + 1);
 
 				explosions[j].ttl--;
 			}
