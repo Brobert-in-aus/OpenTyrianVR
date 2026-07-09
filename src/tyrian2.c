@@ -623,472 +623,20 @@ draw_enemy_end:
 	player[0].x += 25;
 }
 
-void JE_main(void)
+enum LevelTickResult
 {
-	char buffer[256];
-
-	int lastEnemyOnScreen;
-
-	/* NOTE: BEGIN MAIN PROGRAM HERE AFTER LOADING A GAME OR STARTING A NEW ONE */
-
-	/* ----------- GAME ROUTINES ------------------------------------- */
-	/* We need to jump to the beginning to make space for the routines */
-	/* --------------------------------------------------------------- */
-	goto start_level_first;
-
-	/*------------------------------GAME LOOP-----------------------------------*/
-
-	/* Startlevel is called after a previous level is over.  If the first level
-	   is started for a gaming session, startlevelfirst is called instead and
-	   this code is skipped.  The code here finishes the level and prepares for
-	   the loadmap function. */
-
-start_level:
-
-	keyboardClearInput();
-	mouseClearInput();
-
-	mouseSetRelative(false);
-
-	if (galagaMode)
-		twoPlayerMode = false;
-
-	free_sprite2s(&enemySpriteSheets[0]);
-	free_sprite2s(&enemySpriteSheets[1]);
-	free_sprite2s(&enemySpriteSheets[2]);
-	free_sprite2s(&enemySpriteSheets[3]);
-
-	/* Normal speed */
-	if (fastPlay != 0)
-	{
-		smoothScroll = true;
-		Uint16 speed = 0x4300;
-		setFrameSpeed(speed);
-	}
-
-	if (play_demo || record_demo)
-	{
-		if (demo_file)
-		{
-			fclose(demo_file);
-			demo_file = NULL;
-		}
-
-		if (play_demo)
-		{
-			stop_song();
-			fade_black(10);
-		}
-	}
-
-	difficultyLevel = oldDifficultyLevel;   /*Return difficulty to normal*/
-
-	if (!play_demo)
-	{
-		if ((!all_players_dead() || normalBonusLevelCurrent || bonusLevelCurrent) && !playerEndLevel)
-		{
-			mainLevel = nextLevel;
-			JE_endLevelAni();
-
-			fade_song();
-		}
-		else
-		{
-			fade_song();
-			fade_black(10);
-
-			JE_loadGame(twoPlayerMode ? 22 : 11);
-			if (doNotSaveBackup)
-			{
-				superTyrian = false;
-				onePlayerAction = false;
-				player[0].items.super_arcade_mode = SA_NONE;
-			}
-			if (bonusLevelCurrent && !playerEndLevel)
-			{
-				mainLevel = nextLevel;
-			}
-		}
-	}
-	doNotSaveBackup = false;
-
-	if (play_demo)
-		return;
-
-start_level_first:
-
-	set_volume(tyrMusicVolume, fxVolume);
-
-	endLevel = false;
-	reallyEndLevel = false;
-	playerEndLevel = false;
-	extraGame = false;
-
-	doNotSaveBackup = false;
-	JE_loadMap();
-
-	if (mainLevel == 0)  // if quit itemscreen
-		return;          // back to titlescreen
-
-	if (!play_demo)
-		mouseSetRelative(true);
-
-	fade_song();
-
-	for (uint i = 0; i < COUNTOF(player); ++i)
-		player[i].is_alive = true;
-
-	oldDifficultyLevel = difficultyLevel;
-	if (episodeNum == EPISODE_AVAILABLE)
-		difficultyLevel--;
-	if (difficultyLevel < DIFFICULTY_EASY)
-		difficultyLevel = DIFFICULTY_EASY;
-
-	player[0].x = 100;
-	player[0].y = 180;
-
-	player[1].x = 190;
-	player[1].y = 180;
-
-	assert(COUNTOF(player->old_x) == COUNTOF(player->old_y));
-
-	for (uint i = 0; i < COUNTOF(player); ++i)
-	{
-		for (uint j = 0; j < COUNTOF(player->old_x); ++j)
-		{
-			player[i].old_x[j] = player[i].x - (19 - j);
-			player[i].old_y[j] = player[i].y - 18;
-		}
-		
-		player[i].last_x_shot_move = player[i].x;
-		player[i].last_y_shot_move = player[i].y;
-	}
-	
-	JE_loadPic(VGAScreen, twoPlayerMode ? 6 : 3, false);
-
-	JE_drawOptions();
-
-	JE_outText(VGAScreen, 268, twoPlayerMode ? 76 : 118, levelName, 12, 4);
-
-	JE_showVGA();
-	JE_gammaCorrect(&colors, gammaCorrection);
-	fade_palette(colors, 50, 0, 255);
-
-	if (explosionSpriteSheet.data == NULL)
-		JE_loadCompShapes(&explosionSpriteSheet, '6');
-
-	/* MAPX will already be set correctly */
-	mapY = 300 - 8;
-	mapY2 = 600 - 8;
-	mapY3 = 600 - 8;
-	mapYPos = &megaData1.mainmap[mapY][0] - 1;
-	mapY2Pos = &megaData2.mainmap[mapY2][0] - 1;
-	mapY3Pos = &megaData3.mainmap[mapY3][0] - 1;
-	mapXPos = 0;
-	mapXOfs = 0;
-	mapX2Pos = 0;
-	mapX3Pos = 0;
-	mapX3Ofs = 0;
-	mapXbpPos = 0;
-	mapX2bpPos = 0;
-	mapX3bpPos = 0;
-
-	map1YDelay = 1;
-	map1YDelayMax = 1;
-	map2YDelay = 1;
-	map2YDelayMax = 1;
-
-	musicFade = false;
-
-	backPos = 0;
-	backPos2 = 0;
-	backPos3 = 0;
-	power = 0;
-	starfield_speed = 1;
-
-	/* Setup player ship graphics */
-	JE_getShipInfo();
-
-	for (uint i = 0; i < COUNTOF(player); ++i)
-	{
-		player[i].x_velocity = 0;
-		player[i].y_velocity = 0;
-
-		player[i].invulnerable_ticks = 100;
-	}
-
-	/* Initialize Level Data and Debug Mode */
-	levelEnd = 255;
-	levelEndWarp = -4;
-	levelEndFxWait = 0;
-	warningCol = 120;
-	warningColChange = 1;
-	warningSoundDelay = 0;
-	armorShipDelay = 50;
-
-	bonusLevel = false;
-	readyToEndLevel = false;
-	firstGameOver = true;
-	eventLoc = 1;
-	curLoc = 0;
-	backMove = 1;
-	backMove2 = 2;
-	backMove3 = 3;
-	explodeMove = 2;
-	enemiesActive = true;
-	for (temp = 0; temp < 3; temp++)
-	{
-		button[temp] = false;
-	}
-	stopBackgrounds = false;
-	stopBackgroundNum = 0;
-	background3x1   = false;
-	background3x1b  = false;
-	background3over = 0;
-	background2over = 1;
-	topEnemyOver = false;
-	skyEnemyOverAll = false;
-	smallEnemyAdjust = false;
-	starActive = true;
-	enemyContinualDamage = false;
-	levelEnemyFrequency = 96;
-	quitRequested = false;
-
-	for (unsigned int i = 0; i < COUNTOF(boss_bar); i++)
-		boss_bar[i].link_num = 0;
-
-	forceEvents = false;  /*Force events to continue if background movement = 0*/
-
-	superEnemy254Jump = 0;   /*When Enemy with PL 254 dies*/
-
-	/* Filter Status */
-	filterActive = true;
-	filterFade = true;
-	filterFadeStart = false;
-	levelFilter = -99;
-	levelBrightness = -14;
-	levelBrightnessChg = 1;
-
-	background2notTransparent = false;
-
-	uint old_weapon_bar[2] = { 0, 0 };  // only redrawn when they change
-
-	/* Initially erase power bars */
-	lastPower = power / 10;
-
-	/* Initial Text */
-	JE_drawTextWindow(miscText[20]);
-
-	/* Setup Armor/Shield Data */
-	shieldWait = 1;
-	shieldT    = shields[player[0].items.shield].tpwr * 20;
-
-	for (uint i = 0; i < COUNTOF(player); ++i)
-	{
-		player[i].shield     = shields[player[i].items.shield].mpwr;
-		player[i].shield_max = player[i].shield * 2;
-	}
-
-	JE_drawShield();
-	JE_drawArmor();
-
-	for (uint i = 0; i < COUNTOF(player); ++i)
-		player[i].superbombs = 0;
-
-	/* Set cubes to 0 */
-	cubeMax = 0;
-
-	/* Secret Level Display */
-	flash = 0;
-	flashChange = 1;
-	displayTime = 0;
-
-	play_song(levelSong - 1);
-
-	JE_drawPortConfigButtons();
-
-	/* --- MAIN LOOP --- */
-
-#ifdef WITH_NETWORK
-	if (isNetworkGame)
-		JE_clearSpecialRequests();
-#endif
-
-	/* Lockstep network games have always reseeded here so both peers agree on
-	   enemy AI randomness.  Demos and hash verification need run-to-run
-	   determinism for the same reason. */
-	if (isNetworkGame || play_demo || record_demo || statehash_enabled)
-		mt_srand(32402394);
-
-	if (statehash_enabled)
-	{
-		char note[32];
-		snprintf(note, sizeof(note), "level %.10s", levelName);
-		statehash_note(note);
-	}
-
-	initialize_starfield();
-
-	JE_setNewGameSpeed();
-
-	set_volume(tyrMusicVolume, fxVolume);
-
-	/*Save backup game*/
-	if (!play_demo && !doNotSaveBackup)
-	{
-		temp = twoPlayerMode ? 22 : 11;
-		JE_saveGame(temp, "LAST LEVEL    ");
-	}
-
-	if (!play_demo && record_demo)
-	{
-		Uint8 new_demo_num = 0;
-
-		do
-		{
-			sprintf(tempStr, "demorec.%d", new_demo_num++);
-		} while (dir_file_exists(get_user_directory(), tempStr)); // until file doesn't exist
-
-		demo_file = dir_fopen_warn(get_user_directory(), tempStr, "wb");
-		if (!demo_file)
-			exit(1);
-
-		fwrite_u8_die(&episodeNum, 1, demo_file);
-
-		// Pad string buffer with NULs.
-		for (size_t i = 1; i < 10; ++i)
-			if (levelName[i - 1] == '\0')
-				levelName[i] = '\0';
-		fwrite_u8_die((Uint8 *)levelName, 10, demo_file);
-
-		fwrite_u8_die(&lvlFileNum, 1, demo_file);
-
-		fwrite_u8_die(&player[0].items.weapon[FRONT_WEAPON].id,  1, demo_file);
-		fwrite_u8_die(&player[0].items.weapon[REAR_WEAPON].id,   1, demo_file);
-		fwrite_u8_die(&player[0].items.super_arcade_mode,        1, demo_file);
-		fwrite_u8_die(&player[0].items.sidekick[LEFT_SIDEKICK],  1, demo_file);
-		fwrite_u8_die(&player[0].items.sidekick[RIGHT_SIDEKICK], 1, demo_file);
-		fwrite_u8_die(&player[0].items.generator,                1, demo_file);
-
-		fwrite_u8_die(&player[0].items.sidekick_level,           1, demo_file);
-		fwrite_u8_die(&player[0].items.sidekick_series,          1, demo_file);
-
-		fwrite_u8_die(&initial_episode_num,                      1, demo_file);
-
-		fwrite_u8_die(&player[0].items.shield,                   1, demo_file);
-		fwrite_u8_die(&player[0].items.special,                  1, demo_file);
-		fwrite_u8_die(&player[0].items.ship,                     1, demo_file);
-
-		for (uint i = 0; i < 2; ++i)
-			fwrite_u8_die(&player[0].items.weapon[i].power,      1, demo_file);
-
-		Uint8 unused[3] = { 0, 0, 0 };
-		fwrite_u8_die(unused, 3, demo_file);
-
-		fwrite_u8_die(&levelSong, 1, demo_file);
-
-		demo_keys = 0;
-		demo_keys_wait = 0;
-	}
-
-	twoPlayerLinked = false;
-	linkGunDirec = M_PI;
-
-	for (uint i = 0; i < COUNTOF(player); ++i)
-		calc_purple_balls_needed(&player[i]);
-
-	damageRate = 2;  /*Normal Rate for Collision Damage*/
-
-	chargeWait   = 5;
-	chargeLevel  = 0;
-	chargeMax    = 5;
-	chargeGr     = 0;
-	chargeGrWait = 3;
-
-	portConfigChange = false;
-
-	/*Destruction Ratio*/
-	totalEnemy = 0;
-	enemyKilled = 0;
-
-	astralDuration = 0;
-
-	superArcadePowerUp = 1;
-
-	yourInGameMenuRequest = false;
-
-	constantLastX = -1;
-
-	for (uint i = 0; i < COUNTOF(player); ++i)
-		player[i].exploding_ticks = 0;
-
-	if (isNetworkGame)
-	{
-		JE_loadItemDat();
-	}
-
-	memset(enemyAvail,       1, sizeof(enemyAvail));
-	for (uint i = 0; i < COUNTOF(enemyShotAvail); i++)
-		enemyShotAvail[i] = 1;
-
-	/*Initialize Shots*/
-	memset(playerShotData,   0, sizeof(playerShotData));
-	memset(shotAvail,        0, sizeof(shotAvail));
-	memset(shotMultiPos,     0, sizeof(shotMultiPos));
-	memset(shotRepeat,       1, sizeof(shotRepeat));
-
-	memset(button,           0, sizeof(button));
-
-	memset(globalFlags,      0, sizeof(globalFlags));
-
-	memset(explosions,       0, sizeof(explosions));
-	memset(rep_explosions,   0, sizeof(rep_explosions));
-
-	/* --- Clear Sound Queue --- */
-	memset(soundQueue,       0, sizeof(soundQueue));
-	soundQueue[3] = V_GOOD_LUCK;
-
-	memset(enemySpriteSheetIds, 0, sizeof(enemySpriteSheetIds));
-	memset(enemy,               0, sizeof(enemy));
-
-	memset(SFCurrentCode,    0, sizeof(SFCurrentCode));
-	memset(SFExecuted,       0, sizeof(SFExecuted));
-
-	zinglonDuration = 0;
-	specialWait = 0;
-	nextSpecialWait = 0;
-	optionAttachmentMove  = 0;    /*Launch the Attachments!*/
-	optionAttachmentLinked = true;
-
-	editShip1 = false;
-	editShip2 = false;
-
-	memset(smoothies, 0, sizeof(smoothies));
-
-	levelTimer = false;
-	randomExplosions = false;
-
-	last_superpixel = 0;
-	memset(superpixels, 0, sizeof(superpixels));
-
-	returnActive = false;
-
-	galagaShotFreq = 0;
-
-	if (galagaMode)
-	{
-		difficultyLevel = DIFFICULTY_NORMAL;
-	}
-	galagaLife = 10000;
-
-	JE_drawOptionLevel();
-
-	// keeps map from scrolling past the top
-	BKwrap1 = BKwrap1to = &megaData1.mainmap[1][0];
-	BKwrap2 = BKwrap2to = &megaData2.mainmap[1][0];
-	BKwrap3 = BKwrap3to = &megaData3.mainmap[1][0];
-
-level_loop:
+	TICK_CONTINUE,
+	TICK_LEVEL_END,
+};
+
+static char level_tick_buffer[256];
+static int lastEnemyOnScreen;
+static uint old_weapon_bar[2];  // reset at level start
+
+/* One gameplay tick: simulation + drawing + present; exactly the old
+   level_loop body (VR_CONVERSION_PLAN.md Phase 2 step 2). */
+static enum LevelTickResult JE_levelTick(void)
+{
 
 	statehash_tick();
 	if (otyr_hosted)
@@ -1269,7 +817,7 @@ level_loop:
 		JE_eventSystem();
 
 	if (isNetworkGame && reallyEndLevel)
-		goto start_level;
+		return TICK_LEVEL_END;
 
 	/* SMOOTHIES! */
 	JE_checkSmoothies();
@@ -2098,19 +1646,19 @@ draw_player_shot_loop_end:
 			tempStr[i] = '0' + smoothies[i];
 		}
 		tempStr[9] = '\0';
-		sprintf(buffer, "SM = %s", tempStr);
-		JE_outText(VGAScreen, 30, 70, buffer, 4, 0);
+		sprintf(level_tick_buffer, "SM = %s", tempStr);
+		JE_outText(VGAScreen, 30, 70, level_tick_buffer, 4, 0);
 
-		sprintf(buffer, "Memory left = %d", -1);
-		JE_outText(VGAScreen, 30, 80, buffer, 4, 0);
-		sprintf(buffer, "Enemies onscreen = %d", enemyOnScreen);
-		JE_outText(VGAScreen, 30, 90, buffer, 6, 0);
+		sprintf(level_tick_buffer, "Memory left = %d", -1);
+		JE_outText(VGAScreen, 30, 80, level_tick_buffer, 4, 0);
+		sprintf(level_tick_buffer, "Enemies onscreen = %d", enemyOnScreen);
+		JE_outText(VGAScreen, 30, 90, level_tick_buffer, 6, 0);
 
 		debugHist += debugTime - lastDebugTime;
 		debugHistCount++;
 		sprintf(tempStr, "%2.3f", debugHistCount / (debugHist * 1e-3f));
-		sprintf(buffer, "X:%d Y:%-5d  %s FPS  %d %d %d %d", (mapX - 1) * 12 + player[0].x, curLoc, tempStr, player[0].x_velocity, player[0].y_velocity, player[0].x, player[0].y);
-		JE_outText(VGAScreen, 45, 175, buffer, 15, 3);
+		sprintf(level_tick_buffer, "X:%d Y:%-5d  %s FPS  %d %d %d %d", (mapX - 1) * 12 + player[0].x, curLoc, tempStr, player[0].x_velocity, player[0].y_velocity, player[0].x, player[0].y);
+		JE_outText(VGAScreen, 45, 175, level_tick_buffer, 15, 3);
 		lastDebugTime = debugTime;
 	}
 
@@ -2150,8 +1698,8 @@ draw_player_shot_loop_end:
 		}
 
 		JE_textShade (VGAScreen, 140, 6, miscText[66], 7, (levelTimerCountdown % 20) / 3, FULL_SHADE);
-		sprintf(buffer, "%.1f", levelTimerCountdown / 100.0f);
-		JE_dString (VGAScreen, 100, 2, buffer, SMALL_FONT_SHAPES);
+		sprintf(level_tick_buffer, "%.1f", levelTimerCountdown / 100.0f);
+		JE_dString (VGAScreen, 100, 2, level_tick_buffer, SMALL_FONT_SHAPES);
 	}
 
 	/*GAME OVER*/
@@ -2225,7 +1773,7 @@ draw_player_shot_loop_end:
 			skipStarShowVGA = false;
 			JE_mainKeyboardInput();
 			if (skipStarShowVGA)
-				goto level_loop;
+				return TICK_CONTINUE;
 		}
 
 #ifdef NDEBUG
@@ -2399,9 +1947,479 @@ draw_player_shot_loop_end:
 
 	if (reallyEndLevel)
 	{
-		goto start_level;
+		return TICK_LEVEL_END;
 	}
-	goto level_loop;
+	return TICK_CONTINUE;
+}
+
+void JE_main(void)
+{
+
+
+	/* NOTE: BEGIN MAIN PROGRAM HERE AFTER LOADING A GAME OR STARTING A NEW ONE */
+
+	/* ----------- GAME ROUTINES ------------------------------------- */
+	/* We need to jump to the beginning to make space for the routines */
+	/* --------------------------------------------------------------- */
+	goto start_level_first;
+
+	/*------------------------------GAME LOOP-----------------------------------*/
+
+	/* Startlevel is called after a previous level is over.  If the first level
+	   is started for a gaming session, startlevelfirst is called instead and
+	   this code is skipped.  The code here finishes the level and prepares for
+	   the loadmap function. */
+
+start_level:
+
+	keyboardClearInput();
+	mouseClearInput();
+
+	mouseSetRelative(false);
+
+	if (galagaMode)
+		twoPlayerMode = false;
+
+	free_sprite2s(&enemySpriteSheets[0]);
+	free_sprite2s(&enemySpriteSheets[1]);
+	free_sprite2s(&enemySpriteSheets[2]);
+	free_sprite2s(&enemySpriteSheets[3]);
+
+	/* Normal speed */
+	if (fastPlay != 0)
+	{
+		smoothScroll = true;
+		Uint16 speed = 0x4300;
+		setFrameSpeed(speed);
+	}
+
+	if (play_demo || record_demo)
+	{
+		if (demo_file)
+		{
+			fclose(demo_file);
+			demo_file = NULL;
+		}
+
+		if (play_demo)
+		{
+			stop_song();
+			fade_black(10);
+		}
+	}
+
+	difficultyLevel = oldDifficultyLevel;   /*Return difficulty to normal*/
+
+	if (!play_demo)
+	{
+		if ((!all_players_dead() || normalBonusLevelCurrent || bonusLevelCurrent) && !playerEndLevel)
+		{
+			mainLevel = nextLevel;
+			JE_endLevelAni();
+
+			fade_song();
+		}
+		else
+		{
+			fade_song();
+			fade_black(10);
+
+			JE_loadGame(twoPlayerMode ? 22 : 11);
+			if (doNotSaveBackup)
+			{
+				superTyrian = false;
+				onePlayerAction = false;
+				player[0].items.super_arcade_mode = SA_NONE;
+			}
+			if (bonusLevelCurrent && !playerEndLevel)
+			{
+				mainLevel = nextLevel;
+			}
+		}
+	}
+	doNotSaveBackup = false;
+
+	if (play_demo)
+		return;
+
+start_level_first:
+
+	set_volume(tyrMusicVolume, fxVolume);
+
+	endLevel = false;
+	reallyEndLevel = false;
+	playerEndLevel = false;
+	extraGame = false;
+
+	doNotSaveBackup = false;
+	JE_loadMap();
+
+	if (mainLevel == 0)  // if quit itemscreen
+		return;          // back to titlescreen
+
+	if (!play_demo)
+		mouseSetRelative(true);
+
+	fade_song();
+
+	for (uint i = 0; i < COUNTOF(player); ++i)
+		player[i].is_alive = true;
+
+	oldDifficultyLevel = difficultyLevel;
+	if (episodeNum == EPISODE_AVAILABLE)
+		difficultyLevel--;
+	if (difficultyLevel < DIFFICULTY_EASY)
+		difficultyLevel = DIFFICULTY_EASY;
+
+	player[0].x = 100;
+	player[0].y = 180;
+
+	player[1].x = 190;
+	player[1].y = 180;
+
+	assert(COUNTOF(player->old_x) == COUNTOF(player->old_y));
+
+	for (uint i = 0; i < COUNTOF(player); ++i)
+	{
+		for (uint j = 0; j < COUNTOF(player->old_x); ++j)
+		{
+			player[i].old_x[j] = player[i].x - (19 - j);
+			player[i].old_y[j] = player[i].y - 18;
+		}
+		
+		player[i].last_x_shot_move = player[i].x;
+		player[i].last_y_shot_move = player[i].y;
+	}
+	
+	JE_loadPic(VGAScreen, twoPlayerMode ? 6 : 3, false);
+
+	JE_drawOptions();
+
+	JE_outText(VGAScreen, 268, twoPlayerMode ? 76 : 118, levelName, 12, 4);
+
+	JE_showVGA();
+	JE_gammaCorrect(&colors, gammaCorrection);
+	fade_palette(colors, 50, 0, 255);
+
+	if (explosionSpriteSheet.data == NULL)
+		JE_loadCompShapes(&explosionSpriteSheet, '6');
+
+	/* MAPX will already be set correctly */
+	mapY = 300 - 8;
+	mapY2 = 600 - 8;
+	mapY3 = 600 - 8;
+	mapYPos = &megaData1.mainmap[mapY][0] - 1;
+	mapY2Pos = &megaData2.mainmap[mapY2][0] - 1;
+	mapY3Pos = &megaData3.mainmap[mapY3][0] - 1;
+	mapXPos = 0;
+	mapXOfs = 0;
+	mapX2Pos = 0;
+	mapX3Pos = 0;
+	mapX3Ofs = 0;
+	mapXbpPos = 0;
+	mapX2bpPos = 0;
+	mapX3bpPos = 0;
+
+	map1YDelay = 1;
+	map1YDelayMax = 1;
+	map2YDelay = 1;
+	map2YDelayMax = 1;
+
+	musicFade = false;
+
+	backPos = 0;
+	backPos2 = 0;
+	backPos3 = 0;
+	power = 0;
+	starfield_speed = 1;
+
+	/* Setup player ship graphics */
+	JE_getShipInfo();
+
+	for (uint i = 0; i < COUNTOF(player); ++i)
+	{
+		player[i].x_velocity = 0;
+		player[i].y_velocity = 0;
+
+		player[i].invulnerable_ticks = 100;
+	}
+
+	/* Initialize Level Data and Debug Mode */
+	levelEnd = 255;
+	levelEndWarp = -4;
+	levelEndFxWait = 0;
+	warningCol = 120;
+	warningColChange = 1;
+	warningSoundDelay = 0;
+	armorShipDelay = 50;
+
+	bonusLevel = false;
+	readyToEndLevel = false;
+	firstGameOver = true;
+	eventLoc = 1;
+	curLoc = 0;
+	backMove = 1;
+	backMove2 = 2;
+	backMove3 = 3;
+	explodeMove = 2;
+	enemiesActive = true;
+	for (temp = 0; temp < 3; temp++)
+	{
+		button[temp] = false;
+	}
+	stopBackgrounds = false;
+	stopBackgroundNum = 0;
+	background3x1   = false;
+	background3x1b  = false;
+	background3over = 0;
+	background2over = 1;
+	topEnemyOver = false;
+	skyEnemyOverAll = false;
+	smallEnemyAdjust = false;
+	starActive = true;
+	enemyContinualDamage = false;
+	levelEnemyFrequency = 96;
+	quitRequested = false;
+
+	for (unsigned int i = 0; i < COUNTOF(boss_bar); i++)
+		boss_bar[i].link_num = 0;
+
+	forceEvents = false;  /*Force events to continue if background movement = 0*/
+
+	superEnemy254Jump = 0;   /*When Enemy with PL 254 dies*/
+
+	/* Filter Status */
+	filterActive = true;
+	filterFade = true;
+	filterFadeStart = false;
+	levelFilter = -99;
+	levelBrightness = -14;
+	levelBrightnessChg = 1;
+
+	background2notTransparent = false;
+
+	old_weapon_bar[0] = 0;  // only redrawn when they change
+	old_weapon_bar[1] = 0;
+
+	/* Initially erase power bars */
+	lastPower = power / 10;
+
+	/* Initial Text */
+	JE_drawTextWindow(miscText[20]);
+
+	/* Setup Armor/Shield Data */
+	shieldWait = 1;
+	shieldT    = shields[player[0].items.shield].tpwr * 20;
+
+	for (uint i = 0; i < COUNTOF(player); ++i)
+	{
+		player[i].shield     = shields[player[i].items.shield].mpwr;
+		player[i].shield_max = player[i].shield * 2;
+	}
+
+	JE_drawShield();
+	JE_drawArmor();
+
+	for (uint i = 0; i < COUNTOF(player); ++i)
+		player[i].superbombs = 0;
+
+	/* Set cubes to 0 */
+	cubeMax = 0;
+
+	/* Secret Level Display */
+	flash = 0;
+	flashChange = 1;
+	displayTime = 0;
+
+	play_song(levelSong - 1);
+
+	JE_drawPortConfigButtons();
+
+	/* --- MAIN LOOP --- */
+
+#ifdef WITH_NETWORK
+	if (isNetworkGame)
+		JE_clearSpecialRequests();
+#endif
+
+	/* Lockstep network games have always reseeded here so both peers agree on
+	   enemy AI randomness.  Demos and hash verification need run-to-run
+	   determinism for the same reason. */
+	if (isNetworkGame || play_demo || record_demo || statehash_enabled)
+		mt_srand(32402394);
+
+	if (statehash_enabled)
+	{
+		char note[32];
+		snprintf(note, sizeof(note), "level %.10s", levelName);
+		statehash_note(note);
+	}
+
+	initialize_starfield();
+
+	JE_setNewGameSpeed();
+
+	set_volume(tyrMusicVolume, fxVolume);
+
+	/*Save backup game*/
+	if (!play_demo && !doNotSaveBackup)
+	{
+		temp = twoPlayerMode ? 22 : 11;
+		JE_saveGame(temp, "LAST LEVEL    ");
+	}
+
+	if (!play_demo && record_demo)
+	{
+		Uint8 new_demo_num = 0;
+
+		do
+		{
+			sprintf(tempStr, "demorec.%d", new_demo_num++);
+		} while (dir_file_exists(get_user_directory(), tempStr)); // until file doesn't exist
+
+		demo_file = dir_fopen_warn(get_user_directory(), tempStr, "wb");
+		if (!demo_file)
+			exit(1);
+
+		fwrite_u8_die(&episodeNum, 1, demo_file);
+
+		// Pad string buffer with NULs.
+		for (size_t i = 1; i < 10; ++i)
+			if (levelName[i - 1] == '\0')
+				levelName[i] = '\0';
+		fwrite_u8_die((Uint8 *)levelName, 10, demo_file);
+
+		fwrite_u8_die(&lvlFileNum, 1, demo_file);
+
+		fwrite_u8_die(&player[0].items.weapon[FRONT_WEAPON].id,  1, demo_file);
+		fwrite_u8_die(&player[0].items.weapon[REAR_WEAPON].id,   1, demo_file);
+		fwrite_u8_die(&player[0].items.super_arcade_mode,        1, demo_file);
+		fwrite_u8_die(&player[0].items.sidekick[LEFT_SIDEKICK],  1, demo_file);
+		fwrite_u8_die(&player[0].items.sidekick[RIGHT_SIDEKICK], 1, demo_file);
+		fwrite_u8_die(&player[0].items.generator,                1, demo_file);
+
+		fwrite_u8_die(&player[0].items.sidekick_level,           1, demo_file);
+		fwrite_u8_die(&player[0].items.sidekick_series,          1, demo_file);
+
+		fwrite_u8_die(&initial_episode_num,                      1, demo_file);
+
+		fwrite_u8_die(&player[0].items.shield,                   1, demo_file);
+		fwrite_u8_die(&player[0].items.special,                  1, demo_file);
+		fwrite_u8_die(&player[0].items.ship,                     1, demo_file);
+
+		for (uint i = 0; i < 2; ++i)
+			fwrite_u8_die(&player[0].items.weapon[i].power,      1, demo_file);
+
+		Uint8 unused[3] = { 0, 0, 0 };
+		fwrite_u8_die(unused, 3, demo_file);
+
+		fwrite_u8_die(&levelSong, 1, demo_file);
+
+		demo_keys = 0;
+		demo_keys_wait = 0;
+	}
+
+	twoPlayerLinked = false;
+	linkGunDirec = M_PI;
+
+	for (uint i = 0; i < COUNTOF(player); ++i)
+		calc_purple_balls_needed(&player[i]);
+
+	damageRate = 2;  /*Normal Rate for Collision Damage*/
+
+	chargeWait   = 5;
+	chargeLevel  = 0;
+	chargeMax    = 5;
+	chargeGr     = 0;
+	chargeGrWait = 3;
+
+	portConfigChange = false;
+
+	/*Destruction Ratio*/
+	totalEnemy = 0;
+	enemyKilled = 0;
+
+	astralDuration = 0;
+
+	superArcadePowerUp = 1;
+
+	yourInGameMenuRequest = false;
+
+	constantLastX = -1;
+
+	for (uint i = 0; i < COUNTOF(player); ++i)
+		player[i].exploding_ticks = 0;
+
+	if (isNetworkGame)
+	{
+		JE_loadItemDat();
+	}
+
+	memset(enemyAvail,       1, sizeof(enemyAvail));
+	for (uint i = 0; i < COUNTOF(enemyShotAvail); i++)
+		enemyShotAvail[i] = 1;
+
+	/*Initialize Shots*/
+	memset(playerShotData,   0, sizeof(playerShotData));
+	memset(shotAvail,        0, sizeof(shotAvail));
+	memset(shotMultiPos,     0, sizeof(shotMultiPos));
+	memset(shotRepeat,       1, sizeof(shotRepeat));
+
+	memset(button,           0, sizeof(button));
+
+	memset(globalFlags,      0, sizeof(globalFlags));
+
+	memset(explosions,       0, sizeof(explosions));
+	memset(rep_explosions,   0, sizeof(rep_explosions));
+
+	/* --- Clear Sound Queue --- */
+	memset(soundQueue,       0, sizeof(soundQueue));
+	soundQueue[3] = V_GOOD_LUCK;
+
+	memset(enemySpriteSheetIds, 0, sizeof(enemySpriteSheetIds));
+	memset(enemy,               0, sizeof(enemy));
+
+	memset(SFCurrentCode,    0, sizeof(SFCurrentCode));
+	memset(SFExecuted,       0, sizeof(SFExecuted));
+
+	zinglonDuration = 0;
+	specialWait = 0;
+	nextSpecialWait = 0;
+	optionAttachmentMove  = 0;    /*Launch the Attachments!*/
+	optionAttachmentLinked = true;
+
+	editShip1 = false;
+	editShip2 = false;
+
+	memset(smoothies, 0, sizeof(smoothies));
+
+	levelTimer = false;
+	randomExplosions = false;
+
+	last_superpixel = 0;
+	memset(superpixels, 0, sizeof(superpixels));
+
+	returnActive = false;
+
+	galagaShotFreq = 0;
+
+	if (galagaMode)
+	{
+		difficultyLevel = DIFFICULTY_NORMAL;
+	}
+	galagaLife = 10000;
+
+	JE_drawOptionLevel();
+
+	// keeps map from scrolling past the top
+	BKwrap1 = BKwrap1to = &megaData1.mainmap[1][0];
+	BKwrap2 = BKwrap2to = &megaData2.mainmap[1][0];
+	BKwrap3 = BKwrap3to = &megaData3.mainmap[1][0];
+
+level_loop:
+	if (JE_levelTick() == TICK_CONTINUE)
+		goto level_loop;
+	goto start_level;
 }
 
 /* --- Load Level/Map Data --- */
