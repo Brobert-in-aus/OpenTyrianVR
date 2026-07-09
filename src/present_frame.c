@@ -69,6 +69,29 @@ void present_draw_from(SDL_Surface *surface, unsigned int from)
 		{
 			blit_sprite_blend(surface, sprite->x, sprite->y, sprite->filter_color, sprite->index);
 		}
+		else if (sprite->kind == PRESENT_PIXEL_GLOW)
+		{
+			const Uint16 x = (Uint16)sprite->x, y = (Uint16)sprite->y;
+			const Uint8 z = sprite->filter_color;
+			const Uint8 color = (Uint8)sprite->index;
+
+			if (x < (unsigned)surface->w && y < (unsigned)surface->h)
+			{
+				Uint8 *s = (Uint8 *)surface->pixels; /* screen pointer, 8-bit specific */
+				s += y * surface->pitch;
+				s += x;
+
+				*s = (((*s & 0x0f) + z) >> 1) + color;
+				if (x > 0)
+					*(s - 1) = (((*(s - 1) & 0x0f) + (z >> 1)) >> 1) + color;
+				if (x < surface->w - 1u)
+					*(s + 1) = (((*(s + 1) & 0x0f) + (z >> 1)) >> 1) + color;
+				if (y > 0)
+					*(s - surface->pitch) = (((*(s - surface->pitch) & 0x0f) + (z >> 1)) >> 1) + color;
+				if (y < surface->h - 1u)
+					*(s + surface->pitch) = (((*(s + surface->pitch) & 0x0f) + (z >> 1)) >> 1) + color;
+			}
+		}
 		else  /* PRESENT_BLIT_SPRITE2X2 */
 		{
 			if (sprite->flags & PRESENT_FLAG_DARKEN)

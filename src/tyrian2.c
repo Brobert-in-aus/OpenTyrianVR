@@ -1524,6 +1524,7 @@ draw_player_shot_loop_end:
 	}
 
 	/*---------------------------- Draw Explosions ----------------------------*/
+	unsigned int explosion_mark = present_sprite_count;
 	for (int j = 0; j < MAX_EXPLOSIONS; j++)
 	{
 		if (explosions[j].ttl != 0)
@@ -1546,15 +1547,16 @@ draw_player_shot_loop_end:
 			}
 			else
 			{
-				if (explosionTransparent)
-					blit_sprite2_blend(VGAScreen, explosions[j].x, explosions[j].y, explosionSpriteSheet, explosions[j].sprite + 1);
-				else
-					blit_sprite2(VGAScreen, explosions[j].x, explosions[j].y, explosionSpriteSheet, explosions[j].sprite + 1);
+				present_record(PRESENT_EXPLOSION, PRESENT_BLIT_SPRITE2,
+				               explosionTransparent ? PRESENT_FLAG_BLEND : 0, 0,
+				               &explosionSpriteSheet, explosions[j].x, explosions[j].y,
+				               explosions[j].sprite + 1);
 
 				explosions[j].ttl--;
 			}
 		}
 	}
+	present_draw_from(VGAScreen, explosion_mark);
 
 	if (!portConfigChange)
 		portConfigDone = true;

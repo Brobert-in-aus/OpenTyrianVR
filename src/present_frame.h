@@ -56,6 +56,9 @@ typedef enum PresentBlitKind
 	PRESENT_BLIT_SPRITE_BLEND,      /* blit_sprite_blend on the old sprite table
 	                                   system; sheet is NULL, index is the sprite
 	                                   id, filter_color is the table id */
+	PRESENT_PIXEL_GLOW,             /* superpixel read-modify-write glow; sheet
+	                                   is NULL, filter_color is the intensity z,
+	                                   index is the palette color base */
 } PresentBlitKind;
 
 enum

@@ -19,6 +19,7 @@
 #include "varz.h"
 
 #include "otyr_host_internal.h"
+#include "present_frame.h"
 
 #include "config.h"
 #include "editship.h"
@@ -1164,6 +1165,7 @@ void JE_doSP(JE_word x, JE_word y, JE_word num, JE_byte explowidth, JE_byte colo
 
 void JE_drawSP(void)
 {
+	unsigned int mark = present_sprite_count;
 	for (int i = MAX_SUPERPIXELS; i--; )
 	{
 		if (superpixels[i].z)
@@ -1173,22 +1175,13 @@ void JE_drawSP(void)
 
 			if (superpixels[i].x < (unsigned)VGAScreen->w && superpixels[i].y < (unsigned)VGAScreen->h)
 			{
-				Uint8 *s = (Uint8 *)VGAScreen->pixels; /* screen pointer, 8-bit specific */
-				s += superpixels[i].y * VGAScreen->pitch;
-				s += superpixels[i].x;
-
-				*s = (((*s & 0x0f) + superpixels[i].z) >> 1) + superpixels[i].color;
-				if (superpixels[i].x > 0)
-					*(s - 1) = (((*(s - 1) & 0x0f) + (superpixels[i].z >> 1)) >> 1) + superpixels[i].color;
-				if (superpixels[i].x < VGAScreen->w - 1u)
-					*(s + 1) = (((*(s + 1) & 0x0f) + (superpixels[i].z >> 1)) >> 1) + superpixels[i].color;
-				if (superpixels[i].y > 0)
-					*(s - VGAScreen->pitch) = (((*(s - VGAScreen->pitch) & 0x0f) + (superpixels[i].z >> 1)) >> 1) + superpixels[i].color;
-				if (superpixels[i].y < VGAScreen->h - 1u)
-					*(s + VGAScreen->pitch) = (((*(s + VGAScreen->pitch) & 0x0f) + (superpixels[i].z >> 1)) >> 1) + superpixels[i].color;
+				present_record(PRESENT_SUPERPIXEL, PRESENT_PIXEL_GLOW, 0, superpixels[i].z,
+				               NULL, (Sint16)superpixels[i].x, (Sint16)superpixels[i].y,
+				               superpixels[i].color);
 			}
 
 			superpixels[i].z--;
 		}
 	}
+	present_draw_from(VGAScreen, mark);
 }
