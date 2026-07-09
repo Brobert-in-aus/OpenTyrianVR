@@ -3553,6 +3553,25 @@ redo:
 				mouseXC += input.analog_dx;
 				mouseYC += input.analog_dy;
 
+				if (input.has_target)
+				{
+					JE_integer speed = input.target_speed > 0 ? input.target_speed : 2;
+
+					JE_integer dx = input.target_x - this_player->x;
+					if (dx > speed)
+						dx = speed;
+					else if (dx < -speed)
+						dx = -speed;
+					this_player->x += dx;
+
+					JE_integer dy = input.target_y - this_player->y;
+					if (dy > speed)
+						dy = speed;
+					else if (dy < -speed)
+						dy = -speed;
+					this_player->y += dy;
+				}
+
 				button[0] |= input.fire;
 				button[1] |= input.left_sidekick;
 				button[2] |= input.right_sidekick;

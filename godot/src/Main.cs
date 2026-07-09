@@ -1,4 +1,4 @@
-using Godot;
+﻿using Godot;
 using System;
 using System.IO;
 
@@ -28,6 +28,10 @@ public partial class Main : Node3D
 
     private OtyrNative.Buttons _lastButtons;
     private double _statusAccumulator;
+    private uint _fpsWindowFrame;
+    private double _fpsWindowTime;
+    private double _gameFps;
+    private double _fpsLogAccumulator;
 
     // Hand-rectangle steering: the left hand's position within a floating
     // control rectangle maps 1:1 onto the gameplay rectangle; the ship is
@@ -46,10 +50,12 @@ public partial class Main : Node3D
     // Player movement clamp in Tyrian sim coordinates (ENTITY_TAXONOMY.md).
     private const float GameMinX = 40f, GameMaxX = 256f;
     private const float GameMinY = 10f, GameMaxY = 160f;
-    private const float SteerDeadbandPx = 2f;
     private const float LaneWidth = 1.0f, LaneHeight = 0.625f;
-    private short _analogDx, _analogDy;
-    private short _lastAnalogDx, _lastAnalogDy;
+    private const byte HandTargetSpeed = 2;  // px per tick
+    private bool _handTargetActive;
+    private short _handTargetX, _handTargetY;
+    private bool _lastTargetActive;
+    private short _lastTargetX, _lastTargetY;
 
     public override void _Ready()
     {
@@ -355,15 +361,19 @@ public partial class Main : Node3D
             HandSteering();
         }
 
-        if (buttons == _lastButtons && _analogDx == _lastAnalogDx && _analogDy == _lastAnalogDy)
+        if (buttons == _lastButtons && _handTargetActive == _lastTargetActive &&
+            _handTargetX == _lastTargetX && _handTargetY == _lastTargetY)
             return;
         if (buttons != _lastButtons)
             GD.Print($"OpenTyrianVR: input -> 0x{(uint)buttons:x3}");
         _lastButtons = buttons;
-        _lastAnalogDx = _analogDx;
-        _lastAnalogDy = _analogDy;
+        _lastTargetActive = _handTargetActive;
+        _lastTargetX = _handTargetX;
+        _lastTargetY = _handTargetY;
 
-        var input = OtyrNative.InputFrame.Create(buttons, _analogDx, _analogDy);
+        var input = _handTargetActive
+            ? OtyrNative.InputFrame.CreateWithTarget(buttons, _handTargetX, _handTargetY, HandTargetSpeed)
+            : OtyrNative.InputFrame.Create(buttons);
         OtyrNative.SubmitInput(_session, in input, input.StructSize);
     }
 
@@ -381,8 +391,7 @@ public partial class Main : Node3D
         bool tracking = _leftHand != null && _leftHand.GetHasTrackingData();
         _controlRect.Visible = tracking;
         _targetReticle.Visible = tracking && _inGameplay;
-        _analogDx = 0;
-        _analogDy = 0;
+        _handTargetActive = false;
         if (!tracking)
             return;
 
@@ -410,19 +419,40 @@ public partial class Main : Node3D
         _targetReticle.Position = new Vector3(
             (frameU - 0.5f) * LaneWidth, (0.5f - frameV) * LaneHeight, 0.006f);
 
-        // Proportional analog steering through the InputFrame: speed scales
-        // with distance (velocity lookahead damps arrival), so the ship
-        // follows a slow hand smoothly and snaps across for dodges.
-        const float lookaheadTicks = 3f;
-        const float gain = 1.3f;  // analog/4 px-per-tick steady state
-        float dx = targetX - (_playerState.X + _playerState.XVelocity * lookaheadTicks);
-        float dy = targetY - (_playerState.Y + _playerState.YVelocity * lookaheadTicks);
-        _analogDx = (short)(Mathf.Abs(dx) <= SteerDeadbandPx ? 0 : Mathf.Clamp(dx * gain, -30f, 30f));
-        _analogDy = (short)(Mathf.Abs(dy) <= SteerDeadbandPx ? 0 : Mathf.Clamp(dy * gain, -30f, 30f));
+        // Hand the target to the simulation: the pursuit loop runs inside the
+        // tick against fresh position, so it cannot oscillate regardless of
+        // host-side latency.  Hysteresis: the commanded target only moves
+        // when the hand moves meaningfully, so sensor jitter never twitches
+        // the ship.
+        const float targetHysteresisPx = 3f;
+        _handTargetActive = true;
+        if (!_lastTargetActive ||
+            Mathf.Abs(targetX - _handTargetX) > targetHysteresisPx ||
+            Mathf.Abs(targetY - _handTargetY) > targetHysteresisPx)
+        {
+            _handTargetX = (short)Mathf.RoundToInt(targetX);
+            _handTargetY = (short)Mathf.RoundToInt(targetY);
+        }
     }
 
     private void UpdateDiagnostics(double delta)
     {
+        // Measured legacy-frame rate over a 1 s window (should be ~35).
+        _fpsWindowTime += delta;
+        if (_fpsWindowTime >= 1.0)
+        {
+            _gameFps = (_frame.FrameNumber - _fpsWindowFrame) / _fpsWindowTime;
+            _fpsWindowFrame = _frame.FrameNumber;
+            _fpsWindowTime = 0;
+
+            _fpsLogAccumulator += 1.0;
+            if (_fpsLogAccumulator >= 5.0)
+            {
+                _fpsLogAccumulator = 0;
+                GD.Print($"OpenTyrianVR: game {_gameFps:0.0} fps, render {Engine.GetFramesPerSecond():0} fps");
+            }
+        }
+
         _statusAccumulator += delta;
         if (_statusAccumulator < 0.25)
             return;
@@ -442,7 +472,7 @@ public partial class Main : Node3D
 
         _diagnostics.Text =
             $"{(_xrActive ? "XR" : "FLAT")}  render {Engine.GetFramesPerSecond():0} fps  " +
-            $"game frame {_frame.FrameNumber}\n" +
+            $"game {_gameFps:0.0} fps (frame {_frame.FrameNumber})\n" +
             $"pos ({state.X},{state.Y})  shield {state.Shield}  armor {state.Armor}  " +
             $"cash {state.Cash}  lives {state.Lives}" + inputProbe;
     }

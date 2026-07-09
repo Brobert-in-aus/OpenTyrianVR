@@ -37,6 +37,15 @@ typedef struct GameInput
 	 * axis or relative mouse motion. */
 	Sint16 analog_dx, analog_dy;
 
+	/* Absolute target following: when has_target is set, the ship moves
+	 * toward (target_x, target_y) in sim coordinates at up to target_speed
+	 * px per tick.  The feedback loop lives inside the tick against fresh
+	 * position, so remote hosts get stable pursuit regardless of their
+	 * input pipeline latency. */
+	bool has_target;
+	Sint16 target_x, target_y;
+	Uint8 target_speed;
+
 	/* Actions. */
 	bool fire, left_sidekick, right_sidekick, change_fire;
 

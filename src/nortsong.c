@@ -116,6 +116,7 @@ void delayUntilElapsed(void)
 		return;
 
 	const Uint32 half = 1 << 9;
+
 	Uint32 now = SDL_GetTicks() << 10;
 	Sint32 diff = frameCountEnd - now;
 	if (diff >= 0)

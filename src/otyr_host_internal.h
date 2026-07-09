@@ -48,6 +48,10 @@ void otyr_host_game_input(struct GameInput *input);
 /* Hosted config/save directory; empty string means "use the default". */
 const char *otyr_host_user_dir(void);
 
+/* Timing diagnostics: appends "tag a b" lines to the file named by the
+ * OTYR_TRACE environment variable; no-op when unset. */
+void otyr_trace(const char *tag, Uint32 a, Uint32 b);
+
 /* The real program entry, shared by main() and the hosted game thread. */
 int opentyrian_main(int argc, char *argv[]);
 

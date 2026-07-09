@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 4;
+    public const uint AbiVersion = 5;
 
     public const int FrameWidth = 320;
     public const int FrameHeight = 200;
@@ -92,13 +92,28 @@ public static unsafe class OtyrNative
         // steady-state ship speed ~= value/4 px per tick, useful range +-30.
         public short AnalogDx;
         public short AnalogDy;
+        // Absolute target following: the ship pursues (TargetX, TargetY) in
+        // sim coordinates at up to TargetSpeed px/tick; the feedback loop
+        // runs inside the simulation, so it is latency-immune.
+        public byte UseTarget;
+        public byte TargetSpeed;  // 0 = default (2 px/tick)
+        public short TargetX;
+        public short TargetY;
 
-        public static InputFrame Create(Buttons buttons, short analogDx = 0, short analogDy = 0) => new()
+        public static InputFrame Create(Buttons buttons) => new()
         {
             StructSize = (uint)sizeof(InputFrame),
             ButtonBits = (uint)buttons,
-            AnalogDx = analogDx,
-            AnalogDy = analogDy,
+        };
+
+        public static InputFrame CreateWithTarget(Buttons buttons, short targetX, short targetY, byte speed = 0) => new()
+        {
+            StructSize = (uint)sizeof(InputFrame),
+            ButtonBits = (uint)buttons,
+            UseTarget = 1,
+            TargetSpeed = speed,
+            TargetX = targetX,
+            TargetY = targetY,
         };
     }
 

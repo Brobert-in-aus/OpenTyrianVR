@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 4u
+#define OTYR_ABI_VERSION 5u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -97,6 +97,13 @@ typedef struct OtyrInputFrame
 	                           steady-state ship speed ~= value/4 px per tick,
 	                           useful range about -30..30 (v4) */
 	int16_t  analog_dy;
+	uint8_t  use_target;    /* absolute target following: the ship pursues
+	                           (target_x, target_y) in sim coordinates at up
+	                           to target_speed px per tick, with the feedback
+	                           loop inside the simulation tick (v5) */
+	uint8_t  target_speed;  /* 0 = default (2 px per tick) */
+	int16_t  target_x;
+	int16_t  target_y;
 } OtyrInputFrame;
 
 typedef struct OtyrFrame

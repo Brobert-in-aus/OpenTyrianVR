@@ -32,6 +32,34 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef _WIN32
+#include <windows.h>
+#include <timeapi.h>
+#pragma comment(lib, "winmm.lib")
+
+#ifndef PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION
+#define PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION 0x4
+#endif
+
+/* Defensive timer hygiene for the sleep-paced game thread: request 1 ms
+ * resolution and opt out of Windows 11's background timer coarsening (the
+ * XR host's desktop window is typically an occluded mirror).  Note: an
+ * apparent low-fps collapse that motivated this turned out to be the game's
+ * own "Slower" speed setting persisted in tyrian.cfg -- if pacing looks
+ * wrong, check gameSpeed (OTYR_TRACE shows the requested frame period). */
+static void win32_keep_timer_resolution(void)
+{
+	PROCESS_POWER_THROTTLING_STATE state = {
+		.Version = PROCESS_POWER_THROTTLING_CURRENT_VERSION,
+		.ControlMask = PROCESS_POWER_THROTTLING_IGNORE_TIMER_RESOLUTION,
+		.StateMask = 0,
+	};
+	SetProcessInformation(GetCurrentProcess(), ProcessPowerThrottling,
+	                      &state, sizeof(state));
+	timeBeginPeriod(1);
+}
+#endif
+
 bool otyr_hosted = false;
 
 /* The game core is a global-state singleton, so exactly one session. */
@@ -74,6 +102,10 @@ static struct
 	uint32_t applied_buttons;
 	int16_t pending_analog_dx;
 	int16_t pending_analog_dy;
+	uint8_t pending_use_target;
+	uint8_t pending_target_speed;
+	int16_t pending_target_x;
+	int16_t pending_target_y;
 
 	uint32_t level_tick;
 	char user_dir[260];
@@ -149,6 +181,11 @@ void otyr_host_game_input(struct GameInput *input)
 
 	input->analog_dx = session.pending_analog_dx;
 	input->analog_dy = session.pending_analog_dy;
+
+	input->has_target = session.pending_use_target != 0;
+	input->target_x = session.pending_target_x;
+	input->target_y = session.pending_target_y;
+	input->target_speed = session.pending_target_speed;
 	SDL_UnlockMutex(session.mutex);
 }
 
@@ -193,6 +230,10 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 
 	/* No window in hosted mode; must be set before SDL video init. */
 	SDL_setenv("SDL_VIDEODRIVER", "dummy", 1);
+
+#ifdef _WIN32
+	win32_keep_timer_resolution();
+#endif
 
 	session.argc = 0;
 	snprintf(session.args[0], sizeof(session.args[0]), "opentyrian");
@@ -303,6 +344,10 @@ int32_t otyr_session_submit_input(uint64_t handle, const OtyrInputFrame *input,
 	session.pending_buttons = input->buttons;
 	session.pending_analog_dx = input->analog_dx;
 	session.pending_analog_dy = input->analog_dy;
+	session.pending_use_target = input->use_target;
+	session.pending_target_speed = input->target_speed;
+	session.pending_target_x = input->target_x;
+	session.pending_target_y = input->target_y;
 	apply_pending_input_locked();
 	SDL_UnlockMutex(session.mutex);
 	return OTYR_OK;
@@ -413,8 +458,32 @@ static void apply_pending_input_locked(void)
 	session.applied_buttons = pending;
 }
 
+void otyr_trace(const char *tag, Uint32 a, Uint32 b)
+{
+	static FILE *trace_file = NULL;
+	static bool checked = false;
+
+	if (!checked)
+	{
+		checked = true;
+		const char *path = SDL_getenv("OTYR_TRACE");
+		if (path != NULL && path[0] != '\0')
+			trace_file = fopen(path, "w");
+	}
+	if (trace_file == NULL)
+		return;
+	fprintf(trace_file, "%s %lu %lu\n", tag, (unsigned long)a, (unsigned long)b);
+	fflush(trace_file);
+}
+
 void otyr_host_present(SDL_Surface *screen)
 {
+	static Uint32 last_present = 0;
+	Uint32 now_present = SDL_GetTicks();
+	if (last_present != 0)
+		otyr_trace("present", now_present - last_present, now_present);
+	last_present = now_present;
+
 	SDL_LockMutex(session.mutex);
 
 	const Uint8 *pixels = (const Uint8 *)screen->pixels;
