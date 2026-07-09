@@ -92,6 +92,17 @@ unsigned long mt_rand(void)
 	return y;
 }
 
+/* Exposes the generator state for hashing (see statehash.c).  Returns the
+   current position of the state pointer; handles the never-seeded case. */
+unsigned int mt_state_snapshot(const unsigned long **state, unsigned int *count)
+{
+	if (!p0)
+		mt_srand(5489UL);
+	*state = x;
+	*count = N;
+	return (unsigned int)(p0 - x);
+}
+
 /* generates a random number on the interval [0,1]. */
 float mt_rand_1(void)
 {

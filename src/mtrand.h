@@ -23,6 +23,7 @@
 
 void mt_srand(unsigned long s);
 unsigned long mt_rand(void);
+unsigned int mt_state_snapshot(const unsigned long **state, unsigned int *count);
 float mt_rand_1(void);
 float mt_rand_lt1(void);
 

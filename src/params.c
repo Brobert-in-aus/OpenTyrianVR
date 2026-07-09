@@ -24,6 +24,7 @@
 #include "loudness.h"
 #include "network.h"
 #include "opentyr.h"
+#include "statehash.h"
 #include "varz.h"
 #include "xmas.h"
 
@@ -51,6 +52,7 @@ void JE_paramCheck(int argc, char *argv[])
 		{ 'x', 'x', "no-xmas",           false },
 		
 		{ 't', 't', "data",              true },
+		{ 258, 0,   "hash-log",          true },
 		
 		{ 'n', 'n', "net",               true },
 		{ 256, 0,   "net-player-name",   true }, // TODO: no short codes because there should
@@ -93,6 +95,7 @@ void JE_paramCheck(int argc, char *argv[])
 			       "  -j, --no-joystick            Disable joystick/gamepad input\n"
 			       "  -x, --no-xmas                Disable Christmas mode\n\n"
 			       "  -t, --data=DIR               Set Tyrian data directory\n\n"
+			       "  --hash-log=FILE              Write per-tick simulation state hashes to FILE\n\n"
 			       "  -n, --net=HOST[:PORT]        Start a networked game\n"
 			       "  --net-player-name=NAME       Sets local player name in a networked game\n"
 			       "  --net-player-number=NUMBER   Sets local player number in a networked game\n"
@@ -119,6 +122,12 @@ void JE_paramCheck(int argc, char *argv[])
 		// set custom Tyrian data directory
 		case 't':
 			custom_data_dir = option.arg;
+			break;
+
+		// write per-tick simulation state hashes to a file
+		case 258:
+			if (!statehash_open(option.arg))
+				exit(EXIT_FAILURE);
 			break;
 			
 		case 'n':

@@ -44,6 +44,7 @@
 #include "picload.h"
 #include "shots.h"
 #include "sprite.h"
+#include "statehash.h"
 #include "vga256d.h"
 #include "video.h"
 
@@ -909,11 +910,21 @@ start_level_first:
 
 #ifdef WITH_NETWORK
 	if (isNetworkGame)
-	{
 		JE_clearSpecialRequests();
-		mt_srand(32402394);
-	}
 #endif
+
+	/* Lockstep network games have always reseeded here so both peers agree on
+	   enemy AI randomness.  Demos and hash verification need run-to-run
+	   determinism for the same reason. */
+	if (isNetworkGame || play_demo || record_demo || statehash_enabled)
+		mt_srand(32402394);
+
+	if (statehash_enabled)
+	{
+		char note[32];
+		snprintf(note, sizeof(note), "level %.10s", levelName);
+		statehash_note(note);
+	}
 
 	initialize_starfield();
 
@@ -1077,6 +1088,8 @@ start_level_first:
 	BKwrap3 = BKwrap3to = &megaData3.mainmap[1][0];
 
 level_loop:
+
+	statehash_tick();
 
 	//tempScreenSeg = game_screen; /* side-effect of game_screen */
 

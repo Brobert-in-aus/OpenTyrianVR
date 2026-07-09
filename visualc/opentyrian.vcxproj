@@ -153,6 +153,7 @@
     <ClCompile Include="..\src\sndmast.c" />
     <ClCompile Include="..\src\sprite.c" />
     <ClCompile Include="..\src\starlib.c" />
+    <ClCompile Include="..\src\statehash.c" />
     <ClCompile Include="..\src\tyrian2.c" />
     <ClCompile Include="..\src\varz.c" />
     <ClCompile Include="..\src\vga256d.c" />
@@ -205,6 +206,7 @@
     <ClInclude Include="..\src\shots.h" />
     <ClInclude Include="..\src\sndmast.h" />
     <ClInclude Include="..\src\sprite.h" />
+    <ClInclude Include="..\src\statehash.h" />
     <ClInclude Include="..\src\starlib.h" />
     <ClInclude Include="..\src\tyrian2.h" />
     <ClInclude Include="..\src\varz.h" />
