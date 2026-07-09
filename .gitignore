@@ -3,6 +3,13 @@
 # Tyrian 2.1 game data (freeware, distributed separately — see docs/VR_CONVERSION_PLAN.md)
 /tyrian21/
 
+# Pinned build dependencies fetched by visualc/fetch-deps.ps1
+/deps/
+
+# Hash logs and scratch recordings (committed captures are added explicitly)
+/captures/*.log
+/demorec.*
+
 opentyrian.cfg
 tyrian.cfg
 tyrian.sav
