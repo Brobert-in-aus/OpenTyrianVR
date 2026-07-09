@@ -43,6 +43,7 @@
 #include "pcxload.h"
 #include "pcxmast.h"
 #include "picload.h"
+#include "present_frame.h"
 #include "shots.h"
 #include "sprite.h"
 #include "statehash.h"
@@ -162,18 +163,8 @@ void JE_starShowVGA(void)
 /* Enemy drawing is split from the enemy update (VR_CONVERSION_PLAN.md
  * Phase 2 step 3): the update records blit parameters at the exact moment
  * the legacy code drew (positions are pre-integration, filters pre-clear),
- * and a pure draw pass replays them.  The record list is the embryo of the
- * presentation snapshot. */
-typedef struct EnemyBlit
-{
-	Sprite2_array *sheet;
-	Sint16 x, y;
-	Uint16 index;
-	Uint8 filter;
-} EnemyBlit;
-
-static EnemyBlit enemy_blits[25 * 4];
-static unsigned int enemy_blit_count;
+ * and a pure draw pass replays them via the shared presentation frame. */
+static PresentCategory enemy_band_category;
 
 inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed int y_offset, signed int sprite_offset)
 {
@@ -183,31 +174,26 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 		return;
 	}
 
-	assert(enemy_blit_count < COUNTOF(enemy_blits));
-	EnemyBlit *blit = &enemy_blits[enemy_blit_count++];
-	blit->sheet = enemy[i].sprite2s;
-	blit->x = enemy[i].ex + x_offset + tempMapXOfs;
-	blit->y = enemy[i].ey + y_offset;
-	blit->index = enemy[i].egr[enemy[i].enemycycle - 1] + sprite_offset;
-	blit->filter = enemy[i].filter;
-}
-
-static void draw_recorded_enemy_blits(SDL_Surface *surface)
-{
-	for (unsigned int b = 0; b < enemy_blit_count; b++)
-	{
-		const EnemyBlit *blit = &enemy_blits[b];
-		if (blit->filter != 0)
-			blit_sprite2_filter(surface, blit->x, blit->y, *blit->sheet, blit->index, blit->filter);
-		else
-			blit_sprite2(surface, blit->x, blit->y, *blit->sheet, blit->index);
-	}
+	present_record(enemy_band_category, PRESENT_BLIT_SPRITE2,
+	               enemy[i].filter != 0 ? PRESENT_FLAG_FILTER : 0, enemy[i].filter,
+	               enemy[i].sprite2s,
+	               enemy[i].ex + x_offset + tempMapXOfs,
+	               enemy[i].ey + y_offset,
+	               enemy[i].egr[enemy[i].enemycycle - 1] + sprite_offset);
 }
 
 /* Simulates one enemy band for this tick, recording (not performing) the
  * blits.  FKA the update half of JE_drawEnemy. */
 static void JE_updateEnemies(int enemyOffset)
 {
+	switch (enemyOffset)
+	{
+	case 25:  enemy_band_category = PRESENT_ENEMY_SKY; break;
+	case 50:  enemy_band_category = PRESENT_ENEMY_GROUND_A; break;
+	case 75:  enemy_band_category = PRESENT_ENEMY_TOP; break;
+	default:  enemy_band_category = PRESENT_ENEMY_GROUND_B; break;
+	}
+
 	player[0].x -= 25;
 
 	for (int i = enemyOffset - 25; i < enemyOffset; i++)
@@ -654,9 +640,9 @@ draw_enemy_end:
 
 void JE_drawEnemy(int enemyOffset)
 {
-	enemy_blit_count = 0;
+	unsigned int mark = present_sprite_count;
 	JE_updateEnemies(enemyOffset);
-	draw_recorded_enemy_blits(VGAScreen);
+	present_draw_from(VGAScreen, mark);
 }
 
 enum LevelTickResult
@@ -677,6 +663,8 @@ static enum LevelTickResult JE_levelTick(void)
 	statehash_tick();
 	if (otyr_hosted)
 		otyr_host_level_tick();
+
+	present_frame_reset();
 
 	//tempScreenSeg = game_screen; /* side-effect of game_screen */
 
@@ -1365,7 +1353,8 @@ draw_player_shot_loop_end:
 	if (!endLevel)
 	{    /*MAIN DRAWING IS STOPPED STARTING HERE*/
 
-		/* Draw Enemy Shots */
+		/* Enemy Shots: update, collide, record; then replay the blits. */
+		unsigned int enemy_shot_mark = present_sprite_count;
 		for (int z = 0; z < ENEMY_SHOT_MAX; z++)
 		{
 			if (enemyShotAvail[z] == 0)
@@ -1448,14 +1437,19 @@ draw_player_shot_loop_end:
 						}
 
 						if (enemyShot[z].sgr >= 500)
-							blit_sprite2(VGAScreen, enemyShot[z].sx, enemyShot[z].sy, spriteSheet12, enemyShot[z].sgr + enemyShot[z].animate - 500);
+							present_record(PRESENT_ENEMY_SHOT, PRESENT_BLIT_SPRITE2, 0, 0,
+							               &spriteSheet12, enemyShot[z].sx, enemyShot[z].sy,
+							               enemyShot[z].sgr + enemyShot[z].animate - 500);
 						else
-							blit_sprite2(VGAScreen, enemyShot[z].sx, enemyShot[z].sy, spriteSheet8, enemyShot[z].sgr + enemyShot[z].animate);
+							present_record(PRESENT_ENEMY_SHOT, PRESENT_BLIT_SPRITE2, 0, 0,
+							               &spriteSheet8, enemyShot[z].sx, enemyShot[z].sy,
+							               enemyShot[z].sgr + enemyShot[z].animate);
 					}
 				}
 
 			}
 		}
+		present_draw_from(VGAScreen, enemy_shot_mark);
 	}
 
 	if (background3over == 1)

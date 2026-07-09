@@ -125,6 +125,7 @@
     <ClCompile Include="..\src\pcxmast.c" />
     <ClCompile Include="..\src\picload.c" />
     <ClCompile Include="..\src\player.c" />
+    <ClCompile Include="..\src\present_frame.c" />
     <ClCompile Include="..\src\shots.c" />
     <ClCompile Include="..\src\sndmast.c" />
     <ClCompile Include="..\src\sprite.c" />
