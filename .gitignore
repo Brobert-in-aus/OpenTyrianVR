@@ -1,5 +1,8 @@
 /data/
 
+# Tyrian 2.1 game data (freeware, distributed separately — see docs/VR_CONVERSION_PLAN.md)
+/tyrian21/
+
 opentyrian.cfg
 tyrian.cfg
 tyrian.sav

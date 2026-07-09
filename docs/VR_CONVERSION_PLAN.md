@@ -1,0 +1,436 @@
+# OpenTyrian VR conversion plan
+
+## 1. Product direction
+
+The first VR version should preserve Tyrian's rules, timing, levels, weapons, and
+enemy choreography while changing how the playfield is presented and controlled.
+It should feel like a miniature arcade world streaming toward the player, not a
+flat game stretched across a headset.
+
+The default playfield is a wide, tilted lane extending away from the player:
+
+- level travel advances from the far end toward the player, similar to the visual
+  flow of Guitar Hero;
+- the player ship and airborne enemies hover above the lane;
+- ground enemies sit on or just above the terrain;
+- clouds, projectiles, explosions, and pickups occupy intentionally separated
+  height bands;
+- the ship moves across the lane and along a bounded near/far range without
+  changing the original gameplay coordinates or collision rules;
+- head movement changes the view, never the gameplay aim or simulation;
+- controller, gamepad, and accessibility-friendly seated controls are supported.
+
+This is a **2.5D diorama conversion**, not a first-person conversion. The original
+320x200 coordinate system remains the authoritative gameplay plane. Depth is
+primarily presentation metadata, so the game can remain mechanically faithful.
+
+Distribution stance: the project is free and open source, funded at most by
+voluntary donations. Distribution targets are direct downloads and SideQuest;
+no paid storefront and no paywalled content. This stance simplifies the
+licensing analysis in section 8.
+
+## 2. Findings from the source
+
+OpenTyrian is a C99/SDL2 software-rendered game. It draws an indexed-color
+320x200 frame into `SDL_Surface` buffers and uploads the completed frame in
+`JE_showVGA()` (`src/video.c`).
+
+The main gameplay frame in `JE_main()` (`src/tyrian2.c`) interleaves:
+
+1. level event execution;
+2. background tile drawing and scrolling;
+3. enemy simulation and sprite drawing;
+4. projectile simulation, drawing, and collision;
+5. player input, simulation, and drawing;
+6. explosions, HUD, sound dispatch, timing, and presentation.
+
+Important consequences:
+
+- replacing the renderer is not a single backend swap;
+- several functions named as drawing functions also mutate gameplay state;
+- draw order currently encodes semantic layers (ground, sky, top enemies);
+- gameplay uses global state extensively;
+- background maps are already structured data, not merely finished screenshots:
+  three tile layers use 24x28 shapes and maps of 14x300, 14x600, and 15x600;
+- level events, enemies, player shots, enemy shots, explosions, and audio are
+  available as structured state and should be exported rather than recovered
+  from pixels;
+- menus, cinematics, palette effects, and unusual legacy filters are much easier
+  to retain initially as a 2D surface;
+- `JE_main()` (`src/tyrian2.c`) is a single ~3,500-line function containing its
+  own frame loop, and menus, the title screen, cinematics, and pause each run
+  their own nested blocking loops that call `JE_showVGA()`. The only entry point
+  is `main()` in `src/opentyr.c`. There is no tick-callable core today; making
+  one is Phase 2 work, and earlier phases must host the game as-is (see
+  section 6);
+- the core is built directly on SDL2 (surfaces, timing, audio, SDL2_net). The
+  native library will continue to link SDL2 for the foreseeable future; headless
+  operation uses SDL's dummy video driver rather than removing SDL. Phase 5 must
+  therefore include an arm64 Android build of SDL2.
+
+### Upstream relationship
+
+This working copy is a clone of `github.com/opentyrian/opentyrian`, whose
+maintainer is actively refactoring the exact files this plan splits: recent
+upstream commits rewrite config/saves, redesign keyboard/mouse input, and
+replace globals with fields/parameters in `tyrian2.c` and `mainint.c`. That
+work moves in the same direction as Phase 2 and should be absorbed for free
+while possible.
+
+Policy:
+
+- develop on a GitHub fork with `upstream` kept as a remote;
+- track upstream during Phase 0;
+- freeze on a recorded, pinned upstream commit at the start of Phase 2 —
+  replay recordings and state hashes are only meaningful against one exact
+  base commit;
+- after the freeze, upstream merges are rare, deliberate events that re-run
+  the full Phase 0 replay baseline.
+
+Pinned base commit: `1c34d1b` ("Rewrite reading and writing of config and
+saves; rewrite animation player").
+
+The Zig + Godot XR foundation is currently an architecture/extraction workspace,
+not production code. Its most useful lessons are architectural:
+
+- keep simulation and game-specific payloads owned by the game;
+- share only stable platform infrastructure;
+- initialize XR even if the native backend fails, so diagnostics remain visible;
+- use a small, versioned C ABI with explicit ownership and size checks;
+- support flat/headless operation;
+- place and recenter content relative to the first valid head pose;
+- treat PCVR and Quest as separate validated targets;
+- make Quest packaging fail closed and verify native payloads before headset
+  testing.
+
+OpenTyrian is C rather than Zig, so the Zig-specific parts (custom libc
+targeting, the Zig-side big-stack helper) do not transfer directly — an NDK C
+build links bionic natively. But several foundation findings transfer verbatim:
+
+- the APK must ship with `extractNativeLibs=true`, or .NET P/Invoke `dlopen`
+  of the native library fails on Quest (foundation ADR 0002);
+- Quest is a 16 KB-page OS: `zipalign -P 16`;
+- Godot 4.7's Android export template requires the .NET target framework to be
+  `net9.0` (it rejects net8.0);
+- .NET host threads default to ~1 MiB stacks; any thread the native library
+  creates for the game loop should be given a generous explicit stack size;
+- ABI structs are pinned by host-side round-trip tests asserting exact struct
+  sizes, and the ABI version guard throws on mismatch rather than warning.
+
+## 3. Recommended architecture
+
+### Native game core
+
+Refactor OpenTyrian into a native library while retaining a normal SDL desktop
+executable as a regression harness.
+
+The core owns:
+
+- all gameplay rules and fixed-tick simulation;
+- level and asset loading;
+- collision and random-number state;
+- save data and replay/determinism policy;
+- music and sound event selection;
+- the legacy 320x200 renderer used for menus, cinematics, fallback, and
+  comparison.
+
+Expose a small game-owned C ABI:
+
+```c
+uint32_t otyr_abi_version(void);
+uint64_t otyr_capabilities(void); /* feature flags: snapshots, events, ... */
+int32_t  otyr_last_error(char *buffer, uint32_t buffer_size);
+int32_t  otyr_session_create(const void *config, uint32_t config_size,
+                             uint64_t *out_session);
+int32_t  otyr_session_destroy(uint64_t session);
+int32_t  otyr_session_tick(uint64_t session, const OtyrInputFrame *input);
+int32_t  otyr_session_snapshot(uint64_t session, OtyrSnapshot *snapshot);
+int32_t  otyr_session_events(uint64_t session, OtyrEventBuffer *events);
+int32_t  otyr_legacy_frame(uint64_t session, OtyrFrameBuffer *frame);
+```
+
+All ABI structs should be fixed-width, append-only, versioned, and validated on
+both sides. Validation is concrete: host-side round-trip tests assert exact
+struct sizes, and a mismatched `otyr_abi_version` is a hard failure at session
+create, not a warning. Snapshot buffers should be caller-owned or explicitly
+borrowed until the next tick; no ambiguous ownership.
+
+`otyr_session_tick` and `otyr_capabilities` do not exist until Phase 2. Phase 1
+and the first spike host the unmodified blocking game loop on a dedicated
+thread instead (see section 6); the host detects which mode the library
+supports via `otyr_capabilities` once it exists.
+
+### Godot VR host
+
+Use Godot 4 .NET as the XR presentation and platform shell, consistent with the
+foundation direction.
+
+Godot owns:
+
+- OpenXR bootstrap, flat fallback, tracked devices, recentering, and diagnostics;
+- fixed-tick scheduling and interpolation between snapshots;
+- the lane/terrain mesh and all 3D presentation;
+- sprite/mesh pools for ships, enemies, shots, pickups, clouds, and explosions;
+- VR input mapping into the original abstract input frame;
+- spatial audio presentation, HUD, menus, comfort settings, and pause behavior;
+- Windows PCVR and Quest packaging.
+
+Keep the OpenTyrian snapshot schema local to this repository. Consume a pinned
+foundation release later for XR bootstrap, native loading, diagnostics, and
+Quest automation only after that foundation has real implementation and a
+compatible C-native path.
+
+### Coordinate mapping
+
+Use one documented transform:
+
+```text
+Tyrian x (drawable play area, ~0..264) -> lane local X
+Tyrian y (drawable play area, 0..199)  -> lane local Z, reversed so 0 is far away
+semantic layer                         -> lane local Y (height)
+```
+
+The transform is defined over the drawable play surface so entities can enter
+and leave the lane gracefully (enemy shots despawn at roughly x 0..275,
+y -14..190). The player ship itself is clamped much tighter — x in [40, 256]
+and y in [10, 160] (`src/mainint.c`) — so comfort tuning for the ship's
+near/far travel must use that smaller band, not the full surface.
+
+Collisions continue entirely in Tyrian coordinates. Visual heights are assigned
+by category and optional asset metadata:
+
+- terrain: 0;
+- ground enemies and ground effects: terrain height plus a small offset;
+- pickups and player ship: low flight band;
+- ordinary air enemies and shots: middle flight band;
+- clouds and high enemies: upper flight band;
+- HUD: head-locked only for essential status, with most information mounted near
+  the playfield.
+
+The lane dimensions, tilt, distance, and height exaggeration are comfort-tunable.
+
+## 4. Terrain and depth strategy
+
+Do not make Gaussian splatting a prerequisite for the first playable build.
+The source art is low-resolution, palette-based, tiled, and often animated or
+palette-filtered. Unconstrained single-image depth generation can introduce
+geometry that changes between adjacent repeated tiles, shimmers in stereo, and
+misrepresents collision.
+
+Use a staged asset pipeline:
+
+### Stage A: deterministic 2.5D terrain
+
+- decode each 24x28 background shape and palette to RGBA;
+- build the visible map strip from the original tile indices;
+- render it on a subdivided lane mesh;
+- derive conservative height, normal, and roughness maps using authored rules
+  plus optional depth estimation;
+- enforce identical edge heights for identical tile edges to prevent seams;
+- keep water, lava, stars, and palette effects as shaders or overlay planes;
+- cache generated artifacts by source asset hash.
+
+This provides stereo depth, stable motion, and exact texture fidelity.
+
+### Stage B: authored semantic depth
+
+Classify recurring tiles/materials (water, road, crater, wall, foliage, lava,
+space) and give them controlled depth profiles. Add hand-authored overrides for
+hero levels. This will usually outperform unconstrained AI depth on pixel art.
+
+### Stage C: experimental reconstruction
+
+Evaluate Gaussian splats, neural depth, or image-to-3D offline for selected
+background set pieces and sky volumes. Convert or bake results into a performant,
+stable representation for Quest where possible. Require stereo comfort,
+frame-time, seam, and art-fidelity comparisons against Stage B before adoption.
+
+Gaussian splats are more promising for distant scenery and clouds than for the
+collidable scrolling ground. They should never be the authoritative gameplay
+surface.
+
+## 5. Delivery phases and gates
+
+### Phase 0 — Baseline and archaeology
+
+Deliver:
+
+- GitHub fork created, `upstream` remote configured, pinned base commit and
+  upstream-merge policy recorded (see section 2);
+- reproducible Windows desktop build;
+- one short representative level capture;
+- scripted input recording;
+- per-tick hashes of important simulation state;
+- captured legacy frame hashes at checkpoints;
+- entity/layer taxonomy and coordinate document;
+- license and asset-distribution review.
+
+Note that the hash instrumentation itself modifies the game, so the
+*instrumented build at the pinned commit* is the baseline. Hashes prove
+self-consistency of this fork across refactors, not fidelity to upstream.
+
+Gate: a recorded run replays with matching state hashes.
+
+### Phase 1 — VR shell with the unchanged game surface
+
+Deliver:
+
+- Godot OpenXR project with flat fallback;
+- head-relative placement and recenter;
+- original framebuffer shown on a tilted, scrolling arcade board;
+- gamepad and VR-controller input mapped to original actions;
+- original audio;
+- PCVR build with stable frame pacing.
+
+This deliberately proves the native boundary, timing, controls, scale, and
+comfort before the renderer split.
+
+Gate: complete one level in-headset with mechanics matching desktop.
+
+### Phase 2 — Simulation/presentation seam
+
+Refactor one subsystem at a time:
+
+1. introduce `InputFrame`;
+2. isolate exactly one gameplay tick from waiting and presentation;
+3. split enemy update from enemy draw;
+4. split projectile update/collision from draw;
+5. split player update from draw;
+6. emit audio and effect events;
+7. publish a versioned snapshot;
+8. retain the old renderer as a comparison path.
+
+Gate: the same recorded input produces matching state hashes before and after
+each extraction.
+
+### Phase 3 — Hybrid 3D vertical slice
+
+Convert one representative level:
+
+- 3D lane using original background tiles;
+- terrain depth/normal prototype;
+- billboarded player ship, enemies, shots, pickups, and explosions at semantic
+  height bands;
+- correct layer ordering and parallax;
+- legacy HUD rendered to a world-space panel;
+- pooled objects and snapshot interpolation.
+
+Gate: desktop legacy and VR hybrid runs remain mechanically identical; PCVR
+meets frame-time and comfort targets.
+
+### Phase 4 — Full gameplay presentation
+
+- cover every enemy grouping and special draw-order case;
+- port background effects and filters to shaders;
+- add cloud and distant-scenery layers;
+- replace essential HUD elements with readable spatial UI;
+- support story prompts, pause, death, end-level, and two-player presentation;
+- preserve menus/cinematics on the legacy surface until individually redesigned.
+
+Gate: campaign smoke test with no missing entity/event categories.
+
+### Phase 5 — Quest and production hardening
+
+- Android arm64 native build via the NDK, including SDL2 for arm64;
+- Godot Quest export and OpenXR Vendors integration; export template requires
+  the .NET target framework to be `net9.0`;
+- pinned toolchain (Godot version, .NET TFM, OpenXR Vendors plugin, JDK,
+  Android build tools) and parameterized build script;
+- APK payload/manifest verification, alignment, signing, install, and launch
+  diagnostics — fail closed: `extractNativeLibs=true` asserted in the
+  manifest (P/Invoke `dlopen` fails on Quest without it), `zipalign -P 16`
+  (16 KB pages), archive listing must contain the game library and the
+  OpenXR loader/vendors libraries;
+- GPU/CPU profiling, draw-call reduction, texture atlases, pooling, and quality
+  tiers;
+- seated/standing presets, dominant-hand options, remapping, reduced motion,
+  brightness, and playfield-distance controls.
+
+Gate: representative levels run on the target Quest headset without missed
+simulation ticks or comfort regressions.
+
+### Phase 6 — Optional visual upgrades
+
+- authored 3D ship/enemy models while retaining sprite mode;
+- depth-enhanced set pieces and volumetric clouds;
+- mixed-reality backdrop;
+- spatialized effects and reactive haptics;
+- experimental splat-based scenery if it passes performance and stability gates.
+
+## 6. First technical spike
+
+The first spike should be intentionally narrow and disposable only at the Godot
+presentation layer. It must NOT attempt to make the game tick-callable — that
+is Phase 2. `JE_main()` and every menu/cinematic contain their own blocking
+loops, so the spike hosts the game **thread-hosted**:
+
+1. build the C code as a DLL; `otyr_session_create` spawns a dedicated thread
+   (with a generous explicit stack size — .NET host threads default to ~1 MiB)
+   that runs the unmodified `main()`/`JE_main()` path;
+2. run under SDL's dummy video driver — no SDL window, but SDL2 stays linked
+   for surfaces, timing, and audio;
+3. turn `JE_showVGA()` and the frame-delay functions into the synchronization
+   point: each legacy "present" becomes a buffer handoff plus input exchange
+   with the host, which paces the game thread. This one interception handles
+   gameplay, menus, and cinematics uniformly with near-zero refactoring;
+4. expose create/destroy, input-frame submission, legacy-frame retrieval, and
+   minimal player-state calls;
+5. upload the 320x200 indexed frame to a Godot texture;
+6. display it on an adjustable tilted lane in OpenXR;
+7. map a controller thumbstick and buttons to move/fire/rear/sidekick;
+8. record tick time, render time, and input-to-photon behavior;
+9. verify one replay against the desktop executable.
+
+Time-box this spike before extracting full snapshots. Its purpose is to answer
+the highest-risk questions: whether the C core can be hosted safely, whether the
+fixed tick behaves under Godot pacing, and whether the Guitar Hero presentation
+is comfortable and fun. `otyr_session_tick` re-entrancy arrives in Phase 2, and
+only for the gameplay loop — menus and cinematics stay thread-hosted on the
+legacy surface until individually redesigned.
+
+## 7. Decisions to make after the spike
+
+- preferred control metaphor: thumbstick, hand-position steering, pointer aim,
+  or selectable modes;
+- canonical play posture: seated tabletop, standing cabinet, or both;
+- ship motion mapping: direct position, velocity, or hybrid;
+- whether player-controlled near/far movement changes only screen Y or also
+  visual altitude;
+- target headset and minimum PCVR runtime;
+- whether two-player/network play is in the first release;
+- how much legacy UI remains world-space 2D versus being rebuilt;
+- whether redistribution can include the freeware Tyrian data or must require
+  users to supply it. Partially answered: for free channels (direct download,
+  SideQuest) bundling is customary and low-risk — Tyrian 2.1 data has been
+  freeware since 2004 and ships with most OpenTyrian ports. The permission is
+  informal, not a license, and "Tyrian" remains a trademark, so any storefront
+  or paid distribution would change the answer; this project does neither.
+
+## 8. Principal risks
+
+| Risk | Mitigation |
+|---|---|
+| Simulation and rendering are interleaved | Extract by subsystem with replay/state hashes and keep the legacy renderer |
+| VR frame rate differs from legacy tick rate | Fixed simulation tick plus interpolated presentation |
+| Added depth makes hazards ambiguous | Preserve 2D collision plane, use strict height bands and shadows |
+| Forward lane motion causes discomfort | World stays head-stable; move content, tune tilt/speed/FOV, add comfort presets |
+| Pixel art looks inconsistent in stereo | Conservative mesh displacement, nearest sampling, authored depth metadata |
+| Quest cannot sustain the scene | Pools, atlases, MultiMesh/batching, quality tiers, profile from the vertical slice |
+| Menus and palette effects expand scope | Keep a legacy framebuffer path throughout development |
+| Foundation is not implemented yet | Use its contracts as guidance; pin and adopt only proven released components |
+| Upstream keeps rewriting the files we split | Fork; track upstream in Phase 0, freeze on a pinned commit at Phase 2; merges re-run the replay baseline |
+| GPL/data licensing affects distribution | Whole project ships GPL-2.0 (OpenTyrian is GPL; Godot is MIT, compatible). Fine for direct download and SideQuest. The Meta Quest Store is off the table: GPLv2's no-further-restrictions clause conflicts with store terms (the VLC/App Store precedent) and relicensing consent from all OpenTyrian contributors is unobtainable. Donations (Ko-fi, GitHub Sponsors) are fully compatible with GPL — payment for development time, not for the software |
+
+## 9. Definition of a successful first milestone
+
+The milestone is not “some sprites appear in VR.” It is:
+
+- a reproducible desktop and PCVR build;
+- the original game hosted through a versioned native boundary;
+- a comfortable, recenterable tilted-lane presentation;
+- VR controller and gamepad input;
+- one level playable from start to finish;
+- deterministic comparison with the SDL build;
+- diagnostics visible even when native initialization fails;
+- measured evidence that the architecture can progress to structured 3D
+  snapshots without rewriting Tyrian's gameplay.
