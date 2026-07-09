@@ -15,6 +15,13 @@
 /tests/*.exe
 /tests/*.obj
 
+# Godot project build output and staged native libraries
+/godot/.godot/
+/godot/bin/
+/godot/obj/
+/godot/native/
+/godot/.vs/
+
 # Core DLL build output
 /opentyrian-core-*.dll
 /opentyrian-core-*.lib

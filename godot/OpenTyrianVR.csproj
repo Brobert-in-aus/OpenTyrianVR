@@ -1,0 +1,21 @@
+<Project Sdk="Godot.NET.Sdk/4.7.0">
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <EnableDynamicLoading>true</EnableDynamicLoading>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <RootNamespace>OpenTyrianVR</RootNamespace>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <!-- Stage the native core (built by visualc/opentyrian.sln) where
+       OtyrNative's DllImport resolver finds it. -->
+  <Target Name="StageNativeCore" BeforeTargets="Build">
+    <ItemGroup>
+      <NativeCore Include="..\opentyrian-core-x64-Release.dll" />
+      <NativeCore Include="..\SDL2.dll" />
+      <NativeCore Include="..\SDL2_net.dll" />
+    </ItemGroup>
+    <Error Condition="!Exists('..\opentyrian-core-x64-Release.dll')"
+           Text="opentyrian-core-x64-Release.dll not found; build visualc\opentyrian.sln (x64 Release) first." />
+    <Copy SourceFiles="@(NativeCore)" DestinationFolder="native\win-x64\" SkipUnchangedFiles="true" />
+  </Target>
+</Project>
