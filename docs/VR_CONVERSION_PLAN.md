@@ -1,5 +1,23 @@
 # OpenTyrian VR conversion plan
 
+## Status (2026-07-10)
+
+- Phase 0: **complete** (fork/pin, reproducible build, replay + per-tick
+  hashes with turbo verification, taxonomy doc, license review).
+- Section 6 spike: **complete**, results in SPIKE_RESULTS.md.
+- Phase 1: **complete** (played in-headset; hand-rectangle steering with
+  in-sim target pursuit became the primary control).
+- Phase 2: **complete** (GameInput, re-entrant JE_levelTick, all update/draw
+  splits via the presentation frame, sound events, snapshot ABI v7 with
+  sprite-sheet export and per-record source ids).
+- Phase 3 vertical slice: **flat-verified** — entities render as interpolated
+  palette-shaded 3D sprites at taxonomy height bands over an
+  entity-suppressed terrain lane; terrain-baked art stays in the frame.
+  Awaiting the in-headset gate. Known gaps: driving platform-riders need
+  authored per-enemytype metadata (Stage B); old-table blend shots not yet in
+  3D; the lane background is still the legacy framebuffer (3D scrolling
+  terrain mesh is the remainder of Phase 3).
+
 ## 1. Product direction
 
 The first VR version should preserve Tyrian's rules, timing, levels, weapons, and
