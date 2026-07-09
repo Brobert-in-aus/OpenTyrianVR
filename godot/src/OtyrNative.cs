@@ -17,6 +17,7 @@ public static unsafe class OtyrNative
     public const int FrameHeight = 200;
 
     public const int Ok = 0;
+    public const int InvalidSession = -3;
     public const int Timeout = -4;
 
     // OtyrInputFrame.buttons bits.

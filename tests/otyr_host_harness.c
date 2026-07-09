@@ -125,76 +125,106 @@ int main(void)
 
 	OtyrPlayerState state = { .struct_size = sizeof(OtyrPlayerState) };
 
-	/* Timeline (all times from start):
-	 *   0-45s  acquire frames continuously, measuring rate
-	 *   12s    pulse SPACE twice -> title, then Players menu
-	 *   20s    dump BMP (expect Players menu)
-	 *   22s    pulse ESC -> back to title; idle -> auto-demo at ~52s
-	 *   75s    dump BMP (expect demo gameplay) + player state
-	 */
-	const DWORD start = GetTickCount();
-	uint32_t frames_acquired = 0;
-	uint32_t last_report_frame = 0;
-	DWORD last_report = start;
-	int did_space1 = 0, did_space2 = 0, did_menu_bmp = 0, did_esc = 0, did_game_bmp = 0;
+	/* Phase 1: wait out the intro logos until presents go quiet (the title
+	 * menu only redraws on change, so "no new frame for a while" means the
+	 * menu is idle and ready). */
+	LARGE_INTEGER qpf;
+	QueryPerformanceFrequency(&qpf);
 
-	for (;;)
+	printf("waiting for title menu to go idle...\n");
+	DWORD wait_start = GetTickCount();
+	while (GetTickCount() - wait_start < 20000)
 	{
-		DWORD elapsed = GetTickCount() - start;
-		if (elapsed > 80000)
-			break;
-
-		int32_t rc = p_acquire_frame(g_session, frame, sizeof(OtyrFrame), 500);
-		if (rc == OTYR_OK)
-			++frames_acquired;
-		else if (rc != OTYR_TIMEOUT)
-			die("acquire_frame");
-
-		if (elapsed - (last_report - start) >= 10000)
-		{
-			double fps = (frame->frame_number - last_report_frame) /
-			             ((elapsed - (last_report - start)) / 1000.0);
-			printf("t=%2lus frame=%u (%.1f fps)\n", elapsed / 1000, frame->frame_number, fps);
-			last_report = start + elapsed;
-			last_report_frame = frame->frame_number;
-		}
-
-		if (!did_space1 && elapsed > 12000)
-		{
-			did_space1 = 1;
-			pulse_button(OTYR_BUTTON_UI_SPACE, 100);
-			printf("t=%2lus pulsed SPACE\n", elapsed / 1000);
-		}
-		if (!did_space2 && elapsed > 14000)
-		{
-			did_space2 = 1;
-			pulse_button(OTYR_BUTTON_UI_SPACE, 100);
-			printf("t=%2lus pulsed SPACE\n", elapsed / 1000);
-		}
-		if (!did_menu_bmp && elapsed > 20000)
-		{
-			did_menu_bmp = 1;
-			write_bmp("captures\\hosted-menu.bmp", frame);
-		}
-		if (!did_esc && elapsed > 22000)
-		{
-			did_esc = 1;
-			pulse_button(OTYR_BUTTON_UI_CANCEL, 100);
-			printf("t=%2lus pulsed ESC\n", elapsed / 1000);
-		}
-		if (!did_game_bmp && elapsed > 75000)
-		{
-			did_game_bmp = 1;
-			write_bmp("captures\\hosted-demo.bmp", frame);
-			if (p_player_state(g_session, &state, sizeof(state)) != OTYR_OK)
-				die("player_state");
-			printf("player: x=%d y=%d shield=%u armor=%u cash=%u lives=%u alive=%u\n",
-			       state.x, state.y, state.shield, state.armor,
-			       state.cash, state.lives, state.is_alive);
-		}
+		if (p_acquire_frame(g_session, frame, sizeof(OtyrFrame), 1500) == OTYR_TIMEOUT)
+			break;  /* 1.5 s with no present: menu is idle */
 	}
 
-	printf("acquired %u frames total; destroying session...\n", frames_acquired);
+	/* Phase 2: input-to-frame latency.  From an idle menu, the next present
+	 * only happens in response to input, so submit-to-frame is the native
+	 * input latency.  SPACE advances a menu, ESC backs out; alternate. */
+	printf("input-to-frame latency (menu response):\n");
+	double latencies[6];
+	for (int i = 0; i < 6; ++i)
+	{
+		uint32_t button = (i % 2 == 0) ? OTYR_BUTTON_UI_SPACE : OTYR_BUTTON_UI_CANCEL;
+
+		LARGE_INTEGER t0, t1;
+		QueryPerformanceCounter(&t0);
+
+		OtyrInputFrame input = { .struct_size = sizeof(OtyrInputFrame), .buttons = button };
+		if (p_submit_input(g_session, &input, sizeof(input)) != OTYR_OK)
+			die("submit_input(press)");
+
+		if (p_acquire_frame(g_session, frame, sizeof(OtyrFrame), 3000) != OTYR_OK)
+			die("no frame within 3s of menu input");
+		QueryPerformanceCounter(&t1);
+
+		latencies[i] = (t1.QuadPart - t0.QuadPart) * 1000.0 / qpf.QuadPart;
+		printf("  %s -> %.1f ms\n", (i % 2 == 0) ? "SPACE" : "ESC  ", latencies[i]);
+
+		input.buttons = 0;
+		if (p_submit_input(g_session, &input, sizeof(input)) != OTYR_OK)
+			die("submit_input(release)");
+
+		/* Drain fade/transition frames until quiet before the next probe. */
+		while (p_acquire_frame(g_session, frame, sizeof(OtyrFrame), 700) == OTYR_OK)
+			;
+	}
+	double latency_sum = 0;
+	for (int i = 0; i < 6; ++i)
+		latency_sum += latencies[i];
+	printf("  average %.1f ms\n", latency_sum / 6);
+
+	/* Phase 3: navigate title -> Demo (DOWN x5, ENTER) and measure frame
+	 * cadence during demo gameplay. */
+	printf("starting demo playback...\n");
+	for (int i = 0; i < 5; ++i)
+	{
+		pulse_button(OTYR_BUTTON_DOWN, 80);
+		Sleep(150);
+	}
+	pulse_button(OTYR_BUTTON_UI_CONFIRM, 100);
+
+	/* Give the fade + level load a moment, then sample. */
+	Sleep(4000);
+	while (p_acquire_frame(g_session, frame, sizeof(OtyrFrame), 500) == OTYR_OK)
+		break;
+
+	printf("sampling frame cadence for 20s...\n");
+	LARGE_INTEGER prev = { 0 }, now;
+	double min_period = 1e9, max_period = 0, period_sum = 0;
+	uint32_t periods = 0;
+	DWORD cadence_start = GetTickCount();
+	while (GetTickCount() - cadence_start < 20000)
+	{
+		if (p_acquire_frame(g_session, frame, sizeof(OtyrFrame), 500) != OTYR_OK)
+			continue;
+		QueryPerformanceCounter(&now);
+		if (prev.QuadPart != 0)
+		{
+			double period = (now.QuadPart - prev.QuadPart) * 1000.0 / qpf.QuadPart;
+			if (period < min_period) min_period = period;
+			if (period > max_period) max_period = period;
+			period_sum += period;
+			++periods;
+		}
+		prev = now;
+	}
+	if (periods > 0)
+	{
+		double avg = period_sum / periods;
+		printf("cadence: %u frames, avg %.2f ms (%.1f fps), min %.2f ms, max %.2f ms\n",
+		       periods, avg, 1000.0 / avg, min_period, max_period);
+	}
+
+	write_bmp("captures\\hosted-demo.bmp", frame);
+	if (p_player_state(g_session, &state, sizeof(state)) != OTYR_OK)
+		die("player_state");
+	printf("player: x=%d y=%d shield=%u armor=%u cash=%u lives=%u alive=%u\n",
+	       state.x, state.y, state.shield, state.armor,
+	       state.cash, state.lives, state.is_alive);
+
+	printf("destroying session...\n");
 	int32_t rc = p_session_destroy(g_session);
 	printf("destroy: %s\n", rc == OTYR_OK ? "clean" : "TIMEOUT (thread detached)");
 

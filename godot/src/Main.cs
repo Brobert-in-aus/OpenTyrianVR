@@ -183,6 +183,14 @@ public partial class Main : Node3D
     private unsafe void PollFrame()
     {
         int rc = OtyrNative.AcquireFrame(_session, ref _frame, _frame.StructSize, 0);
+        if (rc == OtyrNative.InvalidSession)
+        {
+            // The player quit from inside the game; the game thread halted.
+            GD.Print("OpenTyrianVR: game quit, closing host");
+            ShutDown();
+            GetTree().Quit();
+            return;
+        }
         if (rc != OtyrNative.Ok)
             return;  // Timeout: no new legacy frame this render frame.
 
