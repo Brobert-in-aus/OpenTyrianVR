@@ -46,8 +46,12 @@ public partial class Main : Node3D
     // Player movement clamp in Tyrian sim coordinates (ENTITY_TAXONOMY.md).
     private const float GameMinX = 40f, GameMaxX = 256f;
     private const float GameMinY = 10f, GameMaxY = 160f;
-    private const float SteerDeadbandPx = 4f;
+    private const float SteerDeadbandPx = 2f;
+    private const float SteerRampPx = 16f;
     private const float LaneWidth = 1.0f, LaneHeight = 0.625f;
+    private uint _steerTick;
+    private float _steerErrX, _steerErrY;
+    private OtyrNative.Buttons _steerHeld;
 
     public override void _Ready()
     {
@@ -403,17 +407,40 @@ public partial class Main : Node3D
         _targetReticle.Position = new Vector3(
             (frameU - 0.5f) * LaneWidth, (0.5f - frameV) * LaneHeight, 0.006f);
 
-        // Steer toward the target, leading by the ship's velocity so it
-        // brakes before arrival instead of overshooting and wobbling.
-        const float lookaheadTicks = 3f;
-        var buttons = OtyrNative.Buttons.None;
-        float dx = targetX - (_playerState.X + _playerState.XVelocity * lookaheadTicks);
-        float dy = targetY - (_playerState.Y + _playerState.YVelocity * lookaheadTicks);
-        if (dx > SteerDeadbandPx) buttons |= OtyrNative.Buttons.Right;
-        if (dx < -SteerDeadbandPx) buttons |= OtyrNative.Buttons.Left;
-        if (dy > SteerDeadbandPx) buttons |= OtyrNative.Buttons.Down;
-        if (dy < -SteerDeadbandPx) buttons |= OtyrNative.Buttons.Up;
-        return buttons;
+        // Steer toward the target.  Direction bits are duty-cycled per game
+        // tick (Bresenham accumulator) so small errors produce fractional
+        // average speed through the game's own acceleration model — otherwise
+        // the fixed-speed ship stop-starts behind a slowly moving hand.
+        // Velocity lookahead brakes it before arrival.  Real analog input
+        // replaces this in Phase 2.
+        if (_playerState.LevelTick != _steerTick)
+        {
+            _steerTick = _playerState.LevelTick;
+            const float lookaheadTicks = 3f;
+            float dx = targetX - (_playerState.X + _playerState.XVelocity * lookaheadTicks);
+            float dy = targetY - (_playerState.Y + _playerState.YVelocity * lookaheadTicks);
+            _steerHeld = SteerAxis(dx, ref _steerErrX, OtyrNative.Buttons.Right, OtyrNative.Buttons.Left)
+                       | SteerAxis(dy, ref _steerErrY, OtyrNative.Buttons.Down, OtyrNative.Buttons.Up);
+        }
+        return _steerHeld;
+    }
+
+    private static OtyrNative.Buttons SteerAxis(float delta, ref float error,
+        OtyrNative.Buttons positive, OtyrNative.Buttons negative)
+    {
+        float magnitude = Mathf.Abs(delta) - SteerDeadbandPx;
+        if (magnitude <= 0f)
+        {
+            error = 0f;
+            return OtyrNative.Buttons.None;
+        }
+        // Full speed beyond the ramp, proportional duty cycle inside it.
+        float duty = Mathf.Min(1f, magnitude / SteerRampPx);
+        error += duty;
+        if (error < 1f)
+            return OtyrNative.Buttons.None;
+        error -= 1f;
+        return delta > 0f ? positive : negative;
     }
 
     private void UpdateDiagnostics(double delta)
