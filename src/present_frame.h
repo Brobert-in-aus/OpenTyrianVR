@@ -43,7 +43,7 @@ typedef enum PresentCategory
 	PRESENT_ENEMY_SHOT,         /* mid band */
 	PRESENT_PLAYER_SHOT,        /* mid band */
 	PRESENT_PLAYER,             /* low band */
-	PRESENT_PLAYER_SHADOW,      /* decoration on terrain */
+	PRESENT_SHADOW,             /* decoration cast onto the terrain */
 	PRESENT_SIDEKICK,           /* low band */
 	PRESENT_EXPLOSION,          /* band of source entity */
 	PRESENT_SUPERPIXEL,         /* debris */
@@ -51,8 +51,11 @@ typedef enum PresentCategory
 
 typedef enum PresentBlitKind
 {
-	PRESENT_BLIT_SPRITE2 = 0,       /* blit_sprite2; filter/blend variants by flags */
+	PRESENT_BLIT_SPRITE2 = 0,       /* blit_sprite2; filter/blend/darken by flags */
 	PRESENT_BLIT_SPRITE2X2,         /* blit_sprite2x2 and variants */
+	PRESENT_BLIT_SPRITE_BLEND,      /* blit_sprite_blend on the old sprite table
+	                                   system; sheet is NULL, index is the sprite
+	                                   id, filter_color is the table id */
 } PresentBlitKind;
 
 enum

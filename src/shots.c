@@ -19,6 +19,7 @@
 #include "shots.h"
 
 #include "player.h"
+#include "present_frame.h"
 #include "sprite.h"
 #include "video.h"
 #include "varz.h"
@@ -275,7 +276,8 @@ bool player_shot_move_and_draw(
 
 		if (*out_is_special)
 		{
-			blit_sprite_blend(VGAScreen, *out_shotx+1, *out_shoty, OPTION_SHAPES, sprite_frame - 60001);
+			present_record(PRESENT_PLAYER_SHOT, PRESENT_BLIT_SPRITE_BLEND, 0, OPTION_SHAPES,
+			               NULL, *out_shotx+1, *out_shoty, sprite_frame - 60001);
 
 			*out_special_radiusw = sprite(OPTION_SHAPES, sprite_frame - 60001)->width / 2;
 			*out_special_radiush = sprite(OPTION_SHAPES, sprite_frame - 60001)->height / 2;
@@ -290,14 +292,18 @@ bool player_shot_move_and_draw(
 			if (sprite_frame > 500)
 			{
 				if (background2 && *out_shoty + shadowYDist < 190 && tmp_shotXM < 100)
-					blit_sprite2_darken(VGAScreen, *out_shotx+1, *out_shoty + shadowYDist, spriteSheet12, sprite_frame - 500);
-				blit_sprite2(VGAScreen, *out_shotx+1, *out_shoty, spriteSheet12, sprite_frame - 500);
+					present_record(PRESENT_SHADOW, PRESENT_BLIT_SPRITE2, PRESENT_FLAG_DARKEN, 0,
+					               &spriteSheet12, *out_shotx+1, *out_shoty + shadowYDist, sprite_frame - 500);
+				present_record(PRESENT_PLAYER_SHOT, PRESENT_BLIT_SPRITE2, 0, 0,
+				               &spriteSheet12, *out_shotx+1, *out_shoty, sprite_frame - 500);
 			}
 			else
 			{
 				if (background2 && *out_shoty + shadowYDist < 190 && tmp_shotXM < 100)
-					blit_sprite2_darken(VGAScreen, *out_shotx+1, *out_shoty + shadowYDist, spriteSheet8, sprite_frame);
-				blit_sprite2(VGAScreen, *out_shotx+1, *out_shoty, spriteSheet8, sprite_frame);
+					present_record(PRESENT_SHADOW, PRESENT_BLIT_SPRITE2, PRESENT_FLAG_DARKEN, 0,
+					               &spriteSheet8, *out_shotx+1, *out_shoty + shadowYDist, sprite_frame);
+				present_record(PRESENT_PLAYER_SHOT, PRESENT_BLIT_SPRITE2, 0, 0,
+				               &spriteSheet8, *out_shotx+1, *out_shoty, sprite_frame);
 			}
 		}
 	}

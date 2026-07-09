@@ -60,8 +60,14 @@ void present_draw_from(SDL_Surface *surface, unsigned int from)
 				blit_sprite2_filter(surface, sprite->x, sprite->y, *sprite->sheet, sprite->index, sprite->filter_color);
 			else if (sprite->flags & PRESENT_FLAG_BLEND)
 				blit_sprite2_blend(surface, sprite->x, sprite->y, *sprite->sheet, sprite->index);
+			else if (sprite->flags & PRESENT_FLAG_DARKEN)
+				blit_sprite2_darken(surface, sprite->x, sprite->y, *sprite->sheet, sprite->index);
 			else
 				blit_sprite2(surface, sprite->x, sprite->y, *sprite->sheet, sprite->index);
+		}
+		else if (sprite->kind == PRESENT_BLIT_SPRITE_BLEND)
+		{
+			blit_sprite_blend(surface, sprite->x, sprite->y, sprite->filter_color, sprite->index);
 		}
 		else  /* PRESENT_BLIT_SPRITE2X2 */
 		{

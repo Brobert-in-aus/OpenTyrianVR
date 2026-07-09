@@ -1015,7 +1015,8 @@ static enum LevelTickResult JE_levelTick(void)
 		JE_drawEnemy(75);
 	}
 
-	/* Player Shot Images */
+	/* Player Shot Images: update/collide records the blits; replay follows. */
+	unsigned int player_shot_mark = present_sprite_count;
 	for (int z = 0; z < MAX_PWEAPON; z++)
 	{
 		if (shotAvail[z] != 0)
@@ -1331,6 +1332,7 @@ draw_player_shot_loop_end:
 			;
 		}
 	}
+	present_draw_from(VGAScreen, player_shot_mark);
 
 	/* Player movement indicators for shots that track your ship */
 	for (uint i = 0; i < COUNTOF(player); ++i)
