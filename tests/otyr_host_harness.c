@@ -25,6 +25,8 @@ typedef int32_t (*fn_session_destroy)(uint64_t);
 typedef int32_t (*fn_submit_input)(uint64_t, const OtyrInputFrame *, uint32_t);
 typedef int32_t (*fn_acquire_frame)(uint64_t, OtyrFrame *, uint32_t, uint32_t);
 typedef int32_t (*fn_player_state)(uint64_t, OtyrPlayerState *, uint32_t);
+typedef int32_t (*fn_snapshot)(uint64_t, OtyrSnapshot *, uint32_t, uint32_t);
+typedef int32_t (*fn_sprite_sheet)(uint64_t, uint32_t, OtyrSpriteSheet *, uint32_t);
 
 static fn_abi_version p_abi_version;
 static fn_last_error p_last_error;
@@ -33,6 +35,8 @@ static fn_session_destroy p_session_destroy;
 static fn_submit_input p_submit_input;
 static fn_acquire_frame p_acquire_frame;
 static fn_player_state p_player_state;
+static fn_snapshot p_snapshot;
+static fn_sprite_sheet p_sprite_sheet;
 
 static uint64_t g_session;
 
@@ -104,8 +108,10 @@ int main(void)
 	p_submit_input = (fn_submit_input)GetProcAddress(dll, "otyr_session_submit_input");
 	p_acquire_frame = (fn_acquire_frame)GetProcAddress(dll, "otyr_session_acquire_frame");
 	p_player_state = (fn_player_state)GetProcAddress(dll, "otyr_session_player_state");
+	p_snapshot = (fn_snapshot)GetProcAddress(dll, "otyr_session_snapshot");
+	p_sprite_sheet = (fn_sprite_sheet)GetProcAddress(dll, "otyr_sprite_sheet");
 	if (!p_abi_version || !p_last_error || !p_session_create || !p_session_destroy ||
-	    !p_submit_input || !p_acquire_frame || !p_player_state)
+	    !p_submit_input || !p_acquire_frame || !p_player_state || !p_snapshot || !p_sprite_sheet)
 		die("missing export");
 
 	if (p_abi_version() != OTYR_ABI_VERSION)
@@ -216,6 +222,43 @@ int main(void)
 		printf("cadence: %u frames, avg %.2f ms (%.1f fps), min %.2f ms, max %.2f ms\n",
 		       periods, avg, 1000.0 / avg, min_period, max_period);
 	}
+
+	/* Phase 4: presentation snapshot + sprite sheets (ABI v6). */
+	OtyrSnapshot *snapshot = calloc(1, sizeof(OtyrSnapshot));
+	snapshot->struct_size = sizeof(OtyrSnapshot);
+	if (p_snapshot(g_session, snapshot, sizeof(OtyrSnapshot), 2000) != OTYR_OK)
+		die("session_snapshot");
+
+	unsigned int by_category[16] = { 0 };
+	for (uint32_t i = 0; i < snapshot->sprite_count; ++i)
+		if (snapshot->sprites[i].category < 16)
+			by_category[snapshot->sprites[i].category]++;
+	printf("snapshot: tick %u, %u sprites (sky %u gndA %u top %u gndB %u eshot %u pshot %u player %u shadow %u sk %u expl %u px %u), %u sounds\n",
+	       snapshot->level_tick, snapshot->sprite_count,
+	       by_category[0], by_category[1], by_category[2], by_category[3],
+	       by_category[4], by_category[5], by_category[6], by_category[7],
+	       by_category[8], by_category[9], by_category[10],
+	       snapshot->sound_count);
+	if (snapshot->sprite_count == 0)
+		die("snapshot has no sprites during demo gameplay");
+
+	OtyrSpriteSheet *sheet = calloc(1, sizeof(OtyrSpriteSheet));
+	sheet->struct_size = sizeof(OtyrSpriteSheet);
+	printf("sheets:");
+	for (uint32_t id = 0; id < OTYR_SHEET_COUNT; ++id)
+	{
+		if (p_sprite_sheet(g_session, id, sheet, sizeof(OtyrSpriteSheet)) != OTYR_OK)
+			die("sprite_sheet");
+		unsigned int opaque = 0;
+		for (uint32_t px = 0; px < sheet->cell_count * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H; ++px)
+			if (sheet->pixels[px] != 0)
+				++opaque;
+		printf(" [%u]=%u/%u%%", id, sheet->cell_count,
+		       sheet->cell_count ? opaque * 100 / (sheet->cell_count * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H) : 0);
+	}
+	printf(" (epoch %u)\n", sheet->sheet_epoch);
+	free(sheet);
+	free(snapshot);
 
 	write_bmp("captures\\hosted-demo.bmp", frame);
 	if (p_player_state(g_session, &state, sizeof(state)) != OTYR_OK)

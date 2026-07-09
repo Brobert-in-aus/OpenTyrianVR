@@ -24,12 +24,15 @@
 #include "keyboard.h"
 #include "palette.h"
 #include "player.h"
+#include "present_frame.h"
+#include "sprite.h"
 #include "video.h"
 
 #include "SDL.h"
 
 #include <setjmp.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #ifdef _WIN32
@@ -109,7 +112,41 @@ static struct
 
 	uint32_t level_tick;
 	char user_dir[260];
+
+	/* latest published presentation snapshot */
+	OtyrSnapshot snapshot;
+
+	/* rasterized sprite-sheet cache, filled on the game thread at level load */
+	uint32_t sheet_epoch;
+	uint32_t sheet_cell_count[OTYR_SHEET_COUNT];
+	uint8_t (*sheet_cells)[OTYR_SHEET_CELL_MAX * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H];
 } session;
+
+/* Registry mapping sheet ids to the game's sheet globals. */
+static Sprite2_array *sheet_registry(uint32_t sheet_id)
+{
+	switch (sheet_id)
+	{
+	case 0: return &spriteSheet8;
+	case 1: return &spriteSheet9;
+	case 2: return &spriteSheet10;
+	case 3: return &spriteSheet12;
+	case 4: return &explosionSpriteSheet;
+	case 5: return &enemySpriteSheets[0];
+	case 6: return &enemySpriteSheets[1];
+	case 7: return &enemySpriteSheets[2];
+	case 8: return &enemySpriteSheets[3];
+	default: return NULL;
+	}
+}
+
+static uint8_t sheet_id_for(const Sprite2_array *sheet)
+{
+	for (uint32_t id = 0; id < OTYR_SHEET_COUNT; ++id)
+		if (sheet_registry(id) == sheet)
+			return (uint8_t)id;
+	return OTYR_SHEET_INVALID;
+}
 
 static char last_error[256] = "";
 
@@ -162,6 +199,72 @@ void otyr_host_level_tick(void)
 	/* Game-thread write; published to the host via the state snapshot taken
 	   under the mutex at present time. */
 	++session.level_tick;
+}
+
+/* Decodes one RLE sprite cell (see blit_sprite2) into a 12x14 indexed
+ * bitmap; 0 stays transparent. */
+static void rasterize_cell(const Sprite2_array *sheet, uint32_t index, uint8_t *cell)
+{
+	memset(cell, 0, OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H);
+
+	const uint8_t *base = sheet->data;
+	const uint8_t *end = base + sheet->size;
+
+	uint16_t offset = (uint16_t)(base[2 * index] | (base[2 * index + 1] << 8));
+	if (offset >= sheet->size)
+		return;
+
+	const uint8_t *data = base + offset;
+	int x = 0, y = 0;
+
+	for (; data < end && *data != 0x0f; ++data)
+	{
+		x += *data & 0x0f;
+		unsigned int count = (*data & 0xf0) >> 4;
+
+		if (count == 0)  /* next pixel row */
+		{
+			++y;
+			x -= OTYR_SHEET_CELL_W;
+			if (y >= (int)OTYR_SHEET_CELL_H)
+				return;
+		}
+		else
+		{
+			while (count-- && ++data < end)
+			{
+				if (x >= 0 && x < (int)OTYR_SHEET_CELL_W && y >= 0 && y < (int)OTYR_SHEET_CELL_H)
+					cell[y * OTYR_SHEET_CELL_W + x] = *data;
+				++x;
+			}
+		}
+	}
+}
+
+void otyr_host_capture_sheets(void)
+{
+	SDL_LockMutex(session.mutex);
+	for (uint32_t id = 0; id < OTYR_SHEET_COUNT; ++id)
+	{
+		const Sprite2_array *sheet = sheet_registry(id);
+		uint32_t count = 0;
+
+		if (sheet->data != NULL && sheet->size >= 2)
+		{
+			uint16_t first = (uint16_t)(sheet->data[0] | (sheet->data[1] << 8));
+			count = first / 2;
+			if (count > OTYR_SHEET_CELL_MAX)
+				count = OTYR_SHEET_CELL_MAX;
+
+			for (uint32_t i = 0; i < count; ++i)
+				rasterize_cell(sheet, i,
+				               session.sheet_cells[id] + i * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H);
+		}
+
+		session.sheet_cell_count[id] = count;
+	}
+	++session.sheet_epoch;
+	SDL_UnlockMutex(session.mutex);
 }
 
 void otyr_host_game_input(struct GameInput *input)
@@ -262,6 +365,16 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 
 	snprintf(session.user_dir, sizeof(session.user_dir), "%s", config->user_dir);
 
+	session.sheet_cells = calloc(OTYR_SHEET_COUNT, sizeof(*session.sheet_cells));
+	if (session.sheet_cells == NULL)
+	{
+		set_error("failed to allocate sheet cache");
+		return OTYR_ERROR;
+	}
+	memset(session.sheet_cell_count, 0, sizeof(session.sheet_cell_count));
+	session.sheet_epoch = 0;
+	memset(&session.snapshot, 0, sizeof(session.snapshot));
+
 	session.frame_number = 0;
 	session.pending_buttons = 0;
 	session.applied_buttons = 0;
@@ -323,6 +436,14 @@ int32_t otyr_session_destroy(uint64_t handle)
 	session.thread = NULL;
 	session.state = SESSION_NONE;
 	otyr_hosted = false;
+
+	if (halted)
+	{
+		free(session.sheet_cells);
+		session.sheet_cells = NULL;
+	}
+	/* (detached thread: leak the cache rather than free under its feet) */
+
 	return halted ? OTYR_OK : OTYR_TIMEOUT;
 }
 
@@ -406,6 +527,62 @@ int32_t otyr_session_player_state(uint64_t handle, OtyrPlayerState *state,
 
 	SDL_LockMutex(session.mutex);
 	*state = session.player_state;
+	SDL_UnlockMutex(session.mutex);
+	return OTYR_OK;
+}
+
+int32_t otyr_session_snapshot(uint64_t handle, OtyrSnapshot *snapshot,
+                              uint32_t snapshot_size, uint32_t timeout_ms)
+{
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE)
+		return OTYR_INVALID_SESSION;
+	if (snapshot == NULL || snapshot_size < sizeof(OtyrSnapshot) ||
+	    snapshot->struct_size < sizeof(OtyrSnapshot))
+		return OTYR_INVALID_ARGUMENT;
+
+	const uint32_t last_seen = snapshot->level_tick;
+
+	int32_t result = OTYR_TIMEOUT;
+	const Uint32 deadline = SDL_GetTicks() + timeout_ms;
+
+	SDL_LockMutex(session.mutex);
+	for (;;)
+	{
+		if (session.snapshot.level_tick != last_seen && session.snapshot.level_tick != 0)
+		{
+			memcpy(snapshot, &session.snapshot, sizeof(OtyrSnapshot));
+			result = OTYR_OK;
+			break;
+		}
+		if (session.state == SESSION_HALTED)
+		{
+			result = OTYR_INVALID_SESSION;
+			break;
+		}
+		Uint32 now = SDL_GetTicks();
+		if (now >= deadline)
+			break;
+		SDL_CondWaitTimeout(session.frame_ready, session.mutex, deadline - now);
+	}
+	SDL_UnlockMutex(session.mutex);
+	return result;
+}
+
+int32_t otyr_sprite_sheet(uint64_t handle, uint32_t sheet_id,
+                          OtyrSpriteSheet *sheet, uint32_t sheet_size)
+{
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE)
+		return OTYR_INVALID_SESSION;
+	if (sheet == NULL || sheet_size < sizeof(OtyrSpriteSheet) ||
+	    sheet->struct_size < sizeof(OtyrSpriteSheet) ||
+	    sheet_id >= OTYR_SHEET_COUNT)
+		return OTYR_INVALID_ARGUMENT;
+
+	SDL_LockMutex(session.mutex);
+	sheet->sheet_epoch = session.sheet_epoch;
+	sheet->cell_count = session.sheet_cell_count[sheet_id];
+	memcpy(sheet->pixels, session.sheet_cells[sheet_id],
+	       sheet->cell_count * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H);
 	SDL_UnlockMutex(session.mutex);
 	return OTYR_OK;
 }
@@ -507,6 +684,39 @@ void otyr_host_present(SDL_Surface *screen)
 	session.player_state.y_velocity = player[0].y_velocity;
 
 	++session.frame_number;
+
+	/* Publish the presentation snapshot for this tick (records complete by
+	   present time; sheet pointers resolve to stable ids). */
+	OtyrSnapshot *snapshot = &session.snapshot;
+	snapshot->struct_size = sizeof(OtyrSnapshot);
+	snapshot->level_tick = session.level_tick;
+	snapshot->sheet_epoch = session.sheet_epoch;
+
+	unsigned int sprite_count = present_sprite_count;
+	if (sprite_count > OTYR_SNAPSHOT_SPRITE_MAX)
+		sprite_count = OTYR_SNAPSHOT_SPRITE_MAX;
+	snapshot->sprite_count = sprite_count;
+	for (unsigned int i = 0; i < sprite_count; ++i)
+	{
+		const PresentSprite *in = &present_sprites[i];
+		OtyrSnapshotSprite *out = &snapshot->sprites[i];
+		out->category = in->category;
+		out->kind = in->kind;
+		out->flags = in->flags;
+		out->filter_color = in->filter_color;
+		out->x = in->x;
+		out->y = in->y;
+		out->index = in->index;
+		out->sheet_id = in->sheet != NULL ? sheet_id_for(in->sheet) : OTYR_SHEET_INVALID;
+		memset(out->reserved, 0, sizeof(out->reserved));
+	}
+
+	unsigned int sound_count = present_sound_count;
+	if (sound_count > OTYR_SNAPSHOT_SOUND_MAX)
+		sound_count = OTYR_SNAPSHOT_SOUND_MAX;
+	snapshot->sound_count = sound_count;
+	memcpy(snapshot->sound_channel, present_sound_channel, sizeof(snapshot->sound_channel));
+	memcpy(snapshot->sound_sample, present_sound_sample, sizeof(snapshot->sound_sample));
 
 	SDL_CondBroadcast(session.frame_ready);
 	SDL_UnlockMutex(session.mutex);

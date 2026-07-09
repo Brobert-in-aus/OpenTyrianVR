@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 5u
+#define OTYR_ABI_VERSION 6u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -131,6 +131,74 @@ typedef struct OtyrPlayerState
 	int32_t  y_velocity;
 } OtyrPlayerState;
 
+/* --- Presentation snapshot (v6) --------------------------------------- */
+
+/* Semantic sprite categories; mirrors PresentCategory (present_frame.h) and
+ * maps onto the ENTITY_TAXONOMY.md height bands. */
+#define OTYR_CAT_ENEMY_SKY       0u
+#define OTYR_CAT_ENEMY_GROUND_A  1u
+#define OTYR_CAT_ENEMY_TOP       2u
+#define OTYR_CAT_ENEMY_GROUND_B  3u
+#define OTYR_CAT_ENEMY_SHOT      4u
+#define OTYR_CAT_PLAYER_SHOT     5u
+#define OTYR_CAT_PLAYER          6u
+#define OTYR_CAT_SHADOW          7u
+#define OTYR_CAT_SIDEKICK        8u
+#define OTYR_CAT_EXPLOSION       9u
+#define OTYR_CAT_SUPERPIXEL      10u
+
+#define OTYR_KIND_SPRITE2        0u  /* 12x14 sprite cell */
+#define OTYR_KIND_SPRITE2X2      1u  /* four cells forming 24x28 */
+#define OTYR_KIND_SPRITE_BLEND   2u  /* old-table blend; no sheet */
+#define OTYR_KIND_PIXEL_GLOW     3u  /* debris pixel; filter_color=intensity, index=color */
+
+#define OTYR_SHEET_INVALID       0xffu
+
+#define OTYR_SNAPSHOT_SPRITE_MAX 1024u
+#define OTYR_SNAPSHOT_SOUND_MAX  8u
+
+typedef struct OtyrSnapshotSprite
+{
+	uint8_t  category;      /* OTYR_CAT_* */
+	uint8_t  kind;          /* OTYR_KIND_* */
+	uint8_t  flags;         /* 1 filter, 2 blend, 4 darken (matches present_frame) */
+	uint8_t  filter_color;
+	int16_t  x, y;          /* legacy frame coordinates at draw time */
+	uint16_t index;         /* sprite index within the sheet (1-based) */
+	uint8_t  sheet_id;      /* OTYR_SHEET_* or OTYR_SHEET_INVALID */
+	uint8_t  reserved[3];
+} OtyrSnapshotSprite;
+
+typedef struct OtyrSnapshot
+{
+	uint32_t struct_size;   /* sizeof(OtyrSnapshot); doubles as last-seen key
+	                           via level_tick, like OtyrFrame */
+	uint32_t level_tick;    /* gameplay tick this snapshot belongs to */
+	uint32_t sheet_epoch;   /* increments when sprite sheets are (re)loaded */
+	uint32_t sprite_count;
+	uint32_t sound_count;
+	uint8_t  sound_channel[OTYR_SNAPSHOT_SOUND_MAX];
+	uint8_t  sound_sample[OTYR_SNAPSHOT_SOUND_MAX];
+	OtyrSnapshotSprite sprites[OTYR_SNAPSHOT_SPRITE_MAX];
+} OtyrSnapshot;
+
+/* Sprite sheet export: every cell is a 12x14 indexed-color bitmap (0 =
+ * transparent); palette comes from the frame.  Sheets 0-3 are the static
+ * main tables (8, 9, 10, 12), 4 the explosion sheet, 5-8 the per-level
+ * enemy sheets.  Re-fetch when snapshot.sheet_epoch changes. */
+#define OTYR_SHEET_COUNT   9u
+#define OTYR_SHEET_CELL_W  12u
+#define OTYR_SHEET_CELL_H  14u
+#define OTYR_SHEET_CELL_MAX 1024u
+
+typedef struct OtyrSpriteSheet
+{
+	uint32_t struct_size;
+	uint32_t sheet_epoch;
+	uint32_t cell_count;
+	uint8_t  pixels[OTYR_SHEET_CELL_MAX * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H];
+} OtyrSpriteSheet;
+
 /* Returns OTYR_ABI_VERSION of this library. */
 OTYR_API uint32_t otyr_abi_version(void);
 
@@ -168,6 +236,21 @@ OTYR_API int32_t otyr_session_acquire_frame(uint64_t session,
 OTYR_API int32_t otyr_session_player_state(uint64_t session,
                                            OtyrPlayerState *state,
                                            uint32_t state_size);
+
+/* Blocks until a presentation snapshot for a gameplay tick newer than
+ * snapshot->level_tick is available (0 polls).  Menus produce none. */
+OTYR_API int32_t otyr_session_snapshot(uint64_t session,
+                                       OtyrSnapshot *snapshot,
+                                       uint32_t snapshot_size,
+                                       uint32_t timeout_ms);
+
+/* Copies the rasterized cells of one sprite sheet.  Cheap (memcpy from a
+ * cache filled at level load); call for all sheets whenever sheet_epoch
+ * changes. */
+OTYR_API int32_t otyr_sprite_sheet(uint64_t session,
+                                   uint32_t sheet_id,
+                                   OtyrSpriteSheet *sheet,
+                                   uint32_t sheet_size);
 
 #ifdef __cplusplus
 }

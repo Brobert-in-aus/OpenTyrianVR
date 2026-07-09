@@ -23,9 +23,24 @@
 PresentSprite present_sprites[PRESENT_SPRITE_MAX];
 unsigned int present_sprite_count = 0;
 
+Uint8 present_sound_channel[PRESENT_SOUND_MAX];
+Uint8 present_sound_sample[PRESENT_SOUND_MAX];
+unsigned int present_sound_count = 0;
+
 void present_frame_reset(void)
 {
 	present_sprite_count = 0;
+	present_sound_count = 0;
+}
+
+void present_sound(Uint8 channel, Uint8 sample)
+{
+	if (present_sound_count < PRESENT_SOUND_MAX)
+	{
+		present_sound_channel[present_sound_count] = channel;
+		present_sound_sample[present_sound_count] = sample;
+		++present_sound_count;
+	}
 }
 
 unsigned int present_record(PresentCategory category, PresentBlitKind kind,

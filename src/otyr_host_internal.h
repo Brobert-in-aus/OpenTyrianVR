@@ -40,6 +40,10 @@ void otyr_host_thread_exit(int code);
 /* Called once per gameplay tick (top of the level loop). */
 void otyr_host_level_tick(void);
 
+/* Called on the game thread after a level's sprite sheets are loaded;
+ * rasterizes all sheets into the session cache and bumps the epoch. */
+void otyr_host_capture_sheets(void);
+
 /* Fills the gameplay input frame from the host's submitted state; consumed
  * by the player-movement tick in place of local device sampling. */
 struct GameInput;

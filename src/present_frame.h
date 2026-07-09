@@ -80,9 +80,17 @@ typedef struct PresentSprite
 } PresentSprite;
 
 #define PRESENT_SPRITE_MAX 1024
+#define PRESENT_SOUND_MAX 8
 
 extern PresentSprite present_sprites[PRESENT_SPRITE_MAX];
 extern unsigned int present_sprite_count;
+
+/* Sound events dispatched this tick: (mixer channel, sample id) pairs. */
+extern Uint8 present_sound_channel[PRESENT_SOUND_MAX];
+extern Uint8 present_sound_sample[PRESENT_SOUND_MAX];
+extern unsigned int present_sound_count;
+
+void present_sound(Uint8 channel, Uint8 sample);
 
 /* Clears the record list; called once at the top of each gameplay tick. */
 void present_frame_reset(void);

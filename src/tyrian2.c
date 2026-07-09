@@ -1659,6 +1659,8 @@ draw_player_shot_loop_end:
 
 				multiSamplePlay(soundSamples[temp-1], soundSampleCount[temp-1], temp2, temp3);
 
+				present_sound(temp2, temp);
+
 				soundQueue[temp2] = S_NONE;
 			}
 		}
@@ -2449,6 +2451,9 @@ start_level_first:
 	BKwrap1 = BKwrap1to = &megaData1.mainmap[1][0];
 	BKwrap2 = BKwrap2to = &megaData2.mainmap[1][0];
 	BKwrap3 = BKwrap3to = &megaData3.mainmap[1][0];
+
+	if (otyr_hosted)
+		otyr_host_capture_sheets();  /* sheets for this level are loaded now */
 
 level_loop:
 	if (JE_levelTick() == TICK_CONTINUE)
@@ -4344,6 +4349,7 @@ void JE_eventSystem(void)
 				eventRec[eventLoc-1].eventdat4 > 0 ? eventRec[eventLoc-1].eventdat4 : 0,
 			};
 			
+			bool sheets_changed = false;
 			for (unsigned int i = 0; i < COUNTOF(newEnemyShapeTables); ++i)
 			{
 				if (enemySpriteSheetIds[i] != newEnemyShapeTables[i])
@@ -4357,8 +4363,11 @@ void JE_eventSystem(void)
 						free_sprite2s(&enemySpriteSheets[i]);
 
 					enemySpriteSheetIds[i] = newEnemyShapeTables[i];
+					sheets_changed = true;
 				}
 			}
+			if (otyr_hosted && sheets_changed)
+				otyr_host_capture_sheets();
 		}
 		break;
 
