@@ -23,6 +23,13 @@
 
 extern JE_boolean richMode, constantPlay, constantDie;
 
+/* Verification helpers: turbo_mode removes all frame-pacing delays (the
+ * simulation is wall-clock independent, so results are identical, just
+ * faster); start_with_demo skips the logos/title and plays demos
+ * immediately.  Together they make replay/hash gates take seconds. */
+extern bool turbo_mode;
+extern bool start_with_demo;
+
 void JE_paramCheck(int argc, char *argv[]);
 
 #endif /* PARAMS_H */

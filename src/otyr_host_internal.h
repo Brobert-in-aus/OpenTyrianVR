@@ -40,6 +40,11 @@ void otyr_host_thread_exit(int code);
 /* Called once per gameplay tick (top of the level loop). */
 void otyr_host_level_tick(void);
 
+/* Fills the gameplay input frame from the host's submitted state; consumed
+ * by the player-movement tick in place of local device sampling. */
+struct GameInput;
+void otyr_host_game_input(struct GameInput *input);
+
 /* Hosted config/save directory; empty string means "use the default". */
 const char *otyr_host_user_dir(void);
 

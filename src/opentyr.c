@@ -845,7 +845,7 @@ int opentyrian_main(int argc, char *argv[])
 	}
 
 #ifdef NDEBUG
-	if (!isNetworkGame)
+	if (!isNetworkGame && !start_with_demo)
 		intro_logos();
 #endif
 

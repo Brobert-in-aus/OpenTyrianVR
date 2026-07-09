@@ -47,11 +47,9 @@ public partial class Main : Node3D
     private const float GameMinX = 40f, GameMaxX = 256f;
     private const float GameMinY = 10f, GameMaxY = 160f;
     private const float SteerDeadbandPx = 2f;
-    private const float SteerRampPx = 16f;
     private const float LaneWidth = 1.0f, LaneHeight = 0.625f;
-    private uint _steerTick;
-    private float _steerErrX, _steerErrY;
-    private OtyrNative.Buttons _steerHeld;
+    private short _analogDx, _analogDy;
+    private short _lastAnalogDx, _lastAnalogDy;
 
     public override void _Ready()
     {
@@ -354,15 +352,18 @@ public partial class Main : Node3D
                 XRServer.CenterOnHmd(XRServer.RotationMode.ResetButKeepTilt, true);
             }
 
-            buttons |= HandSteering();
+            HandSteering();
         }
 
-        if (buttons == _lastButtons)
+        if (buttons == _lastButtons && _analogDx == _lastAnalogDx && _analogDy == _lastAnalogDy)
             return;
+        if (buttons != _lastButtons)
+            GD.Print($"OpenTyrianVR: input -> 0x{(uint)buttons:x3}");
         _lastButtons = buttons;
-        GD.Print($"OpenTyrianVR: input -> 0x{(uint)buttons:x3}");
+        _lastAnalogDx = _analogDx;
+        _lastAnalogDy = _analogDy;
 
-        var input = OtyrNative.InputFrame.Create(buttons);
+        var input = OtyrNative.InputFrame.Create(buttons, _analogDx, _analogDy);
         OtyrNative.SubmitInput(_session, in input, input.StructSize);
     }
 
@@ -372,7 +373,7 @@ public partial class Main : Node3D
     /// steer the ship toward it.  Shows the hand marker on the rectangle and
     /// the target reticle on the lane.
     /// </summary>
-    private OtyrNative.Buttons HandSteering()
+    private void HandSteering()
     {
         // The rectangle stays visible whenever the hand tracks (TODO in plan:
         // user setting to hide it or fade it out after level start); the lane
@@ -380,8 +381,10 @@ public partial class Main : Node3D
         bool tracking = _leftHand != null && _leftHand.GetHasTrackingData();
         _controlRect.Visible = tracking;
         _targetReticle.Visible = tracking && _inGameplay;
+        _analogDx = 0;
+        _analogDy = 0;
         if (!tracking)
-            return OtyrNative.Buttons.None;
+            return;
 
         // Project the hand onto the rectangle's plane (drop local Z), clamp
         // to the bounds, and show the marker at the clamped point.
@@ -391,7 +394,7 @@ public partial class Main : Node3D
         _handMarker.Position = new Vector3(lx, ly, 0.002f);
 
         if (!_inGameplay)
-            return OtyrNative.Buttons.None;
+            return;
 
         // 1:1 map to the gameplay rectangle.  Rectangle-up = screen-up = smaller
         // Tyrian y (sim y grows downward).
@@ -407,40 +410,15 @@ public partial class Main : Node3D
         _targetReticle.Position = new Vector3(
             (frameU - 0.5f) * LaneWidth, (0.5f - frameV) * LaneHeight, 0.006f);
 
-        // Steer toward the target.  Direction bits are duty-cycled per game
-        // tick (Bresenham accumulator) so small errors produce fractional
-        // average speed through the game's own acceleration model — otherwise
-        // the fixed-speed ship stop-starts behind a slowly moving hand.
-        // Velocity lookahead brakes it before arrival.  Real analog input
-        // replaces this in Phase 2.
-        if (_playerState.LevelTick != _steerTick)
-        {
-            _steerTick = _playerState.LevelTick;
-            const float lookaheadTicks = 3f;
-            float dx = targetX - (_playerState.X + _playerState.XVelocity * lookaheadTicks);
-            float dy = targetY - (_playerState.Y + _playerState.YVelocity * lookaheadTicks);
-            _steerHeld = SteerAxis(dx, ref _steerErrX, OtyrNative.Buttons.Right, OtyrNative.Buttons.Left)
-                       | SteerAxis(dy, ref _steerErrY, OtyrNative.Buttons.Down, OtyrNative.Buttons.Up);
-        }
-        return _steerHeld;
-    }
-
-    private static OtyrNative.Buttons SteerAxis(float delta, ref float error,
-        OtyrNative.Buttons positive, OtyrNative.Buttons negative)
-    {
-        float magnitude = Mathf.Abs(delta) - SteerDeadbandPx;
-        if (magnitude <= 0f)
-        {
-            error = 0f;
-            return OtyrNative.Buttons.None;
-        }
-        // Full speed beyond the ramp, proportional duty cycle inside it.
-        float duty = Mathf.Min(1f, magnitude / SteerRampPx);
-        error += duty;
-        if (error < 1f)
-            return OtyrNative.Buttons.None;
-        error -= 1f;
-        return delta > 0f ? positive : negative;
+        // Proportional analog steering through the InputFrame: speed scales
+        // with distance (velocity lookahead damps arrival), so the ship
+        // follows a slow hand smoothly and snaps across for dodges.
+        const float lookaheadTicks = 3f;
+        const float gain = 1.3f;  // analog/4 px-per-tick steady state
+        float dx = targetX - (_playerState.X + _playerState.XVelocity * lookaheadTicks);
+        float dy = targetY - (_playerState.Y + _playerState.YVelocity * lookaheadTicks);
+        _analogDx = (short)(Mathf.Abs(dx) <= SteerDeadbandPx ? 0 : Mathf.Clamp(dx * gain, -30f, 30f));
+        _analogDy = (short)(Mathf.Abs(dy) <= SteerDeadbandPx ? 0 : Mathf.Clamp(dy * gain, -30f, 30f));
     }
 
     private void UpdateDiagnostics(double delta)

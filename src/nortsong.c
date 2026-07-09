@@ -90,6 +90,9 @@ void setFrameCount2(JE_word frameCount2)  // FKA NortSong.frameCount2
 
 Uint32 getFrameCountTicks(void)
 {
+	if (turbo_mode)
+		return 0;
+
 	const Uint32 half = 1 << 9;
 	Uint32 now = SDL_GetTicks() << 10;
 	Sint32 diff = frameCountEnd - now;
@@ -98,6 +101,9 @@ Uint32 getFrameCountTicks(void)
 
 Uint32 getFrameCount2Ticks(void)
 {
+	if (turbo_mode)
+		return 0;
+
 	const Uint32 half = 1 << 9;
 	Uint32 now = SDL_GetTicks() << 10;
 	Sint32 diff = frameCount2End - now;
@@ -106,6 +112,9 @@ Uint32 getFrameCount2Ticks(void)
 
 void delayUntilElapsed(void)
 {
+	if (turbo_mode)
+		return;
+
 	const Uint32 half = 1 << 9;
 	Uint32 now = SDL_GetTicks() << 10;
 	Sint32 diff = frameCountEnd - now;

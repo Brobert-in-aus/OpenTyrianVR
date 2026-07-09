@@ -20,6 +20,7 @@
 #include "otyr_host_internal.h"
 
 #include "config.h"
+#include "game_input.h"
 #include "keyboard.h"
 #include "palette.h"
 #include "player.h"
@@ -71,6 +72,8 @@ static struct
 	/* host-desired button state; applied on the game thread each present */
 	uint32_t pending_buttons;
 	uint32_t applied_buttons;
+	int16_t pending_analog_dx;
+	int16_t pending_analog_dy;
 
 	uint32_t level_tick;
 	char user_dir[260];
@@ -127,6 +130,26 @@ void otyr_host_level_tick(void)
 	/* Game-thread write; published to the host via the state snapshot taken
 	   under the mutex at present time. */
 	++session.level_tick;
+}
+
+void otyr_host_game_input(struct GameInput *input)
+{
+	SDL_LockMutex(session.mutex);
+	const uint32_t buttons = session.pending_buttons;
+
+	input->up = (buttons & OTYR_BUTTON_UP) != 0;
+	input->down = (buttons & OTYR_BUTTON_DOWN) != 0;
+	input->left = (buttons & OTYR_BUTTON_LEFT) != 0;
+	input->right = (buttons & OTYR_BUTTON_RIGHT) != 0;
+
+	input->fire = (buttons & OTYR_BUTTON_FIRE) != 0;
+	input->change_fire = (buttons & OTYR_BUTTON_CHANGE_FIRE) != 0;
+	input->left_sidekick = (buttons & OTYR_BUTTON_LEFT_SIDEKICK) != 0;
+	input->right_sidekick = (buttons & OTYR_BUTTON_RIGHT_SIDEKICK) != 0;
+
+	input->analog_dx = session.pending_analog_dx;
+	input->analog_dy = session.pending_analog_dy;
+	SDL_UnlockMutex(session.mutex);
 }
 
 const char *otyr_host_user_dir(void)
@@ -278,6 +301,8 @@ int32_t otyr_session_submit_input(uint64_t handle, const OtyrInputFrame *input,
 	   waiting for input without redrawing, so no present ever happens. */
 	SDL_LockMutex(session.mutex);
 	session.pending_buttons = input->buttons;
+	session.pending_analog_dx = input->analog_dx;
+	session.pending_analog_dy = input->analog_dy;
 	apply_pending_input_locked();
 	SDL_UnlockMutex(session.mutex);
 	return OTYR_OK;

@@ -3250,6 +3250,13 @@ void networkStartScreen(void)
 
 bool titleScreen(void)
 {
+	if (start_with_demo)
+	{
+		/* Verification mode: straight into demo playback, no menu. */
+		play_demo = true;
+		return true;
+	}
+
 	enum MenuItemIndex
 	{
 		MENU_ITEM_NEW_GAME = 0,

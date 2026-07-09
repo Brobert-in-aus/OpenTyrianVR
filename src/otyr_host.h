@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 3u
+#define OTYR_ABI_VERSION 4u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -92,6 +92,11 @@ typedef struct OtyrInputFrame
 {
 	uint32_t struct_size;   /* sizeof(OtyrInputFrame) */
 	uint32_t buttons;       /* OTYR_BUTTON_* bits; level-triggered (held) */
+	int16_t  analog_dx;     /* analog movement, mouse-accumulator units:
+	                           consumed once per gameplay tick while set;
+	                           steady-state ship speed ~= value/4 px per tick,
+	                           useful range about -30..30 (v4) */
+	int16_t  analog_dy;
 } OtyrInputFrame;
 
 typedef struct OtyrFrame

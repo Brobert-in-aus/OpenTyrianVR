@@ -43,8 +43,14 @@ Fork-specific additions used by the Phase 0 replay/determinism gates:
   used), making replays fully deterministic. Stock OpenTyrian demos are
   input-deterministic only — enemy random acceleration diverges between runs.
 
-Determinism gate: play the same demo twice with `--hash-log` and diff the
-logs; they must be identical over the common prefix. The title screen
-auto-plays demos after 30 seconds idle, so this can be done unattended.
+- `--turbo` — removes all frame-pacing delays. The simulation is wall-clock
+  independent, so results are bit-identical, roughly 50x faster.
+- `--play-demo` — skips logos/title and plays demos immediately (cycling
+  demo.1-5).
+
+Determinism gate: run `--turbo --play-demo --hash-log=FILE` and diff against
+the checked baseline; identical over the common prefix. A full demo verifies
+in a few seconds. (Without the flags, the title screen auto-plays demos after
+30 seconds idle, so it also works unattended in real time.)
 
 Reference capture: `captures/demorec-ep1-tyrian.0` (episode 1, level TYRIAN).

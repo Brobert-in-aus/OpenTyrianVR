@@ -36,6 +36,9 @@
 
 JE_boolean richMode = false, constantPlay = false, constantDie = false;
 
+bool turbo_mode = false;
+bool start_with_demo = false;
+
 /* YKS: Note: LOOT cheat had non letters removed. */
 const char pars[][9] = {
 	"LOOT", "RECORD", "NOJOY", "CONSTANT", "DEATH", "NOSOUND", "NOXMAS", "YESXMAS"
@@ -53,6 +56,8 @@ void JE_paramCheck(int argc, char *argv[])
 		
 		{ 't', 't', "data",              true },
 		{ 258, 0,   "hash-log",          true },
+		{ 259, 0,   "turbo",             false },
+		{ 260, 0,   "play-demo",         false },
 		
 		{ 'n', 'n', "net",               true },
 		{ 256, 0,   "net-player-name",   true }, // TODO: no short codes because there should
@@ -95,7 +100,9 @@ void JE_paramCheck(int argc, char *argv[])
 			       "  -j, --no-joystick            Disable joystick/gamepad input\n"
 			       "  -x, --no-xmas                Disable Christmas mode\n\n"
 			       "  -t, --data=DIR               Set Tyrian data directory\n\n"
-			       "  --hash-log=FILE              Write per-tick simulation state hashes to FILE\n\n"
+			       "  --hash-log=FILE              Write per-tick simulation state hashes to FILE\n"
+			       "  --turbo                      Run without frame-pacing delays\n"
+			       "  --play-demo                  Skip logos/title and play demos immediately\n\n"
 			       "  -n, --net=HOST[:PORT]        Start a networked game\n"
 			       "  --net-player-name=NAME       Sets local player name in a networked game\n"
 			       "  --net-player-number=NUMBER   Sets local player number in a networked game\n"
@@ -128,6 +135,16 @@ void JE_paramCheck(int argc, char *argv[])
 		case 258:
 			if (!statehash_open(option.arg))
 				exit(EXIT_FAILURE);
+			break;
+
+		// remove all frame-pacing delays (verification runs)
+		case 259:
+			turbo_mode = true;
+			break;
+
+		// skip logos/title and play demos immediately
+		case 260:
+			start_with_demo = true;
 			break;
 			
 		case 'n':

@@ -122,6 +122,7 @@
     <ClCompile Include="..\src\file.c" />
     <ClCompile Include="..\src\font.c" />
     <ClCompile Include="..\src\fonthand.c" />
+    <ClCompile Include="..\src\game_input.c" />
     <ClCompile Include="..\src\game_menu.c" />
     <ClCompile Include="..\src\helptext.c" />
     <ClCompile Include="..\src\joystick.c" />
@@ -176,6 +177,7 @@
     <ClInclude Include="..\src\file.h" />
     <ClInclude Include="..\src\font.h" />
     <ClInclude Include="..\src\fonthand.h" />
+    <ClInclude Include="..\src\game_input.h" />
     <ClInclude Include="..\src\game_menu.h" />
     <ClInclude Include="..\src\helptext.h" />
     <ClInclude Include="..\src\joystick.h" />

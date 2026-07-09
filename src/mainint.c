@@ -25,6 +25,7 @@
 #include "file.h"
 #include "font.h"
 #include "fonthand.h"
+#include "game_input.h"
 #include "helptext.h"
 #include "joystick.h"
 #include "keyboard.h"
@@ -37,6 +38,7 @@
 #include "nortsong.h"
 #include "nortvars.h"
 #include "opentyr.h"
+#include "otyr_host_internal.h"
 #include "palette.h"
 #include "params.h"
 #include "pcxmast.h"
@@ -2276,7 +2278,7 @@ bool load_next_demo(void)
 	return true;
 }
 
-bool replay_demo_keys(void)
+bool replay_demo_input(GameInput *input)
 {
 	while (demo_keys_wait == 0)
 	{
@@ -2296,20 +2298,15 @@ bool replay_demo_keys(void)
 
 	demo_keys_wait--;
 
-	if (demo_keys & (1 << 0))
-		player[0].y -= CURRENT_KEY_SPEED;
-	if (demo_keys & (1 << 1))
-		player[0].y += CURRENT_KEY_SPEED;
+	input->up = (demo_keys & (1 << 0)) != 0;
+	input->down = (demo_keys & (1 << 1)) != 0;
+	input->left = (demo_keys & (1 << 2)) != 0;
+	input->right = (demo_keys & (1 << 3)) != 0;
 
-	if (demo_keys & (1 << 2))
-		player[0].x -= CURRENT_KEY_SPEED;
-	if (demo_keys & (1 << 3))
-		player[0].x += CURRENT_KEY_SPEED;
-
-	button[0] = (bool)(demo_keys & (1 << 4));
-	button[3] = (bool)(demo_keys & (1 << 5));
-	button[1] = (bool)(demo_keys & (1 << 6));
-	button[2] = (bool)(demo_keys & (1 << 7));
+	input->fire = (demo_keys & (1 << 4)) != 0;
+	input->change_fire = (demo_keys & (1 << 5)) != 0;
+	input->left_sidekick = (demo_keys & (1 << 6)) != 0;
+	input->right_sidekick = (demo_keys & (1 << 7)) != 0;
 
 	return true;
 }
@@ -3521,118 +3518,48 @@ redo:
 				if (record_demo || play_demo)
 					inputDevice = 1;  // keyboard is required device for demo recording
 
-				// demo playback input
+				/* Produce this tick's input frame: demo playback, the native
+				   host boundary, or local device sampling. */
+				GameInput input;
+				memset(&input, 0, sizeof(input));
+
 				if (play_demo)
 				{
-					if (!replay_demo_keys())
+					if (!replay_demo_input(&input))
 					{
 						endLevel = true;
 						levelEnd = 40;
 					}
 				}
-
-				/* joystick input */
-				if ((inputDevice == 0 || inputDevice >= 3) && joysticks > 0)
+				else if (otyr_hosted)
 				{
-					int j = inputDevice  == 0 ? 0 : inputDevice - 3;
-					int j_max = inputDevice == 0 ? joysticks : inputDevice - 3 + 1;
-					for (; j < j_max; j++)
-					{
-						poll_joystick(j);
-
-						if (joystick[j].analog)
-						{
-							mouseXC += joystick_axis_reduce(j, joystick[j].x);
-							mouseYC += joystick_axis_reduce(j, joystick[j].y);
-
-							link_gun_analog = joystick_analog_angle(j, &link_gun_angle);
-						}
-						else
-						{
-							this_player->x += (joystick[j].direction[3] ? -CURRENT_KEY_SPEED : 0) + (joystick[j].direction[1] ? CURRENT_KEY_SPEED : 0);
-							this_player->y += (joystick[j].direction[0] ? -CURRENT_KEY_SPEED : 0) + (joystick[j].direction[2] ? CURRENT_KEY_SPEED : 0);
-						}
-
-						button[0] |= joystick[j].action[0];
-						button[1] |= joystick[j].action[2];
-						button[2] |= joystick[j].action[3];
-						button[3] |= joystick[j].action_pressed[1];
-
-						ingamemenu_pressed |= joystick[j].action_pressed[4];
-						pause_pressed |= joystick[j].action_pressed[5];
-					}
+					otyr_host_game_input(&input);
+				}
+				else
+				{
+					game_input_sample_local(&input, this_player, inputDevice);
 				}
 
-				/* mouse input */
-				if ((inputDevice == 0 || inputDevice == 2) && has_mouse)
-				{
-					button[0] |= (mouseButtonsDown & SDL_BUTTON_LMASK) != 0;
-					button[1] |= (mouseButtonsDown & SDL_BUTTON_RMASK) != 0;
-					button[2] |= (mouseButtonsDown & (mouse_has_three_buttons ? SDL_BUTTON_MMASK : SDL_BUTTON_RMASK)) != 0;
+				/* Consume the input frame. */
+				if (input.up)
+					this_player->y -= CURRENT_KEY_SPEED;
+				if (input.down)
+					this_player->y += CURRENT_KEY_SPEED;
+				if (input.left)
+					this_player->x -= CURRENT_KEY_SPEED;
+				if (input.right)
+					this_player->x += CURRENT_KEY_SPEED;
 
-					Sint32 mouseXR;
-					Sint32 mouseYR;
-					mouseGetRelativePosition(&mouseXR, &mouseYR);
-					mouseXC += mouseXR;
-					mouseYC += mouseYR;
-				}
+				mouseXC += input.analog_dx;
+				mouseYC += input.analog_dy;
 
-				/* keyboard input */
-				if ((inputDevice == 0 || inputDevice == 1) && !play_demo)
-				{
-					if (keysactive[keySettings[KEY_SETTING_UP]])
-						this_player->y -= CURRENT_KEY_SPEED;
-					if (keysactive[keySettings[KEY_SETTING_DOWN]])
-						this_player->y += CURRENT_KEY_SPEED;
+				button[0] |= input.fire;
+				button[1] |= input.left_sidekick;
+				button[2] |= input.right_sidekick;
+				button[3] |= input.change_fire;
 
-					if (keysactive[keySettings[KEY_SETTING_LEFT]])
-						this_player->x -= CURRENT_KEY_SPEED;
-					if (keysactive[keySettings[KEY_SETTING_RIGHT]])
-						this_player->x += CURRENT_KEY_SPEED;
-
-					button[0] |= keysactive[keySettings[KEY_SETTING_FIRE]];
-					button[3] |= keysactive[keySettings[KEY_SETTING_CHANGE_FIRE]];
-					button[1] |= keysactive[keySettings[KEY_SETTING_LEFT_SIDEKICK]];
-					button[2] |= keysactive[keySettings[KEY_SETTING_RIGHT_SIDEKICK]];
-
-					if (constantPlay)
-					{
-						for (unsigned int i = 0; i < 4; i++)
-							button[i] = true;
-
-						++this_player->y;
-						this_player->x += constantLastX;
-					}
-
-					// TODO: check if demo recording still works
-					if (record_demo)
-					{
-						bool new_input = false;
-
-						for (unsigned int i = 0; i < 8; i++)
-						{
-							bool temp = demo_keys & (1 << i);
-							if (temp != keysactive[keySettings[i]])
-								new_input = true;
-						}
-
-						demo_keys_wait++;
-
-						if (new_input)
-						{
-							Uint8 temp2[2] = { demo_keys_wait >> 8, demo_keys_wait };
-							fwrite_u8(temp2, 2, demo_file);
-
-							demo_keys = 0;
-							for (unsigned int i = 0; i < 8; i++)
-								demo_keys |= keysactive[keySettings[i]] ? (1 << i) : 0;
-
-							fwrite_u8(&demo_keys, 1, demo_file);
-
-							demo_keys_wait = 0;
-						}
-					}
-				}
+				link_gun_analog = input.link_gun_analog;
+				link_gun_angle = input.link_gun_angle;
 
 				if (smoothies[9-1])
 				{

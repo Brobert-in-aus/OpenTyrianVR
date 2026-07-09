@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 3;
+    public const uint AbiVersion = 4;
 
     public const int FrameWidth = 320;
     public const int FrameHeight = 200;
@@ -88,11 +88,17 @@ public static unsafe class OtyrNative
     {
         public uint StructSize;
         public uint ButtonBits;
+        // Mouse-accumulator units, consumed once per gameplay tick while set;
+        // steady-state ship speed ~= value/4 px per tick, useful range +-30.
+        public short AnalogDx;
+        public short AnalogDy;
 
-        public static InputFrame Create(Buttons buttons) => new()
+        public static InputFrame Create(Buttons buttons, short analogDx = 0, short analogDy = 0) => new()
         {
             StructSize = (uint)sizeof(InputFrame),
             ButtonBits = (uint)buttons,
+            AnalogDx = analogDx,
+            AnalogDy = analogDy,
         };
     }
 
