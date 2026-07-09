@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 2u
+#define OTYR_ABI_VERSION 3u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -115,6 +115,8 @@ typedef struct OtyrPlayerState
 	uint32_t is_alive;
 	uint32_t level_tick;    /* increments once per gameplay tick; static in
 	                           menus -- gates gameplay-only host features (v2) */
+	int32_t  x_velocity;    /* sim units per tick; for predictive steering (v3) */
+	int32_t  y_velocity;
 } OtyrPlayerState;
 
 /* Returns OTYR_ABI_VERSION of this library. */

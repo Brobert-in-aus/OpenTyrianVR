@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 2;
+    public const uint AbiVersion = 3;
 
     public const int FrameWidth = 320;
     public const int FrameHeight = 200;
@@ -118,6 +118,8 @@ public static unsafe class OtyrNative
         public uint Lives;
         public uint IsAlive;
         public uint LevelTick;
+        public int XVelocity;
+        public int YVelocity;
     }
 
     private const string Dll = "opentyrian-core-x64-Release";

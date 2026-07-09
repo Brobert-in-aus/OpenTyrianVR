@@ -409,6 +409,8 @@ void otyr_host_present(SDL_Surface *screen)
 	session.player_state.lives = player[0].lives != NULL ? *player[0].lives : 0;
 	session.player_state.is_alive = player[0].is_alive;
 	session.player_state.level_tick = session.level_tick;
+	session.player_state.x_velocity = player[0].x_velocity;
+	session.player_state.y_velocity = player[0].y_velocity;
 
 	++session.frame_number;
 

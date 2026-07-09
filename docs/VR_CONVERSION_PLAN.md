@@ -344,7 +344,9 @@ Gate: campaign smoke test with no missing entity/event categories.
 - GPU/CPU profiling, draw-call reduction, texture atlases, pooling, and quality
   tiers;
 - seated/standing presets, dominant-hand options, remapping, reduced motion,
-  brightness, and playfield-distance controls.
+  brightness, and playfield-distance controls;
+- hand-steering settings: dead-zone size, and control-rectangle visibility
+  (always visible / fade out N seconds after level start / hidden).
 
 Gate: representative levels run on the target Quest headset without missed
 simulation ticks or comfort regressions.

@@ -370,10 +370,13 @@ public partial class Main : Node3D
     /// </summary>
     private OtyrNative.Buttons HandSteering()
     {
-        bool active = _inGameplay && _leftHand != null && _leftHand.GetHasTrackingData();
-        _controlRect.Visible = active;
-        _targetReticle.Visible = active;
-        if (!active)
+        // The rectangle stays visible whenever the hand tracks (TODO in plan:
+        // user setting to hide it or fade it out after level start); the lane
+        // reticle and steering only engage during gameplay.
+        bool tracking = _leftHand != null && _leftHand.GetHasTrackingData();
+        _controlRect.Visible = tracking;
+        _targetReticle.Visible = tracking && _inGameplay;
+        if (!tracking)
             return OtyrNative.Buttons.None;
 
         // Project the hand onto the rectangle's plane (drop local Z), clamp
@@ -383,22 +386,29 @@ public partial class Main : Node3D
         float ly = Mathf.Clamp(local.Y, -ControlRectHeight / 2f, ControlRectHeight / 2f);
         _handMarker.Position = new Vector3(lx, ly, 0.002f);
 
+        if (!_inGameplay)
+            return OtyrNative.Buttons.None;
+
         // 1:1 map to the gameplay rectangle.  Rectangle-up = screen-up = smaller
         // Tyrian y (sim y grows downward).
         float targetX = Mathf.Remap(lx, -ControlRectWidth / 2f, ControlRectWidth / 2f, GameMinX, GameMaxX);
         float targetY = Mathf.Remap(ly, -ControlRectHeight / 2f, ControlRectHeight / 2f, GameMaxY, GameMinY);
 
-        // Reticle on the lane: sim coords -> presented-frame coords (the play
-        // area is composited shifted left by 24 px) -> lane-local.
-        float frameU = (targetX - 24f) / 320f;
-        float frameV = targetY / 200f;
+        // Reticle on the lane, placed where the ship's VISUAL CENTER will sit
+        // when it reaches the target: the two 24x28 sprite blocks are drawn at
+        // (x-17, y-7), so the visual center is (x+6.5, y+6.5); the play area
+        // is composited shifted left by 24 px.
+        float frameU = (targetX + 6.5f - 24f) / 320f;
+        float frameV = (targetY + 6.5f) / 200f;
         _targetReticle.Position = new Vector3(
             (frameU - 0.5f) * LaneWidth, (0.5f - frameV) * LaneHeight, 0.006f);
 
-        // Bang-bang toward the target; the ship's own inertia smooths it.
+        // Steer toward the target, leading by the ship's velocity so it
+        // brakes before arrival instead of overshooting and wobbling.
+        const float lookaheadTicks = 3f;
         var buttons = OtyrNative.Buttons.None;
-        float dx = targetX - _playerState.X;
-        float dy = targetY - _playerState.Y;
+        float dx = targetX - (_playerState.X + _playerState.XVelocity * lookaheadTicks);
+        float dy = targetY - (_playerState.Y + _playerState.YVelocity * lookaheadTicks);
         if (dx > SteerDeadbandPx) buttons |= OtyrNative.Buttons.Right;
         if (dx < -SteerDeadbandPx) buttons |= OtyrNative.Buttons.Left;
         if (dy > SteerDeadbandPx) buttons |= OtyrNative.Buttons.Down;
