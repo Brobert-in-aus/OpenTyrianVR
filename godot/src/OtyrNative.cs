@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 1;
+    public const uint AbiVersion = 2;
 
     public const int FrameWidth = 320;
     public const int FrameHeight = 200;
@@ -55,8 +55,10 @@ public static unsafe class OtyrNative
         public uint Reserved;
         public fixed byte DataDir[260];
         public fixed byte HashLog[260];
+        public fixed byte UserDir[260];
 
-        public static Config Create(string dataDir, ConfigFlags flags = ConfigFlags.None, string hashLog = "")
+        public static Config Create(string dataDir, ConfigFlags flags = ConfigFlags.None,
+                                     string hashLog = "", string userDir = "")
         {
             var config = new Config
             {
@@ -66,6 +68,7 @@ public static unsafe class OtyrNative
             };
             WriteUtf8(config.DataDir, 260, dataDir);
             WriteUtf8(config.HashLog, 260, hashLog);
+            WriteUtf8(config.UserDir, 260, userDir);
             return config;
         }
 
@@ -114,6 +117,7 @@ public static unsafe class OtyrNative
         public uint Cash;
         public uint Lives;
         public uint IsAlive;
+        public uint LevelTick;
     }
 
     private const string Dll = "opentyrian-core-x64-Release";

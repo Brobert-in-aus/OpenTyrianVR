@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 1u
+#define OTYR_ABI_VERSION 2u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -85,6 +85,7 @@ typedef struct OtyrConfig
 	uint32_t reserved;
 	char     data_dir[260]; /* UTF-8, NUL-terminated; Tyrian data directory */
 	char     hash_log[260]; /* optional --hash-log path; empty to disable */
+	char     user_dir[260]; /* config/save directory; empty = process cwd (v2) */
 } OtyrConfig;
 
 typedef struct OtyrInputFrame
@@ -112,6 +113,8 @@ typedef struct OtyrPlayerState
 	uint32_t cash;
 	uint32_t lives;
 	uint32_t is_alive;
+	uint32_t level_tick;    /* increments once per gameplay tick; static in
+	                           menus -- gates gameplay-only host features (v2) */
 } OtyrPlayerState;
 
 /* Returns OTYR_ABI_VERSION of this library. */

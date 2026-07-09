@@ -38,6 +38,7 @@
 #include "nortsong.h"
 #include "nortvars.h"
 #include "opentyr.h"
+#include "otyr_host_internal.h"
 #include "params.h"
 #include "pcxload.h"
 #include "pcxmast.h"
@@ -1090,6 +1091,8 @@ start_level_first:
 level_loop:
 
 	statehash_tick();
+	if (otyr_hosted)
+		otyr_host_level_tick();
 
 	//tempScreenSeg = game_screen; /* side-effect of game_screen */
 

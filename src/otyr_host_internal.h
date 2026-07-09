@@ -37,6 +37,12 @@ void otyr_host_present(SDL_Surface *screen);
  * thread back to its entry point so the host process survives. */
 void otyr_host_thread_exit(int code);
 
+/* Called once per gameplay tick (top of the level loop). */
+void otyr_host_level_tick(void);
+
+/* Hosted config/save directory; empty string means "use the default". */
+const char *otyr_host_user_dir(void);
+
 /* The real program entry, shared by main() and the hosted game thread. */
 int opentyrian_main(int argc, char *argv[]);
 

@@ -56,8 +56,8 @@ static struct
 	SDL_Thread *thread;
 
 	/* argv storage for the game thread */
-	char args[4][300];
-	char *argv[5];
+	char args[5][300];
+	char *argv[6];
 	int argc;
 
 	/* latest published frame */
@@ -71,6 +71,9 @@ static struct
 	/* host-desired button state; applied on the game thread each present */
 	uint32_t pending_buttons;
 	uint32_t applied_buttons;
+
+	uint32_t level_tick;
+	char user_dir[260];
 } session;
 
 static char last_error[256] = "";
@@ -117,6 +120,18 @@ static int game_thread_main(void *data)
 void otyr_host_thread_exit(int code)
 {
 	longjmp(thread_exit_env, code + 1);
+}
+
+void otyr_host_level_tick(void)
+{
+	/* Game-thread write; published to the host via the state snapshot taken
+	   under the mutex at present time. */
+	++session.level_tick;
+}
+
+const char *otyr_host_user_dir(void)
+{
+	return session.user_dir;
 }
 
 int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
@@ -175,7 +190,13 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 		session.argv[session.argc] = session.args[3];
 		++session.argc;
 	}
+	/* The host owns input mapping; hosted joystick access would double up. */
+	snprintf(session.args[4], sizeof(session.args[4]), "--no-joystick");
+	session.argv[session.argc] = session.args[4];
+	++session.argc;
 	session.argv[session.argc] = NULL;
+
+	snprintf(session.user_dir, sizeof(session.user_dir), "%s", config->user_dir);
 
 	session.frame_number = 0;
 	session.pending_buttons = 0;
@@ -387,6 +408,7 @@ void otyr_host_present(SDL_Surface *screen)
 	session.player_state.cash = (uint32_t)player[0].cash;
 	session.player_state.lives = player[0].lives != NULL ? *player[0].lives : 0;
 	session.player_state.is_alive = player[0].is_alive;
+	session.player_state.level_tick = session.level_tick;
 
 	++session.frame_number;
 

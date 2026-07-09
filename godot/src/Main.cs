@@ -29,6 +29,26 @@ public partial class Main : Node3D
     private OtyrNative.Buttons _lastButtons;
     private double _statusAccumulator;
 
+    // Hand-rectangle steering: the left hand's position within a floating
+    // control rectangle maps 1:1 onto the gameplay rectangle; the ship is
+    // steered toward that target each frame (the game only accepts 8-way
+    // input, so this is bang-bang until Phase 2 gives us analog axes).
+    private Node3D _controlRect = null!;
+    private MeshInstance3D _handMarker = null!;
+    private MeshInstance3D _targetReticle = null!;
+    private OtyrNative.PlayerState _playerState;
+    private uint _lastLevelTick;
+    private ulong _lastLevelTickMs;
+    private bool _inGameplay;
+
+    private const float ControlRectWidth = 0.36f;
+    private const float ControlRectHeight = 0.25f;
+    // Player movement clamp in Tyrian sim coordinates (ENTITY_TAXONOMY.md).
+    private const float GameMinX = 40f, GameMaxX = 256f;
+    private const float GameMinY = 10f, GameMaxY = 160f;
+    private const float SteerDeadbandPx = 4f;
+    private const float LaneWidth = 1.0f, LaneHeight = 0.625f;
+
     public override void _Ready()
     {
         OtyrNative.RegisterResolver();
@@ -123,10 +143,12 @@ public partial class Main : Node3D
         var lane = new MeshInstance3D
         {
             Name = "Lane",
-            Mesh = new QuadMesh { Size = new Vector2(1.0f, 0.625f) },  // 320:200
+            Mesh = new QuadMesh { Size = new Vector2(LaneWidth, LaneHeight) },  // 320:200
             MaterialOverride = material,
         };
         _playfieldRoot.AddChild(lane);
+
+        BuildHandSteering();
 
         GetViewport().Msaa3D = Viewport.Msaa.Msaa4X;
         GetViewport().Scaling3DScale = 1.4f;
@@ -152,6 +174,60 @@ public partial class Main : Node3D
         AddChild(environment);
     }
 
+    private void BuildHandSteering()
+    {
+        // The control rectangle floats in front of and below the lane, tilted
+        // to match it, at a comfortable seated arm position.
+        _controlRect = new Node3D { Name = "ControlRect" };
+        _controlRect.Position = new Vector3(0f, 0.95f, -0.45f);
+        _controlRect.RotationDegrees = new Vector3(-42f, 0f, 0f);
+        AddChild(_controlRect);
+
+        var rectVisual = new MeshInstance3D
+        {
+            Name = "Bounds",
+            Mesh = new QuadMesh { Size = new Vector2(ControlRectWidth, ControlRectHeight) },
+            MaterialOverride = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(0.3f, 0.6f, 1.0f, 0.08f),
+                Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+                CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+            },
+        };
+        _controlRect.AddChild(rectVisual);
+
+        _handMarker = new MeshInstance3D
+        {
+            Name = "HandMarker",
+            Mesh = new SphereMesh { Radius = 0.012f, Height = 0.024f },
+            MaterialOverride = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(0.2f, 0.5f, 1.0f),
+                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            },
+        };
+        _controlRect.AddChild(_handMarker);
+
+        // Where the ship is being told to go, shown on the lane itself.
+        _targetReticle = new MeshInstance3D
+        {
+            Name = "TargetReticle",
+            Mesh = new QuadMesh { Size = new Vector2(0.025f, 0.025f) },
+            Position = new Vector3(0f, 0f, 0.006f),
+            MaterialOverride = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(0.2f, 0.8f, 1.0f, 0.65f),
+                Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            },
+        };
+        _playfieldRoot.AddChild(_targetReticle);
+
+        _controlRect.Visible = false;
+        _targetReticle.Visible = false;
+    }
+
     private void StartGame()
     {
         uint nativeAbi = OtyrNative.GetAbiVersion();
@@ -159,7 +235,8 @@ public partial class Main : Node3D
             throw new InvalidOperationException($"native ABI {nativeAbi}, expected {OtyrNative.AbiVersion}");
 
         string dataDir = Path.GetFullPath(Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "tyrian21"));
-        var config = OtyrNative.Config.Create(dataDir, OtyrNative.ConfigFlags.EnableAudio);
+        string userDir = ProjectSettings.GlobalizePath("user://");
+        var config = OtyrNative.Config.Create(dataDir, OtyrNative.ConfigFlags.EnableAudio, userDir: userDir);
 
         int rc = OtyrNative.SessionCreate(in config, (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.Config>(), out _session);
         if (rc != OtyrNative.Ok)
@@ -176,8 +253,26 @@ public partial class Main : Node3D
             return;
 
         PollFrame();
+        PollPlayerState();
         SubmitInput();
         UpdateDiagnostics(delta);
+    }
+
+    private void PollPlayerState()
+    {
+        _playerState.StructSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.PlayerState>();
+        if (OtyrNative.GetPlayerState(_session, ref _playerState, _playerState.StructSize) != OtyrNative.Ok)
+            return;
+
+        ulong now = Time.GetTicksMsec();
+        if (_playerState.LevelTick != _lastLevelTick)
+        {
+            _lastLevelTick = _playerState.LevelTick;
+            _lastLevelTickMs = now;
+        }
+        // Gameplay ticks run at ~35 Hz; if none arrived recently we are in a
+        // menu (or paused) and hand steering must not emit direction input.
+        _inGameplay = _lastLevelTickMs != 0 && now - _lastLevelTickMs < 250;
     }
 
     private unsafe void PollFrame()
@@ -254,6 +349,8 @@ public partial class Main : Node3D
                 buttons |= OtyrNative.Buttons.UiPause;
                 XRServer.CenterOnHmd(XRServer.RotationMode.ResetButKeepTilt, true);
             }
+
+            buttons |= HandSteering();
         }
 
         if (buttons == _lastButtons)
@@ -265,6 +362,50 @@ public partial class Main : Node3D
         OtyrNative.SubmitInput(_session, in input, input.StructSize);
     }
 
+    /// <summary>
+    /// Maps the left hand's position within the control rectangle to a target
+    /// point in the gameplay rectangle and returns the direction bits that
+    /// steer the ship toward it.  Shows the hand marker on the rectangle and
+    /// the target reticle on the lane.
+    /// </summary>
+    private OtyrNative.Buttons HandSteering()
+    {
+        bool active = _inGameplay && _leftHand != null && _leftHand.GetHasTrackingData();
+        _controlRect.Visible = active;
+        _targetReticle.Visible = active;
+        if (!active)
+            return OtyrNative.Buttons.None;
+
+        // Project the hand onto the rectangle's plane (drop local Z), clamp
+        // to the bounds, and show the marker at the clamped point.
+        Vector3 local = _controlRect.ToLocal(_leftHand!.GlobalPosition);
+        float lx = Mathf.Clamp(local.X, -ControlRectWidth / 2f, ControlRectWidth / 2f);
+        float ly = Mathf.Clamp(local.Y, -ControlRectHeight / 2f, ControlRectHeight / 2f);
+        _handMarker.Position = new Vector3(lx, ly, 0.002f);
+
+        // 1:1 map to the gameplay rectangle.  Rectangle-up = screen-up = smaller
+        // Tyrian y (sim y grows downward).
+        float targetX = Mathf.Remap(lx, -ControlRectWidth / 2f, ControlRectWidth / 2f, GameMinX, GameMaxX);
+        float targetY = Mathf.Remap(ly, -ControlRectHeight / 2f, ControlRectHeight / 2f, GameMaxY, GameMinY);
+
+        // Reticle on the lane: sim coords -> presented-frame coords (the play
+        // area is composited shifted left by 24 px) -> lane-local.
+        float frameU = (targetX - 24f) / 320f;
+        float frameV = targetY / 200f;
+        _targetReticle.Position = new Vector3(
+            (frameU - 0.5f) * LaneWidth, (0.5f - frameV) * LaneHeight, 0.006f);
+
+        // Bang-bang toward the target; the ship's own inertia smooths it.
+        var buttons = OtyrNative.Buttons.None;
+        float dx = targetX - _playerState.X;
+        float dy = targetY - _playerState.Y;
+        if (dx > SteerDeadbandPx) buttons |= OtyrNative.Buttons.Right;
+        if (dx < -SteerDeadbandPx) buttons |= OtyrNative.Buttons.Left;
+        if (dy > SteerDeadbandPx) buttons |= OtyrNative.Buttons.Down;
+        if (dy < -SteerDeadbandPx) buttons |= OtyrNative.Buttons.Up;
+        return buttons;
+    }
+
     private void UpdateDiagnostics(double delta)
     {
         _statusAccumulator += delta;
@@ -272,11 +413,7 @@ public partial class Main : Node3D
             return;
         _statusAccumulator = 0;
 
-        var state = new OtyrNative.PlayerState
-        {
-            StructSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.PlayerState>(),
-        };
-        OtyrNative.GetPlayerState(_session, ref state, state.StructSize);
+        OtyrNative.PlayerState state = _playerState;
 
         string inputProbe = "";
         if (_xrActive && _leftHand != null && _rightHand != null)

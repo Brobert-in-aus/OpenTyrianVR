@@ -27,6 +27,7 @@
 #include "mtrand.h"
 #include "nortsong.h"
 #include "opentyr.h"
+#include "otyr_host_internal.h"
 #include "player.h"
 #include "varz.h"
 #include "vga256d.h"
@@ -634,7 +635,10 @@ void JE_setNewGameSpeed(void)
 const char *get_user_directory(void)
 {
 	static char user_dir[500] = "";
-	
+
+	if (otyr_hosted && otyr_host_user_dir()[0] != '\0')
+		return otyr_host_user_dir();
+
 	if (strlen(user_dir) == 0)
 	{
 #ifndef TARGET_WIN32
