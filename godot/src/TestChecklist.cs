@@ -13,11 +13,12 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Black art pixels back (ship solid over clouds)",
-        "Speckle gone: boss / domes / dissolves",
-        "Title logo: no black dots",
-        "Structures: one height per object (no split cells)",
-        "Washed-out feeling: better?",
+        "Ship fade at level start = invuln blend? (wait it out",
+        "  over open ground, no cloud, ~3s)",
+        "Menu text: selected-item bright pixels intact",
+        "Speckle: does it appear ONLY after shooting a dome?",
+        "Sidebar reads TYRIAN-VR on level 1",
+        "Washed-out: compare menus vs gameplay",
         "Anything else off? tell Claude after",
     };
 

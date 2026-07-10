@@ -2188,7 +2188,11 @@ start_level_first:
 
 	JE_drawOptions();
 
-	JE_outText(VGAScreen, 268, twoPlayerMode ? 76 : 118, levelName, 12, 4);
+	/* Hosted cosmetic: the flagship level carries the VR branding (this is
+	   the LEVEL name field; level 1 is named TYRIAN). */
+	JE_outText(VGAScreen, 268, twoPlayerMode ? 76 : 118,
+	           (otyr_hosted && strcmp(levelName, "TYRIAN") == 0) ? "TYRIAN-VR" : levelName,
+	           12, 4);
 
 	JE_showVGA();
 	JE_gammaCorrect(&colors, gammaCorrection);
