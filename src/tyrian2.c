@@ -166,8 +166,9 @@ void JE_starShowVGA(void)
  * and a pure draw pass replays them via the shared presentation frame. */
 static PresentCategory enemy_band_category;
 
-/* Per-slot "has ever moved" latch for the terrain-art classification. */
-static Uint8 otyr_enemy_moved[100];
+/* Per-slot "has ever moved" latch for the terrain-art classification; the
+ * host's publish-time reclassification pass reads it too. */
+Uint8 otyr_enemy_moved[100];
 
 inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed int y_offset, signed int sprite_offset)
 {
@@ -2189,9 +2190,11 @@ start_level_first:
 	JE_drawOptions();
 
 	/* Hosted cosmetic: the flagship level carries the VR branding (this is
-	   the LEVEL name field; level 1 is named TYRIAN). */
+	   the LEVEL name field; level 1 is named TYRIAN, possibly space-padded
+	   by the level file). */
 	JE_outText(VGAScreen, 268, twoPlayerMode ? 76 : 118,
-	           (otyr_hosted && strcmp(levelName, "TYRIAN") == 0) ? "TYRIAN-VR" : levelName,
+	           (otyr_hosted && strncmp(levelName, "TYRIAN", 6) == 0 &&
+	            (levelName[6] == '\0' || levelName[6] == ' ')) ? "TYRIAN-VR" : levelName,
 	           12, 4);
 
 	JE_showVGA();

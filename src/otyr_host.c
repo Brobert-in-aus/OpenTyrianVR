@@ -940,6 +940,38 @@ void otyr_host_present(SDL_Surface *screen)
 		memset(out->reserved, 0, sizeof(out->reserved));
 	}
 
+	/* Stacked statics recorded BEFORE their base (e.g. a dome crown whose
+	   slot draws earlier than the dome body) miss the in-tick surface-rider
+	   check; re-run it over the complete record list so never-moved enemies
+	   whose center sits on terrain-baked art export as aux 2. */
+	for (unsigned int i = 0; i < sprite_count; ++i)
+	{
+		OtyrSnapshotSprite *rec = &snapshot->sprites[i];
+		if (rec->category > OTYR_CAT_ENEMY_GROUND_B || rec->aux != 0)
+			continue;
+		if ((rec->source_id & 0xff00) != 0x1000 || (rec->source_id & 0xff) >= 100)
+			continue;  /* only enemy-slot records carry the latch */
+		if (otyr_enemy_moved[rec->source_id & 0xff])
+			continue;
+
+		const int16_t cx = rec->x + (rec->kind == 1 ? 12 : 6);
+		const int16_t cy = rec->y + (rec->kind == 1 ? 14 : 7);
+		for (unsigned int r = 0; r < sprite_count; ++r)
+		{
+			const OtyrSnapshotSprite *other = &snapshot->sprites[r];
+			if (other->aux != 1 || other->category > OTYR_CAT_ENEMY_GROUND_B)
+				continue;
+			const int16_t w = other->kind == 1 ? 24 : 12;
+			const int16_t h = other->kind == 1 ? 28 : 14;
+			if (cx >= other->x && cx < other->x + w &&
+			    cy >= other->y && cy < other->y + h)
+			{
+				rec->aux = 2;
+				break;
+			}
+		}
+	}
+
 	unsigned int sound_count = present_sound_count;
 	if (sound_count > OTYR_SNAPSHOT_SOUND_MAX)
 		sound_count = OTYR_SNAPSHOT_SOUND_MAX;

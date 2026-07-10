@@ -60,6 +60,10 @@ bool otyr_host_cell_is_opaque(const void *sheet, Uint16 index);
 struct GameInput;
 void otyr_host_game_input(struct GameInput *input);
 
+/* Per-slot "has ever moved" latch maintained by the enemy recorder
+ * (tyrian2.c); the publish-time reclassification pass reads it. */
+extern Uint8 otyr_enemy_moved[100];
+
 /* Hosted config/save directory; empty string means "use the default". */
 const char *otyr_host_user_dir(void);
 

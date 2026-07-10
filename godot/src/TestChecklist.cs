@@ -13,11 +13,8 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Dome square + top pixel lines GONE (crown reattached)",
-        "Washed-out fixed (palette gamma) - colors right now?",
-        "Ship fade at level start ~3s = invuln (no cloud needed)",
+        "Dome: crown reattached (no square, no top pixels)",
         "Sidebar reads TYRIAN-VR on level 1",
-        "Wrecks: no ghost copies hovering above them",
         "Anything else off? tell Claude after",
     };
 
