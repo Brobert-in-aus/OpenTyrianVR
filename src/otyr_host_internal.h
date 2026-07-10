@@ -40,6 +40,12 @@ void otyr_host_thread_exit(int code);
 /* Called once per gameplay tick (top of the level loop). */
 void otyr_host_level_tick(void);
 
+/* Called when the level loop exits (back to menus); with it, otyr_in_level
+ * spans the whole level including pauses and in-game menus, which is what
+ * gates the host's background color keying. */
+void otyr_host_level_end(void);
+extern bool otyr_in_level;
+
 /* Called on the game thread after a level's sprite sheets are loaded;
  * rasterizes all sheets into the session cache and bumps the epoch. */
 void otyr_host_capture_sheets(void);

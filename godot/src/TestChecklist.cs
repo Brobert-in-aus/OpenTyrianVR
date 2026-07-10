@@ -13,13 +13,11 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Shadows land on clouds too",
-        "No enemies jumping between layers",
-        "Structures under clouds again (not riding them)",
-        "Platform statics: wobble gone",
-        "Dissolving ships / dome triangle gone",
-        "No orange flash at level start",
-        "Brightness vs earlier: verdict?",
+        "Black art pixels back (ship solid over clouds)",
+        "Speckle gone: boss / domes / dissolves",
+        "Title logo: no black dots",
+        "Structures: one height per object (no split cells)",
+        "Washed-out feeling: better?",
         "Anything else off? tell Claude after",
     };
 

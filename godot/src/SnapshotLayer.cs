@@ -120,9 +120,10 @@ public unsafe partial class SnapshotLayer : Node3D
                     vec2 cell_origin_px = vec2(mod(cell, 32.0) * 12.0, floor(cell / 32.0) * 14.0);
                     vec2 cell_px = clamp(UV * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));
                     vec2 uv = (cell_origin_px + cell_px) / vec2(384.0, 448.0);
-                    float idx = floor(texture(atlas, uv).r * 255.0 + 0.5);
-                    if (idx < 0.5)
+                    vec2 s = texture(atlas, uv).rg;
+                    if (s.g < 0.5)  // opacity plane: index 0 is real black
                         discard;
+                    float idx = floor(s.r * 255.0 + 0.5);
                     // Hit-flash / ice tint: exact legacy hue swap,
                     // out = (idx & 0x0f) | filter.
                     if (mod(v_flags, 2.0) >= 1.0)
@@ -144,7 +145,7 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             var atlasImage = Image.CreateEmpty(
                 AtlasCellsPerRow * OtyrNative.SheetCellW, AtlasCellsPerRow * OtyrNative.SheetCellH,
-                false, Image.Format.R8);
+                false, Image.Format.Rg8);  // r = palette index, g = opacity
             _atlas[id] = ImageTexture.CreateFromImage(atlasImage);
 
             var material = new ShaderMaterial { Shader = shader };
@@ -228,9 +229,10 @@ public unsafe partial class SnapshotLayer : Node3D
                     vec2 wh = slot_wh.yz;
                     vec2 origin_px = vec2(mod(slot_wh.x, 16.0), floor(slot_wh.x / 16.0)) * 64.0;
                     vec2 px = clamp(UV * wh, vec2(0.5), wh - 0.5);
-                    float idx = floor(texture(atlas, (origin_px + px) / 1024.0).r * 255.0 + 0.5);
-                    if (idx < 0.5)
+                    vec2 s = texture(atlas, (origin_px + px) / 1024.0).rg;
+                    if (s.g < 0.5)
                         discard;
+                    float idx = floor(s.r * 255.0 + 0.5);
                     ALBEDO = texture(palette, vec2((idx + 0.5) / 256.0, 0.5)).rgb;
                     ALPHA = 0.55;
                 }
@@ -239,7 +241,7 @@ public unsafe partial class SnapshotLayer : Node3D
         var oldMaterial = new ShaderMaterial { Shader = oldShader };
         _oldAtlas = ImageTexture.CreateFromImage(Image.CreateEmpty(
             OldAtlasSlotsPerRow * OtyrNative.OldSpriteWMax,
-            OldAtlasSlotsPerRow * OtyrNative.OldSpriteHMax, false, Image.Format.R8));
+            OldAtlasSlotsPerRow * OtyrNative.OldSpriteHMax, false, Image.Format.Rg8));
         oldMaterial.SetShaderParameter("atlas", _oldAtlas);
         oldMaterial.SetShaderParameter("palette", _paletteTexture);
 
@@ -278,8 +280,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 void fragment() {
                     vec2 cell_origin_px = vec2(mod(cell, 32.0) * 12.0, floor(cell / 32.0) * 14.0);
                     vec2 cell_px = clamp(UV * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));
-                    float idx = floor(texture(atlas, (cell_origin_px + cell_px) / vec2(384.0, 448.0)).r * 255.0 + 0.5);
-                    if (idx < 0.5)
+                    if (texture(atlas, (cell_origin_px + cell_px) / vec2(384.0, 448.0)).g < 0.5)
                         discard;
                     ALBEDO = vec3(0.5);  // halve brightness, keep hue
                 }
@@ -346,7 +347,7 @@ public unsafe partial class SnapshotLayer : Node3D
     {
         int atlasW = AtlasCellsPerRow * OtyrNative.SheetCellW;
         int atlasH = AtlasCellsPerRow * OtyrNative.SheetCellH;
-        var pixels = new byte[atlasW * atlasH];
+        var pixels = new byte[atlasW * atlasH * 2];  // rg: index, opacity
 
         for (uint id = 0; id < OtyrNative.SheetCount; id++)
         {
@@ -364,14 +365,20 @@ public unsafe partial class SnapshotLayer : Node3D
                     int originX = (cell % AtlasCellsPerRow) * OtyrNative.SheetCellW;
                     int originY = (cell / AtlasCellsPerRow) * OtyrNative.SheetCellH;
                     byte* src = sheet->Pixels + cell * OtyrNative.SheetCellW * OtyrNative.SheetCellH;
+                    byte* opa = sheet->Opacity + cell * OtyrNative.SheetCellW * OtyrNative.SheetCellH;
 
                     for (int y = 0; y < OtyrNative.SheetCellH; y++)
                         for (int x = 0; x < OtyrNative.SheetCellW; x++)
-                            pixels[(originY + y) * atlasW + originX + x] = src[y * OtyrNative.SheetCellW + x];
+                        {
+                            int at = ((originY + y) * atlasW + originX + x) * 2;
+                            int st = y * OtyrNative.SheetCellW + x;
+                            pixels[at] = src[st];
+                            pixels[at + 1] = opa[st] != 0 ? (byte)255 : (byte)0;
+                        }
                 }
             }
 
-            var image = Image.CreateFromData(atlasW, atlasH, false, Image.Format.R8, pixels);
+            var image = Image.CreateFromData(atlasW, atlasH, false, Image.Format.Rg8, pixels);
             _atlas[id].Update(image);
 
             if (DumpAtlases)
@@ -386,7 +393,7 @@ public unsafe partial class SnapshotLayer : Node3D
     {
         int atlasW = OldAtlasSlotsPerRow * OtyrNative.OldSpriteWMax;
         int atlasH = OldAtlasSlotsPerRow * OtyrNative.OldSpriteHMax;
-        var pixels = new byte[atlasW * atlasH];
+        var pixels = new byte[atlasW * atlasH * 2];  // rg: index, opacity
         _oldSprite.StructSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.OldSprite>();
 
         for (uint i = 0; i < OtyrNative.OldSpriteMax; i++)
@@ -406,12 +413,16 @@ public unsafe partial class SnapshotLayer : Node3D
             {
                 for (int y = 0; y < _oldSprite.Height; y++)
                     for (int x = 0; x < _oldSprite.Width; x++)
-                        pixels[(originY + y) * atlasW + originX + x] =
-                            spr->Pixels[y * OtyrNative.OldSpriteWMax + x];
+                    {
+                        int at = ((originY + y) * atlasW + originX + x) * 2;
+                        int st = y * OtyrNative.OldSpriteWMax + x;
+                        pixels[at] = spr->Pixels[st];
+                        pixels[at + 1] = spr->Opacity[st] != 0 ? (byte)255 : (byte)0;
+                    }
             }
         }
 
-        _oldAtlas.Update(Image.CreateFromData(atlasW, atlasH, false, Image.Format.R8, pixels));
+        _oldAtlas.Update(Image.CreateFromData(atlasW, atlasH, false, Image.Format.Rg8, pixels));
     }
 
     private void UpdatePalette(uint[] paletteArgb)
@@ -473,6 +484,7 @@ public unsafe partial class SnapshotLayer : Node3D
             if (source != OtyrNative.NoSource)
                 _prevRuns.TryAdd(source, (start, i - start));
         }
+        _surfaceBySource.Clear();
 
         fixed (OtyrNative.Snapshot* snapshot = &_snapshot)
         {
@@ -537,6 +549,21 @@ public unsafe partial class SnapshotLayer : Node3D
 
         PairWithPrevious(ref cell, sprite.SourceId);
         ++_cellCount;
+    }
+
+    // One surface decision per entity per tick: querying per cell split
+    // multi-cell structures across heights when they straddled a platform
+    // edge (4 cells floating, 2 on the ground).
+    private readonly System.Collections.Generic.Dictionary<ushort, float> _surfaceBySource = new();
+
+    private float SurfaceForSource(ushort sourceId, float centerX, float centerY)
+    {
+        if (sourceId != OtyrNative.NoSource && _surfaceBySource.TryGetValue(sourceId, out float cached))
+            return cached;
+        float surface = _background?.SurfaceZAt(new Vector2(centerX - 24f, centerY)) ?? 0f;
+        if (sourceId != OtyrNative.NoSource)
+            _surfaceBySource[sourceId] = surface;
+        return surface;
     }
 
     /// <summary>Pairs a cell with last tick's nearest same-source cell on
@@ -616,12 +643,12 @@ public unsafe partial class SnapshotLayer : Node3D
             // them: the platform map layer or the ground itself.  The
             // offset is sub-pixel against head parallax (a 4 mm gap made
             // platform structures visibly wobble).
-            float surface = _background?.SurfaceZAt(new Vector2(centerX - 24f, centerY)) ?? 0f;
+            float surface = SurfaceForSource(sprite.SourceId, centerX, centerY);
             band = surface > 0f ? surface + 0.0008f : StructureZ;
         }
         else if (isEnemy && sprite.Aux == 2)
         {
-            float surface = _background?.SurfaceZAt(new Vector2(centerX - 24f, centerY)) ?? 0f;
+            float surface = SurfaceForSource(sprite.SourceId, centerX, centerY);
             band = Math.Max(surface, BackgroundLayer.PlatformZ) + 0.0008f;
         }
         else if (isShadow)

@@ -364,10 +364,12 @@ public partial class Main : Node3D
                 byte index = frame->Pixels[i];
                 // Color key: with the native background suppressed, the fill
                 // index means "nothing drawn here" and the 3D tile layers
-                // show through.  Index-0 black in art stays opaque.  Data is
-                // premultiplied (keyed pixels fully zero) so linear/mipmap
-                // filtering can't bleed key-colored fringes into the art.
-                if (Render3DBackground && index == OtyrNative.BgKeyIndex)
+                // show through.  Only while a level is active: menus redraw
+                // the frame fully and legitimately use the key index in art
+                // (keying there punched black holes in the title logo).
+                // Data is premultiplied (keyed pixels fully zero) so
+                // linear/mipmap filtering can't bleed key-colored fringes.
+                if (Render3DBackground && _frame.InLevel != 0 && index == OtyrNative.BgKeyIndex)
                 {
                     _rgba[i * 4 + 0] = 0;
                     _rgba[i * 4 + 1] = 0;

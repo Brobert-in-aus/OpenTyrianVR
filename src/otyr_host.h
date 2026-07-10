@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 11u
+#define OTYR_ABI_VERSION 12u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -136,6 +136,11 @@ typedef struct OtyrFrame
 	uint8_t  pixels[OTYR_FRAME_WIDTH * OTYR_FRAME_HEIGHT]; /* palette indices */
 	uint32_t palette[256];  /* 0xAARRGGBB, A always 0xFF */
 	uint32_t level_tick;    /* gameplay tick this present belongs to (v6) */
+	uint8_t  in_level;      /* nonzero while a level is active, incl. pause;
+	                           gates the background color key: menus redraw
+	                           the frame fully and may legitimately use the
+	                           key index in art (v12) */
+	uint8_t  reserved[3];
 } OtyrFrame;
 
 typedef struct OtyrPlayerState
@@ -249,6 +254,11 @@ typedef struct OtyrSpriteSheet
 	uint32_t sheet_epoch;
 	uint32_t cell_count;
 	uint8_t  pixels[OTYR_SHEET_CELL_MAX * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H];
+	/* 1 where the sprite actually drew a pixel (v12).  Index 0 is a real,
+	   drawable color (black): pixels[] == 0 alone cannot distinguish art
+	   black from transparency, and treating it as transparent punched
+	   see-through holes in dark art. */
+	uint8_t  opacity[OTYR_SHEET_CELL_MAX * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H];
 } OtyrSpriteSheet;
 
 /* Returns OTYR_ABI_VERSION of this library. */
@@ -353,6 +363,7 @@ typedef struct OtyrOldSprite
 	uint32_t struct_size;
 	uint16_t width, height; /* 0x0 = sprite does not exist (or was clamped) */
 	uint8_t  pixels[OTYR_OLD_SPRITE_W_MAX * OTYR_OLD_SPRITE_H_MAX];
+	uint8_t  opacity[OTYR_OLD_SPRITE_W_MAX * OTYR_OLD_SPRITE_H_MAX]; /* (v12) */
 } OtyrOldSprite;
 
 OTYR_API int32_t otyr_old_sprite(uint64_t session,

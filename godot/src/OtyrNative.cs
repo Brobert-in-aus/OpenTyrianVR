@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 11;
+    public const uint AbiVersion = 12;
 
     // Palette index of the suppressed background fill (the frame color key);
     // index-0 black in sprite/HUD art stays opaque.
@@ -143,6 +143,7 @@ public static unsafe class OtyrNative
         public uint StructSize;
         public ushort Width, Height;  // 0x0 = sprite does not exist
         public fixed byte Pixels[OldSpriteWMax * OldSpriteHMax];
+        public fixed byte Opacity[OldSpriteWMax * OldSpriteHMax];  // (v12)
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -164,6 +165,9 @@ public static unsafe class OtyrNative
         public uint SheetEpoch;
         public uint CellCount;
         public fixed byte Pixels[SheetCellMax * SheetCellW * SheetCellH];
+        // 1 where the sprite drew a pixel: index 0 is real black, so the
+        // pixel value alone cannot mark transparency (v12).
+        public fixed byte Opacity[SheetCellMax * SheetCellW * SheetCellH];
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -247,6 +251,9 @@ public static unsafe class OtyrNative
         public fixed byte Pixels[FrameWidth * FrameHeight];
         public fixed uint Palette[256];  // 0xAARRGGBB
         public uint LevelTick;  // gameplay tick this present belongs to (v6)
+        public byte InLevel;    // nonzero while a level is active, incl. pause;
+                                // gates the background color key (v12)
+        public byte R1, R2, R3;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -319,10 +326,10 @@ public static unsafe class OtyrNative
         if (sizeof(SnapshotSprite) != 16 ||
             sizeof(BackgroundDraw) != 16 ||
             sizeof(Snapshot) != 36 + SnapshotSpriteMax * 16 + BgLayerCount * 16 ||
-            sizeof(SpriteSheet) != 12 + SheetCellMax * SheetCellW * SheetCellH ||
+            sizeof(SpriteSheet) != 12 + 2 * SheetCellMax * SheetCellW * SheetCellH ||
             sizeof(BackgroundMap) != 16 + BgMapCellMax + BgShapeMax * BgTileW * BgTileH ||
-            sizeof(OldSprite) != 8 + OldSpriteWMax * OldSpriteHMax ||
-            sizeof(Frame) != 16 + FrameWidth * FrameHeight + 1024 + 4)
+            sizeof(OldSprite) != 8 + 2 * OldSpriteWMax * OldSpriteHMax ||
+            sizeof(Frame) != 16 + FrameWidth * FrameHeight + 1024 + 4 + 4)
             throw new InvalidOperationException("ABI struct layout mismatch");
 
         NativeLibrary.SetDllImportResolver(typeof(OtyrNative).Assembly, (name, assembly, searchPath) =>

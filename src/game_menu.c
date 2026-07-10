@@ -31,6 +31,7 @@
 #include "network.h"
 #include "nortsong.h"
 #include "nortvars.h"
+#include "otyr_host_internal.h"
 #include "params.h"
 #include "pcxmast.h"
 #include "picload.h"
@@ -154,6 +155,8 @@ JE_longint JE_cashLeft(void)
 void JE_itemScreen(void)
 {
 	bool quit = false;
+
+	otyr_host_level_end();  /* between-level menus: frames are full redraws */
 
 	if (shopSpriteSheet.data == NULL)
 		JE_loadCompShapes(&shopSpriteSheet, '1');

@@ -3364,6 +3364,8 @@ void networkStartScreen(void)
 
 bool titleScreen(void)
 {
+	otyr_host_level_end();  /* back in menus: frames are full redraws */
+
 	if (start_with_demo)
 	{
 		/* Verification mode: straight into demo playback, no menu. */

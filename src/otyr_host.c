@@ -71,10 +71,10 @@ bool otyr_hosted = false;
 typedef char otyr_assert_sprite_size[sizeof(OtyrSnapshotSprite) == 16 ? 1 : -1];
 typedef char otyr_assert_bg_draw_size[sizeof(OtyrBackgroundDraw) == 16 ? 1 : -1];
 typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 36 + 1024 * 16 + 3 * 16 ? 1 : -1];
-typedef char otyr_assert_sheet_size[sizeof(OtyrSpriteSheet) == 12 + 1024 * 12 * 14 ? 1 : -1];
-typedef char otyr_assert_frame_size[sizeof(OtyrFrame) == 16 + 320 * 200 + 1024 + 4 ? 1 : -1];
+typedef char otyr_assert_sheet_size[sizeof(OtyrSpriteSheet) == 12 + 2 * 1024 * 12 * 14 ? 1 : -1];
+typedef char otyr_assert_frame_size[sizeof(OtyrFrame) == 16 + 320 * 200 + 1024 + 4 + 4 ? 1 : -1];
 typedef char otyr_assert_bg_map_size[sizeof(OtyrBackgroundMap) == 16 + 600 * 15 + 72 * 24 * 28 ? 1 : -1];
-typedef char otyr_assert_old_sprite_size[sizeof(OtyrOldSprite) == 8 + 64 * 64 ? 1 : -1];
+typedef char otyr_assert_old_sprite_size[sizeof(OtyrOldSprite) == 8 + 2 * 64 * 64 ? 1 : -1];
 
 /* The game core is a global-state singleton, so exactly one session. */
 #define SESSION_HANDLE 1ull
@@ -106,6 +106,7 @@ static struct
 	/* latest published frame */
 	uint32_t frame_number;
 	uint32_t frame_level_tick;
+	uint8_t frame_in_level;
 	uint8_t pixels[OTYR_FRAME_WIDTH * OTYR_FRAME_HEIGHT];
 	uint32_t palette_argb[256];
 
@@ -132,6 +133,7 @@ static struct
 	uint32_t sheet_epoch;
 	uint32_t sheet_cell_count[OTYR_SHEET_COUNT];
 	uint8_t (*sheet_cells)[OTYR_SHEET_CELL_MAX * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H];
+	uint8_t (*sheet_opacity)[OTYR_SHEET_CELL_MAX * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H];
 
 	/* per-cell "fully opaque" flags (game-thread only): baked terrain art */
 	uint8_t sheet_cell_opaque[OTYR_SHEET_COUNT][OTYR_SHEET_CELL_MAX];
@@ -216,18 +218,29 @@ void otyr_host_thread_exit(int code)
 	longjmp(thread_exit_env, code + 1);
 }
 
+bool otyr_in_level = false;
+
 void otyr_host_level_tick(void)
 {
 	/* Game-thread write; published to the host via the state snapshot taken
 	   under the mutex at present time. */
 	++session.level_tick;
+	otyr_in_level = true;
+}
+
+void otyr_host_level_end(void)
+{
+	otyr_in_level = false;
 }
 
 /* Decodes one RLE sprite cell (see blit_sprite2) into a 12x14 indexed
- * bitmap; 0 stays transparent. */
-static void rasterize_cell(const Sprite2_array *sheet, uint32_t index, uint8_t *cell)
+ * bitmap plus an opacity mask.  Draw runs can legitimately write index 0
+ * (black), so the pixel value alone cannot mark transparency. */
+static void rasterize_cell(const Sprite2_array *sheet, uint32_t index,
+                           uint8_t *cell, uint8_t *opacity)
 {
 	memset(cell, 0, OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H);
+	memset(opacity, 0, OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H);
 
 	const uint8_t *base = sheet->data;
 	const uint8_t *end = base + sheet->size;
@@ -256,7 +269,10 @@ static void rasterize_cell(const Sprite2_array *sheet, uint32_t index, uint8_t *
 			while (count-- && ++data < end)
 			{
 				if (x >= 0 && x < (int)OTYR_SHEET_CELL_W && y >= 0 && y < (int)OTYR_SHEET_CELL_H)
+				{
 					cell[y * OTYR_SHEET_CELL_W + x] = *data;
+					opacity[y * OTYR_SHEET_CELL_W + x] = 1;
+				}
 				++x;
 			}
 		}
@@ -328,6 +344,7 @@ static void capture_old_sprites_locked(void)
 		out->width = 0;
 		out->height = 0;
 		memset(out->pixels, 0, sizeof(out->pixels));
+		memset(out->opacity, 0, sizeof(out->opacity));
 
 		if (i >= sprite_table[OPTION_SHAPES].count ||
 		    !sprite_exists(OPTION_SHAPES, i))
@@ -360,7 +377,10 @@ static void capture_old_sprites_locked(void)
 				break;
 			default:
 				if (px < spr->width)
+				{
 					out->pixels[py * OTYR_OLD_SPRITE_W_MAX + px] = *data;
+					out->opacity[py * OTYR_OLD_SPRITE_W_MAX + px] = 1;
+				}
 				++px;
 				break;
 			}
@@ -393,11 +413,12 @@ void otyr_host_capture_sheets(void)
 			for (uint32_t i = 0; i < count; ++i)
 			{
 				uint8_t *cell = session.sheet_cells[id] + i * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H;
-				rasterize_cell(sheet, i, cell);
+				uint8_t *opa = session.sheet_opacity[id] + i * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H;
+				rasterize_cell(sheet, i, cell, opa);
 
 				unsigned int opaque = 0;
 				for (unsigned int p = 0; p < OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H; ++p)
-					if (cell[p] != 0)
+					if (opa[p] != 0)
 						++opaque;
 				/* ~98%+: baked terrain backdrops; real flyers always have
 				   transparent corners. */
@@ -521,7 +542,8 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 	snprintf(session.user_dir, sizeof(session.user_dir), "%s", config->user_dir);
 
 	session.sheet_cells = calloc(OTYR_SHEET_COUNT, sizeof(*session.sheet_cells));
-	if (session.sheet_cells == NULL)
+	session.sheet_opacity = calloc(OTYR_SHEET_COUNT, sizeof(*session.sheet_opacity));
+	if (session.sheet_cells == NULL || session.sheet_opacity == NULL)
 	{
 		set_error("failed to allocate sheet cache");
 		return OTYR_ERROR;
@@ -600,6 +622,8 @@ int32_t otyr_session_destroy(uint64_t handle)
 	{
 		free(session.sheet_cells);
 		session.sheet_cells = NULL;
+		free(session.sheet_opacity);
+		session.sheet_opacity = NULL;
 	}
 	/* (detached thread: leak the cache rather than free under its feet) */
 
@@ -659,6 +683,8 @@ int32_t otyr_session_acquire_frame(uint64_t handle, OtyrFrame *frame,
 			memcpy(frame->pixels, session.pixels, sizeof(session.pixels));
 			memcpy(frame->palette, session.palette_argb, sizeof(session.palette_argb));
 			frame->level_tick = session.frame_level_tick;
+			frame->in_level = session.frame_in_level;
+			memset(frame->reserved, 0, sizeof(frame->reserved));
 			result = OTYR_OK;
 			break;
 		}
@@ -742,6 +768,8 @@ int32_t otyr_sprite_sheet(uint64_t handle, uint32_t sheet_id,
 	sheet->sheet_epoch = session.sheet_epoch;
 	sheet->cell_count = session.sheet_cell_count[sheet_id];
 	memcpy(sheet->pixels, session.sheet_cells[sheet_id],
+	       sheet->cell_count * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H);
+	memcpy(sheet->opacity, session.sheet_opacity[sheet_id],
 	       sheet->cell_count * OTYR_SHEET_CELL_W * OTYR_SHEET_CELL_H);
 	SDL_UnlockMutex(session.mutex);
 	return OTYR_OK;
@@ -882,6 +910,7 @@ void otyr_host_present(SDL_Surface *screen)
 
 	++session.frame_number;
 	session.frame_level_tick = session.level_tick;
+	session.frame_in_level = otyr_in_level;
 
 	/* Publish the presentation snapshot for this tick (records complete by
 	   present time; sheet pointers resolve to stable ids). */
