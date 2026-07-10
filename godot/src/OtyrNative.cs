@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 7;
+    public const uint AbiVersion = 8;
 
     public const int FrameWidth = 320;
     public const int FrameHeight = 200;
@@ -46,6 +46,11 @@ public static unsafe class OtyrNative
         EnableAudio = 1 << 0,
         // Legacy frame shows only backgrounds/HUD; entities come from the snapshot.
         SuppressEntityDraw = 1 << 1,
+        // Skip background tile blits (scroll state still advances); the host
+        // renders the map layers itself from otyr_background_map (v8).
+        SuppressBackground = 1 << 2,
+        // Publish per-layer standalone raster hashes (verification only, v8).
+        BackgroundHashes = 1 << 3,
     }
 
     // Presentation snapshot (ABI v6).
@@ -77,6 +82,25 @@ public static unsafe class OtyrNative
 
     public const ushort NoSource = 0xffff;
 
+    // Background map layers (ABI v8).
+    public const int BgLayerCount = 3;
+    public const int BgTileW = 24;
+    public const int BgTileH = 28;
+    public const int BgShapeMax = 72;
+    public const int BgMapCellMax = 600 * 15;
+    public const byte BgTileEmpty = 0xff;
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct BackgroundDraw
+    {
+        public int TileOffset;   // first blit row's first tile in the flattened map (may be < 0)
+        public short X, Y;       // frame position of that tile; 8 rows x 12 tiles of 24x28 from here
+        public byte Drawn;       // 0 = layer not blitted this tick
+        public byte Blend;       // 50/50 value-nibble blend variant
+        public ushort Reserved;
+        public uint Hash;        // only filled under ConfigFlags.BackgroundHashes
+    }
+
     [StructLayout(LayoutKind.Sequential)]
     public unsafe struct Snapshot
     {
@@ -88,6 +112,26 @@ public static unsafe class OtyrNative
         public fixed byte SoundChannel[SnapshotSoundMax];
         public fixed byte SoundSample[SnapshotSoundMax];
         public fixed byte SpritesRaw[SnapshotSpriteMax * 16];  // SnapshotSprite[1024]
+        public BackgroundDraw Background0, Background1, Background2;  // (v8)
+
+        public BackgroundDraw Background(int layer) => layer switch
+        {
+            0 => Background0,
+            1 => Background1,
+            _ => Background2,
+        };
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct BackgroundMap
+    {
+        public uint StructSize;
+        public uint SheetEpoch;
+        public ushort Width, Height;  // map dimensions in tiles
+        public ushort ShapeCount;
+        public ushort Reserved;
+        public fixed byte Tiles[BgMapCellMax];  // row-major shape indices; 0xff = empty
+        public fixed byte Shapes[BgShapeMax * BgTileW * BgTileH];
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -228,6 +272,9 @@ public static unsafe class OtyrNative
     [DllImport(Dll, EntryPoint = "otyr_sprite_sheet")]
     public static extern int GetSpriteSheet(ulong session, uint sheetId, SpriteSheet* sheet, uint sheetSize);
 
+    [DllImport(Dll, EntryPoint = "otyr_background_map")]
+    public static extern int GetBackgroundMap(ulong session, uint layer, BackgroundMap* map, uint mapSize);
+
     public static string LastError()
     {
         var buffer = stackalloc byte[256];
@@ -244,8 +291,10 @@ public static unsafe class OtyrNative
     {
         // ABI layout guards (mirrors the native static asserts).
         if (sizeof(SnapshotSprite) != 16 ||
-            sizeof(Snapshot) != 36 + SnapshotSpriteMax * 16 ||
+            sizeof(BackgroundDraw) != 16 ||
+            sizeof(Snapshot) != 36 + SnapshotSpriteMax * 16 + BgLayerCount * 16 ||
             sizeof(SpriteSheet) != 12 + SheetCellMax * SheetCellW * SheetCellH ||
+            sizeof(BackgroundMap) != 16 + BgMapCellMax + BgShapeMax * BgTileW * BgTileH ||
             sizeof(Frame) != 16 + FrameWidth * FrameHeight + 1024 + 4)
             throw new InvalidOperationException("ABI struct layout mismatch");
 

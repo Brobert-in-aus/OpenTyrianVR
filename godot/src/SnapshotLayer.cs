@@ -59,6 +59,11 @@ public unsafe partial class SnapshotLayer : Node3D
     private readonly byte[] _paletteRgba = new byte[256 * 4];
     private readonly int[] _instanceCount = new int[LayerCount];
 
+    /// <summary>Set before adding to the tree: render the background map
+    /// layers in 3D (pair with ConfigFlags.SuppressBackground).</summary>
+    public bool EnableBackground;
+    private BackgroundLayer? _background;
+
     public override void _Ready()
     {
         _snapshot.StructSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.Snapshot>();
@@ -66,6 +71,12 @@ public unsafe partial class SnapshotLayer : Node3D
 
         _paletteImage = Image.CreateEmpty(256, 1, false, Image.Format.Rgba8);
         _paletteTexture = ImageTexture.CreateFromImage(_paletteImage);
+
+        if (EnableBackground)
+        {
+            _background = new BackgroundLayer(_paletteTexture) { Name = "BackgroundLayer" };
+            AddChild(_background);
+        }
 
         var shader = new Shader
         {
@@ -198,6 +209,7 @@ public unsafe partial class SnapshotLayer : Node3D
 
             UpdatePalette(paletteArgb);
             BuildSprites();
+            _background?.OnSnapshot(session, in _snapshot);
 
             // Smoothed snapshot period for interpolation pacing.
             ulong now = Time.GetTicksUsec();
@@ -431,6 +443,8 @@ public unsafe partial class SnapshotLayer : Node3D
             double elapsed = (Time.GetTicksUsec() - _snapshotArrivalUsec) / 1_000_000.0;
             t = (float)Mathf.Clamp(elapsed / _snapshotPeriod, 0.0, 1.0);
         }
+
+        _background?.OnRender(t);
 
         Array.Clear(_instanceCount);
 

@@ -56,6 +56,12 @@ public partial class Main : Node3D
     // 0 = the sim's default max (5 px/tick, the original sustained keyboard
     // speed); the sim applies its own distance-based ease profile.
     private const byte HandTargetSpeed = 0;
+
+    // Render the background map layers as 3D geometry (ground/structures
+    // pixel-locked to the lane, clouds elevated and scroll-interpolated); the
+    // legacy frame's tile blits are suppressed and palette index 0 becomes
+    // transparent so the frame overlays the tile layers.
+    private const bool Render3DBackground = true;
     private bool _handTargetActive;
     private short _handTargetX, _handTargetY;
     private bool _lastTargetActive;
@@ -135,7 +141,7 @@ public partial class Main : Node3D
         {
             Code = """
                 shader_type spatial;
-                render_mode unshaded;
+                render_mode unshaded, depth_prepass_alpha;
 
                 uniform sampler2D frame : source_color, filter_linear_mipmap_anisotropic;
 
@@ -145,7 +151,12 @@ public partial class Main : Node3D
                     vec2 seam = floor(pixel + 0.5);
                     vec2 dudv = fwidth(pixel);
                     pixel = seam + clamp((pixel - seam) / dudv, -0.5, 0.5);
-                    ALBEDO = texture(frame, pixel / size).rgb;
+                    vec4 c = texture(frame, pixel / size);
+                    // Alpha carries the background color key (palette index 0
+                    // when the native background blits are suppressed); the
+                    // tile layers render just behind this plane.
+                    ALBEDO = c.rgb;
+                    ALPHA = c.a;
                 }
                 """,
         };
@@ -162,7 +173,7 @@ public partial class Main : Node3D
 
         BuildHandSteering();
 
-        _snapshotLayer = new SnapshotLayer { Name = "SnapshotLayer" };
+        _snapshotLayer = new SnapshotLayer { Name = "SnapshotLayer", EnableBackground = Render3DBackground };
         _playfieldRoot.AddChild(_snapshotLayer);
 
         GetViewport().Msaa3D = Viewport.Msaa.Msaa4X;
@@ -251,9 +262,10 @@ public partial class Main : Node3D
 
         string dataDir = Path.GetFullPath(Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "tyrian21"));
         string userDir = ProjectSettings.GlobalizePath("user://");
-        var config = OtyrNative.Config.Create(dataDir,
-            OtyrNative.ConfigFlags.EnableAudio | OtyrNative.ConfigFlags.SuppressEntityDraw,
-            userDir: userDir);
+        var flags = OtyrNative.ConfigFlags.EnableAudio | OtyrNative.ConfigFlags.SuppressEntityDraw;
+        if (Render3DBackground)
+            flags |= OtyrNative.ConfigFlags.SuppressBackground;
+        var config = OtyrNative.Config.Create(dataDir, flags, userDir: userDir);
 
         int rc = OtyrNative.SessionCreate(in config, (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.Config>(), out _session);
         if (rc != OtyrNative.Ok)
@@ -314,11 +326,15 @@ public partial class Main : Node3D
 
             for (int i = 0; i < OtyrNative.FrameWidth * OtyrNative.FrameHeight; ++i)
             {
-                uint argb = frame->Palette[frame->Pixels[i]];
+                byte index = frame->Pixels[i];
+                uint argb = frame->Palette[index];
                 _rgba[i * 4 + 0] = (byte)(argb >> 16);
                 _rgba[i * 4 + 1] = (byte)(argb >> 8);
                 _rgba[i * 4 + 2] = (byte)argb;
-                _rgba[i * 4 + 3] = 0xff;
+                // Color key: with the native background suppressed, palette
+                // index 0 means "nothing drawn here" and the 3D tile layers
+                // show through.
+                _rgba[i * 4 + 3] = Render3DBackground && index == 0 ? (byte)0 : (byte)0xff;
             }
         }
 

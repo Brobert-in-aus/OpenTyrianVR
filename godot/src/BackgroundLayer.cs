@@ -1,0 +1,262 @@
+using Godot;
+using System;
+
+namespace OpenTyrianVR;
+
+/// <summary>
+/// Renders the game's three scrolling background map layers from the exported
+/// tile data (ABI v8) in place of the legacy framebuffer background, which is
+/// suppressed natively via ConfigFlags.SuppressBackground.
+///
+/// Layers 0 (ground) and 1 (structures) stay pixel-locked to the sim tick and
+/// sit a fraction of a millimeter behind the lane overlay: terrain-paint art
+/// in the legacy frame (ground enemies covering their baked destroyed state)
+/// must stay pixel-coplanar with the tiles beneath it, so those layers get no
+/// scroll interpolation.  Layer 2 (clouds/top) carries no terrain paint and
+/// floats at real diorama height with per-render-frame scroll interpolation.
+///
+/// Each layer is a single quad over the 264x184 play region; the fragment
+/// shader resolves frame pixel -> map tile -> shape pixel -> palette, with a
+/// seam-aware bilinear blend in post-palette RGB for anti-aliasing.
+/// </summary>
+public unsafe partial class BackgroundLayer : Node3D
+{
+    private const float LaneWidth = 1.0f, LaneHeight = 0.625f;
+    private const int PlayW = 264, PlayH = 184;
+    private const int AtlasCols = 8;  // 8x9 grid of 24x28 shapes
+
+    // Lane-local Z per layer.  0/1 hug the lane overlay (sub-pixel offsets:
+    // ~0.1 mm of head parallax against 3.1 mm/px); 2 floats above the sky
+    // band, matching legacy draw order (background3over == 0 draws after sky
+    // enemies, before top enemies).
+    private static readonly float[] LayerZ = { -0.0008f, -0.0004f, 0.070f };
+
+    private OtyrNative.BackgroundMap _map;  // fetch scratch (57 KB)
+    private uint _mapEpoch;
+
+    private readonly MeshInstance3D[] _quads = new MeshInstance3D[OtyrNative.BgLayerCount];
+    private readonly ShaderMaterial[] _materials = new ShaderMaterial[OtyrNative.BgLayerCount];
+    private readonly ImageTexture[] _tilemapTex = new ImageTexture[OtyrNative.BgLayerCount];
+    private readonly ImageTexture[] _atlasTex = new ImageTexture[OtyrNative.BgLayerCount];
+    private readonly Vector2I[] _mapSize = new Vector2I[OtyrNative.BgLayerCount];
+
+    private readonly OtyrNative.BackgroundDraw[] _currDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
+    private readonly OtyrNative.BackgroundDraw[] _prevDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
+
+    // A scroll step larger than this between ticks is a map jump (wrap
+    // event); snap instead of interpolating across it.
+    private const float TeleportGuardPx = 56f;
+
+    private readonly ImageTexture _palette;
+
+    public BackgroundLayer(ImageTexture palette)
+    {
+        _palette = palette;
+    }
+
+    public override void _Ready()
+    {
+        _map.StructSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.BackgroundMap>();
+
+        var shader = new Shader
+        {
+            Code = """
+                shader_type spatial;
+                render_mode unshaded, cull_disabled, depth_prepass_alpha;
+
+                uniform sampler2D tilemap : filter_nearest;
+                uniform sampler2D atlas : filter_nearest;
+                uniform sampler2D palette : filter_nearest;
+                uniform ivec2 map_size;
+                uniform vec2 origin_px;   // map tile (0,0) position, play-region px
+                uniform float alpha_mul;  // 1.0, or 0.55 for the legacy blend variant
+
+                // Palette RGB at one integer map pixel; a = coverage.
+                vec4 sample_map(ivec2 mp) {
+                    if (mp.x < 0 || mp.y < 0)
+                        return vec4(0.0);
+                    ivec2 tile = mp / ivec2(24, 28);
+                    if (tile.x >= map_size.x || tile.y >= map_size.y)
+                        return vec4(0.0);
+                    int idx = int(texelFetch(tilemap, tile, 0).r * 255.0 + 0.5);
+                    if (idx > 200)  // 0xff = empty cell
+                        return vec4(0.0);
+                    ivec2 ap = ivec2((idx % 8) * 24, (idx / 8) * 28) + (mp - tile * ivec2(24, 28));
+                    float pi = floor(texelFetch(atlas, ap, 0).r * 255.0 + 0.5);
+                    if (pi < 0.5)  // palette 0 = transparent
+                        return vec4(0.0);
+                    vec3 rgb = texture(palette, vec2((pi + 0.5) / 256.0, 0.5)).rgb;
+                    return vec4(rgb, 1.0);
+                }
+
+                void fragment() {
+                    vec2 frame_px = UV * vec2(264.0, 184.0);
+                    vec2 mpf = frame_px - origin_px;
+
+                    // Anti-aliased point sampling: snap to texel centers except
+                    // in a fwidth-wide band at texel seams (the lane shader's
+                    // trick), then blend the 4 neighbors in post-palette RGB.
+                    vec2 seam = floor(mpf + 0.5);
+                    vec2 dudv = max(fwidth(mpf), vec2(1e-4));
+                    vec2 px = seam + clamp((mpf - seam) / dudv, -0.5, 0.5);
+
+                    vec2 base = px - 0.5;
+                    ivec2 i0 = ivec2(floor(base));
+                    vec2 w = base - vec2(i0);
+
+                    vec4 c = mix(
+                        mix(sample_map(i0), sample_map(i0 + ivec2(1, 0)), w.x),
+                        mix(sample_map(i0 + ivec2(0, 1)), sample_map(i0 + ivec2(1, 1)), w.x),
+                        w.y);
+
+                    if (c.a < 0.004)
+                        discard;
+                    ALBEDO = c.rgb / c.a;   // un-premultiply the coverage blend
+                    ALPHA = c.a * alpha_mul;
+                }
+                """,
+        };
+
+        // The play region (frame px 0..264 x 0..184) in lane-local coordinates
+        // (the lane maps the full 320x200 frame; play area publishes at -24).
+        var quadMesh = new QuadMesh
+        {
+            Size = new Vector2(PlayW / 320f * LaneWidth, PlayH / 200f * LaneHeight),
+        };
+        float centerX = (PlayW / 2f / 320f - 0.5f) * LaneWidth;
+        float centerY = (0.5f - PlayH / 2f / 200f) * LaneHeight;
+
+        for (int l = 0; l < OtyrNative.BgLayerCount; l++)
+        {
+            _materials[l] = new ShaderMaterial { Shader = shader };
+            _materials[l].SetShaderParameter("palette", _palette);
+            _materials[l].SetShaderParameter("alpha_mul", 1.0f);
+
+            _quads[l] = new MeshInstance3D
+            {
+                Name = $"BgLayer{l}",
+                Mesh = quadMesh,
+                MaterialOverride = _materials[l],
+                Position = new Vector3(centerX, centerY, LayerZ[l]),
+                Visible = false,
+            };
+            AddChild(_quads[l]);
+        }
+
+        // Opaque backing behind everything: where the suppressed legacy frame
+        // and the tile layers are all transparent, the board reads as black
+        // (menus, erased HUD rects, astral events) instead of see-through.
+        AddChild(new MeshInstance3D
+        {
+            Name = "Backing",
+            Mesh = new QuadMesh { Size = new Vector2(LaneWidth, LaneHeight) },
+            Position = new Vector3(0f, 0f, -0.0012f),
+            MaterialOverride = new StandardMaterial3D
+            {
+                AlbedoColor = new Color(0f, 0f, 0f),
+                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            },
+        });
+    }
+
+    /// <summary>Called by SnapshotLayer when a new gameplay tick's snapshot
+    /// arrives; refreshes map textures on epoch change and latches the
+    /// per-layer scroll state.</summary>
+    public void OnSnapshot(ulong session, in OtyrNative.Snapshot snapshot)
+    {
+        if (snapshot.SheetEpoch != _mapEpoch)
+        {
+            _mapEpoch = snapshot.SheetEpoch;
+            FetchMaps(session);
+        }
+
+        for (int l = 0; l < OtyrNative.BgLayerCount; l++)
+        {
+            _prevDraw[l] = _currDraw[l];
+            _currDraw[l] = snapshot.Background(l);
+            _quads[l].Visible = _currDraw[l].Drawn != 0;
+            _materials[l].SetShaderParameter("alpha_mul", _currDraw[l].Blend != 0 ? 0.55f : 1.0f);
+
+            // Layers 0/1 are pixel-locked to the tick (terrain-paint
+            // coplanarity); their origin updates here and only here.
+            if (l < 2 && _currDraw[l].Drawn != 0)
+                _materials[l].SetShaderParameter("origin_px", Origin(l, _currDraw[l]));
+        }
+    }
+
+    /// <summary>Called every render frame with the tick interpolation phase;
+    /// smooth-scrolls the elevated cloud layer.</summary>
+    public void OnRender(float t)
+    {
+        const int l = 2;
+        if (_currDraw[l].Drawn == 0)
+            return;
+
+        Vector2 curr = Origin(l, _currDraw[l]);
+        Vector2 origin = curr;
+        if (_prevDraw[l].Drawn != 0)
+        {
+            Vector2 prev = Origin(l, _prevDraw[l]);
+            if (prev.DistanceTo(curr) <= TeleportGuardPx)
+                origin = prev.Lerp(curr, t);
+        }
+        _materials[l].SetShaderParameter("origin_px", origin);
+    }
+
+    /// <summary>Play-region position of map tile (0,0) for a draw record: the
+    /// record pins map cell (row0, col0) at frame (x, y); draw x is in
+    /// pre-composite coordinates (play area publishes shifted -24).</summary>
+    private Vector2 Origin(int layer, in OtyrNative.BackgroundDraw draw)
+    {
+        int width = Math.Max((int)_mapSize[layer].X, 1);
+        int row0 = (int)Math.Floor(draw.TileOffset / (double)width);
+        int col0 = draw.TileOffset - row0 * width;
+        return new Vector2(draw.X - 24 - col0 * 24, draw.Y - row0 * 28);
+    }
+
+    private void FetchMaps(ulong session)
+    {
+        for (uint l = 0; l < OtyrNative.BgLayerCount; l++)
+        {
+            int rc;
+            fixed (OtyrNative.BackgroundMap* mapPtr = &_map)
+                rc = OtyrNative.GetBackgroundMap(session, l, mapPtr, _map.StructSize);
+            if (rc != OtyrNative.Ok || _map.Width == 0)
+                continue;
+
+            _mapSize[l] = new Vector2I(_map.Width, _map.Height);
+            _materials[l].SetShaderParameter("map_size", _mapSize[l]);
+
+            var tiles = new byte[_map.Width * _map.Height];
+            fixed (OtyrNative.BackgroundMap* map = &_map)
+            {
+                for (int i = 0; i < tiles.Length; i++)
+                    tiles[i] = map->Tiles[i];
+            }
+            var tilemapImage = Image.CreateFromData(_map.Width, _map.Height, false, Image.Format.R8, tiles);
+            _tilemapTex[l] = ImageTexture.CreateFromImage(tilemapImage);
+            _materials[l].SetShaderParameter("tilemap", _tilemapTex[l]);
+
+            int atlasRows = (OtyrNative.BgShapeMax + AtlasCols - 1) / AtlasCols;
+            int atlasW = AtlasCols * OtyrNative.BgTileW;
+            int atlasH = atlasRows * OtyrNative.BgTileH;
+            var atlas = new byte[atlasW * atlasH];
+            fixed (OtyrNative.BackgroundMap* map = &_map)
+            {
+                for (int s = 0; s < _map.ShapeCount; s++)
+                {
+                    int originX = (s % AtlasCols) * OtyrNative.BgTileW;
+                    int originY = (s / AtlasCols) * OtyrNative.BgTileH;
+                    byte* src = map->Shapes + s * OtyrNative.BgTileW * OtyrNative.BgTileH;
+                    for (int y = 0; y < OtyrNative.BgTileH; y++)
+                        for (int x = 0; x < OtyrNative.BgTileW; x++)
+                            atlas[(originY + y) * atlasW + originX + x] = src[y * OtyrNative.BgTileW + x];
+                }
+            }
+            var atlasImage = Image.CreateFromData(atlasW, atlasH, false, Image.Format.R8, atlas);
+            _atlasTex[l] = ImageTexture.CreateFromImage(atlasImage);
+            _materials[l].SetShaderParameter("atlas", _atlasTex[l]);
+        }
+        GD.Print($"OpenTyrianVR: background maps refreshed (epoch {_mapEpoch})");
+    }
+}
