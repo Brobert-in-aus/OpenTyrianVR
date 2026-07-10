@@ -194,7 +194,9 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 
 	/* Surface riders: a slow-moving enemy whose center sits on terrain-paint
 	   recorded earlier this tick (e.g., tanks on floating platforms) is
-	   grounded on that surface, not flying above it. */
+	   grounded on that surface, not flying above it.  Marked with aux 2:
+	   the host renders these in 3D at platform height (the platform map
+	   layer is elevated), unlike aux-1 art which stays flat in the frame. */
 	if (!terrain_art && otyr_hosted &&
 	    abs(enemy[i].exc) <= 1 && abs(enemy[i].eyc) <= 1)
 	{
@@ -203,12 +205,12 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 		for (unsigned int r = 0; r < present_sprite_count; ++r)
 		{
 			const PresentSprite *other = &present_sprites[r];
-			if (other->aux == 0 || other->category > PRESENT_ENEMY_GROUND_B)
+			if (other->aux != 1 || other->category > PRESENT_ENEMY_GROUND_B)
 				continue;
 			if (center_x >= other->x && center_x < other->x + 12 &&
 			    center_y >= other->y && center_y < other->y + 14)
 			{
-				terrain_art = 1;
+				terrain_art = 2;
 				break;
 			}
 		}

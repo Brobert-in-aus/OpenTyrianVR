@@ -13,15 +13,12 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Ground tiles: aligned with tanks/wrecks (no parallax)",
-        "Clouds: float above lane, scroll smooth at 120 Hz",
-        "Clouds layer OVER sky enemies, UNDER top enemies",
-        "HUD / sidebar / menus / text composite intact",
-        "Entity motion smooth (35 Hz -> refresh interp)",
-        "Hand steering still feels right",
-        "Known: INSERT COIN under clouds - acceptable?",
-        "Pause menu: frozen terrain/clouds - acceptable?",
-        "Perf: render fps holds at headset rate",
+        "Pit/slab interiors solid black (nothing shows through)",
+        "Floating platforms: BELOW your ship",
+        "Platform riders (tanks/turrets): ON their platforms",
+        "No sprites hanging past the lane edges",
+        "Quit-to-menu / pause: nothing lingering",
+        "Anything else off? tell Claude after",
     };
 
     private readonly bool[] _done = new bool[Items.Length];

@@ -135,6 +135,11 @@ extern PresentBackground present_backgrounds[PRESENT_BACKGROUND_LAYERS];
  * maps plus the per-tick scroll records. */
 extern bool present_suppress_background;
 
+/* Palette index the suppressed background fill uses so the host can key it
+ * out.  Deliberately NOT 0: art (pit interiors, baked slabs) uses index-0
+ * black that must stay opaque in the frame overlay. */
+#define PRESENT_BG_KEY_INDEX 254
+
 /* When set, each background draw also rasters its layer standalone (against
  * a zeroed scratch frame) and publishes an FNV-1a hash so a host-side
  * reconstruction can be verified mechanically. */

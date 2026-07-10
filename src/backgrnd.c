@@ -188,7 +188,10 @@ static Uint32 bg_capture_hash(int x, JE_word back_pos, Uint8 **map, int stride, 
 
 void draw_background_1(SDL_Surface *surface)
 {
-	SDL_FillRect(surface, NULL, 0);
+	/* With the tile blits suppressed, the fill is the color key the host
+	   sees through to its own background layers; index-0 black in sprite
+	   and HUD art stays opaque. */
+	SDL_FillRect(surface, NULL, present_suppress_background ? PRESENT_BG_KEY_INDEX : 0);
 
 	Uint8 **map = (Uint8 **)mapYPos + mapXbpPos - 12;
 

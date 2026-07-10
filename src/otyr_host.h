@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 10u
+#define OTYR_ABI_VERSION 11u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -84,7 +84,15 @@ extern "C" {
                                                         tile blits (scroll
                                                         state still advances);
                                                         host renders the map
-                                                        layers itself (v8) */
+                                                        layers itself; the
+                                                        frame's background
+                                                        fill becomes
+                                                        OTYR_BG_KEY_INDEX for
+                                                        color keying (v8) */
+
+/* Palette index of the suppressed background fill: the host keys THIS out of
+ * the frame overlay, not 0 -- index-0 black in sprite/HUD art is opaque. */
+#define OTYR_BG_KEY_INDEX 254u
 #define OTYR_CONFIG_BACKGROUND_HASHES      (1u << 3) /* publish per-layer
                                                         standalone raster
                                                         hashes for export
@@ -180,7 +188,10 @@ typedef struct OtyrSnapshotSprite
 	int16_t  x, y;          /* legacy frame coordinates at draw time */
 	uint16_t index;         /* sprite index within the sheet (1-based) */
 	uint8_t  sheet_id;      /* OTYR_SHEET_* or OTYR_SHEET_INVALID */
-	uint8_t  aux;           /* per-category metadata (enemies: terrain art) */
+	uint8_t  aux;           /* per-category metadata; enemies: 1 = baked
+	                           terrain art (flat in the frame), 2 = platform
+	                           rider (render at the elevated platform map
+	                           layer's height) (v11) */
 	uint16_t source_id;     /* stable entity id across ticks (0xffff none);
 	                           same-id records pair by emit order (v7) */
 	uint8_t  reserved[2];   /* pads the struct to exactly 16 bytes */

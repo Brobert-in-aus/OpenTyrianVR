@@ -429,8 +429,9 @@ public unsafe partial class SnapshotLayer : Node3D
                     continue;
                 if (sprite.Category == (byte)OtyrNative.Category.Shadow)
                     continue;  // stays in the legacy frame (terrain paint)
-                if (sprite.Aux != 0 && sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB)
+                if (sprite.Aux == 1 && sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB)
                     continue;  // ground-baked art stays in the legacy frame
+                               // (aux 2 = platform rider, rendered below)
 
                 if (sprite.Kind == 1)  // SPRITE2X2: four cells (i, i+1, i+19, i+20)
                 {
@@ -540,8 +541,12 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.CellIndex = cellIndex - 1;
         cell.Flags = sprite.Flags;
         cell.FilterColor = sprite.FilterColor;
-        cell.Z = BandHeight[Math.Min(sprite.Category, (byte)(BandHeight.Length - 1))]
-               + recordIndex * OrderBias;
+        // Platform riders (aux 2) sit on the elevated platform map layer,
+        // not at their slot band.
+        float band = sprite.Aux == 2 && sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB
+            ? BackgroundLayer.PlatformZ + 0.004f
+            : BandHeight[Math.Min(sprite.Category, (byte)(BandHeight.Length - 1))];
+        cell.Z = band + recordIndex * OrderBias;
         cell.CurrPx = new Vector2(centerX, centerY);
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
@@ -593,11 +598,21 @@ public unsafe partial class SnapshotLayer : Node3D
 
             Vector2 px = cell.HasPrev ? cell.PrevPx.Lerp(cell.CurrPx, t) : cell.CurrPx;
 
-            // Frame pixels (game_screen, composited -24) -> lane local.
-            float laneX = ((px.X - 24f) / 320f - 0.5f) * LaneWidth;
-            float laneY = (0.5f - px.Y / 200f) * LaneHeight;
-
             int id = cell.SheetId;
+
+            // Cull cells fully outside the visible play region (frame copies
+            // draw columns 24..288, rows 0..184): legacy clips these at the
+            // margins, so they must not float past the lane edges.
+            float halfW = id == GlowLayer ? 1f : id == OldLayer ? cell.Flags / 2f : OtyrNative.SheetCellW / 2f;
+            float halfH = id == GlowLayer ? 1f : id == OldLayer ? cell.FilterColor / 2f : OtyrNative.SheetCellH / 2f;
+            float frameX = px.X - 24f;
+            if (frameX + halfW <= 0f || frameX - halfW >= 264f ||
+                px.Y + halfH <= 0f || px.Y - halfH >= 184f)
+                continue;
+
+            // Frame pixels (game_screen, composited -24) -> lane local.
+            float laneX = (frameX / 320f - 0.5f) * LaneWidth;
+            float laneY = (0.5f - px.Y / 200f) * LaneHeight;
             int instance = _instanceCount[id]++;
             if (instance >= _multiMesh[id].InstanceCount)
             {

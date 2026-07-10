@@ -365,10 +365,10 @@ public partial class Main : Node3D
                 _rgba[i * 4 + 0] = (byte)(argb >> 16);
                 _rgba[i * 4 + 1] = (byte)(argb >> 8);
                 _rgba[i * 4 + 2] = (byte)argb;
-                // Color key: with the native background suppressed, palette
-                // index 0 means "nothing drawn here" and the 3D tile layers
-                // show through.
-                _rgba[i * 4 + 3] = Render3DBackground && index == 0 ? (byte)0 : (byte)0xff;
+                // Color key: with the native background suppressed, the fill
+                // index means "nothing drawn here" and the 3D tile layers
+                // show through.  Index-0 black in art stays opaque.
+                _rgba[i * 4 + 3] = Render3DBackground && index == OtyrNative.BgKeyIndex ? (byte)0 : (byte)0xff;
             }
         }
 

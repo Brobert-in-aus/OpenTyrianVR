@@ -11,7 +11,11 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 10;
+    public const uint AbiVersion = 11;
+
+    // Palette index of the suppressed background fill (the frame color key);
+    // index-0 black in sprite/HUD art stays opaque.
+    public const byte BgKeyIndex = 254;
 
     public const int FrameWidth = 320;
     public const int FrameHeight = 200;

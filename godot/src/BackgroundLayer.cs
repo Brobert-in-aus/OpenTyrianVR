@@ -29,14 +29,17 @@ public unsafe partial class BackgroundLayer : Node3D
     // Coplanar layers hug the lane overlay (sub-pixel offsets: ~0.1 mm of
     // head parallax against 3.1 mm/px); layers that legacy draws over
     // entities get real diorama height.  Layer 1 over==1 (e.g. Tyrian-1
-    // clouds, drawn over the ground objects) sits above the terrain paint
-    // but below the player band (0.04); layer 2 sits above the sky band
-    // (0.055) for over==0, below it for over==2.
+    // clouds, drawn over the ground objects) sits above the terrain paint;
+    // layer 2 (e.g. floating platforms) sits above the clouds.  Both stay
+    // below the player band (0.04): legacy draws the player, shots, and
+    // top enemies after every background layer, so nothing map-based may
+    // ever cover the ship.
+    public const float PlatformZ = 0.030f;
     private static float LayerHeight(int layer, byte overMode) => layer switch
     {
         0 => -0.0008f,
         1 => overMode == 1 ? 0.020f : -0.0004f,
-        _ => overMode == 2 ? 0.030f : 0.070f,
+        _ => overMode == 2 ? 0.025f : PlatformZ,
     };
 
     private OtyrNative.BackgroundMap _map;  // fetch scratch (57 KB)
