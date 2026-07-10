@@ -19,6 +19,7 @@
 #include "present_frame.h"
 
 #include <assert.h>
+#include <string.h>
 
 PresentSprite present_sprites[PRESENT_SPRITE_MAX];
 unsigned int present_sprite_count = 0;
@@ -27,10 +28,28 @@ Uint8 present_sound_channel[PRESENT_SOUND_MAX];
 Uint8 present_sound_sample[PRESENT_SOUND_MAX];
 unsigned int present_sound_count = 0;
 
+PresentBackground present_backgrounds[PRESENT_BACKGROUND_LAYERS];
+bool present_suppress_background = false;
+bool present_background_hash = false;
+
 void present_frame_reset(void)
 {
 	present_sprite_count = 0;
 	present_sound_count = 0;
+	memset(present_backgrounds, 0, sizeof(present_backgrounds));
+}
+
+void present_background(int layer, Sint32 tile_offset, Sint16 x, Sint16 y,
+                        bool blend, Uint32 hash)
+{
+	if (layer < 0 || layer >= PRESENT_BACKGROUND_LAYERS)
+		return;
+	present_backgrounds[layer].tile_offset = tile_offset;
+	present_backgrounds[layer].x = x;
+	present_backgrounds[layer].y = y;
+	present_backgrounds[layer].drawn = 1;
+	present_backgrounds[layer].blend = blend ? 1 : 0;
+	present_backgrounds[layer].hash = hash;
 }
 
 void present_sound(Uint8 channel, Uint8 sample)

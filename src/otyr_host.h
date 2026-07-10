@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 7u
+#define OTYR_ABI_VERSION 8u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -80,6 +80,15 @@ extern "C" {
                                                         backgrounds/HUD; host
                                                         renders entities from
                                                         the snapshot (v6) */
+#define OTYR_CONFIG_SUPPRESS_BACKGROUND    (1u << 2) /* skip the background
+                                                        tile blits (scroll
+                                                        state still advances);
+                                                        host renders the map
+                                                        layers itself (v8) */
+#define OTYR_CONFIG_BACKGROUND_HASHES      (1u << 3) /* publish per-layer
+                                                        standalone raster
+                                                        hashes for export
+                                                        verification (v8) */
 
 typedef struct OtyrConfig
 {
@@ -177,6 +186,24 @@ typedef struct OtyrSnapshotSprite
 	uint8_t  reserved[2];   /* pads the struct to exactly 16 bytes */
 } OtyrSnapshotSprite;
 
+/* Per-tick scroll record for one background map layer (v8).  The map data
+ * itself is static per level (otyr_background_map); this pins where the
+ * legacy blit placed it this tick. */
+#define OTYR_BG_LAYER_COUNT 3u
+
+typedef struct OtyrBackgroundDraw
+{
+	int32_t  tile_offset;   /* element index of the first blit row's first
+	                           tile within the flattened map (may be < 0) */
+	int16_t  x, y;          /* frame position of that tile; the layer covers
+	                           8 rows of 12 tiles from here (24x28 each) */
+	uint8_t  drawn;         /* 0 = layer not blitted this tick */
+	uint8_t  blend;         /* 50/50 value-nibble blend variant */
+	uint16_t reserved;
+	uint32_t hash;          /* standalone-raster FNV-1a; only filled when
+	                           OTYR_CONFIG_BACKGROUND_HASHES is set */
+} OtyrBackgroundDraw;
+
 typedef struct OtyrSnapshot
 {
 	uint32_t struct_size;   /* sizeof(OtyrSnapshot); doubles as last-seen key
@@ -188,6 +215,7 @@ typedef struct OtyrSnapshot
 	uint8_t  sound_channel[OTYR_SNAPSHOT_SOUND_MAX];
 	uint8_t  sound_sample[OTYR_SNAPSHOT_SOUND_MAX];
 	OtyrSnapshotSprite sprites[OTYR_SNAPSHOT_SPRITE_MAX];
+	OtyrBackgroundDraw background[OTYR_BG_LAYER_COUNT]; /* (v8) */
 } OtyrSnapshot;
 
 /* Sprite sheet export: every cell is a 12x14 indexed-color bitmap (0 =
@@ -259,6 +287,38 @@ OTYR_API int32_t otyr_sprite_sheet(uint64_t session,
                                    uint32_t sheet_id,
                                    OtyrSpriteSheet *sheet,
                                    uint32_t sheet_size);
+
+/* --- Background map export (v8) ---------------------------------------- */
+
+/* Each level has three scrolling map layers built from 24x28 indexed-color
+ * tiles (0 = transparent): layer 0 the ground (14x300 map, parallax 1x),
+ * layer 1 structures/water (14x600, 2x), layer 2 clouds/top (15x600, 3x).
+ * Static per level; re-fetch when snapshot.sheet_epoch changes.  Per-tick
+ * placement comes from OtyrSnapshot.background[]. */
+#define OTYR_BG_TILE_W      24u
+#define OTYR_BG_TILE_H      28u
+#define OTYR_BG_SHAPE_MAX   72u
+#define OTYR_BG_MAP_CELL_MAX (600u * 15u)
+#define OTYR_BG_TILE_EMPTY  0xffu
+
+typedef struct OtyrBackgroundMap
+{
+	uint32_t struct_size;
+	uint32_t sheet_epoch;
+	uint16_t width, height; /* map dimensions in tiles */
+	uint16_t shape_count;
+	uint16_t reserved;
+	uint8_t  tiles[OTYR_BG_MAP_CELL_MAX]; /* row-major shape indices;
+	                                         OTYR_BG_TILE_EMPTY = no tile */
+	uint8_t  shapes[OTYR_BG_SHAPE_MAX * OTYR_BG_TILE_W * OTYR_BG_TILE_H];
+} OtyrBackgroundMap;
+
+/* Copies one background map layer (0..2) from the cache filled at level
+ * load. */
+OTYR_API int32_t otyr_background_map(uint64_t session,
+                                     uint32_t layer,
+                                     OtyrBackgroundMap *map,
+                                     uint32_t map_size);
 
 #ifdef __cplusplus
 }

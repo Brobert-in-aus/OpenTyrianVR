@@ -27,6 +27,7 @@ typedef int32_t (*fn_acquire_frame)(uint64_t, OtyrFrame *, uint32_t, uint32_t);
 typedef int32_t (*fn_player_state)(uint64_t, OtyrPlayerState *, uint32_t);
 typedef int32_t (*fn_snapshot)(uint64_t, OtyrSnapshot *, uint32_t, uint32_t);
 typedef int32_t (*fn_sprite_sheet)(uint64_t, uint32_t, OtyrSpriteSheet *, uint32_t);
+typedef int32_t (*fn_background_map)(uint64_t, uint32_t, OtyrBackgroundMap *, uint32_t);
 
 static fn_abi_version p_abi_version;
 static fn_last_error p_last_error;
@@ -37,6 +38,7 @@ static fn_acquire_frame p_acquire_frame;
 static fn_player_state p_player_state;
 static fn_snapshot p_snapshot;
 static fn_sprite_sheet p_sprite_sheet;
+static fn_background_map p_background_map;
 
 static uint64_t g_session;
 
@@ -80,6 +82,78 @@ static void write_bmp(const char *path, const OtyrFrame *frame)
 	printf("wrote %s\n", path);
 }
 
+/* Replays blit_background_row (backgrnd.c) from exported map data onto a flat
+ * 320-pitch buffer, including its flat-address clipping quirks, so the raster
+ * hash can be compared bit-for-bit with the native standalone capture. */
+static void bg_blit_row(uint8_t *surf, int x, int y, const OtyrBackgroundMap *map,
+                        int32_t tile_offset, int blend)
+{
+	uint8_t *pixels = surf + (y * 320) + x;
+	uint8_t *pixels_ll = surf;
+	uint8_t *pixels_ul = surf + 200 * 320;
+
+	for (int row = 0; row < 28; row++)
+	{
+		if ((pixels + (12 * 24)) < pixels_ll)
+		{
+			pixels += 320;
+			continue;
+		}
+
+		for (int tile = 0; tile < 12; tile++)
+		{
+			int32_t off = tile_offset + tile;
+			const uint8_t *data = NULL;
+			if (off >= 0 && off < (int32_t)(map->width * map->height) &&
+			    map->tiles[off] != OTYR_BG_TILE_EMPTY)
+				data = map->shapes + map->tiles[off] * OTYR_BG_TILE_W * OTYR_BG_TILE_H;
+
+			if (data == NULL)
+			{
+				pixels += 24;
+				continue;
+			}
+
+			data += row * 24;
+
+			for (int i = 24; i; i--)
+			{
+				if (pixels >= pixels_ul)
+					return;
+				if (pixels >= pixels_ll && *data != 0)
+					*pixels = blend ? (uint8_t)((*data & 0xf0) | (((*pixels & 0x0f) + (*data & 0x0f)) / 2))
+					                : *data;
+
+				pixels++;
+				data++;
+			}
+		}
+
+		pixels += 320 - 12 * 24;
+	}
+}
+
+static uint32_t bg_reconstruct_hash(const OtyrBackgroundMap *map, const OtyrBackgroundDraw *draw)
+{
+	/* padding above the frame: the first blit row starts at negative y */
+	static uint8_t buffer[320 * 29 + 320 * 200];
+	uint8_t *surf = buffer + 320 * 29;
+	memset(buffer, 0, sizeof(buffer));
+
+	for (int i = 0; i < 8; i++)
+		bg_blit_row(surf, draw->x, draw->y + i * 28, map,
+		            draw->tile_offset + i * map->width, draw->blend);
+
+	uint32_t hash = 2166136261u;
+	for (int y = 0; y < 200; y++)
+		for (int x = 0; x < 320; x++)
+		{
+			hash ^= surf[y * 320 + x];
+			hash *= 16777619u;
+		}
+	return hash;
+}
+
 static void pulse_button(uint32_t buttons, DWORD hold_ms)
 {
 	OtyrInputFrame input = { .struct_size = sizeof(OtyrInputFrame), .buttons = buttons };
@@ -110,15 +184,18 @@ int main(void)
 	p_player_state = (fn_player_state)GetProcAddress(dll, "otyr_session_player_state");
 	p_snapshot = (fn_snapshot)GetProcAddress(dll, "otyr_session_snapshot");
 	p_sprite_sheet = (fn_sprite_sheet)GetProcAddress(dll, "otyr_sprite_sheet");
+	p_background_map = (fn_background_map)GetProcAddress(dll, "otyr_background_map");
 	if (!p_abi_version || !p_last_error || !p_session_create || !p_session_destroy ||
-	    !p_submit_input || !p_acquire_frame || !p_player_state || !p_snapshot || !p_sprite_sheet)
+	    !p_submit_input || !p_acquire_frame || !p_player_state || !p_snapshot || !p_sprite_sheet ||
+	    !p_background_map)
 		die("missing export");
 
 	if (p_abi_version() != OTYR_ABI_VERSION)
 		die("ABI version mismatch");
 	printf("ABI version %u\n", p_abi_version());
 
-	OtyrConfig config = { .struct_size = sizeof(OtyrConfig), .abi_version = OTYR_ABI_VERSION };
+	OtyrConfig config = { .struct_size = sizeof(OtyrConfig), .abi_version = OTYR_ABI_VERSION,
+	                      .flags = OTYR_CONFIG_BACKGROUND_HASHES };
 	snprintf(config.data_dir, sizeof(config.data_dir), "tyrian21");
 	snprintf(config.hash_log, sizeof(config.hash_log), "captures\\hash-hosted.log");
 
@@ -328,6 +405,57 @@ int main(void)
 	}
 	printf("record verify: %u checked, %u bad\n", checked_records, bad_records);
 	free(sheets);
+
+	/* Phase 4c: background map export (ABI v8).  Fetch the three map layers
+	 * and, across a stretch of live snapshots, reconstruct each drawn layer
+	 * from exported data alone; the hash must match the native standalone
+	 * raster bit-for-bit. */
+	OtyrBackgroundMap *bg_maps = calloc(OTYR_BG_LAYER_COUNT, sizeof(OtyrBackgroundMap));
+	for (uint32_t l = 0; l < OTYR_BG_LAYER_COUNT; ++l)
+	{
+		bg_maps[l].struct_size = sizeof(OtyrBackgroundMap);
+		if (p_background_map(g_session, l, &bg_maps[l], sizeof(OtyrBackgroundMap)) != OTYR_OK)
+			die("background_map");
+		unsigned int used = 0;
+		for (uint32_t i = 0; i < (uint32_t)(bg_maps[l].width * bg_maps[l].height); ++i)
+			if (bg_maps[l].tiles[i] != OTYR_BG_TILE_EMPTY)
+				++used;
+		printf("bg map %u: %ux%u tiles (%u placed), %u shapes\n",
+		       l, bg_maps[l].width, bg_maps[l].height, used, bg_maps[l].shape_count);
+	}
+
+	{
+		unsigned int bg_checked[OTYR_BG_LAYER_COUNT] = { 0 };
+		unsigned int bg_bad[OTYR_BG_LAYER_COUNT] = { 0 };
+		DWORD bg_start = GetTickCount();
+		while (GetTickCount() - bg_start < 15000)
+		{
+			if (p_snapshot(g_session, snapshot, sizeof(OtyrSnapshot), 1000) != OTYR_OK)
+				continue;
+			for (uint32_t l = 0; l < OTYR_BG_LAYER_COUNT; ++l)
+			{
+				const OtyrBackgroundDraw *draw = &snapshot->background[l];
+				if (!draw->drawn)
+					continue;
+				++bg_checked[l];
+				if (bg_reconstruct_hash(&bg_maps[l], draw) != draw->hash)
+				{
+					if (++bg_bad[l] <= 4)
+						printf("  BG MISMATCH layer %u tick %u offset %d at (%d,%d) blend %u\n",
+						       l, snapshot->level_tick, draw->tile_offset,
+						       draw->x, draw->y, draw->blend);
+				}
+			}
+		}
+		printf("bg verify: layer ticks checked %u/%u/%u, mismatches %u/%u/%u\n",
+		       bg_checked[0], bg_checked[1], bg_checked[2],
+		       bg_bad[0], bg_bad[1], bg_bad[2]);
+		if (bg_checked[0] == 0)
+			die("background layer 1 never drawn during demo verify window");
+		if (bg_bad[0] + bg_bad[1] + bg_bad[2] != 0)
+			die("background reconstruction mismatch");
+	}
+	free(bg_maps);
 
 	OtyrSpriteSheet *sheet = calloc(1, sizeof(OtyrSpriteSheet));
 	sheet->struct_size = sizeof(OtyrSpriteSheet);

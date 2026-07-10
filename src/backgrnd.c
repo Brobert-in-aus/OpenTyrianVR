@@ -21,6 +21,7 @@
 #include "config.h"
 #include "mtrand.h"
 #include "opentyr.h"
+#include "present_frame.h"
 #include "varz.h"
 #include "video.h"
 
@@ -152,18 +153,56 @@ void blit_background_row_blend(SDL_Surface *surface, int x, int y, Uint8 **map)
 	}
 }
 
+/* Rasters the same 8 blit rows against a zeroed scratch frame and returns an
+ * FNV-1a hash of it; lets the host verify its map-data reconstruction of a
+ * layer bit-for-bit without disturbing the real frame. */
+static Uint32 bg_capture_hash(int x, JE_word back_pos, Uint8 **map, int stride, bool blend)
+{
+	static SDL_Surface *scratch = NULL;
+	if (scratch == NULL)
+		scratch = SDL_CreateRGBSurface(0, 320, 200, 8, 0, 0, 0, 0);
+	SDL_FillRect(scratch, NULL, 0);
+
+	for (int i = -1; i < 7; i++)
+	{
+		if (blend)
+			blit_background_row_blend(scratch, x, (i * 28) + back_pos, map);
+		else
+			blit_background_row(scratch, x, (i * 28) + back_pos, map);
+
+		map += stride;
+	}
+
+	Uint32 hash = 2166136261u;
+	for (int y = 0; y < 200; y++)
+	{
+		const Uint8 *p = (const Uint8 *)scratch->pixels + y * scratch->pitch;
+		for (int px = 0; px < 320; px++)
+		{
+			hash ^= p[px];
+			hash *= 16777619u;
+		}
+	}
+	return hash;
+}
+
 void draw_background_1(SDL_Surface *surface)
 {
 	SDL_FillRect(surface, NULL, 0);
-	
+
 	Uint8 **map = (Uint8 **)mapYPos + mapXbpPos - 12;
-	
-	for (int i = -1; i < 7; i++)
-	{
-		blit_background_row(surface, mapXPos, (i * 28) + backPos, map);
-		
-		map += 14;
-	}
+
+	present_background(0, (Sint32)(map - (Uint8 **)&megaData1.mainmap[0][0]),
+	                   (Sint16)mapXPos, (Sint16)backPos - 28, false,
+	                   present_background_hash ? bg_capture_hash(mapXPos, backPos, map, 14, false) : 0);
+
+	if (!present_suppress_background)
+		for (int i = -1; i < 7; i++)
+		{
+			blit_background_row(surface, mapXPos, (i * 28) + backPos, map);
+
+			map += 14;
+		}
 }
 
 void draw_background_2(SDL_Surface *surface)
@@ -175,15 +214,20 @@ void draw_background_2(SDL_Surface *surface)
 	{
 		// water effect combines background 1 and 2 by synchronizing the x coordinate
 		int x = smoothies[1] ? mapXPos : mapX2Pos;
-		
+
 		Uint8 **map = (Uint8 **)mapY2Pos + (smoothies[1] ? mapXbpPos : mapX2bpPos) - 12;
-		
-		for (int i = -1; i < 7; i++)
-		{
-			blit_background_row(surface, x, (i * 28) + backPos2, map);
-			
-			map += 14;
-		}
+
+		present_background(1, (Sint32)(map - (Uint8 **)&megaData2.mainmap[0][0]),
+		                   (Sint16)x, (Sint16)backPos2 - 28, false,
+		                   present_background_hash ? bg_capture_hash(x, backPos2, map, 14, false) : 0);
+
+		if (!present_suppress_background)
+			for (int i = -1; i < 7; i++)
+			{
+				blit_background_row(surface, x, (i * 28) + backPos2, map);
+
+				map += 14;
+			}
 	}
 	
 	/*Set Movement of background*/
@@ -208,13 +252,18 @@ void draw_background_2_blend(SDL_Surface *surface)
 		backMove2 = (map2YDelay == 1) ? 1 : 0;
 	
 	Uint8 **map = (Uint8 **)mapY2Pos + mapX2bpPos - 12;
-	
-	for (int i = -1; i < 7; i++)
-	{
-		blit_background_row_blend(surface, mapX2Pos, (i * 28) + backPos2, map);
-		
-		map += 14;
-	}
+
+	present_background(1, (Sint32)(map - (Uint8 **)&megaData2.mainmap[0][0]),
+	                   (Sint16)mapX2Pos, (Sint16)backPos2 - 28, true,
+	                   present_background_hash ? bg_capture_hash(mapX2Pos, backPos2, map, 14, true) : 0);
+
+	if (!present_suppress_background)
+		for (int i = -1; i < 7; i++)
+		{
+			blit_background_row_blend(surface, mapX2Pos, (i * 28) + backPos2, map);
+
+			map += 14;
+		}
 	
 	/*Set Movement of background*/
 	if (--map2YDelay == 0)
@@ -245,13 +294,18 @@ void draw_background_3(SDL_Surface *surface)
 	}
 	
 	Uint8 **map = (Uint8 **)mapY3Pos + mapX3bpPos - 12;
-	
-	for (int i = -1; i < 7; i++)
-	{
-		blit_background_row(surface, mapX3Pos, (i * 28) + backPos3, map);
-		
-		map += 15;
-	}
+
+	present_background(2, (Sint32)(map - (Uint8 **)&megaData3.mainmap[0][0]),
+	                   (Sint16)mapX3Pos, (Sint16)backPos3 - 28, false,
+	                   present_background_hash ? bg_capture_hash(mapX3Pos, backPos3, map, 15, false) : 0);
+
+	if (!present_suppress_background)
+		for (int i = -1; i < 7; i++)
+		{
+			blit_background_row(surface, mapX3Pos, (i * 28) + backPos3, map);
+
+			map += 15;
+		}
 }
 
 void JE_filterScreen(JE_shortint col, JE_shortint int_)

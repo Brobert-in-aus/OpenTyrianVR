@@ -26,6 +26,7 @@
 #include "player.h"
 #include "present_frame.h"
 #include "sprite.h"
+#include "varz.h"
 #include "video.h"
 
 #include "SDL.h"
@@ -68,9 +69,11 @@ bool otyr_hosted = false;
 /* ABI layout guards: a host reading these structs assumes exactly these
  * sizes (foundation rule: size asserts on both sides of the boundary). */
 typedef char otyr_assert_sprite_size[sizeof(OtyrSnapshotSprite) == 16 ? 1 : -1];
-typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 36 + 1024 * 16 ? 1 : -1];
+typedef char otyr_assert_bg_draw_size[sizeof(OtyrBackgroundDraw) == 16 ? 1 : -1];
+typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 36 + 1024 * 16 + 3 * 16 ? 1 : -1];
 typedef char otyr_assert_sheet_size[sizeof(OtyrSpriteSheet) == 12 + 1024 * 12 * 14 ? 1 : -1];
 typedef char otyr_assert_frame_size[sizeof(OtyrFrame) == 16 + 320 * 200 + 1024 + 4 ? 1 : -1];
+typedef char otyr_assert_bg_map_size[sizeof(OtyrBackgroundMap) == 16 + 600 * 15 + 72 * 24 * 28 ? 1 : -1];
 
 /* The game core is a global-state singleton, so exactly one session. */
 #define SESSION_HANDLE 1ull
@@ -131,6 +134,9 @@ static struct
 
 	/* per-cell "fully opaque" flags (game-thread only): baked terrain art */
 	uint8_t sheet_cell_opaque[OTYR_SHEET_COUNT][OTYR_SHEET_CELL_MAX];
+
+	/* background map layers, captured with the sheets at level load */
+	OtyrBackgroundMap bg_maps[OTYR_BG_LAYER_COUNT];
 } session;
 
 /* Registry mapping sheet ids to the game's sheet globals. */
@@ -252,9 +258,63 @@ static void rasterize_cell(const Sprite2_array *sheet, uint32_t index, uint8_t *
 	}
 }
 
+/* Recovers a mainmap tile pointer's shape index (the loader stores pointers
+ * into megaDataN.shapes[i].sh; NULL and out-of-table become "empty"). */
+static uint8_t bg_tile_index(const JE_byte *tile, const uint8_t *shape0,
+                             size_t stride, unsigned int count)
+{
+	if (tile == NULL)
+		return OTYR_BG_TILE_EMPTY;
+	ptrdiff_t delta = (const uint8_t *)tile - shape0;
+	if (delta < 0 || (size_t)delta % stride != 0 || (size_t)delta / stride >= count)
+		return OTYR_BG_TILE_EMPTY;
+	return (uint8_t)((size_t)delta / stride);
+}
+
+static void capture_background_maps_locked(void)
+{
+	const struct
+	{
+		JE_byte *const *map;
+		unsigned int width, height;
+		const uint8_t *shape0;
+		size_t stride;
+		unsigned int shape_count;
+	} layers[OTYR_BG_LAYER_COUNT] = {
+		{ &megaData1.mainmap[0][0], 14, 300,
+		  (const uint8_t *)megaData1.shapes[0].sh, sizeof(megaData1.shapes[0]), 72 },
+		{ &megaData2.mainmap[0][0], 14, 600,
+		  (const uint8_t *)megaData2.shapes[0].sh, sizeof(megaData2.shapes[0]), 71 },
+		{ &megaData3.mainmap[0][0], 15, 600,
+		  (const uint8_t *)megaData3.shapes[0].sh, sizeof(megaData3.shapes[0]), 70 },
+	};
+
+	for (unsigned int l = 0; l < OTYR_BG_LAYER_COUNT; ++l)
+	{
+		OtyrBackgroundMap *out = &session.bg_maps[l];
+		out->struct_size = sizeof(OtyrBackgroundMap);
+		out->width = (uint16_t)layers[l].width;
+		out->height = (uint16_t)layers[l].height;
+		out->shape_count = (uint16_t)layers[l].shape_count;
+		out->reserved = 0;
+
+		const unsigned int cells = layers[l].width * layers[l].height;
+		for (unsigned int i = 0; i < cells; ++i)
+			out->tiles[i] = bg_tile_index(layers[l].map[i], layers[l].shape0,
+			                              layers[l].stride, layers[l].shape_count);
+		memset(out->tiles + cells, OTYR_BG_TILE_EMPTY, sizeof(out->tiles) - cells);
+
+		for (unsigned int s = 0; s < layers[l].shape_count; ++s)
+			memcpy(out->shapes + s * OTYR_BG_TILE_W * OTYR_BG_TILE_H,
+			       layers[l].shape0 + s * layers[l].stride,
+			       OTYR_BG_TILE_W * OTYR_BG_TILE_H);
+	}
+}
+
 void otyr_host_capture_sheets(void)
 {
 	SDL_LockMutex(session.mutex);
+	capture_background_maps_locked();
 	for (uint32_t id = 0; id < OTYR_SHEET_COUNT; ++id)
 	{
 		const Sprite2_array *sheet = sheet_registry(id);
@@ -416,6 +476,9 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 	otyr_hosted = true;
 	windowHasFocus = true;  /* no window: the host always "has focus" */
 	present_suppress_entity_draw = (config->flags & OTYR_CONFIG_SUPPRESS_ENTITY_DRAW) != 0;
+	present_suppress_background = (config->flags & OTYR_CONFIG_SUPPRESS_BACKGROUND) != 0;
+	present_background_hash = (config->flags & OTYR_CONFIG_BACKGROUND_HASHES) != 0;
+	memset(session.bg_maps, 0, sizeof(session.bg_maps));
 
 	session.state = SESSION_RUNNING;
 	session.thread = SDL_CreateThreadWithStackSize(game_thread_main,
@@ -621,6 +684,24 @@ int32_t otyr_sprite_sheet(uint64_t handle, uint32_t sheet_id,
 	return OTYR_OK;
 }
 
+int32_t otyr_background_map(uint64_t handle, uint32_t layer,
+                            OtyrBackgroundMap *map, uint32_t map_size)
+{
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE)
+		return OTYR_INVALID_SESSION;
+	if (map == NULL || map_size < sizeof(OtyrBackgroundMap) ||
+	    map->struct_size < sizeof(OtyrBackgroundMap) ||
+	    layer >= OTYR_BG_LAYER_COUNT)
+		return OTYR_INVALID_ARGUMENT;
+
+	SDL_LockMutex(session.mutex);
+	memcpy(map, &session.bg_maps[layer], sizeof(OtyrBackgroundMap));
+	map->struct_size = sizeof(OtyrBackgroundMap);
+	map->sheet_epoch = session.sheet_epoch;
+	SDL_UnlockMutex(session.mutex);
+	return OTYR_OK;
+}
+
 /* ---- game-thread side ---------------------------------------------- */
 
 static void push_key_event(SDL_Scancode scancode, bool down)
@@ -754,6 +835,19 @@ void otyr_host_present(SDL_Surface *screen)
 	snapshot->sound_count = sound_count;
 	memcpy(snapshot->sound_channel, present_sound_channel, sizeof(snapshot->sound_channel));
 	memcpy(snapshot->sound_sample, present_sound_sample, sizeof(snapshot->sound_sample));
+
+	for (unsigned int l = 0; l < OTYR_BG_LAYER_COUNT; ++l)
+	{
+		const PresentBackground *in = &present_backgrounds[l];
+		OtyrBackgroundDraw *out = &snapshot->background[l];
+		out->tile_offset = in->tile_offset;
+		out->x = in->x;
+		out->y = in->y;
+		out->drawn = in->drawn;
+		out->blend = in->blend;
+		out->reserved = 0;
+		out->hash = in->hash;
+	}
 
 	SDL_CondBroadcast(session.frame_ready);
 	SDL_UnlockMutex(session.mutex);

@@ -104,6 +104,40 @@ void present_sound(Uint8 channel, Uint8 sample);
  * carries only backgrounds, HUD, and text. */
 extern bool present_suppress_entity_draw;
 
+/* --- Background layers ------------------------------------------------ */
+
+/* Per-tick record of one scrolling map layer draw (backgrnd.c).  The maps
+ * themselves are static per level and exported separately; this captures the
+ * exact scroll position the legacy blit used so the host can reproduce the
+ * layer pixel-for-pixel. */
+typedef struct PresentBackground
+{
+	Sint32 tile_offset;   /* element index of the first blit row's first tile
+	                         within the layer's flattened map (may be < 0:
+	                         the row above the map, clipped offscreen) */
+	Sint16 x, y;          /* frame position of that tile; y = backPos - 28 */
+	Uint8 drawn;          /* layer was blitted this tick */
+	Uint8 blend;          /* 50/50 value-nibble blend variant (wild detail) */
+	Uint32 hash;          /* standalone-raster FNV-1a when capture enabled */
+} PresentBackground;
+
+#define PRESENT_BACKGROUND_LAYERS 3
+
+extern PresentBackground present_backgrounds[PRESENT_BACKGROUND_LAYERS];
+
+/* When set (hosted VR mode), the background tile blits are skipped -- scroll
+ * state still advances -- and the host renders the layers from the exported
+ * maps plus the per-tick scroll records. */
+extern bool present_suppress_background;
+
+/* When set, each background draw also rasters its layer standalone (against
+ * a zeroed scratch frame) and publishes an FNV-1a hash so a host-side
+ * reconstruction can be verified mechanically. */
+extern bool present_background_hash;
+
+void present_background(int layer, Sint32 tile_offset, Sint16 x, Sint16 y,
+                        bool blend, Uint32 hash);
+
 /* Clears the record list; called once at the top of each gameplay tick. */
 void present_frame_reset(void);
 
