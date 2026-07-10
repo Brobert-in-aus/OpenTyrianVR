@@ -49,6 +49,9 @@ public partial class TestChecklist : Node3D
     public void ToggleCurrent()
     {
         _done[_cursor] = !_done[_cursor];
+        // The log is the durable record: headset screenshots crop the panel
+        // and the state is session-only.
+        GD.Print($"OpenTyrianVR: checklist {(_done[_cursor] ? "PASS" : "unchecked")}: {Items[_cursor]}");
         if (_done[_cursor])
         {
             for (int step = 1; step <= Items.Length; step++)
