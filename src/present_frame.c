@@ -113,17 +113,10 @@ void present_draw_from(SDL_Surface *surface, unsigned int from)
 		   tile backdrops, must layer under clouds/text) and shadows (depth
 		   cues cast onto the terrain).  Those keep drawing into the frame. */
 		if (present_suppress_entity_draw)
-		{
-			/* aux 1 = baked terrain art (stays flat in the frame);
-			   aux 2 = platform rider (host renders it in 3D at the
-			   elevated platform layer's height). */
-			const bool terrain_paint =
-				present_sprites[i].category == PRESENT_SHADOW ||
-				(present_sprites[i].category <= PRESENT_ENEMY_GROUND_B &&
-				 present_sprites[i].aux == 1);
-			if (!terrain_paint)
-				continue;
-		}
+			continue;  /* the host renders every record in 3D -- including
+			              shadows (translucent quads over the terrain) and
+			              baked structures (map-locked coplanar cells); the
+			              frame keeps only backgrounds, HUD, and text */
 		const PresentSprite *sprite = &present_sprites[i];
 
 		if (sprite->kind == PRESENT_BLIT_SPRITE2)

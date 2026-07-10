@@ -19,22 +19,30 @@ public unsafe partial class SnapshotLayer : Node3D
     private const int AtlasCellsPerRow = 32;  // 32x32 grid of 12x14 cells
 
     // Lane-local Z (out of the board) per category — the diorama height bands.
+    // Every hazard band sits ABOVE the elevated map layers (clouds 0.02,
+    // platforms 0.03): anything that can collide with the player must never
+    // hide under scenery.  Genuinely grounded units float a little as a
+    // consequence -- accepted until Stage B authored heights.
     private static readonly float[] BandHeight =
     {
         0.055f,  // EnemySky (mid band)
-        0.0008f, // EnemyGroundA: pixel-coplanar with the lane -- ground art is
-                 // baked over exact tile pixels (incl. covering destroyed-state
-                 // art), so any visible parallax breaks the illusion
+        0.036f,  // EnemyGroundA (above platforms, below the player)
         0.085f,  // EnemyTop (high band)
-        0.0008f, // EnemyGroundB
+        0.036f,  // EnemyGroundB
         0.050f,  // EnemyShot
         0.050f,  // PlayerShot
         0.040f,  // Player
-        0.002f,  // Shadow (not rendered in 3D; see AddCell)
+        0.0016f, // Shadow: translucent dark quad cast onto the terrain
         0.040f,  // Sidekick
         0.050f,  // Explosion
         0.050f,  // Superpixel
     };
+
+    // Baked structures (aux 1): map-locked art a hair above the terrain
+    // tiles it covers (destroyed-state art is baked into those tiles).
+    private const float StructureZ = 0.0010f;
+    // Platform riders (aux 2): just above the platform map layer.
+    private const float RiderZ = BackgroundLayer.PlatformZ + 0.004f;
 
     // Draw-order bias within a tick: later records sit imperceptibly higher,
     // reproducing legacy layering without z-fighting.
@@ -120,6 +128,12 @@ public unsafe partial class SnapshotLayer : Node3D
                     // Legacy blend variants (transparent explosions,
                     // invulnerable ship) approximate as 55% alpha.
                     ALPHA = mod(floor(v_flags / 2.0), 2.0) >= 1.0 ? 0.55 : 1.0;
+                    // Darken variant (shadows): the sprite is a coverage
+                    // mask darkening whatever lies beneath it.
+                    if (mod(floor(v_flags / 4.0), 2.0) >= 1.0) {
+                        ALBEDO = vec3(0.0);
+                        ALPHA = 0.45;
+                    }
                 }
                 """,
         };
@@ -427,11 +441,9 @@ public unsafe partial class SnapshotLayer : Node3D
 
                 if (sprite.SheetId >= OtyrNative.SheetCount || sprite.Index == 0)
                     continue;
-                if (sprite.Category == (byte)OtyrNative.Category.Shadow)
-                    continue;  // stays in the legacy frame (terrain paint)
-                if (sprite.Aux == 1 && sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB)
-                    continue;  // ground-baked art stays in the legacy frame
-                               // (aux 2 = platform rider, rendered below)
+                // Shadows and baked structures render in 3D too (nothing
+                // dynamic stays in the frame): shadows as translucent dark
+                // quads, structures as map-locked coplanar cells.
 
                 if (sprite.Kind == 1)  // SPRITE2X2: four cells (i, i+1, i+19, i+20)
                 {
@@ -541,15 +553,24 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.CellIndex = cellIndex - 1;
         cell.Flags = sprite.Flags;
         cell.FilterColor = sprite.FilterColor;
-        // Platform riders (aux 2) sit on the elevated platform map layer,
-        // not at their slot band.
-        float band = sprite.Aux == 2 && sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB
-            ? BackgroundLayer.PlatformZ + 0.004f
-            : BandHeight[Math.Min(sprite.Category, (byte)(BandHeight.Length - 1))];
+        bool isEnemy = sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB;
+        float band = isEnemy && sprite.Aux == 1 ? StructureZ
+                   : isEnemy && sprite.Aux == 2 ? RiderZ
+                   : BandHeight[Math.Min(sprite.Category, (byte)(BandHeight.Length - 1))];
         cell.Z = band + recordIndex * OrderBias;
         cell.CurrPx = new Vector2(centerX, centerY);
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
+
+        // Baked structures are locked to the map tiles beneath them; the
+        // tile layers step per tick, so interpolating the art over them
+        // would swim against its own baked underlay.
+        if (isEnemy && sprite.Aux == 1)
+        {
+            _cellKeys[_cellCount] = 0xffffffff;
+            ++_cellCount;
+            return;
+        }
 
         // Pair with last tick: same source id, k-th occurrence (emit order is
         // deterministic per source).

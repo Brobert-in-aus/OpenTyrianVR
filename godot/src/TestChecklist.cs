@@ -13,11 +13,12 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Pit/slab interiors solid black (nothing shows through)",
-        "Floating platforms: BELOW your ship",
-        "Platform riders (tanks/turrets): ON their platforms",
-        "No sprites hanging past the lane edges",
-        "Quit-to-menu / pause: nothing lingering",
+        "Shadows: dark + correct everywhere (no orange)",
+        "Shadows visible over pits/structures too",
+        "Ground art tone matches terrain (no dark cells)",
+        "ALL hazard enemies visible (never under scenery)",
+        "Riders/tanks above their platforms",
+        "Pause + quit menus: clean, no enemies",
         "Anything else off? tell Claude after",
     };
 

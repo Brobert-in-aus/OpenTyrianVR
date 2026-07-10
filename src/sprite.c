@@ -20,6 +20,7 @@
 
 #include "file.h"
 #include "opentyr.h"
+#include "present_frame.h"
 #include "video.h"
 
 #include <assert.h>
@@ -466,9 +467,13 @@ void blit_sprite_dark(SDL_Surface *surface, int x, int y, unsigned int table, un
 		default:  // set a pixel
 			if (pixels >= pixels_ul)
 				return;
-			if (pixels >= pixels_ll)
+			/* Darkening reads the destination: over the suppressed-background
+			   color key there is nothing to darken (the host owns those
+			   pixels), and touching the key would un-key it. */
+			if (pixels >= pixels_ll &&
+			    !(present_suppress_background && *pixels == PRESENT_BG_KEY_INDEX))
 				*pixels = black ? 0x00 : ((*pixels & 0xf0) | ((*pixels & 0x0f) / 2));
-			
+
 			pixels++;
 			x_offset++;
 			break;
@@ -650,12 +655,14 @@ void blit_sprite2_darken(SDL_Surface *surface, int x, int y, Sprite2_array sprit
 			while (count--)
 			{
 				++data;
-				
+
 				if (pixels >= pixels_ul)
 					return;
-				if (pixels >= pixels_ll)
+				/* See blit_sprite_dark: never darken the background key. */
+				if (pixels >= pixels_ll &&
+				    !(present_suppress_background && *pixels == PRESENT_BG_KEY_INDEX))
 					*pixels = ((*pixels & 0x0f) / 2) + (*pixels & 0xf0);
-				
+
 				++pixels;
 			}
 		}

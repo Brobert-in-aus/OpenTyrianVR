@@ -154,10 +154,11 @@ public partial class Main : Node3D
                     vec2 dudv = fwidth(pixel);
                     pixel = seam + clamp((pixel - seam) / dudv, -0.5, 0.5);
                     vec4 c = texture(frame, pixel / size);
-                    // Alpha carries the background color key (palette index 0
-                    // when the native background blits are suppressed); the
-                    // tile layers render just behind this plane.
-                    ALBEDO = c.rgb;
+                    // Alpha carries the background color key (the suppressed
+                    // fill index); the tile layers render just behind this
+                    // plane.  Texture data is premultiplied: un-premultiply
+                    // after filtering so keyed texels can't tint art edges.
+                    ALBEDO = c.rgb / max(c.a, 0.004);
                     ALPHA = c.a;
                 }
                 """,
@@ -361,14 +362,26 @@ public partial class Main : Node3D
             for (int i = 0; i < OtyrNative.FrameWidth * OtyrNative.FrameHeight; ++i)
             {
                 byte index = frame->Pixels[i];
-                uint argb = frame->Palette[index];
-                _rgba[i * 4 + 0] = (byte)(argb >> 16);
-                _rgba[i * 4 + 1] = (byte)(argb >> 8);
-                _rgba[i * 4 + 2] = (byte)argb;
                 // Color key: with the native background suppressed, the fill
                 // index means "nothing drawn here" and the 3D tile layers
-                // show through.  Index-0 black in art stays opaque.
-                _rgba[i * 4 + 3] = Render3DBackground && index == OtyrNative.BgKeyIndex ? (byte)0 : (byte)0xff;
+                // show through.  Index-0 black in art stays opaque.  Data is
+                // premultiplied (keyed pixels fully zero) so linear/mipmap
+                // filtering can't bleed key-colored fringes into the art.
+                if (Render3DBackground && index == OtyrNative.BgKeyIndex)
+                {
+                    _rgba[i * 4 + 0] = 0;
+                    _rgba[i * 4 + 1] = 0;
+                    _rgba[i * 4 + 2] = 0;
+                    _rgba[i * 4 + 3] = 0;
+                }
+                else
+                {
+                    uint argb = frame->Palette[index];
+                    _rgba[i * 4 + 0] = (byte)(argb >> 16);
+                    _rgba[i * 4 + 1] = (byte)(argb >> 8);
+                    _rgba[i * 4 + 2] = (byte)argb;
+                    _rgba[i * 4 + 3] = 0xff;
+                }
             }
         }
 
