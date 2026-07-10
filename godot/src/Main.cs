@@ -80,6 +80,15 @@ public partial class Main : Node3D
 
     private void InitXr()
     {
+        // Debug override: force flat mode even when an OpenXR runtime is
+        // reachable (Virtual Desktop grabs the app whenever it streams,
+        // which blackens the desktop window and blocks solo flat testing).
+        if (System.Environment.GetEnvironmentVariable("OTYR_FLAT") == "1")
+        {
+            GD.Print("OpenTyrianVR: OTYR_FLAT=1, forcing flat mode");
+            return;
+        }
+
         var xr = XRServer.FindInterface("OpenXR");
         if (xr != null && xr.IsInitialized())
         {

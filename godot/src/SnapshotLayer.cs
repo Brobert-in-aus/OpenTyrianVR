@@ -103,7 +103,7 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             Code = """
                 shader_type spatial;
-                render_mode unshaded, cull_disabled, depth_prepass_alpha;
+                render_mode unshaded, cull_disabled, depth_draw_always;
 
                 uniform sampler2D atlas : filter_nearest;
                 uniform sampler2D palette : source_color, filter_nearest;
@@ -278,7 +278,7 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             Code = """
                 shader_type spatial;
-                render_mode unshaded, cull_disabled, blend_mul;
+                render_mode unshaded, cull_disabled, blend_mul, depth_draw_always;
 
                 uniform sampler2D atlas : filter_nearest;
 
