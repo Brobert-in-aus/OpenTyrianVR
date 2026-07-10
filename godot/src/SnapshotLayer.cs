@@ -32,15 +32,19 @@ public unsafe partial class SnapshotLayer : Node3D
         0.050f,  // EnemyShot
         0.050f,  // PlayerShot
         0.040f,  // Player
-        0.0016f, // Shadow: translucent dark quad cast onto the terrain
+        0.0008f, // Shadow (fallback; normally surface-following, see AddCell)
         0.040f,  // Sidekick
         0.050f,  // Explosion
         0.050f,  // Superpixel
     };
 
-    // Baked structures (aux 1): map-locked art a hair above the terrain
-    // tiles it covers (destroyed-state art is baked into those tiles).
-    private const float StructureZ = 0.0010f;
+    // Baked structures (aux 1) and shadows share one coplanar band a hair
+    // above the terrain, layered by record order (OrderBias) exactly like
+    // the legacy paint order: a structure's own shadow is recorded just
+    // before it and lands just beneath it (hidden, as in legacy), while
+    // the player/shot shadows recorded late in the tick land above
+    // structure art and visibly cross it.
+    private const float StructureZ = 0.0008f;
     // Platform riders (aux 2): just above the platform map layer.
     private const float RiderZ = BackgroundLayer.PlatformZ + 0.004f;
 
@@ -644,22 +648,21 @@ public unsafe partial class SnapshotLayer : Node3D
             // offset is sub-pixel against head parallax (a 4 mm gap made
             // platform structures visibly wobble).
             float surface = SurfaceForSource(sprite.SourceId, centerX, centerY);
-            band = surface > 0f ? surface + 0.0008f : StructureZ;
+            band = surface + StructureZ;
         }
         else if (isEnemy && sprite.Aux == 2)
         {
             float surface = SurfaceForSource(sprite.SourceId, centerX, centerY);
-            band = Math.Max(surface, BackgroundLayer.PlatformZ) + 0.0008f;
+            band = Math.Max(surface, BackgroundLayer.PlatformZ) + StructureZ;
         }
         else if (isShadow)
         {
             // Shadows fall on the topmost scenery under them -- including
             // the clouds (legacy draws player/shot shadows after the cloud
-            // layer, so they land on it).
+            // layer, so they land on it) -- in the SAME band as structure
+            // art: record order decides who paints over whom.
             float surface = _background?.SurfaceZAt(new Vector2(centerX - 24f, centerY), includeClouds: true) ?? 0f;
-            band = surface > 0f
-                ? surface + 0.0008f
-                : BandHeight[(byte)OtyrNative.Category.Shadow];
+            band = surface + StructureZ;
         }
         else
         {

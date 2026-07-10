@@ -13,12 +13,12 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Ship fade at level start = invuln blend? (wait it out",
-        "  over open ground, no cloud, ~3s)",
+        "Dome/structure top squares GONE (was self-shadow)",
+        "Wrecks: no ghost copies hovering above them",
+        "Ship shadow still visibly crosses pits/structures",
+        "Ship fade at level start ~3s = invuln (no cloud needed)",
         "Menu text: selected-item bright pixels intact",
-        "Speckle: does it appear ONLY after shooting a dome?",
         "Sidebar reads TYRIAN-VR on level 1",
-        "Washed-out: compare menus vs gameplay",
         "Anything else off? tell Claude after",
     };
 
