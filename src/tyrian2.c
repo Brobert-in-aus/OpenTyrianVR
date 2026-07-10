@@ -166,6 +166,9 @@ void JE_starShowVGA(void)
  * and a pure draw pass replays them via the shared presentation frame. */
 static PresentCategory enemy_band_category;
 
+/* Per-slot "has ever moved" latch for the terrain-art classification. */
+static Uint8 otyr_enemy_moved[100];
+
 inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed int y_offset, signed int sprite_offset)
 {
 	if (enemy[i].sprite2s == NULL)
@@ -179,11 +182,16 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 
 	/* Classify the WHOLE enemy as terrain art if any of its cells is fully
 	   opaque (baked backdrop), so multi-cell structures never tear between
-	   the flat frame and the floating 3D layer.  Only STATIONARY enemies
+	   the flat frame and the floating 3D layer.  Only NEVER-MOVED enemies
 	   qualify: movers with opaque body cells are hazards and must ride the
-	   always-visible band, never sink into the scenery. */
+	   always-visible band, never sink into the scenery -- and the latch
+	   (instead of a per-tick velocity test) keeps a mover that briefly
+	   stops from flickering down to surface height. */
+	if (enemy[i].exc != 0 || enemy[i].eyc != 0)
+		otyr_enemy_moved[i] = 1;
+
 	Uint8 terrain_art = enemy[i].enemyground ? 1 : 0;
-	if (!terrain_art && enemy[i].exc == 0 && enemy[i].eyc == 0)
+	if (!terrain_art && !otyr_enemy_moved[i])
 	{
 		if (enemy[i].size == 1)
 			terrain_art = (otyr_host_cell_is_opaque(enemy[i].sprite2s, base_index) ||
@@ -3934,10 +3942,11 @@ Sint16 JE_newEnemy(int enemyOffset, Uint16 eDatI, Sint16 uniqueShapeTableI)
 		if (enemyAvail[i] == 1)
 		{
 			enemyAvail[i] = JE_makeEnemy(&enemy[i], eDatI, uniqueShapeTableI);
+			otyr_enemy_moved[i] = 0;  /* fresh slot: may classify as static */
 			return i + 1;
 		}
 	}
-	
+
 	return 0;
 }
 

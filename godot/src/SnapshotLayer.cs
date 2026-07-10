@@ -443,26 +443,36 @@ public unsafe partial class SnapshotLayer : Node3D
     private int _cellCount;
     private RenderCell[] _prevCells = new RenderCell[OtyrNative.SnapshotSpriteMax * 4];
     private int _prevCellCount;
-    // Pairing: (source_id, per-source ordinal) of each cell this tick.
-    private uint[] _cellKeys = new uint[OtyrNative.SnapshotSpriteMax * 4];
-    private uint[] _prevCellKeys = new uint[OtyrNative.SnapshotSpriteMax * 4];
-    private readonly System.Collections.Generic.Dictionary<uint, int> _prevByKey = new();
-    private readonly System.Collections.Generic.Dictionary<ushort, int> _sourceOrdinal = new();
+    // Pairing: source id of each cell; cells pair to last tick's nearest
+    // same-source, same-layer cell.  (Emission-order pairing broke when the
+    // legacy renderer skipped off-screen cell rows: entities entering or
+    // leaving the screen edges shifted the order, cells lerped across the
+    // sprite, and entities visibly dissolved.)
+    private ushort[] _cellSource = new ushort[OtyrNative.SnapshotSpriteMax * 4];
+    private ushort[] _prevCellSource = new ushort[OtyrNative.SnapshotSpriteMax * 4];
+    private readonly System.Collections.Generic.Dictionary<ushort, (int Start, int Count)> _prevRuns = new();
 
-    private const float TeleportGuardPx = 32f;
+    private const float PairRadiusPx = 16f;
 
     private void BuildSprites()
     {
         // Rotate current -> previous.
         (_prevCells, _cells) = (_cells, _prevCells);
-        (_prevCellKeys, _cellKeys) = (_cellKeys, _prevCellKeys);
+        (_prevCellSource, _cellSource) = (_cellSource, _prevCellSource);
         _prevCellCount = _cellCount;
         _cellCount = 0;
 
-        _prevByKey.Clear();
-        for (int i = 0; i < _prevCellCount; i++)
-            _prevByKey.TryAdd(_prevCellKeys[i], i);
-        _sourceOrdinal.Clear();
+        // Same-source cells are emitted contiguously; index the runs.
+        _prevRuns.Clear();
+        for (int i = 0; i < _prevCellCount;)
+        {
+            ushort source = _prevCellSource[i];
+            int start = i;
+            while (i < _prevCellCount && _prevCellSource[i] == source)
+                i++;
+            if (source != OtyrNative.NoSource)
+                _prevRuns.TryAdd(source, (start, i - start));
+        }
 
         fixed (OtyrNative.Snapshot* snapshot = &_snapshot)
         {
@@ -525,23 +535,37 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
 
-        if (sprite.SourceId != OtyrNative.NoSource)
+        PairWithPrevious(ref cell, sprite.SourceId);
+        ++_cellCount;
+    }
+
+    /// <summary>Pairs a cell with last tick's nearest same-source cell on
+    /// the same render layer (within a small radius, so genuinely new cells
+    /// appear in place instead of stretching from a sibling).</summary>
+    private void PairWithPrevious(ref RenderCell cell, ushort sourceId)
+    {
+        _cellSource[_cellCount] = sourceId;
+        if (sourceId == OtyrNative.NoSource || !_prevRuns.TryGetValue(sourceId, out var run))
+            return;
+
+        float bestDist = PairRadiusPx;
+        int bestIdx = -1;
+        for (int i = run.Start; i < run.Start + run.Count; i++)
         {
-            uint key = (uint)sprite.SourceId << 8;
-            _cellKeys[_cellCount] = key;
-            if (_prevByKey.TryGetValue(key, out int prevIdx) &&
-                _prevCells[prevIdx].CurrPx.DistanceTo(cell.CurrPx) <= TeleportGuardPx)
+            if (_prevCells[i].SheetId != cell.SheetId)
+                continue;
+            float dist = _prevCells[i].CurrPx.DistanceTo(cell.CurrPx);
+            if (dist < bestDist)
             {
-                cell.PrevPx = _prevCells[prevIdx].CurrPx;
-                cell.HasPrev = true;
+                bestDist = dist;
+                bestIdx = i;
             }
         }
-        else
+        if (bestIdx >= 0)
         {
-            _cellKeys[_cellCount] = 0xffffffff;
+            cell.PrevPx = _prevCells[bestIdx].CurrPx;
+            cell.HasPrev = true;
         }
-
-        ++_cellCount;
     }
 
     private void AddOldCell(in OtyrNative.SnapshotSprite sprite, uint recordIndex)
@@ -563,25 +587,7 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
 
-        if (sprite.SourceId != OtyrNative.NoSource)
-        {
-            _sourceOrdinal.TryGetValue(sprite.SourceId, out int ordinal);
-            _sourceOrdinal[sprite.SourceId] = ordinal + 1;
-            uint key = (uint)sprite.SourceId << 8 | (uint)(ordinal & 0xff);
-            _cellKeys[_cellCount] = key;
-
-            if (_prevByKey.TryGetValue(key, out int prevIdx) &&
-                _prevCells[prevIdx].CurrPx.DistanceTo(cell.CurrPx) <= TeleportGuardPx)
-            {
-                cell.PrevPx = _prevCells[prevIdx].CurrPx;
-                cell.HasPrev = true;
-            }
-        }
-        else
-        {
-            _cellKeys[_cellCount] = 0xffffffff;
-        }
-
+        PairWithPrevious(ref cell, sprite.SourceId);
         ++_cellCount;
     }
 
@@ -602,19 +608,31 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.Flags = sprite.Flags;
         cell.FilterColor = sprite.FilterColor;
         bool isEnemy = sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB;
+        bool isShadow = sprite.Category == (byte)OtyrNative.Category.Shadow;
         float band;
         if (isEnemy && sprite.Aux == 1)
         {
             // Stationary structures sit on whatever surface is beneath
-            // them: an elevated map layer (platform, raised road) or the
-            // ground itself.
+            // them: the platform map layer or the ground itself.  The
+            // offset is sub-pixel against head parallax (a 4 mm gap made
+            // platform structures visibly wobble).
             float surface = _background?.SurfaceZAt(new Vector2(centerX - 24f, centerY)) ?? 0f;
-            band = surface > 0f ? surface + 0.004f : StructureZ;
+            band = surface > 0f ? surface + 0.0008f : StructureZ;
         }
         else if (isEnemy && sprite.Aux == 2)
         {
             float surface = _background?.SurfaceZAt(new Vector2(centerX - 24f, centerY)) ?? 0f;
-            band = Math.Max(surface, BackgroundLayer.PlatformZ) + 0.004f;
+            band = Math.Max(surface, BackgroundLayer.PlatformZ) + 0.0008f;
+        }
+        else if (isShadow)
+        {
+            // Shadows fall on the topmost scenery under them -- including
+            // the clouds (legacy draws player/shot shadows after the cloud
+            // layer, so they land on it).
+            float surface = _background?.SurfaceZAt(new Vector2(centerX - 24f, centerY), includeClouds: true) ?? 0f;
+            band = surface > 0f
+                ? surface + 0.0008f
+                : BandHeight[(byte)OtyrNative.Category.Shadow];
         }
         else
         {
@@ -630,35 +648,12 @@ public unsafe partial class SnapshotLayer : Node3D
         // would swim against its own baked underlay.
         if (isEnemy && sprite.Aux == 1)
         {
-            _cellKeys[_cellCount] = 0xffffffff;
+            _cellSource[_cellCount] = OtyrNative.NoSource;
             ++_cellCount;
             return;
         }
 
-        // Pair with last tick: same source id, k-th occurrence (emit order is
-        // deterministic per source).
-        if (sprite.SourceId != OtyrNative.NoSource)
-        {
-            _sourceOrdinal.TryGetValue(sprite.SourceId, out int ordinal);
-            _sourceOrdinal[sprite.SourceId] = ordinal + 1;
-            uint key = (uint)sprite.SourceId << 8 | (uint)(ordinal & 0xff);
-            _cellKeys[_cellCount] = key;
-
-            if (_prevByKey.TryGetValue(key, out int prevIdx))
-            {
-                Vector2 prev = _prevCells[prevIdx].CurrPx;
-                if (prev.DistanceTo(cell.CurrPx) <= TeleportGuardPx)
-                {
-                    cell.PrevPx = prev;
-                    cell.HasPrev = true;
-                }
-            }
-        }
-        else
-        {
-            _cellKeys[_cellCount] = 0xffffffff;
-        }
-
+        PairWithPrevious(ref cell, sprite.SourceId);
         ++_cellCount;
     }
 

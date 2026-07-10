@@ -13,12 +13,13 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Shadows: darken the terrain (not a gray replica)",
-        "Mobile enemies NEVER under clouds/platforms",
-        "Turrets/statics sit on their surface (gnd or platform)",
-        "Dome noise square (930): shoot a dome - damage art?",
-        "Brightness vs last run: still washed out?",
-        "Pause: only the lives text remains (known)",
+        "Shadows land on clouds too",
+        "No enemies jumping between layers",
+        "Structures under clouds again (not riding them)",
+        "Platform statics: wobble gone",
+        "Dissolving ships / dome triangle gone",
+        "No orange flash at level start",
+        "Brightness vs earlier: verdict?",
         "Anything else off? tell Claude after",
     };
 

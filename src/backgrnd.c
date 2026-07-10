@@ -49,12 +49,14 @@ void JE_darkenBackground(JE_word neat)  /* wild detail level */
 	int x, y;
 	
 	s += 24;
-	
+
 	for (y = 184; y; y--)
 	{
 		for (x = 264; x; x--)
 		{
-			*s = ((((*s & 0x0f) << 4) - (*s & 0x0f) + ((((x - neat - y) >> 2) + *(s-2) + (y == 184 ? 0 : *(s-(VGAScreen->pitch-1)))) & 0x0f)) >> 4) | (*s & 0xf0);
+			/* Never transform the suppressed-background color key. */
+			if (!(present_suppress_background && *s == PRESENT_BG_KEY_INDEX))
+				*s = ((((*s & 0x0f) << 4) - (*s & 0x0f) + ((((x - neat - y) >> 2) + *(s-2) + (y == 184 ? 0 : *(s-(VGAScreen->pitch-1)))) & 0x0f)) >> 4) | (*s & 0xf0);
 			s++;
 		}
 		s += VGAScreen->pitch - 264;
@@ -333,35 +335,42 @@ void JE_filterScreen(JE_shortint col, JE_shortint int_)
 		}
 	}
 	
+	/* Full-screen hue/brightness filters must leave the suppressed-background
+	   color key alone: transforming key pixels un-keys them and paints the
+	   whole playfield (a bright orange flash during level-start fades). */
 	if (col != -99 && filtrationAvail)
 	{
 		s = VGAScreen->pixels;
 		s += 24;
-		
+
 		col <<= 4;
-		
+
 		for (y = 184; y; y--)
 		{
 			for (x = 264; x; x--)
 			{
-				*s = col | (*s & 0x0f);
+				if (!(present_suppress_background && *s == PRESENT_BG_KEY_INDEX))
+					*s = col | (*s & 0x0f);
 				s++;
 			}
 			s += VGAScreen->pitch - 264;
 		}
 	}
-	
+
 	if (int_ != -99 && explosionTransparent)
 	{
 		s = VGAScreen->pixels;
 		s += 24;
-		
+
 		for (y = 184; y; y--)
 		{
 			for (x = 264; x; x--)
 			{
-				temp = (*s & 0x0f) + int_;
-				*s = (*s & 0xf0) | (temp >= 0x1f ? 0 : (temp >= 0x0f ? 0x0f : temp));
+				if (!(present_suppress_background && *s == PRESENT_BG_KEY_INDEX))
+				{
+					temp = (*s & 0x0f) + int_;
+					*s = (*s & 0xf0) | (temp >= 0x1f ? 0 : (temp >= 0x0f ? 0x0f : temp));
+				}
 				s++;
 			}
 			s += VGAScreen->pitch - 264;

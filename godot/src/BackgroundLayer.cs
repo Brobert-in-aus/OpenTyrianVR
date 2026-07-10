@@ -226,11 +226,14 @@ public unsafe partial class BackgroundLayer : Node3D
 
     /// <summary>Height of the topmost elevated map layer whose art covers the
     /// given play-region pixel this tick, or 0 when only the ground is
-    /// beneath it.  Lets stationary units sit on the surface they occupy
-    /// (floating platforms, raised roads) instead of a fixed band.</summary>
-    public float SurfaceZAt(Vector2 framePx)
+    /// beneath it.  With includeClouds false, only layer 2 (platforms,
+    /// raised roads) counts: statics RIDE platforms, but a static under a
+    /// cloud stays on the ground beneath it, covered -- exactly the legacy
+    /// draw order.  Shadows pass true: they fall on clouds too.</summary>
+    public float SurfaceZAt(Vector2 framePx, bool includeClouds = false)
     {
-        for (int l = OtyrNative.BgLayerCount - 1; l >= 1; l--)
+        int lowestLayer = includeClouds ? 1 : 2;
+        for (int l = OtyrNative.BgLayerCount - 1; l >= lowestLayer; l--)
         {
             if (_currDraw[l].Drawn == 0 || _tilesCpu[l] == null)
                 continue;
