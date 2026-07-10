@@ -50,6 +50,7 @@ public unsafe partial class BackgroundLayer : Node3D
     private readonly ImageTexture[] _tilemapTex = new ImageTexture[OtyrNative.BgLayerCount];
     private readonly ImageTexture[] _atlasTex = new ImageTexture[OtyrNative.BgLayerCount];
     private readonly Vector2I[] _mapSize = new Vector2I[OtyrNative.BgLayerCount];
+    private readonly byte[][] _tilesCpu = new byte[OtyrNative.BgLayerCount][];
 
     private readonly OtyrNative.BackgroundDraw[] _currDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
     private readonly OtyrNative.BackgroundDraw[] _prevDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
@@ -223,6 +224,31 @@ public unsafe partial class BackgroundLayer : Node3D
         }
     }
 
+    /// <summary>Height of the topmost elevated map layer whose art covers the
+    /// given play-region pixel this tick, or 0 when only the ground is
+    /// beneath it.  Lets stationary units sit on the surface they occupy
+    /// (floating platforms, raised roads) instead of a fixed band.</summary>
+    public float SurfaceZAt(Vector2 framePx)
+    {
+        for (int l = OtyrNative.BgLayerCount - 1; l >= 1; l--)
+        {
+            if (_currDraw[l].Drawn == 0 || _tilesCpu[l] == null)
+                continue;
+            float z = LayerHeight(l, _currDraw[l].OverMode);
+            if (z <= 0.001f)
+                continue;  // coplanar layers are not ridable surfaces
+
+            Vector2 mp = framePx - Origin(l, _currDraw[l]);
+            int tx = (int)Mathf.Floor(mp.X / OtyrNative.BgTileW);
+            int ty = (int)Mathf.Floor(mp.Y / OtyrNative.BgTileH);
+            if (tx < 0 || ty < 0 || tx >= _mapSize[l].X || ty >= _mapSize[l].Y)
+                continue;
+            if (_tilesCpu[l][ty * _mapSize[l].X + tx] != OtyrNative.BgTileEmpty)
+                return z;
+        }
+        return 0f;
+    }
+
     /// <summary>Play-region position of map tile (0,0) for a draw record: the
     /// record pins map cell (row0, col0) at frame (x, y); draw x is in
     /// pre-composite coordinates (play area publishes shifted -24).</summary>
@@ -253,6 +279,7 @@ public unsafe partial class BackgroundLayer : Node3D
                 for (int i = 0; i < tiles.Length; i++)
                     tiles[i] = map->Tiles[i];
             }
+            _tilesCpu[l] = tiles;  // kept for surface-height queries
             var tilemapImage = Image.CreateFromData(_map.Width, _map.Height, false, Image.Format.R8, tiles);
             _tilemapTex[l] = ImageTexture.CreateFromImage(tilemapImage);
             _materials[l].SetShaderParameter("tilemap", _tilemapTex[l]);

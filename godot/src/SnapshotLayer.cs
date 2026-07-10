@@ -56,11 +56,14 @@ public unsafe partial class SnapshotLayer : Node3D
     private double _snapshotPeriod = 0.02875;  // nominal 35 Hz tick
 
     // Layers 0..SheetCount-1 are sprite sheets; then the glow layer
-    // (superpixel debris as small palette-colored quads) and the old-table
-    // layer (variable-size OPTION_SHAPES blend shots).
+    // (superpixel debris as small palette-colored quads), the old-table
+    // layer (variable-size OPTION_SHAPES blend shots), and one
+    // multiplicative shadow layer per sheet (legacy darken blits halve the
+    // brightness of whatever is beneath, keeping its hue).
     private const int GlowLayer = OtyrNative.SheetCount;
     private const int OldLayer = OtyrNative.SheetCount + 1;
-    private const int LayerCount = OtyrNative.SheetCount + 2;
+    private const int ShadowLayerBase = OtyrNative.SheetCount + 2;
+    private const int LayerCount = ShadowLayerBase + OtyrNative.SheetCount;
     private const int OldAtlasSlotsPerRow = 16;  // 16x16 grid of 64x64 slots
 
     private readonly MultiMesh[] _multiMesh = new MultiMesh[LayerCount];
@@ -128,12 +131,6 @@ public unsafe partial class SnapshotLayer : Node3D
                     // Legacy blend variants (transparent explosions,
                     // invulnerable ship) approximate as 55% alpha.
                     ALPHA = mod(floor(v_flags / 2.0), 2.0) >= 1.0 ? 0.55 : 1.0;
-                    // Darken variant (shadows): the sprite is a coverage
-                    // mask darkening whatever lies beneath it.
-                    if (mod(floor(v_flags / 4.0), 2.0) >= 1.0) {
-                        ALBEDO = vec3(0.0);
-                        ALPHA = 0.45;
-                    }
                 }
                 """,
         };
@@ -260,6 +257,54 @@ public unsafe partial class SnapshotLayer : Node3D
             Multimesh = _multiMesh[OldLayer],
             MaterialOverride = oldMaterial,
         });
+
+        // Shadow layers: legacy darken blits (shadows, iced enemies) halve
+        // the value of whatever lies beneath while keeping its hue -- a
+        // multiplicative quad using the sprite cell as a coverage mask.
+        var shadowShader = new Shader
+        {
+            Code = """
+                shader_type spatial;
+                render_mode unshaded, cull_disabled, blend_mul, depth_draw_never;
+
+                uniform sampler2D atlas : filter_nearest;
+
+                varying float cell;
+
+                void vertex() {
+                    cell = INSTANCE_CUSTOM.x;
+                }
+
+                void fragment() {
+                    vec2 cell_origin_px = vec2(mod(cell, 32.0) * 12.0, floor(cell / 32.0) * 14.0);
+                    vec2 cell_px = clamp(UV * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));
+                    float idx = floor(texture(atlas, (cell_origin_px + cell_px) / vec2(384.0, 448.0)).r * 255.0 + 0.5);
+                    if (idx < 0.5)
+                        discard;
+                    ALBEDO = vec3(0.5);  // halve brightness, keep hue
+                }
+                """,
+        };
+        for (int id = 0; id < OtyrNative.SheetCount; id++)
+        {
+            var shadowMaterial = new ShaderMaterial { Shader = shadowShader };
+            shadowMaterial.SetShaderParameter("atlas", _atlas[id]);
+
+            _multiMesh[ShadowLayerBase + id] = new MultiMesh
+            {
+                TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
+                UseCustomData = true,
+                Mesh = quad,
+                InstanceCount = 256,
+                VisibleInstanceCount = 0,
+            };
+            AddChild(new MultiMeshInstance3D
+            {
+                Name = $"Shadow{id}",
+                Multimesh = _multiMesh[ShadowLayerBase + id],
+                MaterialOverride = shadowMaterial,
+            });
+        }
     }
 
     /// <summary>Polls for a new snapshot and updates the sprite quads.
@@ -549,14 +594,32 @@ public unsafe partial class SnapshotLayer : Node3D
         float centerY = sprite.Y + pixelOffsetY + OtyrNative.SheetCellH / 2f;
 
         ref RenderCell cell = ref _cells[_cellCount];
-        cell.SheetId = sprite.SheetId;
+        // Darken blits (shadows, iced) go to the multiplicative shadow
+        // layer of their sheet instead of the color layer.
+        bool darken = (sprite.Flags & 4) != 0;
+        cell.SheetId = darken ? ShadowLayerBase + sprite.SheetId : sprite.SheetId;
         cell.CellIndex = cellIndex - 1;
         cell.Flags = sprite.Flags;
         cell.FilterColor = sprite.FilterColor;
         bool isEnemy = sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB;
-        float band = isEnemy && sprite.Aux == 1 ? StructureZ
-                   : isEnemy && sprite.Aux == 2 ? RiderZ
-                   : BandHeight[Math.Min(sprite.Category, (byte)(BandHeight.Length - 1))];
+        float band;
+        if (isEnemy && sprite.Aux == 1)
+        {
+            // Stationary structures sit on whatever surface is beneath
+            // them: an elevated map layer (platform, raised road) or the
+            // ground itself.
+            float surface = _background?.SurfaceZAt(new Vector2(centerX - 24f, centerY)) ?? 0f;
+            band = surface > 0f ? surface + 0.004f : StructureZ;
+        }
+        else if (isEnemy && sprite.Aux == 2)
+        {
+            float surface = _background?.SurfaceZAt(new Vector2(centerX - 24f, centerY)) ?? 0f;
+            band = Math.Max(surface, BackgroundLayer.PlatformZ) + 0.004f;
+        }
+        else
+        {
+            band = BandHeight[Math.Min(sprite.Category, (byte)(BandHeight.Length - 1))];
+        }
         cell.Z = band + recordIndex * OrderBias;
         cell.CurrPx = new Vector2(centerX, centerY);
         cell.PrevPx = cell.CurrPx;

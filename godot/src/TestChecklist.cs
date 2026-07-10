@@ -13,12 +13,12 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Shadows: dark + correct everywhere (no orange)",
-        "Shadows visible over pits/structures too",
-        "Ground art tone matches terrain (no dark cells)",
-        "ALL hazard enemies visible (never under scenery)",
-        "Riders/tanks above their platforms",
-        "Pause + quit menus: clean, no enemies",
+        "Shadows: darken the terrain (not a gray replica)",
+        "Mobile enemies NEVER under clouds/platforms",
+        "Turrets/statics sit on their surface (gnd or platform)",
+        "Dome noise square (930): shoot a dome - damage art?",
+        "Brightness vs last run: still washed out?",
+        "Pause: only the lives text remains (known)",
         "Anything else off? tell Claude after",
     };
 
