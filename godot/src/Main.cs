@@ -299,10 +299,28 @@ public partial class Main : Node3D
         GD.Print($"OpenTyrianVR: session up, data={dataDir}");
     }
 
+    // OTYR_CAPTURE=1: save the viewport to user://cap_N.png every ~2 s
+    // (self-service visual verification; window capture is unreliable on
+    // multi-monitor setups and XR grabs the window entirely).
+    private static readonly bool CaptureMode =
+        System.Environment.GetEnvironmentVariable("OTYR_CAPTURE") == "1";
+    private double _captureAccumulator;
+    private int _captureIndex;
+
     public override void _Process(double delta)
     {
         if (!_sessionLive)
             return;
+
+        if (CaptureMode)
+        {
+            _captureAccumulator += delta;
+            if (_captureAccumulator >= 2.0 && _captureIndex < 40)
+            {
+                _captureAccumulator = 0;
+                GetViewport().GetTexture().GetImage().SavePng($"user://cap_{_captureIndex++:D2}.png");
+            }
+        }
 
         PollFrame();
         PollPlayerState();

@@ -23,11 +23,17 @@
   palette gamma, color keying, and shadow rendering verified in-headset
   across eight test passes. Known gaps for Stage B authored metadata:
   enemy hover heights (movers ride a uniform hazard band, grounded units
-  float); multi-slot structure assemblies (e.g. the level-1 dome, enemy
-  sheet cells ~97-107) composite crown/turret pieces through designed
-  transparency and still show a shimmering square where the layered cells
-  meet -- needs single-quad assembly rendering. In-play text (lives, cash,
-  INSERT COIN) still draws flat in the frame (text-proud feature is next).
+  float); and the level-1 dome artifact: a cell-aligned square at the
+  dome's top-middle that shimmers/vanishes in-headset. Established facts:
+  the art (enemy sheet 5, cells ~97-107, captures/sheet5_annotated.png) is
+  FULLY OPAQUE (tester-verified from the sheet dump); the assembly is
+  multi-slot; the mechanical verifier shows the legacy frame disagreeing
+  with cells 105/106 at their recorded positions (~34-48% match, meaning
+  legacy paints something else there); and the artifact does NOT reproduce
+  in static flat self-captures of the same build (OTYR_CAPTURE) -- it is
+  temporal and/or head-parallax dependent. Candidate for Stage B
+  single-quad assembly rendering. In-play text (lives, cash, INSERT COIN)
+  still draws flat in the frame (text-proud feature is next).
   One unreproduced sighting of non-cloaking enemies rendering
   semi-transparent for part of a run. Smoothie-filter/darken levels and
   background3over==2 levels need a fallback (slice level uses neither).
