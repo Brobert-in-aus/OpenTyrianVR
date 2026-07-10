@@ -13,10 +13,15 @@
 - Phase 3 vertical slice: **flat-verified** — entities render as interpolated
   palette-shaded 3D sprites at taxonomy height bands over an
   entity-suppressed terrain lane; terrain-baked art stays in the frame.
-  Awaiting the in-headset gate. Known gaps: driving platform-riders need
-  authored per-enemytype metadata (Stage B); old-table blend shots not yet in
-  3D; the lane background is still the legacy framebuffer (3D scrolling
-  terrain mesh is the remainder of Phase 3).
+  The lane background is now real 3D tile geometry (ABI v8): the level's
+  three map layers export with per-tick scroll records (bit-exact, verified
+  by standalone raster hashes in the harness); ground/structures render
+  pixel-locked behind the color-keyed legacy overlay, clouds elevated with
+  scroll interpolation. Awaiting the in-headset gate. Known gaps: driving
+  platform-riders need authored per-enemytype metadata (Stage B); old-table
+  blend shots not yet in 3D; in-play text draws under the elevated cloud
+  layer; smoothie-filter/darken levels and background3over==2 levels need a
+  fallback (slice level uses neither).
 
 ## 1. Product direction
 
