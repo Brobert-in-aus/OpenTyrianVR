@@ -13,8 +13,10 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Dome: crown reattached (no square, no top pixels)",
-        "Sidebar reads TYRIAN-VR on level 1",
+        "Dome flush with ground, composite intact (no square)",
+        "Domes/ground statics pass UNDER clouds (legacy-true)",
+        "Platform turrets still ON their platforms",
+        "Ship shadow still crosses pits/structures",
         "Anything else off? tell Claude after",
     };
 

@@ -32,19 +32,23 @@ public unsafe partial class SnapshotLayer : Node3D
         0.050f,  // EnemyShot
         0.050f,  // PlayerShot
         0.040f,  // Player
-        0.0008f, // Shadow (fallback; normally surface-following, see AddCell)
+        -0.0002f, // Shadow (fallback; normally surface-following, see AddCell)
         0.040f,  // Sidekick
         0.050f,  // Explosion
         0.050f,  // Superpixel
     };
 
-    // Baked structures (aux 1) and shadows share one coplanar band a hair
-    // above the terrain, layered by record order (OrderBias) exactly like
-    // the legacy paint order: a structure's own shadow is recorded just
-    // before it and lands just beneath it (hidden, as in legacy), while
-    // the player/shot shadows recorded late in the tick land above
-    // structure art and visibly cross it.
-    private const float StructureZ = 0.0008f;
+    // Baked structures and shadows: ground-band statics composite with the
+    // destroyed-state art baked in the terrain tiles through their own
+    // TRANSPARENT pixels, so they sit as close to the tile plane as depth
+    // allows (0.6 mm: parallax far below a pixel) -- beneath the lane text
+    // and, matching legacy draw order, beneath the cloud/platform layers.
+    // Top-band statics draw AFTER those layers in legacy and ride them.
+    // Shadows share the same bands; record order (OrderBias) reproduces
+    // the legacy paint order within a band (self-shadows tuck under their
+    // owners, late player/shot shadows cross structure art).
+    private const float GroundStructureZ = -0.0002f;
+    private const float SurfaceRideZ = 0.0008f;
 
     // Draw-order bias within a tick: later records sit imperceptibly higher,
     // reproducing legacy layering without z-fighting.
@@ -641,23 +645,23 @@ public unsafe partial class SnapshotLayer : Node3D
         float band;
         if (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2))
         {
-            // Stationary structures -- and statics stacked ON structure art
-            // (aux 2: dome crowns, pad-mounted turrets) -- sit in one band
-            // on whatever surface is beneath them (platform map layer or
-            // the ground), glued together by record order exactly like the
-            // legacy paint order.  Lifting the stacked layer exposed the
-            // art beneath it as a corrupt-looking square.
-            float surface = SurfaceForSource(sprite.SourceId, centerX, centerY);
-            band = surface + StructureZ;
+            // Ground-band statics (legacy paints them BEFORE the cloud and
+            // platform layers) stay flush with the terrain tiles so their
+            // transparent pixels composite the baked destroyed art; only
+            // top-band statics (painted after those layers) ride the
+            // platform surface.
+            band = sprite.Category == (byte)OtyrNative.Category.EnemyTop
+                ? Math.Max(SurfaceForSource(sprite.SourceId, centerX, centerY), BackgroundLayer.PlatformZ) + SurfaceRideZ
+                : GroundStructureZ;
         }
         else if (isShadow)
         {
-            // Shadows fall on the topmost scenery under them -- including
-            // the clouds (legacy draws player/shot shadows after the cloud
-            // layer, so they land on it) -- in the SAME band as structure
-            // art: record order decides who paints over whom.
+            // Shadows fall on the topmost scenery under them (clouds
+            // included: legacy draws player/shot shadows after the cloud
+            // layer) in the SAME band as the statics there, so record
+            // order decides who paints over whom.
             float surface = _background?.SurfaceZAt(new Vector2(centerX - 24f, centerY), includeClouds: true) ?? 0f;
-            band = surface + StructureZ;
+            band = surface > 0f ? surface + SurfaceRideZ : GroundStructureZ;
         }
         else
         {
