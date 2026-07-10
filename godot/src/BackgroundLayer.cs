@@ -34,10 +34,11 @@ public unsafe partial class BackgroundLayer : Node3D
     // below the player band (0.04): legacy draws the player, shots, and
     // top enemies after every background layer, so nothing map-based may
     // ever cover the ship.
+    public const float GroundZ = -0.0008f;
     public const float PlatformZ = 0.030f;
     private static float LayerHeight(int layer, byte overMode) => layer switch
     {
-        0 => -0.0008f,
+        0 => GroundZ,
         1 => overMode == 1 ? 0.020f : -0.0004f,
         _ => overMode == 2 ? 0.025f : PlatformZ,
     };

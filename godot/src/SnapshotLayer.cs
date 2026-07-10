@@ -38,17 +38,15 @@ public unsafe partial class SnapshotLayer : Node3D
         0.050f,  // Superpixel
     };
 
-    // Baked structures and shadows: ground-band statics composite with the
-    // destroyed-state art baked in the terrain tiles through their own
-    // TRANSPARENT pixels, so they sit as close to the tile plane as depth
-    // allows (0.6 mm: parallax far below a pixel) -- beneath the lane text
-    // and, matching legacy draw order, beneath the cloud/platform layers.
-    // Top-band statics draw AFTER those layers in legacy and ride them.
-    // Shadows share the same bands; record order (OrderBias) reproduces
-    // the legacy paint order within a band (self-shadows tuck under their
-    // owners, late player/shot shadows cross structure art).
-    private const float GroundStructureZ = -0.0002f;
-    private const float SurfaceRideZ = 0.0008f;
+    // Baked structures and shadows render as DECALS: positioned at exactly
+    // the terrain/platform plane (identical screen position at any head
+    // angle -- true zero parallax, so their transparent pixels composite
+    // the destroyed-state art baked in the tiles), with the legacy paint
+    // order encoded as a per-record DEPTH-only bias (statics beat the
+    // tiles, self-shadows tuck under their owners, late player/shot
+    // shadows cross structure art).  Ground-band statics decal the ground
+    // plane (beneath passing clouds, matching legacy draw order); top-band
+    // statics decal the platform plane.
 
     // Draw-order bias within a tick: later records sit imperceptibly higher,
     // reproducing legacy layering without z-fighting.
@@ -113,14 +111,21 @@ public unsafe partial class SnapshotLayer : Node3D
                 varying float cell;
                 varying float v_flags;
                 varying float v_filter;
+                varying float v_decal;
 
                 void vertex() {
                     cell = INSTANCE_CUSTOM.x;
                     v_flags = INSTANCE_CUSTOM.y;
                     v_filter = INSTANCE_CUSTOM.z;
+                    v_decal = INSTANCE_CUSTOM.w;
                 }
 
                 void fragment() {
+                    // Terrain decals sit at EXACTLY the tile plane (zero
+                    // head parallax, so transparent art pixels composite
+                    // the baked tiles beneath); a depth-only bias encodes
+                    // the paint order against the tiles and each other.
+                    DEPTH = FRAGCOORD.z + (v_decal > 0.0 ? 0.00001 + v_decal * 0.00002 : 0.0);
                     // Half-texel inset keeps edge fragments inside this cell
                     // (no atlas bleeding from neighboring cells).
                     vec2 cell_origin_px = vec2(mod(cell, 32.0) * 12.0, floor(cell / 32.0) * 14.0);
@@ -273,17 +278,23 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             Code = """
                 shader_type spatial;
-                render_mode unshaded, cull_disabled, blend_mul, depth_draw_never;
+                render_mode unshaded, cull_disabled, blend_mul;
 
                 uniform sampler2D atlas : filter_nearest;
 
                 varying float cell;
+                varying float v_decal;
 
                 void vertex() {
                     cell = INSTANCE_CUSTOM.x;
+                    v_decal = INSTANCE_CUSTOM.w;
                 }
 
                 void fragment() {
+                    // Same decal depth bias as the sprite layer: shadows
+                    // interleave with the statics on their plane by record
+                    // order (self-shadows under owners, late shadows over).
+                    DEPTH = FRAGCOORD.z + (v_decal > 0.0 ? 0.00001 + v_decal * 0.00002 : 0.0);
                     vec2 cell_origin_px = vec2(mod(cell, 32.0) * 12.0, floor(cell / 32.0) * 14.0);
                     vec2 cell_px = clamp(UV * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));
                     if (texture(atlas, (cell_origin_px + cell_px) / vec2(384.0, 448.0)).g < 0.5)
@@ -451,6 +462,7 @@ public unsafe partial class SnapshotLayer : Node3D
         public int CellIndex;      // 0-based atlas cell
         public byte Flags, FilterColor;
         public float Z;            // lane-local height incl. order bias
+        public float DecalOrder;   // > 0: terrain decal; depth-only paint order
         public Vector2 CurrPx;     // cell center, frame pixels
         public Vector2 PrevPx;     // previous-tick center (== CurrPx if new)
         public bool HasPrev;
@@ -643,31 +655,30 @@ public unsafe partial class SnapshotLayer : Node3D
         bool isEnemy = sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB;
         bool isShadow = sprite.Category == (byte)OtyrNative.Category.Shadow;
         float band;
+        float decalOrder = 0f;
         if (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2))
         {
-            // Ground-band statics (legacy paints them BEFORE the cloud and
-            // platform layers) stay flush with the terrain tiles so their
-            // transparent pixels composite the baked destroyed art; only
-            // top-band statics (painted after those layers) ride the
-            // platform surface.
             band = sprite.Category == (byte)OtyrNative.Category.EnemyTop
-                ? Math.Max(SurfaceForSource(sprite.SourceId, centerX, centerY), BackgroundLayer.PlatformZ) + SurfaceRideZ
-                : GroundStructureZ;
+                ? Math.Max(SurfaceForSource(sprite.SourceId, centerX, centerY), BackgroundLayer.PlatformZ)
+                : BackgroundLayer.GroundZ;
+            decalOrder = (recordIndex + 1f) / OtyrNative.SnapshotSpriteMax;
         }
         else if (isShadow)
         {
-            // Shadows fall on the topmost scenery under them (clouds
+            // Shadows decal the topmost scenery under them (clouds
             // included: legacy draws player/shot shadows after the cloud
-            // layer) in the SAME band as the statics there, so record
-            // order decides who paints over whom.
+            // layer); the depth bias orders them against the statics on
+            // the same plane.
             float surface = _background?.SurfaceZAt(new Vector2(centerX - 24f, centerY), includeClouds: true) ?? 0f;
-            band = surface > 0f ? surface + SurfaceRideZ : GroundStructureZ;
+            band = surface > 0f ? surface : BackgroundLayer.GroundZ;
+            decalOrder = (recordIndex + 1f) / OtyrNative.SnapshotSpriteMax;
         }
         else
         {
             band = BandHeight[Math.Min(sprite.Category, (byte)(BandHeight.Length - 1))];
         }
-        cell.Z = band + recordIndex * OrderBias;
+        cell.Z = band + (decalOrder > 0f ? 0f : recordIndex * OrderBias);
+        cell.DecalOrder = decalOrder;
         cell.CurrPx = new Vector2(centerX, centerY);
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
@@ -737,7 +748,7 @@ public unsafe partial class SnapshotLayer : Node3D
             _multiMesh[id].SetInstanceTransform(instance,
                 new Transform3D(basis, new Vector3(laneX, laneY, cell.Z)));
             _multiMesh[id].SetInstanceCustomData(instance,
-                new Color(cell.CellIndex, cell.Flags, cell.FilterColor, 0));
+                new Color(cell.CellIndex, cell.Flags, cell.FilterColor, cell.DecalOrder));
         }
 
         for (int id = 0; id < LayerCount; id++)

@@ -13,10 +13,11 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Dome flush with ground, composite intact (no square)",
-        "Domes/ground statics pass UNDER clouds (legacy-true)",
-        "Platform turrets still ON their platforms",
+        "Statics AT ground level: zero shimmer at any head angle",
+        "No floating / split ground objects anywhere",
+        "Statics pass under clouds; platform turrets ride",
         "Ship shadow still crosses pits/structures",
+        "Cloud translucency still looks good",
         "Anything else off? tell Claude after",
     };
 
