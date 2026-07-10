@@ -276,8 +276,9 @@ bool player_shot_move_and_draw(
 
 		if (*out_is_special)
 		{
-			present_record(PRESENT_PLAYER_SHOT, PRESENT_BLIT_SPRITE_BLEND, 0, OPTION_SHAPES,
-			               NULL, *out_shotx+1, *out_shoty, sprite_frame - 60001);
+			present_record_id(PRESENT_PLAYER_SHOT, PRESENT_BLIT_SPRITE_BLEND, 0, OPTION_SHAPES, 0,
+			                  (Uint16)(0x3000 | shot_id),
+			                  NULL, *out_shotx+1, *out_shoty, sprite_frame - 60001);
 
 			*out_special_radiusw = sprite(OPTION_SHAPES, sprite_frame - 60001)->width / 2;
 			*out_special_radiush = sprite(OPTION_SHAPES, sprite_frame - 60001)->height / 2;

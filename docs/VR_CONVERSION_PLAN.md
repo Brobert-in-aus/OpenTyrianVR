@@ -17,11 +17,12 @@
   three map layers export with per-tick scroll records (bit-exact, verified
   by standalone raster hashes in the harness); ground/structures render
   pixel-locked behind the color-keyed legacy overlay, clouds elevated with
-  scroll interpolation. Awaiting the in-headset gate. Known gaps: driving
-  platform-riders need authored per-enemytype metadata (Stage B); old-table
-  blend shots not yet in 3D; in-play text draws under the elevated cloud
-  layer; smoothie-filter/darken levels and background3over==2 levels need a
-  fallback (slice level uses neither).
+  scroll interpolation. Old-table blend shots (special weapons) render as
+  interpolated 3D quads from the OPTION_SHAPES export (ABI v9). Awaiting the
+  in-headset gate. Known gaps: driving platform-riders need authored
+  per-enemytype metadata (Stage B); in-play text draws under the elevated
+  cloud layer; smoothie-filter/darken levels and background3over==2 levels
+  need a fallback (slice level uses neither).
 
 ## 1. Product direction
 

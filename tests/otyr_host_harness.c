@@ -28,6 +28,7 @@ typedef int32_t (*fn_player_state)(uint64_t, OtyrPlayerState *, uint32_t);
 typedef int32_t (*fn_snapshot)(uint64_t, OtyrSnapshot *, uint32_t, uint32_t);
 typedef int32_t (*fn_sprite_sheet)(uint64_t, uint32_t, OtyrSpriteSheet *, uint32_t);
 typedef int32_t (*fn_background_map)(uint64_t, uint32_t, OtyrBackgroundMap *, uint32_t);
+typedef int32_t (*fn_old_sprite)(uint64_t, uint32_t, uint32_t, OtyrOldSprite *, uint32_t);
 
 static fn_abi_version p_abi_version;
 static fn_last_error p_last_error;
@@ -39,6 +40,7 @@ static fn_player_state p_player_state;
 static fn_snapshot p_snapshot;
 static fn_sprite_sheet p_sprite_sheet;
 static fn_background_map p_background_map;
+static fn_old_sprite p_old_sprite;
 
 static uint64_t g_session;
 
@@ -185,9 +187,10 @@ int main(void)
 	p_snapshot = (fn_snapshot)GetProcAddress(dll, "otyr_session_snapshot");
 	p_sprite_sheet = (fn_sprite_sheet)GetProcAddress(dll, "otyr_sprite_sheet");
 	p_background_map = (fn_background_map)GetProcAddress(dll, "otyr_background_map");
+	p_old_sprite = (fn_old_sprite)GetProcAddress(dll, "otyr_old_sprite");
 	if (!p_abi_version || !p_last_error || !p_session_create || !p_session_destroy ||
 	    !p_submit_input || !p_acquire_frame || !p_player_state || !p_snapshot || !p_sprite_sheet ||
-	    !p_background_map)
+	    !p_background_map || !p_old_sprite)
 		die("missing export");
 
 	if (p_abi_version() != OTYR_ABI_VERSION)
@@ -456,6 +459,30 @@ int main(void)
 			die("background reconstruction mismatch");
 	}
 	free(bg_maps);
+
+	/* Phase 4d: old-table sprite export (ABI v9).  OPTION_SHAPES carries the
+	 * special blend shots; verify the cache answers and reports plausible
+	 * dimensions. */
+	{
+		OtyrOldSprite *old = calloc(1, sizeof(OtyrOldSprite));
+		old->struct_size = sizeof(OtyrOldSprite);
+		unsigned int present = 0, max_w = 0, max_h = 0;
+		for (uint32_t i = 0; i < OTYR_OLD_SPRITE_MAX; ++i)
+		{
+			old->struct_size = sizeof(OtyrOldSprite);
+			if (p_old_sprite(g_session, OTYR_OLD_TABLE_OPTION, i, old, sizeof(OtyrOldSprite)) != OTYR_OK)
+				die("old_sprite");
+			if (old->width == 0)
+				continue;
+			++present;
+			if (old->width > max_w) max_w = old->width;
+			if (old->height > max_h) max_h = old->height;
+		}
+		printf("old sprites: %u present, max %ux%u\n", present, max_w, max_h);
+		if (present == 0)
+			die("no OPTION_SHAPES sprites cached");
+		free(old);
+	}
 
 	OtyrSpriteSheet *sheet = calloc(1, sizeof(OtyrSpriteSheet));
 	sheet->struct_size = sizeof(OtyrSpriteSheet);

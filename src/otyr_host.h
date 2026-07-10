@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 8u
+#define OTYR_ABI_VERSION 9u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -319,6 +319,31 @@ OTYR_API int32_t otyr_background_map(uint64_t session,
                                      uint32_t layer,
                                      OtyrBackgroundMap *map,
                                      uint32_t map_size);
+
+/* --- Old-table sprite export (v9) --------------------------------------- */
+
+/* Sprites on the legacy variable-size table (blit_sprite family).  Only the
+ * OPTION_SHAPES table (5) is cached: it carries the "special" player shots
+ * recorded as OTYR_KIND_SPRITE_BLEND, whose OtyrSnapshotSprite.index is the
+ * sprite index here and filter_color the table id.  Rasterized at level
+ * load; rows are stored at a fixed 64-byte stride, 0 = transparent. */
+#define OTYR_OLD_TABLE_OPTION  5u
+#define OTYR_OLD_SPRITE_MAX    151u
+#define OTYR_OLD_SPRITE_W_MAX  64u
+#define OTYR_OLD_SPRITE_H_MAX  64u
+
+typedef struct OtyrOldSprite
+{
+	uint32_t struct_size;
+	uint16_t width, height; /* 0x0 = sprite does not exist (or was clamped) */
+	uint8_t  pixels[OTYR_OLD_SPRITE_W_MAX * OTYR_OLD_SPRITE_H_MAX];
+} OtyrOldSprite;
+
+OTYR_API int32_t otyr_old_sprite(uint64_t session,
+                                 uint32_t table,
+                                 uint32_t index,
+                                 OtyrOldSprite *sprite,
+                                 uint32_t sprite_size);
 
 #ifdef __cplusplus
 }

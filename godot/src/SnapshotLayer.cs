@@ -47,13 +47,19 @@ public unsafe partial class SnapshotLayer : Node3D
     private ulong _snapshotArrivalUsec;
     private double _snapshotPeriod = 0.02875;  // nominal 35 Hz tick
 
-    // Layers 0..SheetCount-1 are sprite sheets; the last is the glow layer
-    // (superpixel debris as small palette-colored quads).
+    // Layers 0..SheetCount-1 are sprite sheets; then the glow layer
+    // (superpixel debris as small palette-colored quads) and the old-table
+    // layer (variable-size OPTION_SHAPES blend shots).
     private const int GlowLayer = OtyrNative.SheetCount;
-    private const int LayerCount = OtyrNative.SheetCount + 1;
+    private const int OldLayer = OtyrNative.SheetCount + 1;
+    private const int LayerCount = OtyrNative.SheetCount + 2;
+    private const int OldAtlasSlotsPerRow = 16;  // 16x16 grid of 64x64 slots
 
     private readonly MultiMesh[] _multiMesh = new MultiMesh[LayerCount];
     private readonly ImageTexture[] _atlas = new ImageTexture[OtyrNative.SheetCount];
+    private ImageTexture _oldAtlas = null!;
+    private OtyrNative.OldSprite _oldSprite;  // fetch scratch
+    private readonly Vector2I[] _oldSize = new Vector2I[OtyrNative.OldSpriteMax];
     private ImageTexture _paletteTexture = null!;
     private Image _paletteImage = null!;
     private readonly byte[] _paletteRgba = new byte[256 * 4];
@@ -188,6 +194,58 @@ public unsafe partial class SnapshotLayer : Node3D
             Multimesh = _multiMesh[GlowLayer],
             MaterialOverride = glowMaterial,
         });
+
+        // Old-table layer: variable-size OPTION_SHAPES sprites drawn with the
+        // legacy 50/50 value blend, approximated as 55% alpha.  Unit-pixel
+        // quads scaled per instance; custom data = (sprite index, w, h).
+        var oldShader = new Shader
+        {
+            Code = """
+                shader_type spatial;
+                render_mode unshaded, cull_disabled, depth_prepass_alpha;
+
+                uniform sampler2D atlas : filter_nearest;
+                uniform sampler2D palette : filter_nearest;
+
+                varying vec3 slot_wh;
+
+                void vertex() {
+                    slot_wh = INSTANCE_CUSTOM.xyz;
+                }
+
+                void fragment() {
+                    vec2 wh = slot_wh.yz;
+                    vec2 origin_px = vec2(mod(slot_wh.x, 16.0), floor(slot_wh.x / 16.0)) * 64.0;
+                    vec2 px = clamp(UV * wh, vec2(0.5), wh - 0.5);
+                    float idx = floor(texture(atlas, (origin_px + px) / 1024.0).r * 255.0 + 0.5);
+                    if (idx < 0.5)
+                        discard;
+                    ALBEDO = texture(palette, vec2((idx + 0.5) / 256.0, 0.5)).rgb;
+                    ALPHA = 0.55;
+                }
+                """,
+        };
+        var oldMaterial = new ShaderMaterial { Shader = oldShader };
+        _oldAtlas = ImageTexture.CreateFromImage(Image.CreateEmpty(
+            OldAtlasSlotsPerRow * OtyrNative.OldSpriteWMax,
+            OldAtlasSlotsPerRow * OtyrNative.OldSpriteHMax, false, Image.Format.R8));
+        oldMaterial.SetShaderParameter("atlas", _oldAtlas);
+        oldMaterial.SetShaderParameter("palette", _paletteTexture);
+
+        _multiMesh[OldLayer] = new MultiMesh
+        {
+            TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
+            UseCustomData = true,
+            Mesh = new QuadMesh { Size = new Vector2(PxToMeters, PxToMeters) },
+            InstanceCount = 128,
+            VisibleInstanceCount = 0,
+        };
+        AddChild(new MultiMeshInstance3D
+        {
+            Name = "OldTableLayer",
+            Multimesh = _multiMesh[OldLayer],
+            MaterialOverride = oldMaterial,
+        });
     }
 
     /// <summary>Polls for a new snapshot and updates the sprite quads.
@@ -260,7 +318,41 @@ public unsafe partial class SnapshotLayer : Node3D
             if (DumpAtlases)
                 image.SavePng($"user://atlas_{id}_epoch{_sheetEpoch}.png");
         }
+
+        FetchOldAtlas(session);
         GD.Print($"OpenTyrianVR: sprite atlases refreshed (epoch {_sheetEpoch})");
+    }
+
+    private void FetchOldAtlas(ulong session)
+    {
+        int atlasW = OldAtlasSlotsPerRow * OtyrNative.OldSpriteWMax;
+        int atlasH = OldAtlasSlotsPerRow * OtyrNative.OldSpriteHMax;
+        var pixels = new byte[atlasW * atlasH];
+        _oldSprite.StructSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.OldSprite>();
+
+        for (uint i = 0; i < OtyrNative.OldSpriteMax; i++)
+        {
+            int rc;
+            fixed (OtyrNative.OldSprite* ptr = &_oldSprite)
+                rc = OtyrNative.GetOldSprite(session, OtyrNative.OldTableOption, i, ptr, _oldSprite.StructSize);
+            _oldSize[i] = rc == OtyrNative.Ok
+                ? new Vector2I(_oldSprite.Width, _oldSprite.Height)
+                : Vector2I.Zero;
+            if (_oldSize[i] == Vector2I.Zero)
+                continue;
+
+            int originX = ((int)i % OldAtlasSlotsPerRow) * OtyrNative.OldSpriteWMax;
+            int originY = ((int)i / OldAtlasSlotsPerRow) * OtyrNative.OldSpriteHMax;
+            fixed (OtyrNative.OldSprite* spr = &_oldSprite)
+            {
+                for (int y = 0; y < _oldSprite.Height; y++)
+                    for (int x = 0; x < _oldSprite.Width; x++)
+                        pixels[(originY + y) * atlasW + originX + x] =
+                            spr->Pixels[y * OtyrNative.OldSpriteWMax + x];
+            }
+        }
+
+        _oldAtlas.Update(Image.CreateFromData(atlasW, atlasH, false, Image.Format.R8, pixels));
     }
 
     private void UpdatePalette(uint[] paletteArgb)
@@ -327,8 +419,14 @@ public unsafe partial class SnapshotLayer : Node3D
                     continue;
                 }
 
+                if (sprite.Kind == 2)  // SPRITE_BLEND on the old table
+                {
+                    AddOldCell(sprite, i);
+                    continue;
+                }
+
                 if (sprite.SheetId >= OtyrNative.SheetCount || sprite.Index == 0)
-                    continue;  // old-table blend blits: not yet rendered
+                    continue;
                 if (sprite.Category == (byte)OtyrNative.Category.Shadow)
                     continue;  // stays in the legacy frame (terrain paint)
                 if (sprite.Aux != 0 && sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB)
@@ -373,6 +471,47 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             uint key = (uint)sprite.SourceId << 8;
             _cellKeys[_cellCount] = key;
+            if (_prevByKey.TryGetValue(key, out int prevIdx) &&
+                _prevCells[prevIdx].CurrPx.DistanceTo(cell.CurrPx) <= TeleportGuardPx)
+            {
+                cell.PrevPx = _prevCells[prevIdx].CurrPx;
+                cell.HasPrev = true;
+            }
+        }
+        else
+        {
+            _cellKeys[_cellCount] = 0xffffffff;
+        }
+
+        ++_cellCount;
+    }
+
+    private void AddOldCell(in OtyrNative.SnapshotSprite sprite, uint recordIndex)
+    {
+        if (_cellCount >= _cells.Length || sprite.Index >= OtyrNative.OldSpriteMax)
+            return;
+        Vector2I size = _oldSize[sprite.Index];
+        if (size == Vector2I.Zero)
+            return;
+
+        ref RenderCell cell = ref _cells[_cellCount];
+        cell.SheetId = OldLayer;
+        cell.CellIndex = sprite.Index;
+        // Repurposed for the old layer: quad scale in pixels (fits a byte).
+        cell.Flags = (byte)size.X;
+        cell.FilterColor = (byte)size.Y;
+        cell.Z = BandHeight[(byte)OtyrNative.Category.PlayerShot] + recordIndex * OrderBias;
+        cell.CurrPx = new Vector2(sprite.X + size.X / 2f, sprite.Y + size.Y / 2f);
+        cell.PrevPx = cell.CurrPx;
+        cell.HasPrev = false;
+
+        if (sprite.SourceId != OtyrNative.NoSource)
+        {
+            _sourceOrdinal.TryGetValue(sprite.SourceId, out int ordinal);
+            _sourceOrdinal[sprite.SourceId] = ordinal + 1;
+            uint key = (uint)sprite.SourceId << 8 | (uint)(ordinal & 0xff);
+            _cellKeys[_cellCount] = key;
+
             if (_prevByKey.TryGetValue(key, out int prevIdx) &&
                 _prevCells[prevIdx].CurrPx.DistanceTo(cell.CurrPx) <= TeleportGuardPx)
             {
@@ -460,14 +599,20 @@ public unsafe partial class SnapshotLayer : Node3D
 
             int id = cell.SheetId;
             int instance = _instanceCount[id]++;
-            if (instance >= OtyrNative.SnapshotSpriteMax)
+            if (instance >= _multiMesh[id].InstanceCount)
             {
-                _instanceCount[id] = OtyrNative.SnapshotSpriteMax;
+                _instanceCount[id] = (int)_multiMesh[id].InstanceCount;
                 continue;
             }
 
+            // The old-table layer uses a unit-pixel quad scaled to the
+            // sprite's size (stored in Flags/FilterColor).
+            Basis basis = id == OldLayer
+                ? Basis.Identity.Scaled(new Vector3(cell.Flags, cell.FilterColor, 1f))
+                : Basis.Identity;
+
             _multiMesh[id].SetInstanceTransform(instance,
-                new Transform3D(Basis.Identity, new Vector3(laneX, laneY, cell.Z)));
+                new Transform3D(basis, new Vector3(laneX, laneY, cell.Z)));
             _multiMesh[id].SetInstanceCustomData(instance,
                 new Color(cell.CellIndex, cell.Flags, cell.FilterColor, 0));
         }

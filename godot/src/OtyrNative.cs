@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 8;
+    public const uint AbiVersion = 9;
 
     public const int FrameWidth = 320;
     public const int FrameHeight = 200;
@@ -120,6 +120,22 @@ public static unsafe class OtyrNative
             1 => Background1,
             _ => Background2,
         };
+    }
+
+    // Old variable-size sprite table export (ABI v9): OPTION_SHAPES carries
+    // the "special" blend shots (Kind == 2; Index is the sprite, FilterColor
+    // the table id).  Rows at a fixed 64-byte stride; 0 = transparent.
+    public const uint OldTableOption = 5;
+    public const int OldSpriteMax = 151;
+    public const int OldSpriteWMax = 64;
+    public const int OldSpriteHMax = 64;
+
+    [StructLayout(LayoutKind.Sequential)]
+    public unsafe struct OldSprite
+    {
+        public uint StructSize;
+        public ushort Width, Height;  // 0x0 = sprite does not exist
+        public fixed byte Pixels[OldSpriteWMax * OldSpriteHMax];
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -275,6 +291,9 @@ public static unsafe class OtyrNative
     [DllImport(Dll, EntryPoint = "otyr_background_map")]
     public static extern int GetBackgroundMap(ulong session, uint layer, BackgroundMap* map, uint mapSize);
 
+    [DllImport(Dll, EntryPoint = "otyr_old_sprite")]
+    public static extern int GetOldSprite(ulong session, uint table, uint index, OldSprite* sprite, uint spriteSize);
+
     public static string LastError()
     {
         var buffer = stackalloc byte[256];
@@ -295,6 +314,7 @@ public static unsafe class OtyrNative
             sizeof(Snapshot) != 36 + SnapshotSpriteMax * 16 + BgLayerCount * 16 ||
             sizeof(SpriteSheet) != 12 + SheetCellMax * SheetCellW * SheetCellH ||
             sizeof(BackgroundMap) != 16 + BgMapCellMax + BgShapeMax * BgTileW * BgTileH ||
+            sizeof(OldSprite) != 8 + OldSpriteWMax * OldSpriteHMax ||
             sizeof(Frame) != 16 + FrameWidth * FrameHeight + 1024 + 4)
             throw new InvalidOperationException("ABI struct layout mismatch");
 

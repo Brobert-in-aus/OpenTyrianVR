@@ -74,6 +74,7 @@ typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 36 + 1024 * 16 + 
 typedef char otyr_assert_sheet_size[sizeof(OtyrSpriteSheet) == 12 + 1024 * 12 * 14 ? 1 : -1];
 typedef char otyr_assert_frame_size[sizeof(OtyrFrame) == 16 + 320 * 200 + 1024 + 4 ? 1 : -1];
 typedef char otyr_assert_bg_map_size[sizeof(OtyrBackgroundMap) == 16 + 600 * 15 + 72 * 24 * 28 ? 1 : -1];
+typedef char otyr_assert_old_sprite_size[sizeof(OtyrOldSprite) == 8 + 64 * 64 ? 1 : -1];
 
 /* The game core is a global-state singleton, so exactly one session. */
 #define SESSION_HANDLE 1ull
@@ -137,6 +138,10 @@ static struct
 
 	/* background map layers, captured with the sheets at level load */
 	OtyrBackgroundMap bg_maps[OTYR_BG_LAYER_COUNT];
+
+	/* rasterized OPTION_SHAPES sprites (old variable-size table), for the
+	   "special" blend shots; captured with the sheets */
+	OtyrOldSprite old_sprites[OTYR_OLD_SPRITE_MAX];
 } session;
 
 /* Registry mapping sheet ids to the game's sheet globals. */
@@ -311,10 +316,68 @@ static void capture_background_maps_locked(void)
 	}
 }
 
+/* Decodes one old-table sprite (blit_sprite run encoding: 255 = skip run,
+ * 254 = next row, 253 = skip one, else literal pixel) into a fixed-stride
+ * bitmap. */
+static void capture_old_sprites_locked(void)
+{
+	for (uint32_t i = 0; i < OTYR_OLD_SPRITE_MAX; ++i)
+	{
+		OtyrOldSprite *out = &session.old_sprites[i];
+		out->struct_size = sizeof(OtyrOldSprite);
+		out->width = 0;
+		out->height = 0;
+		memset(out->pixels, 0, sizeof(out->pixels));
+
+		if (i >= sprite_table[OPTION_SHAPES].count ||
+		    !sprite_exists(OPTION_SHAPES, i))
+			continue;
+
+		const Sprite *spr = sprite(OPTION_SHAPES, i);
+		if (spr->width > OTYR_OLD_SPRITE_W_MAX || spr->height > OTYR_OLD_SPRITE_H_MAX)
+			continue;  /* stays 0x0: host skips it (none expected this big) */
+
+		out->width = spr->width;
+		out->height = spr->height;
+
+		const Uint8 *data = spr->data;
+		const Uint8 *const data_ul = data + spr->size;
+		unsigned int px = 0, py = 0;
+
+		for (; data < data_ul && py < spr->height; ++data)
+		{
+			switch (*data)
+			{
+			case 255:
+				++data;
+				px += *data;
+				break;
+			case 254:
+				px = spr->width;
+				break;
+			case 253:
+				++px;
+				break;
+			default:
+				if (px < spr->width)
+					out->pixels[py * OTYR_OLD_SPRITE_W_MAX + px] = *data;
+				++px;
+				break;
+			}
+			if (px >= spr->width)
+			{
+				px = 0;
+				++py;
+			}
+		}
+	}
+}
+
 void otyr_host_capture_sheets(void)
 {
 	SDL_LockMutex(session.mutex);
 	capture_background_maps_locked();
+	capture_old_sprites_locked();
 	for (uint32_t id = 0; id < OTYR_SHEET_COUNT; ++id)
 	{
 		const Sprite2_array *sheet = sheet_registry(id);
@@ -698,6 +761,25 @@ int32_t otyr_background_map(uint64_t handle, uint32_t layer,
 	memcpy(map, &session.bg_maps[layer], sizeof(OtyrBackgroundMap));
 	map->struct_size = sizeof(OtyrBackgroundMap);
 	map->sheet_epoch = session.sheet_epoch;
+	SDL_UnlockMutex(session.mutex);
+	return OTYR_OK;
+}
+
+int32_t otyr_old_sprite(uint64_t handle, uint32_t table, uint32_t index,
+                        OtyrOldSprite *out, uint32_t out_size)
+{
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE)
+		return OTYR_INVALID_SESSION;
+	if (out == NULL || out_size < sizeof(OtyrOldSprite) ||
+	    out->struct_size < sizeof(OtyrOldSprite) ||
+	    index >= OTYR_OLD_SPRITE_MAX)
+		return OTYR_INVALID_ARGUMENT;
+	if (table != OTYR_OLD_TABLE_OPTION)
+		return OTYR_UNSUPPORTED;  /* only OPTION_SHAPES is cached */
+
+	SDL_LockMutex(session.mutex);
+	memcpy(out, &session.old_sprites[index], sizeof(OtyrOldSprite));
+	out->struct_size = sizeof(OtyrOldSprite);
 	SDL_UnlockMutex(session.mutex);
 	return OTYR_OK;
 }
