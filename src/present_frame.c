@@ -40,7 +40,7 @@ void present_frame_reset(void)
 }
 
 void present_background(int layer, Sint32 tile_offset, Sint16 x, Sint16 y,
-                        bool blend, Uint32 hash)
+                        bool blend, Uint8 over, Uint32 hash)
 {
 	if (layer < 0 || layer >= PRESENT_BACKGROUND_LAYERS)
 		return;
@@ -49,6 +49,7 @@ void present_background(int layer, Sint32 tile_offset, Sint16 x, Sint16 y,
 	present_backgrounds[layer].y = y;
 	present_backgrounds[layer].drawn = 1;
 	present_backgrounds[layer].blend = blend ? 1 : 0;
+	present_backgrounds[layer].over = over;
 	present_backgrounds[layer].hash = hash;
 }
 

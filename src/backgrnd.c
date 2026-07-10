@@ -193,7 +193,7 @@ void draw_background_1(SDL_Surface *surface)
 	Uint8 **map = (Uint8 **)mapYPos + mapXbpPos - 12;
 
 	present_background(0, (Sint32)(map - (Uint8 **)&megaData1.mainmap[0][0]),
-	                   (Sint16)mapXPos, (Sint16)backPos - 28, false,
+	                   (Sint16)mapXPos, (Sint16)backPos - 28, false, 0,
 	                   present_background_hash ? bg_capture_hash(mapXPos, backPos, map, 14, false) : 0);
 
 	if (!present_suppress_background)
@@ -218,7 +218,7 @@ void draw_background_2(SDL_Surface *surface)
 		Uint8 **map = (Uint8 **)mapY2Pos + (smoothies[1] ? mapXbpPos : mapX2bpPos) - 12;
 
 		present_background(1, (Sint32)(map - (Uint8 **)&megaData2.mainmap[0][0]),
-		                   (Sint16)x, (Sint16)backPos2 - 28, false,
+		                   (Sint16)x, (Sint16)backPos2 - 28, false, background2over,
 		                   present_background_hash ? bg_capture_hash(x, backPos2, map, 14, false) : 0);
 
 		if (!present_suppress_background)
@@ -254,7 +254,7 @@ void draw_background_2_blend(SDL_Surface *surface)
 	Uint8 **map = (Uint8 **)mapY2Pos + mapX2bpPos - 12;
 
 	present_background(1, (Sint32)(map - (Uint8 **)&megaData2.mainmap[0][0]),
-	                   (Sint16)mapX2Pos, (Sint16)backPos2 - 28, true,
+	                   (Sint16)mapX2Pos, (Sint16)backPos2 - 28, true, background2over,
 	                   present_background_hash ? bg_capture_hash(mapX2Pos, backPos2, map, 14, true) : 0);
 
 	if (!present_suppress_background)
@@ -296,7 +296,7 @@ void draw_background_3(SDL_Surface *surface)
 	Uint8 **map = (Uint8 **)mapY3Pos + mapX3bpPos - 12;
 
 	present_background(2, (Sint32)(map - (Uint8 **)&megaData3.mainmap[0][0]),
-	                   (Sint16)mapX3Pos, (Sint16)backPos3 - 28, false,
+	                   (Sint16)mapX3Pos, (Sint16)backPos3 - 28, false, background3over,
 	                   present_background_hash ? bg_capture_hash(mapX3Pos, backPos3, map, 15, false) : 0);
 
 	if (!present_suppress_background)

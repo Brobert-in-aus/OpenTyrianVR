@@ -118,6 +118,11 @@ typedef struct PresentBackground
 	Sint16 x, y;          /* frame position of that tile; y = backPos - 28 */
 	Uint8 drawn;          /* layer was blitted this tick */
 	Uint8 blend;          /* 50/50 value-nibble blend variant (wild detail) */
+	Uint8 over;           /* the layer's *over mode at draw time: where the
+	                         draw sat in the tick relative to entities (layer
+	                         1: background2over -- 1 draws over ground
+	                         enemies; layer 2: background3over -- 2 draws
+	                         before sky enemies) */
 	Uint32 hash;          /* standalone-raster FNV-1a when capture enabled */
 } PresentBackground;
 
@@ -136,7 +141,7 @@ extern bool present_suppress_background;
 extern bool present_background_hash;
 
 void present_background(int layer, Sint32 tile_offset, Sint16 x, Sint16 y,
-                        bool blend, Uint32 hash);
+                        bool blend, Uint8 over, Uint32 hash);
 
 /* Clears the record list; called once at the top of each gameplay tick. */
 void present_frame_reset(void);

@@ -450,9 +450,12 @@ int main(void)
 				}
 			}
 		}
-		printf("bg verify: layer ticks checked %u/%u/%u, mismatches %u/%u/%u\n",
+		printf("bg verify: layer ticks checked %u/%u/%u, mismatches %u/%u/%u, over modes %u/%u/%u\n",
 		       bg_checked[0], bg_checked[1], bg_checked[2],
-		       bg_bad[0], bg_bad[1], bg_bad[2]);
+		       bg_bad[0], bg_bad[1], bg_bad[2],
+		       snapshot->background[0].over_mode,
+		       snapshot->background[1].over_mode,
+		       snapshot->background[2].over_mode);
 		if (bg_checked[0] == 0)
 			die("background layer 1 never drawn during demo verify window");
 		if (bg_bad[0] + bg_bad[1] + bg_bad[2] != 0)

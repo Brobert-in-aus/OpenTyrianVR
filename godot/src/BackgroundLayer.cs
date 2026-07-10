@@ -25,11 +25,19 @@ public unsafe partial class BackgroundLayer : Node3D
     private const int PlayW = 264, PlayH = 184;
     private const int AtlasCols = 8;  // 8x9 grid of 24x28 shapes
 
-    // Lane-local Z per layer.  0/1 hug the lane overlay (sub-pixel offsets:
-    // ~0.1 mm of head parallax against 3.1 mm/px); 2 floats above the sky
-    // band, matching legacy draw order (background3over == 0 draws after sky
-    // enemies, before top enemies).
-    private static readonly float[] LayerZ = { -0.0008f, -0.0004f, 0.070f };
+    // Lane-local Z per layer, chosen from the layer's over mode each tick.
+    // Coplanar layers hug the lane overlay (sub-pixel offsets: ~0.1 mm of
+    // head parallax against 3.1 mm/px); layers that legacy draws over
+    // entities get real diorama height.  Layer 1 over==1 (e.g. Tyrian-1
+    // clouds, drawn over the ground objects) sits above the terrain paint
+    // but below the player band (0.04); layer 2 sits above the sky band
+    // (0.055) for over==0, below it for over==2.
+    private static float LayerHeight(int layer, byte overMode) => layer switch
+    {
+        0 => -0.0008f,
+        1 => overMode == 1 ? 0.020f : -0.0004f,
+        _ => overMode == 2 ? 0.030f : 0.070f,
+    };
 
     private OtyrNative.BackgroundMap _map;  // fetch scratch (57 KB)
     private uint _mapEpoch;
@@ -137,7 +145,7 @@ public unsafe partial class BackgroundLayer : Node3D
                 Name = $"BgLayer{l}",
                 Mesh = quadMesh,
                 MaterialOverride = _materials[l],
-                Position = new Vector3(centerX, centerY, LayerZ[l]),
+                Position = new Vector3(centerX, centerY, LayerHeight(l, 0)),
                 Visible = false,
             };
             AddChild(_quads[l]);
@@ -177,30 +185,39 @@ public unsafe partial class BackgroundLayer : Node3D
             _quads[l].Visible = _currDraw[l].Drawn != 0;
             _materials[l].SetShaderParameter("alpha_mul", _currDraw[l].Blend != 0 ? 0.55f : 1.0f);
 
-            // Layers 0/1 are pixel-locked to the tick (terrain-paint
+            float z = LayerHeight(l, _currDraw[l].OverMode);
+            Vector3 position = _quads[l].Position;
+            if (position.Z != z)
+                _quads[l].Position = new Vector3(position.X, position.Y, z);
+
+            // Coplanar layers are pixel-locked to the tick (terrain-paint
             // coplanarity); their origin updates here and only here.
-            if (l < 2 && _currDraw[l].Drawn != 0)
+            // Elevated layers carry no terrain paint and scroll-interpolate
+            // in OnRender instead.
+            if (z <= 0.001f && _currDraw[l].Drawn != 0)
                 _materials[l].SetShaderParameter("origin_px", Origin(l, _currDraw[l]));
         }
     }
 
     /// <summary>Called every render frame with the tick interpolation phase;
-    /// smooth-scrolls the elevated cloud layer.</summary>
+    /// smooth-scrolls the elevated layers.</summary>
     public void OnRender(float t)
     {
-        const int l = 2;
-        if (_currDraw[l].Drawn == 0)
-            return;
-
-        Vector2 curr = Origin(l, _currDraw[l]);
-        Vector2 origin = curr;
-        if (_prevDraw[l].Drawn != 0)
+        for (int l = 1; l < OtyrNative.BgLayerCount; l++)
         {
-            Vector2 prev = Origin(l, _prevDraw[l]);
-            if (prev.DistanceTo(curr) <= TeleportGuardPx)
-                origin = prev.Lerp(curr, t);
+            if (_currDraw[l].Drawn == 0 || _quads[l].Position.Z <= 0.001f)
+                continue;
+
+            Vector2 curr = Origin(l, _currDraw[l]);
+            Vector2 origin = curr;
+            if (_prevDraw[l].Drawn != 0)
+            {
+                Vector2 prev = Origin(l, _prevDraw[l]);
+                if (prev.DistanceTo(curr) <= TeleportGuardPx)
+                    origin = prev.Lerp(curr, t);
+            }
+            _materials[l].SetShaderParameter("origin_px", origin);
         }
-        _materials[l].SetShaderParameter("origin_px", origin);
     }
 
     /// <summary>Play-region position of map tile (0,0) for a draw record: the

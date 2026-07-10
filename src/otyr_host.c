@@ -927,6 +927,7 @@ void otyr_host_present(SDL_Surface *screen)
 		out->y = in->y;
 		out->drawn = in->drawn;
 		out->blend = in->blend;
+		out->over_mode = in->over;
 		out->reserved = 0;
 		out->hash = in->hash;
 	}

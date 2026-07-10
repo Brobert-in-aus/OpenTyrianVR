@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 9;
+    public const uint AbiVersion = 10;
 
     public const int FrameWidth = 320;
     public const int FrameHeight = 200;
@@ -97,7 +97,10 @@ public static unsafe class OtyrNative
         public short X, Y;       // frame position of that tile; 8 rows x 12 tiles of 24x28 from here
         public byte Drawn;       // 0 = layer not blitted this tick
         public byte Blend;       // 50/50 value-nibble blend variant
-        public ushort Reserved;
+        public byte OverMode;    // draw position relative to entities (v10): layer 1
+                                 // (background2over): 0/3 under ground enemies, 1 over
+                                 // them; layer 2 (background3over): 0 over sky, 2 under
+        public byte Reserved;
         public uint Hash;        // only filled under ConfigFlags.BackgroundHashes
     }
 

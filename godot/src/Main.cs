@@ -297,6 +297,9 @@ public partial class Main : Node3D
         PollFrame();
         PollPlayerState();
         _snapshotLayer.Poll(_session, _palette);
+        // Menus, pause, and quit-to-title stop gameplay ticks; the 3D scene
+        // (sprites AND background layers) must not linger over them.
+        _snapshotLayer.Visible = _inGameplay;
         UpdateChecklistInput();
         SubmitInput();
         UpdateDiagnostics(delta);

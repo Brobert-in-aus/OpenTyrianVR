@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 9u
+#define OTYR_ABI_VERSION 10u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -199,7 +199,12 @@ typedef struct OtyrBackgroundDraw
 	                           8 rows of 12 tiles from here (24x28 each) */
 	uint8_t  drawn;         /* 0 = layer not blitted this tick */
 	uint8_t  blend;         /* 50/50 value-nibble blend variant */
-	uint16_t reserved;
+	uint8_t  over_mode;     /* where the draw sat relative to entities (v10):
+	                           layer 1 (background2over): 0/3 = under ground
+	                           enemies, 1 = over them (e.g. clouds); layer 2
+	                           (background3over): 0 = over sky enemies,
+	                           2 = under them */
+	uint8_t  reserved;
 	uint32_t hash;          /* standalone-raster FNV-1a; only filled when
 	                           OTYR_CONFIG_BACKGROUND_HASHES is set */
 } OtyrBackgroundDraw;
