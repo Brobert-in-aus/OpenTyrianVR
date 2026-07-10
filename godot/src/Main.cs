@@ -42,6 +42,8 @@ public partial class Main : Node3D
     private Node3D _controlRect = null!;
     private MeshInstance3D _handMarker = null!;
     private MeshInstance3D _targetReticle = null!;
+    private TestChecklist _checklist = null!;
+    private bool _lastCheckPressed, _lastSkipPressed;
     private OtyrNative.PlayerState _playerState;
     private uint _lastLevelTick;
     private ulong _lastLevelTickMs;
@@ -189,6 +191,17 @@ public partial class Main : Node3D
         };
         _playfieldRoot.AddChild(_diagnostics);
 
+        // In-headset test checklist: a panel directly to the player's left at
+        // head height, facing them -- turn your head 90 degrees to read it.
+        // World-space (not under PlayfieldRoot), so it ignores the lane tilt.
+        _checklist = new TestChecklist
+        {
+            Name = "TestChecklist",
+            Position = new Vector3(-0.85f, 1.35f, -0.25f),
+            RotationDegrees = new Vector3(0f, 90f, 0f),
+        };
+        AddChild(_checklist);
+
         var environment = new WorldEnvironment
         {
             Environment = new Godot.Environment
@@ -284,8 +297,26 @@ public partial class Main : Node3D
         PollFrame();
         PollPlayerState();
         _snapshotLayer.Poll(_session, _palette);
+        UpdateChecklistInput();
         SubmitInput();
         UpdateDiagnostics(delta);
+    }
+
+    private void UpdateChecklistInput()
+    {
+        // Stick clicks are unused by the game, so they drive the checklist;
+        // C/V cover flat testing.  Edge-triggered.
+        bool check = Input.IsKeyPressed(Key.C) ||
+            (_xrActive && _rightHand != null && _rightHand.IsButtonPressed("primary_click"));
+        bool skip = Input.IsKeyPressed(Key.V) ||
+            (_xrActive && _leftHand != null && _leftHand.IsButtonPressed("primary_click"));
+
+        if (check && !_lastCheckPressed)
+            _checklist.ToggleCurrent();
+        if (skip && !_lastSkipPressed)
+            _checklist.MoveCursor();
+        _lastCheckPressed = check;
+        _lastSkipPressed = skip;
     }
 
     private void PollPlayerState()
