@@ -18,11 +18,19 @@
   by standalone raster hashes in the harness); ground/structures render
   pixel-locked behind the color-keyed legacy overlay, clouds elevated with
   scroll interpolation. Old-table blend shots (special weapons) render as
-  interpolated 3D quads from the OPTION_SHAPES export (ABI v9). Awaiting the
-  in-headset gate. Known gaps: driving platform-riders need authored
-  per-enemytype metadata (Stage B); in-play text draws under the elevated
-  cloud layer; smoothie-filter/darken levels and background3over==2 levels
-  need a fallback (slice level uses neither).
+  interpolated 3D quads from the OPTION_SHAPES export (ABI v9). Statics and
+  shadows render as zero-parallax terrain decals (depth-bias paint order);
+  palette gamma, color keying, and shadow rendering verified in-headset
+  across eight test passes. Known gaps for Stage B authored metadata:
+  enemy hover heights (movers ride a uniform hazard band, grounded units
+  float); multi-slot structure assemblies (e.g. the level-1 dome, enemy
+  sheet cells ~97-107) composite crown/turret pieces through designed
+  transparency and still show a shimmering square where the layered cells
+  meet -- needs single-quad assembly rendering. In-play text (lives, cash,
+  INSERT COIN) still draws flat in the frame (text-proud feature is next).
+  One unreproduced sighting of non-cloaking enemies rendering
+  semi-transparent for part of a run. Smoothie-filter/darken levels and
+  background3over==2 levels need a fallback (slice level uses neither).
 
 ## 1. Product direction
 

@@ -350,6 +350,51 @@ int main(void)
 		snapshot->level_tick = 0;  /* re-read until they land on one tick */
 	}
 
+	/* Dump enemy sheet 5 colorized through the live palette for manual art
+	 * inspection (32 cells per row, matching the host atlas layout);
+	 * transparent pixels render as a dark checkerboard. */
+	{
+		const uint32_t cells = sheets[5].cell_count;
+		const int cols = 32, cw = 12, ch = 14;
+		const int rows = (int)((cells + cols - 1) / cols);
+		const int w = cols * cw, h = rows * ch;
+		uint8_t *img = malloc((size_t)w * h * 4);
+		for (int p = 0; p < w * h; ++p)
+		{
+			int x = p % w, y = p / w;
+			uint32_t argb = ((x + y) & 1) ? 0xff303030 : 0xff202020;
+			uint32_t cell = (uint32_t)(y / ch) * cols + (uint32_t)(x / cw);
+			if (cell < cells)
+			{
+				int px = (y % ch) * cw + (x % cw);
+				const uint8_t *cp = sheets[5].pixels + cell * cw * ch;
+				const uint8_t *co = sheets[5].opacity + cell * cw * ch;
+				if (co[px])
+					argb = frame->palette[cp[px]];
+			}
+			memcpy(img + (size_t)p * 4, &argb, 4);
+		}
+		FILE *f = fopen("captures\\sheet5.bmp", "wb");
+		if (f != NULL)
+		{
+			uint8_t hdr[54] = { 'B', 'M' };
+			*(uint32_t *)(hdr + 2) = 54 + (uint32_t)(w * h * 4);
+			*(uint32_t *)(hdr + 10) = 54;
+			*(uint32_t *)(hdr + 14) = 40;
+			*(int32_t *)(hdr + 18) = w;
+			*(int32_t *)(hdr + 22) = h;
+			*(uint16_t *)(hdr + 26) = 1;
+			*(uint16_t *)(hdr + 28) = 32;
+			*(uint32_t *)(hdr + 34) = (uint32_t)(w * h * 4);
+			fwrite(hdr, 1, sizeof(hdr), f);
+			for (int y = h - 1; y >= 0; --y)
+				fwrite(img + (size_t)y * w * 4, 4, w, f);
+			fclose(f);
+			printf("wrote captures\\sheet5.bmp (%u cells)\n", cells);
+		}
+		free(img);
+	}
+
 	/* Aggregate record-vs-frame agreement across many ticks so persistent
 	 * offenders (specific sheet cells that never match what the legacy
 	 * renderer drew) stand out from transient overlap noise. */
