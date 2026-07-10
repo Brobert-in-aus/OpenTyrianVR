@@ -13,12 +13,11 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Dome/structure top squares GONE (was self-shadow)",
-        "Wrecks: no ghost copies hovering above them",
-        "Ship shadow still visibly crosses pits/structures",
+        "Dome square + top pixel lines GONE (crown reattached)",
+        "Washed-out fixed (palette gamma) - colors right now?",
         "Ship fade at level start ~3s = invuln (no cloud needed)",
-        "Menu text: selected-item bright pixels intact",
         "Sidebar reads TYRIAN-VR on level 1",
+        "Wrecks: no ghost copies hovering above them",
         "Anything else off? tell Claude after",
     };
 

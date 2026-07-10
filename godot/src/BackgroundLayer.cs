@@ -1,4 +1,4 @@
-using Godot;
+﻿using Godot;
 using System;
 
 namespace OpenTyrianVR;
@@ -78,7 +78,7 @@ public unsafe partial class BackgroundLayer : Node3D
 
                 uniform sampler2D tilemap : filter_nearest;
                 uniform sampler2D atlas : filter_nearest;
-                uniform sampler2D palette : filter_nearest;
+                uniform sampler2D palette : source_color, filter_nearest;
                 uniform ivec2 map_size;
                 uniform vec2 origin_px;   // map tile (0,0) position, play-region px
                 uniform float alpha_mul;  // 1.0, or 0.55 for the legacy blend variant

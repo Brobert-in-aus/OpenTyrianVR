@@ -350,63 +350,111 @@ int main(void)
 		snapshot->level_tick = 0;  /* re-read until they land on one tick */
 	}
 
+	/* Aggregate record-vs-frame agreement across many ticks so persistent
+	 * offenders (specific sheet cells that never match what the legacy
+	 * renderer drew) stand out from transient overlap noise. */
+	enum { AGG_MAX = 512 };
+	struct { uint8_t sheet, kind, aux, category; uint16_t index;
+	         uint32_t count; uint64_t match, opaque; } agg[AGG_MAX];
+	unsigned int agg_count = 0;
 	unsigned int bad_records = 0, checked_records = 0;
-	for (uint32_t i = 0; i < snapshot->sprite_count; ++i)
+
+	for (int sweep = 0; sweep < 300; ++sweep)
 	{
-		const OtyrSnapshotSprite *rec = &snapshot->sprites[i];
-		if (rec->sheet_id >= OTYR_SHEET_COUNT || rec->index == 0 || rec->flags != 0)
-			continue;  /* only plain blits are directly comparable */
-		if (rec->kind != 0 && rec->kind != 1)
-			continue;
-
-		unsigned int pieces = rec->kind == 1 ? 4 : 1;
-		static const int piece_dx[4] = { 0, 12, 0, 12 };
-		static const int piece_dy[4] = { 0, 0, 14, 14 };
-		static const int piece_di[4] = { 0, 1, 19, 20 };
-
-		unsigned int opaque = 0, match = 0;
-		for (unsigned int p = 0; p < pieces; ++p)
+		if (sweep > 0)
 		{
-			uint32_t cell = rec->index + piece_di[p] - 1;
-			if (cell >= sheets[rec->sheet_id].cell_count)
+			if (p_snapshot(g_session, snapshot, sizeof(OtyrSnapshot), 1000) != OTYR_OK)
 				continue;
-			const uint8_t *cell_px = sheets[rec->sheet_id].pixels + cell * 12 * 14;
-
-			for (int y = 0; y < 14; ++y)
-				for (int x = 0; x < 12; ++x)
-				{
-					uint8_t v = cell_px[y * 12 + x];
-					if (v == 0)
-						continue;
-					int fx = rec->x + piece_dx[p] + x;
-					int fy = rec->y + piece_dy[p] + y;
-					if (fx < 0 || fx >= 320 || fy < 0 || fy >= 200)
-						continue;
-					++opaque;
-					/* Frame pixels are game_screen composited -24; but the
-					 * exported frame is the composited VGAScreenSeg, so
-					 * compare at fx-24 within the 264-wide play area. */
-					int cx = fx - 24;
-					if (cx < 0 || cx >= 264)
-						continue;
-					if (frame->pixels[fy * 320 + cx] == v)
-						++match;
-				}
+			for (int attempt = 0; attempt < 50; ++attempt)
+			{
+				if (p_acquire_frame(g_session, frame, sizeof(OtyrFrame), 1000) != OTYR_OK)
+					break;
+				if (frame->level_tick == snapshot->level_tick)
+					break;
+			}
+			if (frame->level_tick != snapshot->level_tick)
+				continue;
 		}
 
-		if (opaque >= 20)
+		for (uint32_t i = 0; i < snapshot->sprite_count; ++i)
 		{
-			++checked_records;
-			if (match * 100 < opaque * 60)  /* under 60% agreement */
+			const OtyrSnapshotSprite *rec = &snapshot->sprites[i];
+			if (rec->sheet_id >= OTYR_SHEET_COUNT || rec->index == 0 || rec->flags != 0)
+				continue;  /* only plain blits are directly comparable */
+			if (rec->kind != 0 && rec->kind != 1)
+				continue;
+
+			unsigned int pieces = rec->kind == 1 ? 4 : 1;
+			static const int piece_dx[4] = { 0, 12, 0, 12 };
+			static const int piece_dy[4] = { 0, 0, 14, 14 };
+			static const int piece_di[4] = { 0, 1, 19, 20 };
+
+			unsigned int opaque = 0, match = 0;
+			for (unsigned int p = 0; p < pieces; ++p)
 			{
-				if (++bad_records <= 10)
-					printf("  MISMATCH cat %u kind %u sheet %u index %u at (%d,%d): %u/%u px\n",
-					       rec->category, rec->kind, rec->sheet_id, rec->index,
-					       rec->x, rec->y, match, opaque);
+				uint32_t cell = rec->index + piece_di[p] - 1;
+				if (cell >= sheets[rec->sheet_id].cell_count)
+					continue;
+				const uint8_t *cell_px = sheets[rec->sheet_id].pixels + cell * 12 * 14;
+				const uint8_t *cell_op = sheets[rec->sheet_id].opacity + cell * 12 * 14;
+
+				for (int y = 0; y < 14; ++y)
+					for (int x = 0; x < 12; ++x)
+					{
+						if (!cell_op[y * 12 + x])
+							continue;
+						uint8_t v = cell_px[y * 12 + x];
+						int fx = rec->x + piece_dx[p] + x;
+						int fy = rec->y + piece_dy[p] + y;
+						if (fx < 24 || fx >= 288 || fy < 0 || fy >= 184)
+							continue;
+						++opaque;
+						if (frame->pixels[fy * 320 + fx - 24] == v)
+							++match;
+					}
+			}
+
+			if (opaque < 20)
+				continue;
+			++checked_records;
+			if (match * 100 < opaque * 60)
+				++bad_records;
+
+			unsigned int a = 0;
+			for (; a < agg_count; ++a)
+				if (agg[a].sheet == rec->sheet_id && agg[a].index == rec->index &&
+				    agg[a].kind == rec->kind)
+					break;
+			if (a == agg_count && agg_count < AGG_MAX)
+			{
+				agg[a].sheet = rec->sheet_id; agg[a].kind = rec->kind;
+				agg[a].aux = rec->aux; agg[a].category = rec->category;
+				agg[a].index = rec->index;
+				agg[a].count = 0; agg[a].match = 0; agg[a].opaque = 0;
+				++agg_count;
+			}
+			if (a < agg_count)
+			{
+				agg[a].count++;
+				agg[a].match += match;
+				agg[a].opaque += opaque;
 			}
 		}
+		snapshot->level_tick = snapshot->level_tick;  /* wait for a newer one */
 	}
-	printf("record verify: %u checked, %u bad\n", checked_records, bad_records);
+
+	printf("record verify: %u checked, %u bad (60%% rule)\n", checked_records, bad_records);
+	printf("persistent offenders (seen >= 5 ticks, avg < 85%%):\n");
+	for (unsigned int a = 0; a < agg_count; ++a)
+	{
+		if (agg[a].count < 5 || agg[a].opaque == 0)
+			continue;
+		unsigned int pct = (unsigned int)(agg[a].match * 100 / agg[a].opaque);
+		if (pct < 85)
+			printf("  sheet %u kind %u cat %u aux %u index %u: %u ticks, avg %u%%\n",
+			       agg[a].sheet, agg[a].kind, agg[a].category, agg[a].aux,
+			       agg[a].index, agg[a].count, pct);
+	}
 	free(sheets);
 
 	/* Phase 4c: background map export (ABI v8).  Fetch the three map layers

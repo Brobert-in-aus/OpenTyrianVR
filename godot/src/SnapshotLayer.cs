@@ -1,4 +1,4 @@
-using Godot;
+﻿using Godot;
 using System;
 
 namespace OpenTyrianVR;
@@ -18,7 +18,7 @@ public unsafe partial class SnapshotLayer : Node3D
     private const float PxToMeters = LaneWidth / 320f;
     private const int AtlasCellsPerRow = 32;  // 32x32 grid of 12x14 cells
 
-    // Lane-local Z (out of the board) per category — the diorama height bands.
+    // Lane-local Z (out of the board) per category -- the diorama height bands.
     // Every hazard band sits ABOVE the elevated map layers (clouds 0.02,
     // platforms 0.03): anything that can collide with the player must never
     // hide under scenery.  Genuinely grounded units float a little as a
@@ -45,8 +45,6 @@ public unsafe partial class SnapshotLayer : Node3D
     // the player/shot shadows recorded late in the tick land above
     // structure art and visibly cross it.
     private const float StructureZ = 0.0008f;
-    // Platform riders (aux 2): just above the platform map layer.
-    private const float RiderZ = BackgroundLayer.PlatformZ + 0.004f;
 
     // Draw-order bias within a tick: later records sit imperceptibly higher,
     // reproducing legacy layering without z-fighting.
@@ -106,7 +104,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 render_mode unshaded, cull_disabled, depth_prepass_alpha;
 
                 uniform sampler2D atlas : filter_nearest;
-                uniform sampler2D palette : filter_nearest;
+                uniform sampler2D palette : source_color, filter_nearest;
 
                 varying float cell;
                 varying float v_flags;
@@ -180,7 +178,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 shader_type spatial;
                 render_mode unshaded, cull_disabled;
 
-                uniform sampler2D palette : filter_nearest;
+                uniform sampler2D palette : source_color, filter_nearest;
 
                 varying float pal_index;
 
@@ -221,7 +219,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 render_mode unshaded, cull_disabled, depth_prepass_alpha;
 
                 uniform sampler2D atlas : filter_nearest;
-                uniform sampler2D palette : filter_nearest;
+                uniform sampler2D palette : source_color, filter_nearest;
 
                 varying vec3 slot_wh;
 
@@ -641,19 +639,16 @@ public unsafe partial class SnapshotLayer : Node3D
         bool isEnemy = sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB;
         bool isShadow = sprite.Category == (byte)OtyrNative.Category.Shadow;
         float band;
-        if (isEnemy && sprite.Aux == 1)
+        if (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2))
         {
-            // Stationary structures sit on whatever surface is beneath
-            // them: the platform map layer or the ground itself.  The
-            // offset is sub-pixel against head parallax (a 4 mm gap made
-            // platform structures visibly wobble).
+            // Stationary structures -- and statics stacked ON structure art
+            // (aux 2: dome crowns, pad-mounted turrets) -- sit in one band
+            // on whatever surface is beneath them (platform map layer or
+            // the ground), glued together by record order exactly like the
+            // legacy paint order.  Lifting the stacked layer exposed the
+            // art beneath it as a corrupt-looking square.
             float surface = SurfaceForSource(sprite.SourceId, centerX, centerY);
             band = surface + StructureZ;
-        }
-        else if (isEnemy && sprite.Aux == 2)
-        {
-            float surface = SurfaceForSource(sprite.SourceId, centerX, centerY);
-            band = Math.Max(surface, BackgroundLayer.PlatformZ) + StructureZ;
         }
         else if (isShadow)
         {
@@ -673,10 +668,10 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
 
-        // Baked structures are locked to the map tiles beneath them; the
-        // tile layers step per tick, so interpolating the art over them
-        // would swim against its own baked underlay.
-        if (isEnemy && sprite.Aux == 1)
+        // Baked structures (and statics stacked on them) are locked to the
+        // map tiles beneath; the tile layers step per tick, so interpolating
+        // the art over them would swim against its own baked underlay.
+        if (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2))
         {
             _cellSource[_cellCount] = OtyrNative.NoSource;
             ++_cellCount;
