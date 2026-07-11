@@ -187,9 +187,25 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 	   qualify: movers with opaque body cells are hazards and must ride the
 	   always-visible band, never sink into the scenery -- and the latch
 	   (instead of a per-tick velocity test) keeps a mover that briefly
-	   stops from flickering down to surface height. */
-	if (enemy[i].exc != 0 || enemy[i].eyc != 0)
+	   stops from flickering down to surface height.  The latch trips on
+	   motion CAPABILITY, not just observed velocity: a to-be-mover that
+	   spawns with zero velocity but pending acceleration (excc/eycc),
+	   player-seek accel (xaccel/yaccel), or event-granted drift
+	   (fixedmovey) must ride the hazard band from its first tick, or it
+	   spends its opening ticks as a translucent ground decal and pops
+	   solid when it starts moving (the purple-carrier symptom). */
+	if (enemy[i].exc != 0 || enemy[i].eyc != 0 ||
+	    enemy[i].excc != 0 || enemy[i].eycc != 0 ||
+	    enemy[i].xaccel != 0 || enemy[i].yaccel != 0 ||
+	    enemy[i].fixedmovey != 0)
+	{
+		/* Tripwire: a latch trip with zero velocity is the capability
+		   rule acting where the old observed-motion rule would not have
+		   (the purple-carrier class); log it for headset debriefs. */
+		if (!otyr_enemy_moved[i] && enemy[i].exc == 0 && enemy[i].eyc == 0)
+			otyr_trace("latch-capability", i, base_index);
 		otyr_enemy_moved[i] = 1;
+	}
 
 	Uint8 terrain_art = enemy[i].enemyground ? 1 : 0;
 	if (!terrain_art && !otyr_enemy_moved[i])
@@ -4279,6 +4295,12 @@ void JE_createNewEventEnemy(JE_byte enemyTypeOfs, JE_word enemyOffset, Sint16 un
 	tempW = eventRec[eventLoc-1].eventdat + enemyTypeOfs;
 
 	enemyAvail[b-1] = JE_makeEnemy(&enemy[b-1], tempW, uniqueShapeTableI);
+	/* Fresh occupant: clear the mover latch (it inherited the previous
+	   occupant's state, so statics reusing a mover's slot rode the hazard
+	   band forever, and whether a spawn read as terrain art depended on
+	   slot-reuse history).  The capability latch in record_enemy_blit
+	   re-trips before the first record if this enemy can move. */
+	otyr_enemy_moved[b-1] = 0;
 
 	if (eventRec[eventLoc-1].eventdat2 != -99)
 	{

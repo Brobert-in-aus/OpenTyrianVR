@@ -140,6 +140,38 @@
   captures/ship_edge_sliver.png (4K in-headset crop: hairline dashes
   off the quad's top/left edges, sub-art-pixel scale; suspects are the
   half-texel edge clamp under MSAA and the shadow quad's border).
+- Autonomous round (2026-07-11 late): TWO fixes awaiting headset
+  confirmation.  (1) Ship-edge sliver root cause: the 2x2 single-quad
+  shaders decoded the UV quadrant with fract(uv0*2.0) -- MSAA edge
+  fragments get UVs extrapolated a hair outside [0,1], and fract wraps
+  a small negative to ~1.0, sampling the FAR edge of the sub-cell
+  (opaque mid-sprite art) instead of the transparent border.  That is
+  why the dashes sat on the top/left edges only (positive overshoot
+  lands on transparent borders and discards) and why the artifact
+  arrived with the single-quad round.  Sprite and shadow shaders now
+  clamp instead of wrapping; flat captures verify 2x2 assembly intact.
+  (2) Purple-carrier first-spawn: the mover latch now trips on motion
+  CAPABILITY (exc/eyc/excc/eycc/xaccel/yaccel/fixedmovey) rather than
+  observed velocity, so a to-be-mover rides the hazard band from tick
+  one; the event-spawn path (JE_createNewEventEnemy) also clears the
+  latch, which it previously inherited from the slot's prior occupant
+  -- that stale latch is why LATER carrier spawns rendered solid while
+  the first read translucent.  OTYR_TRACE gains "latch-capability"
+  (slot, cell) logging every save the new rule makes.  Turbo hash gate
+  bit-identical over 89,009 ticks; demo-sweep classifications unchanged
+  (the carrier class does not occur in the five shipped demos, so
+  in-headset level-1 play plus the trace is the confirming test).
+  Harness: the bg sweep now runs two Stage-B detectors -- static->mover
+  promotions (aux 1->0 mid-lifetime with positional continuity; zero in
+  demos pre- and post-fix) and moving statics (aux-1 records deviating
+  from their band's modal scroll).  The latter fires ~159 times across
+  demos 1-2, ALL from enemyground-flagged units (tanks/turrets), which
+  classify aux 1 unconditionally and legitimately drive around inside
+  the flat terrain lane -- by-design Stage A behavior, noted here so
+  the number is not mistaken for a regression.  It also surfaced that
+  sheet 7 (Coins&Gems) exports 0 cells while demo records reference it
+  (aux 1, so the flat frame covers it today; a 3D coin record would
+  render invisible -- Stage B checklist item).
 
 ## 1. Product direction
 

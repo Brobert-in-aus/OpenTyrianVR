@@ -151,10 +151,16 @@ public unsafe partial class SnapshotLayer : Node3D
                     bool dbg_big = mod(floor(v_flags / 8.0), 2.0) >= 1.0;
                     vec2 dbg_q = vec2(0.0);
                     if (dbg_big) {
-                        vec2 q = step(vec2(0.5), uv0);
+                        // MSAA edge fragments get UVs extrapolated a hair
+                        // outside [0,1]; fract() would wrap them to the FAR
+                        // edge of the sub-cell (opaque mid-sprite art -> the
+                        // hairline dashes off the quad's top/left edges), so
+                        // clamp instead of wrapping.
+                        vec2 h = uv0 * 2.0;
+                        vec2 q = clamp(floor(h), vec2(0.0), vec2(1.0));
                         dbg_q = q;
                         cid += q.x + q.y * 19.0;
-                        uv0 = fract(uv0 * 2.0);
+                        uv0 = clamp(h - q, vec2(0.0), vec2(1.0));
                     }
                     // Half-texel inset keeps edge fragments inside this cell
                     // (no atlas bleeding from neighboring cells).
@@ -333,9 +339,12 @@ public unsafe partial class SnapshotLayer : Node3D
                     float cid = floor(cell + 0.5);
                     vec2 uv0 = UV;
                     if (mod(floor(v_flags / 8.0), 2.0) >= 1.0) {  // 2x2 quad
-                        vec2 q = step(vec2(0.5), uv0);
+                        // Clamp, not fract: see the sprite shader (MSAA edge
+                        // extrapolation must not wrap to the far sub-cell edge).
+                        vec2 h = uv0 * 2.0;
+                        vec2 q = clamp(floor(h), vec2(0.0), vec2(1.0));
                         cid += q.x + q.y * 19.0;
-                        uv0 = fract(uv0 * 2.0);
+                        uv0 = clamp(h - q, vec2(0.0), vec2(1.0));
                     }
                     vec2 cell_origin_px = vec2(mod(cid, 32.0) * 12.0, floor(cid / 32.0) * 14.0);
                     vec2 cell_px = clamp(uv0 * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));

@@ -602,6 +602,23 @@ int main(void)
 		unsigned int bg_bad[OTYR_BG_LAYER_COUNT] = { 0 };
 		uint32_t epoch = bg_maps[0].sheet_epoch;
 		unsigned int epochs_seen = 1;
+
+		/* Static->mover promotion detector (Stage B): an enemy record whose
+		 * aux flips 1 -> 0 while its slot stays occupied at a continuous
+		 * position is a to-be-mover that spent its first ticks classified as
+		 * terrain-baked art (the purple-carrier symptom: reads translucent
+		 * as a ground decal, then pops solid when it starts moving). */
+		struct { uint8_t valid, aux, streak; uint32_t tick; int16_t x, y; } slot_track[100];
+		memset(slot_track, 0, sizeof(slot_track));
+		unsigned int promotions = 0;
+		/* Moving-static detector: an aux-1 (terrain-baked) record whose
+		 * per-tick delta deviates from the modal scroll delta of the other
+		 * statics is a mover classified as scenery (e.g. drift granted via
+		 * fixedmovey, which never trips the exc/eyc latch and so never
+		 * produces an aux transition at all). */
+		unsigned int moving_statics = 0;
+		uint32_t last_seen_tick = 0;
+
 		DWORD bg_start = GetTickCount();
 		while (GetTickCount() - bg_start < window_ms)
 		{
@@ -617,10 +634,115 @@ int main(void)
 					if (p_background_map(g_session, l, &bg_maps[l], sizeof(OtyrBackgroundMap)) != OTYR_OK)
 						die("background_map refetch");
 				}
+				memset(slot_track, 0, sizeof(slot_track));  /* new level, new slots */
 				printf("  bg sweep: epoch %u maps refetched (%ux%u/%ux%u/%ux%u)\n",
 				       epoch, bg_maps[0].width, bg_maps[0].height,
 				       bg_maps[1].width, bg_maps[1].height,
 				       bg_maps[2].width, bg_maps[2].height);
+			}
+			if (snapshot->level_tick != last_seen_tick)
+			{
+				last_seen_tick = snapshot->level_tick;
+				uint8_t seen[100] = { 0 };
+				const OtyrSnapshotSprite *first_rec[100] = { 0 };
+				for (uint32_t i = 0; i < snapshot->sprite_count; ++i)
+				{
+					const OtyrSnapshotSprite *rec = &snapshot->sprites[i];
+					if ((rec->source_id & 0xff00) != 0x1000)
+						continue;
+					if (rec->category > 3)
+						continue;  /* enemy bands only (shadows share the id) */
+					unsigned int slot = rec->source_id & 0xff;
+					if (slot >= 100 || seen[slot])
+						continue;  /* one record per slot; 2x2 cells share aux */
+					seen[slot] = 1;
+					first_rec[slot] = rec;
+					if (slot_track[slot].valid &&
+					    snapshot->level_tick > slot_track[slot].tick &&
+					    snapshot->level_tick - slot_track[slot].tick <= 15 &&
+					    slot_track[slot].aux == 1 && rec->aux == 0 &&
+					    abs(rec->x - slot_track[slot].x) <= 12 &&
+					    abs(rec->y - slot_track[slot].y) <= 20)
+					{
+						if (++promotions <= 8)
+							printf("  STATIC->MOVER slot %u tick %u->%u pos (%d,%d)->(%d,%d) sheet %u index %u\n",
+							       slot, slot_track[slot].tick, snapshot->level_tick,
+							       slot_track[slot].x, slot_track[slot].y,
+							       rec->x, rec->y, rec->sheet_id, rec->index);
+					}
+				}
+
+				/* Moving-static pass: needs exactly-consecutive ticks so the
+				 * deltas are comparable.  Modal (dx,dy) over the aux-1 slots
+				 * OF THE SAME BAND is that band's scroll (sky/ground/top
+				 * scroll at different rates); a slot deviating from its own
+				 * band's scroll 3 ticks running is a mover classified as
+				 * scenery. */
+				for (unsigned int cat = 0; cat <= 3; ++cat)
+				{
+					int16_t dxs[100], dys[100];
+					unsigned int deltas = 0;
+					for (unsigned int s = 0; s < 100; ++s)
+						if (seen[s] && slot_track[s].valid && first_rec[s]->aux == 1 &&
+						    first_rec[s]->category == cat && slot_track[s].aux == 1 &&
+						    snapshot->level_tick == slot_track[s].tick + 1)
+						{
+							dxs[deltas] = first_rec[s]->x - slot_track[s].x;
+							dys[deltas] = first_rec[s]->y - slot_track[s].y;
+							++deltas;
+						}
+					int16_t modal_dx = 0, modal_dy = 0;
+					unsigned int modal_n = 0;
+					for (unsigned int a = 0; a < deltas; ++a)
+					{
+						unsigned int n = 0;
+						for (unsigned int b = 0; b < deltas; ++b)
+							if (dxs[b] == dxs[a] && dys[b] == dys[a])
+								++n;
+						if (n > modal_n)
+						{
+							modal_n = n;
+							modal_dx = dxs[a];
+							modal_dy = dys[a];
+						}
+					}
+					for (unsigned int s = 0; s < 100; ++s)
+					{
+						if (!seen[s] || !slot_track[s].valid ||
+						    first_rec[s]->category != cat)
+							continue;
+						if (modal_n >= 3 && first_rec[s]->aux == 1 &&
+						    slot_track[s].aux == 1 &&
+						    snapshot->level_tick == slot_track[s].tick + 1 &&
+						    (first_rec[s]->x - slot_track[s].x != modal_dx ||
+						     first_rec[s]->y - slot_track[s].y != modal_dy))
+						{
+							if (++slot_track[s].streak == 3 && ++moving_statics <= 12)
+								printf("  MOVING STATIC slot %u cat %u kind %u tick %u pos (%d,%d) delta (%d,%d) vs scroll (%d,%d) sheet %u index %u\n",
+								       s, cat, first_rec[s]->kind, snapshot->level_tick,
+								       first_rec[s]->x, first_rec[s]->y,
+								       first_rec[s]->x - slot_track[s].x,
+								       first_rec[s]->y - slot_track[s].y,
+								       modal_dx, modal_dy, first_rec[s]->sheet_id, first_rec[s]->index);
+						}
+						else
+							slot_track[s].streak = 0;
+					}
+				}
+
+				for (unsigned int s = 0; s < 100; ++s)
+				{
+					if (seen[s])
+					{
+						slot_track[s].valid = 1;
+						slot_track[s].aux = first_rec[s]->aux;
+						slot_track[s].tick = snapshot->level_tick;
+						slot_track[s].x = first_rec[s]->x;
+						slot_track[s].y = first_rec[s]->y;
+					}
+					else
+						slot_track[s].valid = 0;  /* absent: don't chain across respawns */
+				}
 			}
 			for (uint32_t l = 0; l < OTYR_BG_LAYER_COUNT; ++l)
 			{
@@ -644,6 +766,8 @@ int main(void)
 		       snapshot->background[0].over_mode,
 		       snapshot->background[1].over_mode,
 		       snapshot->background[2].over_mode);
+		printf("static->mover promotions: %u, moving statics: %u\n",
+		       promotions, moving_statics);
 		if (bg_checked[0] == 0)
 			die("background layer 1 never drawn during demo verify window");
 		if (bg_bad[0] + bg_bad[1] + bg_bad[2] != 0)
