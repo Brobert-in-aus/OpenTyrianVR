@@ -18,7 +18,8 @@ public partial class TestChecklist : Node3D
         "WARNING text proud (let armor drop below 6)",
         "Pause screen: no cash/text remnant behind it",
         "Sidebar + bottom text bar unchanged (flat)",
-        "Text colors/shadows match the flat game",
+        "Dome + big ships solid at any head angle",
+        "No dissolve/shear on ships at screen edges",
         "Anything else off? tell Claude after",
     };
 
