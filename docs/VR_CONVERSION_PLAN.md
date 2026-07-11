@@ -172,6 +172,30 @@
   sheet 7 (Coins&Gems) exports 0 cells while demo records reference it
   (aux 1, so the flat frame covers it today; a 3D coin record would
   render invisible -- Stage B checklist item).
+- Headset round 4 (2026-07-12): ship-edge sliver GONE, carrier solid
+  from first spawn, explosions/text/tally all held.  PIP IDENTIFIED by
+  the trace tripwire: every in-region flat draw of the session is the
+  in-game menu's help line at (10,147), hue 14 = orange, TINY_FONT
+  (mainint.c ~1547) plus its help-box bar shades -- i.e. the pip is
+  not a gameplay HUD leak at all but the legacy pause/in-game-menu UI
+  drawing into the play region of the flat frame, which is menu-flat-
+  by-design today.  It cannot persist into play (draw_background_1
+  refills the frame with the key index every tick); it only shows
+  while paused.  Resolution belongs to the Phase 4 spatial pause UI
+  (suppress the legacy help box/text when hosted and present pause UI
+  in 3D); the tripwire stays armed.  NEW (confirmed in code): statics
+  riding floating platforms (aux 2, and top-band aux 1 with elevated
+  surface) visibly swim/blur against their platform under head motion
+  -- BackgroundLayer.OnRender smooth-scrolls the ELEVATED tile layers
+  every render frame, while rider quads deliberately step per tick
+  (they skip snapshot interpolation so they don't swim against the
+  baked underlay -- correct for the GROUND layer, which also steps,
+  but wrong for interpolated platforms).  Fix queued: offset each
+  elevated-surface rider by its layer's sub-tick scroll delta
+  (interpolated origin minus current origin) in WriteTransforms so
+  riders and platform move as one; shadows decaling clouds need the
+  cloud layer's delta likewise.  True-ground decals are unaffected
+  (ground layer and its decals both step), matching the report.
 
 ## 1. Product direction
 
