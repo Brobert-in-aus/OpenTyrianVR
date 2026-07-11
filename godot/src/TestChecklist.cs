@@ -13,12 +13,11 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Pause: pip GONE (was the special-ready lamp)",
-        "Pause entry: menu instant, no 3D scene lingering",
-        "In-play: special lamp floats proud by the icon",
-        "Unpause: HUD + scene return instantly",
-        "Sway: platform statics glued, no blur",
-        "True-ground statics still fine",
+        "Platform statics SOLID (no destroyed art thru)",
+        "Platform statics still glued when swaying",
+        "True-ground statics unchanged",
+        "Clouds/scenery layering still right",
+        "Quote frame numbers for anything odd",
         "Anything else off? tell Claude after",
     };
 

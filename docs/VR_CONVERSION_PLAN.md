@@ -208,7 +208,25 @@
   suppressed frame's play region is pixel-clean top-left, hash gate
   bit-identical (86,761 ticks), harness PASS on ABI 15.  Harness
   gained OTYR_SUPPRESS=1 (run with the host's real suppression flags
-  so the dumped frame shows only what leaks past the gates).  NEW (confirmed in code): statics
+  so the dumped frame shows only what leaks past the gates).
+- Same round, user report: platform statics read partly transparent
+  (the baked DESTROYED tile art showed through the intact structure).
+  ROOT CAUSE (host): Godot sorts the transparent pass by node-origin
+  camera distance -- the ELEVATED tile layers (platforms at +0.030)
+  sort in front of the sprite MultiMesh origins and drew AFTER the
+  rider decals sharing their plane, alpha-blending the crater art over
+  the intact structures.  The ground layer sits BEHIND the multimesh
+  origins, which is why true-ground decals never showed it (and
+  shadows decaling clouds had the same latent inversion).  FIX: tile
+  layer materials get RenderPriority -10 (tiles always draw first
+  among transparents; depth still resolves entity-vs-layer occlusion).
+  Flat targeted captures of the TYRIAN-9 platform section show the
+  platform turrets solid.  Tooling: OTYR_CAPTURE_AT=<frame,...>
+  (exact-frame composited captures -- demo determinism makes overlay
+  frame numbers addressable) and OTYR_CAPTURE_RUN=1 (user test runs:
+  a capture every 2 s named cap_f<frame>.jpg, background-encoded, so
+  quoted frame numbers map to the nearest screenshot; stale files
+  wiped at launch).  NEW (confirmed in code): statics
   riding floating platforms (aux 2, and top-band aux 1 with elevated
   surface) visibly swim/blur against their platform under head motion
   -- BackgroundLayer.OnRender smooth-scrolls the ELEVATED tile layers

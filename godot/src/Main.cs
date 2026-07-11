@@ -333,6 +333,15 @@ public partial class Main : Node3D
 
         _frame.StructSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.Frame>();
         GD.Print($"OpenTyrianVR: session up, data={dataDir}");
+
+        if (CaptureRun)
+        {
+            using var dir = DirAccess.Open("user://");
+            foreach (string file in dir.GetFiles())
+                if (file.StartsWith("cap_f") && file.EndsWith(".jpg"))
+                    dir.Remove(file);
+            GD.Print("OpenTyrianVR: run capture on (every 2 s, named by frame)");
+        }
     }
 
     // OTYR_CAPTURE=N: save the viewport to user://cap_N.png every ~2 s,
@@ -343,12 +352,41 @@ public partial class Main : Node3D
     private double _captureAccumulator;
     private int _captureIndex;
 
+    // OTYR_CAPTURE_AT=n1,n2,...: capture the viewport the moment the frame
+    // counter (the "(frame N)" in the diagnostics overlay) crosses each
+    // target, as user://cap_at_N.png.  Demos are deterministic, so a frame
+    // number quoted from an overlay screenshot is directly addressable.
+    private static readonly uint[] CaptureAt = ParseCaptureAt();
+    private int _captureAtIndex;
+
+    // OTYR_CAPTURE_RUN=1: during user test runs, capture every 2 s named by
+    // the frame counter (user://cap_f<frame>.jpg) so a frame number quoted
+    // from the diagnostics overlay maps to the nearest file.  JPEG encode
+    // runs off the main thread (a PNG encode stalls the headset).  Stale
+    // captures are wiped at launch so quotes are unambiguous per session.
+    private static readonly bool CaptureRun =
+        System.Environment.GetEnvironmentVariable("OTYR_CAPTURE_RUN") == "1";
+    private double _captureRunAccumulator;
+    private int _captureRunCount;
+    private const int CaptureRunMax = 1800;  // ~60 min runaway guard
+
     private static int ParseCaptureCount()
     {
         string value = System.Environment.GetEnvironmentVariable("OTYR_CAPTURE") ?? "";
         if (!int.TryParse(value, out int count) || count <= 0)
             return 0;
         return count == 1 ? 40 : count;
+    }
+
+    private static uint[] ParseCaptureAt()
+    {
+        string value = System.Environment.GetEnvironmentVariable("OTYR_CAPTURE_AT") ?? "";
+        var targets = new System.Collections.Generic.List<uint>();
+        foreach (string part in value.Split(',', System.StringSplitOptions.RemoveEmptyEntries))
+            if (uint.TryParse(part.Trim(), out uint frame))
+                targets.Add(frame);
+        targets.Sort();
+        return targets.ToArray();
     }
 
     public override void _Process(double delta)
@@ -367,6 +405,24 @@ public partial class Main : Node3D
         }
 
         PollFrame();
+        while (_captureAtIndex < CaptureAt.Length && _frame.FrameNumber >= CaptureAt[_captureAtIndex])
+        {
+            GetViewport().GetTexture().GetImage().SavePng($"user://cap_at_{CaptureAt[_captureAtIndex]}.png");
+            ++_captureAtIndex;
+        }
+
+        if (CaptureRun)
+        {
+            _captureRunAccumulator += delta;
+            if (_captureRunAccumulator >= 2.0 && _captureRunCount < CaptureRunMax)
+            {
+                _captureRunAccumulator = 0;
+                ++_captureRunCount;
+                var image = GetViewport().GetTexture().GetImage();
+                string path = $"user://cap_f{_frame.FrameNumber:D6}.jpg";
+                System.Threading.Tasks.Task.Run(() => image.SaveJpg(path, 0.8f));
+            }
+        }
         PollPlayerState();
         _snapshotLayer.Poll(_session, _palette);
         // Menus, pause, and quit-to-title stop gameplay ticks; the 3D scene
