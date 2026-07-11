@@ -2612,6 +2612,17 @@ void JE_endLevelAni(void)
 	   host punched out exactly the brightest glyph pixels. */
 	otyr_host_level_end();
 
+	/* With the key disarmed, the suppressed-background fill (index 254)
+	   would render as the glow ramp's WHITE; the 3D scene those pixels
+	   keyed out is gone, so paint them black for the tally backdrop. */
+	if (otyr_hosted && present_config_suppress_background)
+	{
+		Uint8 *px = (Uint8 *)VGAScreenSeg->pixels;
+		for (int p = 0; p < VGAScreenSeg->pitch * VGAScreenSeg->h; ++p)
+			if (px[p] == PRESENT_BG_KEY_INDEX)
+				px[p] = 0;
+	}
+
 	if (!constantPlay)
 	{
 		// Grant ShipEdit privileges

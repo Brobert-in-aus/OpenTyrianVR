@@ -20,6 +20,7 @@
 
 #include "backgrnd.h"
 #include "config.h"
+#include "otyr_host_internal.h"
 #include "video.h"
 
 #include <assert.h>
@@ -134,8 +135,16 @@ bool present_suppress_text = false;
  * the frame). */
 static bool text_gate(SDL_Surface *screen, int x, int y)
 {
-	return present_text_window && screen == game_screen &&
-	       x > -64 && x < 264 && y > -64 && y < 184;
+	bool pass = present_text_window && screen == game_screen &&
+	            x > -64 && x < 264 && y > -64 && y < 184;
+	/* Tripwire (OTYR_TRACE): an in-play-looking HUD/text draw that misses
+	   the gate mid-level lands FLAT in the frame -- log who and where, so
+	   intermittent leaks (the pause-backdrop "pip") identify themselves. */
+	if (!pass && otyr_hosted && otyr_in_level &&
+	    x >= 0 && x < 264 && y >= 0 && y < 184)
+		otyr_trace(present_text_window ? "hudleak-surface" : "hudleak-window",
+		           (Uint32)x, (Uint32)y);
+	return pass;
 }
 
 bool present_text_glyph(SDL_Surface *screen, int x, int y,

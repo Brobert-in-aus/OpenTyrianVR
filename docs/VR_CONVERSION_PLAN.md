@@ -128,6 +128,18 @@
   OPEN (cosmetic): sub-art-pixel sliver at the ship quad's top/left
   edges, needs a dedicated look. Debug envs: OTYR_FORCE_ARCADE,
   OTYR_FORCE_SPECIAL join OTYR_FORCE_SHIP for demo-based HUD repro.
+- Final look (2026-07-11 evening): the tally screen turned WHITE -- the
+  round-3 keying fix disarmed the key while the suppressed-background
+  fill (index 254) was still in the frame, and the glow palette maps
+  254 to white; JE_endLevelAni now paints those pixels black (the 3D
+  scene they keyed out is gone). The pause-backdrop pip persists
+  despite the window-reopen fix -- origin still unknown; a tripwire in
+  the text gate (OTYR_TRACE "hudleak-window"/"hudleak-surface" lines
+  with coordinates) will identify any flat in-play HUD draw next
+  session. Ship edge sliver reference saved to
+  captures/ship_edge_sliver.png (4K in-headset crop: hairline dashes
+  off the quad's top/left edges, sub-art-pixel scale; suspects are the
+  half-texel edge clamp under MSAA and the shadow quad's border).
 
 ## 1. Product direction
 
