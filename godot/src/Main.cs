@@ -64,6 +64,11 @@ public partial class Main : Node3D
     // legacy frame's tile blits are suppressed and palette index 0 becomes
     // transparent so the frame overlays the tile layers.
     private const bool Render3DBackground = true;
+
+    // Render in-play overlay text and HUD icons (cash, lives, WARNING,
+    // timer, game over, insert coin) proud of the playfield instead of flat
+    // in the frame (v13).
+    private const bool RenderProudText = true;
     private bool _handTargetActive;
     private short _handTargetX, _handTargetY;
     private bool _lastTargetActive;
@@ -73,9 +78,31 @@ public partial class Main : Node3D
     {
         OtyrNative.RegisterResolver();
 
+        MoveWindowToSideMonitor();
         InitXr();
         BuildScene();
         StartGame();
+    }
+
+    // Park the desktop window on the rightmost monitor (the tester's side
+    // ultrawide) so it neither occludes nor gets occluded by their work.
+    // Godot's screen API is DPI-aware; CLI --position is not reliable here.
+    private void MoveWindowToSideMonitor()
+    {
+        int screens = DisplayServer.GetScreenCount();
+        if (screens < 2)
+            return;
+        int rightmost = 0, bestX = int.MinValue;
+        for (int i = 0; i < screens; i++)
+        {
+            int x = DisplayServer.ScreenGetPosition(i).X;
+            if (x > bestX)
+            {
+                bestX = x;
+                rightmost = i;
+            }
+        }
+        GetWindow().CurrentScreen = rightmost;
     }
 
     private void InitXr()
@@ -286,8 +313,17 @@ public partial class Main : Node3D
         string dataDir = Path.GetFullPath(Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "tyrian21"));
         string userDir = ProjectSettings.GlobalizePath("user://");
         var flags = OtyrNative.ConfigFlags.EnableAudio | OtyrNative.ConfigFlags.SuppressEntityDraw;
+        // OTYR_MUTE=1: no game audio (solo test runs; the attract demo is
+        // loud and the tester may be doing something else entirely).
+        if (System.Environment.GetEnvironmentVariable("OTYR_MUTE") == "1")
+        {
+            GD.Print("OpenTyrianVR: OTYR_MUTE=1, audio disabled");
+            flags &= ~OtyrNative.ConfigFlags.EnableAudio;
+        }
         if (Render3DBackground)
             flags |= OtyrNative.ConfigFlags.SuppressBackground;
+        if (RenderProudText)
+            flags |= OtyrNative.ConfigFlags.SuppressText;
         var config = OtyrNative.Config.Create(dataDir, flags, userDir: userDir);
 
         int rc = OtyrNative.SessionCreate(in config, (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.Config>(), out _session);

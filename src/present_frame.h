@@ -47,6 +47,8 @@ typedef enum PresentCategory
 	PRESENT_SIDEKICK,           /* low band */
 	PRESENT_EXPLOSION,          /* band of source entity */
 	PRESENT_SUPERPIXEL,         /* debris */
+	PRESENT_TEXT,               /* in-play overlay text and HUD icons; proud
+	                               band, above everything */
 } PresentCategory;
 
 typedef enum PresentBlitKind
@@ -59,6 +61,11 @@ typedef enum PresentBlitKind
 	PRESENT_PIXEL_GLOW,             /* superpixel read-modify-write glow; sheet
 	                                   is NULL, filter_color is the intensity z,
 	                                   index is the palette color base */
+	PRESENT_BLIT_SPRITE_HV,         /* old-table glyph with hue/value shading
+	                                   (fonthand.c); sheet is NULL, index is
+	                                   the sprite id, filter_color packs
+	                                   (table << 4) | hue, aux is the signed
+	                                   value shift */
 } PresentBlitKind;
 
 enum
@@ -66,6 +73,10 @@ enum
 	PRESENT_FLAG_FILTER = 1,        /* use filter_color */
 	PRESENT_FLAG_BLEND = 2,         /* additive blend variant */
 	PRESENT_FLAG_DARKEN = 4,        /* darken variant (shadows) */
+	/* SPRITE_HV only: */
+	PRESENT_FLAG_BLACK = 8,         /* solid black glyph (outline passes) */
+	PRESENT_FLAG_CLAMP = 16,        /* blit_sprite_hv value clamping (vs the
+	                                   _unsafe wrap-around) */
 };
 
 typedef struct PresentSprite
@@ -103,6 +114,31 @@ void present_sound(Uint8 channel, Uint8 sample);
  * rendered by the host from the snapshot instead, and the legacy framebuffer
  * carries only backgrounds, HUD, and text. */
 extern bool present_suppress_entity_draw;
+
+/* --- In-play text and HUD icons ---------------------------------------- */
+
+/* The recording window for in-play overlay text: opened by
+ * present_frame_reset (top of a gameplay tick), closed by JE_showVGA.  Text
+ * drawn to game_screen inside the play region while the window is open is
+ * in-play overlay (cash, lives, WARNING, timer, game over, insert coin) and
+ * gets recorded; everything else -- pause/menu screens (drawn to
+ * VGAScreenSeg or after the present), the sidebar, the bottom text bar --
+ * stays in the frame. */
+extern bool present_text_window;
+
+/* When set (hosted VR mode), recorded text/icon draws are also skipped in
+ * the frame: the host renders them proud of the playfield. */
+extern bool present_suppress_text;
+
+/* Records one glyph draw when the text gate passes.  Returns true when the
+ * frame blit should be SKIPPED (recorded and suppression is on). */
+bool present_text_glyph(SDL_Surface *screen, int x, int y,
+                        unsigned int table, unsigned int sprite_id,
+                        Uint8 flags, Uint8 hue, Sint8 value);
+
+/* As above for the in-play HUD icon blits (lives, superbombs, special). */
+bool present_hud_blit(SDL_Surface *screen, Sprite2_array *sheet,
+                      int x, int y, unsigned int index, bool two_by_two);
 
 /* --- Background layers ------------------------------------------------ */
 

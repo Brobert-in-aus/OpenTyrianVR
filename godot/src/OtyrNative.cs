@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 12;
+    public const uint AbiVersion = 13;
 
     // Palette index of the suppressed background fill (the frame color key);
     // index-0 black in sprite/HUD art stays opaque.
@@ -55,6 +55,9 @@ public static unsafe class OtyrNative
         SuppressBackground = 1 << 2,
         // Publish per-layer standalone raster hashes (verification only, v8).
         BackgroundHashes = 1 << 3,
+        // Skip in-play overlay text/HUD-icon blits in the frame; the host
+        // renders the Category.Text records proud of the playfield (v13).
+        SuppressText = 1 << 4,
     }
 
     // Presentation snapshot (ABI v6).
@@ -70,6 +73,7 @@ public static unsafe class OtyrNative
     {
         EnemySky = 0, EnemyGroundA, EnemyTop, EnemyGroundB,
         EnemyShot, PlayerShot, Player, Shadow, Sidekick, Explosion, Superpixel,
+        Text,  // in-play overlay text/HUD icons; proud band (v13)
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -131,8 +135,15 @@ public static unsafe class OtyrNative
 
     // Old variable-size sprite table export (ABI v9): OPTION_SHAPES carries
     // the "special" blend shots (Kind == 2; Index is the sprite, FilterColor
-    // the table id).  Rows at a fixed 64-byte stride; 0 = transparent.
+    // the table id); the three font tables (v13) carry glyphs for text
+    // records (Kind == 4; FilterColor packs (table << 4) | hue, Aux the
+    // signed value shift).  Rows at a fixed 64-byte stride; use the opacity
+    // plane for transparency.
+    public const uint OldTableFontBig = 0;    // FONT_SHAPES
+    public const uint OldTableFontSmall = 1;  // SMALL_FONT_SHAPES
+    public const uint OldTableFontTiny = 2;   // TINY_FONT
     public const uint OldTableOption = 5;
+    public const int OldTableSlots = 4;       // atlas slot order: option, big, small, tiny
     public const int OldSpriteMax = 151;
     public const int OldSpriteWMax = 64;
     public const int OldSpriteHMax = 64;

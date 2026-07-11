@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 12u
+#define OTYR_ABI_VERSION 13u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -97,6 +97,12 @@ extern "C" {
                                                         standalone raster
                                                         hashes for export
                                                         verification (v8) */
+#define OTYR_CONFIG_SUPPRESS_TEXT          (1u << 4) /* skip in-play overlay
+                                                        text/HUD-icon blits in
+                                                        the frame; the host
+                                                        renders the OTYR_CAT_TEXT
+                                                        records proud of the
+                                                        playfield (v13) */
 
 typedef struct OtyrConfig
 {
@@ -173,11 +179,21 @@ typedef struct OtyrPlayerState
 #define OTYR_CAT_SIDEKICK        8u
 #define OTYR_CAT_EXPLOSION       9u
 #define OTYR_CAT_SUPERPIXEL      10u
+#define OTYR_CAT_TEXT            11u /* in-play overlay text/HUD icons;
+                                        render proud, above everything (v13) */
 
 #define OTYR_KIND_SPRITE2        0u  /* 12x14 sprite cell */
 #define OTYR_KIND_SPRITE2X2      1u  /* four cells forming 24x28 */
 #define OTYR_KIND_SPRITE_BLEND   2u  /* old-table blend; no sheet */
 #define OTYR_KIND_PIXEL_GLOW     3u  /* debris pixel; filter_color=intensity, index=color */
+#define OTYR_KIND_SPRITE_HV      4u  /* old-table glyph, hue/value shaded (v13):
+                                        no sheet; index = sprite id;
+                                        filter_color = (font table << 4) | hue;
+                                        aux = signed value shift.  flags: 2 =
+                                        50/50 dest blend, 4 = halve-dest shadow,
+                                        8 = solid black, 16 = clamped value
+                                        (else unsafe wrap: idx =
+                                        ((hue<<4) | (low4 + value)) & 0xff) */
 
 #define OTYR_SHEET_INVALID       0xffu
 
@@ -348,12 +364,17 @@ OTYR_API int32_t otyr_background_map(uint64_t session,
 
 /* --- Old-table sprite export (v9) --------------------------------------- */
 
-/* Sprites on the legacy variable-size table (blit_sprite family).  Only the
- * OPTION_SHAPES table (5) is cached: it carries the "special" player shots
- * recorded as OTYR_KIND_SPRITE_BLEND, whose OtyrSnapshotSprite.index is the
- * sprite index here and filter_color the table id.  Rasterized at level
- * load; rows are stored at a fixed 64-byte stride, 0 = transparent. */
-#define OTYR_OLD_TABLE_OPTION  5u
+/* Sprites on the legacy variable-size table (blit_sprite family).  Cached
+ * tables: OPTION_SHAPES (5) carries the "special" player shots recorded as
+ * OTYR_KIND_SPRITE_BLEND (index = sprite id, filter_color = table id); the
+ * three font tables (v13) carry the glyphs referenced by OTYR_KIND_SPRITE_HV
+ * text records.  Rasterized at level load; rows are stored at a fixed
+ * 64-byte stride; use the opacity plane for transparency (glyph art can use
+ * index 0). */
+#define OTYR_OLD_TABLE_FONT_BIG    0u  /* FONT_SHAPES */
+#define OTYR_OLD_TABLE_FONT_SMALL  1u  /* SMALL_FONT_SHAPES */
+#define OTYR_OLD_TABLE_FONT_TINY   2u  /* TINY_FONT */
+#define OTYR_OLD_TABLE_OPTION      5u
 #define OTYR_OLD_SPRITE_MAX    151u
 #define OTYR_OLD_SPRITE_W_MAX  64u
 #define OTYR_OLD_SPRITE_H_MAX  64u

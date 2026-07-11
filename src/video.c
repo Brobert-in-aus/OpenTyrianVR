@@ -22,6 +22,7 @@
 #include "opentyr.h"
 #include "otyr_host_internal.h"
 #include "palette.h"
+#include "present_frame.h"
 #include "video_scale.h"
 
 #include <assert.h>
@@ -335,6 +336,10 @@ void JE_clr256(SDL_Surface *screen)
 
 void JE_showVGA(void)
 {
+	/* Close the in-play text recording window: draws after the tick's
+	   present (pause screens, dialogs, glow loops) belong to the frame. */
+	present_text_window = false;
+
 	if (otyr_hosted)
 	{
 		otyr_host_present(VGAScreen);

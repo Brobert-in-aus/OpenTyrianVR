@@ -395,6 +395,29 @@ int main(void)
 		free(img);
 	}
 
+	/* Font tables (v13): fetched up front so text records (kind 4) can be
+	 * verified against the frame below. */
+	OtyrOldSprite *fonts = calloc(3 * OTYR_OLD_SPRITE_MAX, sizeof(OtyrOldSprite));
+	for (uint32_t t = 0; t < 3; ++t)
+	{
+		unsigned int glyphs = 0, fmax_w = 0, fmax_h = 0;
+		for (uint32_t i = 0; i < OTYR_OLD_SPRITE_MAX; ++i)
+		{
+			OtyrOldSprite *o = &fonts[t * OTYR_OLD_SPRITE_MAX + i];
+			o->struct_size = sizeof(OtyrOldSprite);
+			if (p_old_sprite(g_session, t, i, o, sizeof(OtyrOldSprite)) != OTYR_OK)
+				die("font old_sprite");
+			if (o->width == 0)
+				continue;
+			++glyphs;
+			if (o->width > fmax_w) fmax_w = o->width;
+			if (o->height > fmax_h) fmax_h = o->height;
+		}
+		printf("font table %u: %u glyphs, max %ux%u\n", t, glyphs, fmax_w, fmax_h);
+		if (glyphs == 0)
+			die("font table export empty");
+	}
+
 	/* Aggregate record-vs-frame agreement across many ticks so persistent
 	 * offenders (specific sheet cells that never match what the legacy
 	 * renderer drew) stand out from transient overlap noise. */
@@ -424,42 +447,86 @@ int main(void)
 		for (uint32_t i = 0; i < snapshot->sprite_count; ++i)
 		{
 			const OtyrSnapshotSprite *rec = &snapshot->sprites[i];
-			if (rec->sheet_id >= OTYR_SHEET_COUNT || rec->index == 0 || rec->flags != 0)
-				continue;  /* only plain blits are directly comparable */
-			if (rec->kind != 0 && rec->kind != 1)
-				continue;
-
-			unsigned int pieces = rec->kind == 1 ? 4 : 1;
-			static const int piece_dx[4] = { 0, 12, 0, 12 };
-			static const int piece_dy[4] = { 0, 0, 14, 14 };
-			static const int piece_di[4] = { 0, 1, 19, 20 };
-
 			unsigned int opaque = 0, match = 0;
-			for (unsigned int p = 0; p < pieces; ++p)
-			{
-				uint32_t cell = rec->index + piece_di[p] - 1;
-				if (cell >= sheets[rec->sheet_id].cell_count)
-					continue;
-				const uint8_t *cell_px = sheets[rec->sheet_id].pixels + cell * 12 * 14;
-				const uint8_t *cell_op = sheets[rec->sheet_id].opacity + cell * 12 * 14;
 
-				for (int y = 0; y < 14; ++y)
-					for (int x = 0; x < 12; ++x)
+			if (rec->kind == 4)
+			{
+				/* Text glyph (v13): verify the final color passes only.
+				   Black outline passes are legitimately overdrawn by the
+				   color glyph on top; blend/darken read the destination. */
+				if (rec->flags & (2 | 4 | 8))
+					continue;
+				uint32_t table = rec->filter_color >> 4;
+				uint32_t hue = rec->filter_color & 0x0f;
+				int value = (int8_t)rec->aux;
+				if (table > 2 || rec->index >= OTYR_OLD_SPRITE_MAX)
+					continue;
+				const OtyrOldSprite *g = &fonts[table * OTYR_OLD_SPRITE_MAX + rec->index];
+				if (g->width == 0)
+					continue;
+
+				for (int y = 0; y < g->height; ++y)
+					for (int x = 0; x < g->width; ++x)
 					{
-						if (!cell_op[y * 12 + x])
+						if (!g->opacity[y * OTYR_OLD_SPRITE_W_MAX + x])
 							continue;
-						uint8_t v = cell_px[y * 12 + x];
-						int fx = rec->x + piece_dx[p] + x;
-						int fy = rec->y + piece_dy[p] + y;
+						int fx = rec->x + x, fy = rec->y + y;
 						if (fx < 24 || fx >= 288 || fy < 0 || fy >= 184)
 							continue;
+						int low = g->pixels[y * OTYR_OLD_SPRITE_W_MAX + x] & 0x0f;
+						uint8_t v;
+						if (rec->flags & 16)  /* clamped (blit_sprite_hv) */
+						{
+							unsigned int tv = (unsigned int)(low + value) & 0xff;
+							if (tv > 0x0f)
+								tv = (tv >= 0x1f) ? 0x0 : 0xf;
+							v = (uint8_t)((hue << 4) | tv);
+						}
+						else                  /* unsafe wrap (blit_sprite_hv_unsafe) */
+							v = (uint8_t)((hue << 4) | (low + value));
 						++opaque;
 						if (frame->pixels[fy * 320 + fx - 24] == v)
 							++match;
 					}
 			}
+			else
+			{
+				if (rec->sheet_id >= OTYR_SHEET_COUNT || rec->index == 0 || rec->flags != 0)
+					continue;  /* only plain blits are directly comparable */
+				if (rec->kind != 0 && rec->kind != 1)
+					continue;
 
-			if (opaque < 20)
+				unsigned int pieces = rec->kind == 1 ? 4 : 1;
+				static const int piece_dx[4] = { 0, 12, 0, 12 };
+				static const int piece_dy[4] = { 0, 0, 14, 14 };
+				static const int piece_di[4] = { 0, 1, 19, 20 };
+
+				for (unsigned int p = 0; p < pieces; ++p)
+				{
+					uint32_t cell = rec->index + piece_di[p] - 1;
+					if (cell >= sheets[rec->sheet_id].cell_count)
+						continue;
+					const uint8_t *cell_px = sheets[rec->sheet_id].pixels + cell * 12 * 14;
+					const uint8_t *cell_op = sheets[rec->sheet_id].opacity + cell * 12 * 14;
+
+					for (int y = 0; y < 14; ++y)
+						for (int x = 0; x < 12; ++x)
+						{
+							if (!cell_op[y * 12 + x])
+								continue;
+							uint8_t v = cell_px[y * 12 + x];
+							int fx = rec->x + piece_dx[p] + x;
+							int fy = rec->y + piece_dy[p] + y;
+							if (fx < 24 || fx >= 288 || fy < 0 || fy >= 184)
+								continue;
+							++opaque;
+							if (frame->pixels[fy * 320 + fx - 24] == v)
+								++match;
+						}
+				}
+			}
+
+			if (opaque < (rec->kind == 4 ? 10u : 20u))
 				continue;
 			++checked_records;
 			if (match * 100 < opaque * 60)
@@ -500,6 +567,7 @@ int main(void)
 			       agg[a].sheet, agg[a].kind, agg[a].category, agg[a].aux,
 			       agg[a].index, agg[a].count, pct);
 	}
+	free(fonts);
 	free(sheets);
 
 	/* Phase 4c: background map export (ABI v8).  Fetch the three map layers

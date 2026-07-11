@@ -13,11 +13,12 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Statics AT ground level: zero shimmer at any head angle",
-        "No floating / split ground objects anywhere",
-        "Statics pass under clouds; platform turrets ride",
-        "Ship shadow still crosses pits/structures",
-        "Cloud translucency still looks good",
+        "Cash number floats proud above everything",
+        "Level-start flash text proud + readable",
+        "WARNING text proud (let armor drop below 6)",
+        "Pause screen: no cash/text remnant behind it",
+        "Sidebar + bottom text bar unchanged (flat)",
+        "Text colors/shadows match the flat game",
         "Anything else off? tell Claude after",
     };
 

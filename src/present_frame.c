@@ -18,6 +18,8 @@
  */
 #include "present_frame.h"
 
+#include "video.h"
+
 #include <assert.h>
 #include <string.h>
 
@@ -37,6 +39,7 @@ void present_frame_reset(void)
 	present_sprite_count = 0;
 	present_sound_count = 0;
 	memset(present_backgrounds, 0, sizeof(present_backgrounds));
+	present_text_window = true;
 }
 
 void present_background(int layer, Sint32 tile_offset, Sint16 x, Sint16 y,
@@ -104,6 +107,42 @@ unsigned int present_record(PresentCategory category, PresentBlitKind kind,
 
 bool present_suppress_entity_draw = false;
 
+bool present_text_window = false;
+bool present_suppress_text = false;
+
+/* In-play overlay text: the tick's record window is open, the draw targets
+ * the gameplay surface (pause/menu screens draw to VGAScreenSeg), and the
+ * position is inside the play region (sidebar and bottom text bar stay in
+ * the frame). */
+static bool text_gate(SDL_Surface *screen, int x, int y)
+{
+	return present_text_window && screen == game_screen &&
+	       x > -64 && x < 264 && y > -64 && y < 184;
+}
+
+bool present_text_glyph(SDL_Surface *screen, int x, int y,
+                        unsigned int table, unsigned int sprite_id,
+                        Uint8 flags, Uint8 hue, Sint8 value)
+{
+	if (!text_gate(screen, x, y))
+		return false;
+	present_record_aux(PRESENT_TEXT, PRESENT_BLIT_SPRITE_HV, flags,
+	                   (Uint8)((table << 4) | (hue & 0x0f)), (Uint8)value,
+	                   NULL, (Sint16)x, (Sint16)y, (Uint16)sprite_id);
+	return present_suppress_text;
+}
+
+bool present_hud_blit(SDL_Surface *screen, Sprite2_array *sheet,
+                      int x, int y, unsigned int index, bool two_by_two)
+{
+	if (!text_gate(screen, x, y))
+		return false;
+	present_record(PRESENT_TEXT,
+	               two_by_two ? PRESENT_BLIT_SPRITE2X2 : PRESENT_BLIT_SPRITE2,
+	               0, 0, sheet, (Sint16)x, (Sint16)y, (Uint16)index);
+	return present_suppress_text;
+}
+
 void present_draw_from(SDL_Surface *surface, unsigned int from)
 {
 	for (unsigned int i = from; i < present_sprite_count; i++)
@@ -118,6 +157,11 @@ void present_draw_from(SDL_Surface *surface, unsigned int from)
 			              baked structures (map-locked coplanar cells); the
 			              frame keeps only backgrounds, HUD, and text */
 		const PresentSprite *sprite = &present_sprites[i];
+
+		/* Text/HUD records blit inline at their call sites (fonthand.c,
+		   JE_inGameDisplays); they are export metadata only. */
+		if (sprite->category == PRESENT_TEXT)
+			continue;
 
 		if (sprite->kind == PRESENT_BLIT_SPRITE2)
 		{

@@ -2937,7 +2937,8 @@ void JE_inGameDisplays(void)
 	}
 
 	/*Special Weapon?*/
-	if (player[0].items.special > 0)
+	if (player[0].items.special > 0 &&
+	    !present_hud_blit(VGAScreen, &spriteSheet10, 25, 1, special[player[0].items.special].itemgraphic, true))
 		blit_sprite2x2(VGAScreen, 25, 1, spriteSheet10, special[player[0].items.special].itemgraphic);
 
 	/*Lives Left*/
@@ -2952,7 +2953,8 @@ void JE_inGameDisplays(void)
 
 			if (extra_lives >= 5)
 			{
-				blit_sprite2(VGAScreen, tempW, y, spriteSheet9, 285);
+				if (!present_hud_blit(VGAScreen, &spriteSheet9, tempW, y, 285, false))
+					blit_sprite2(VGAScreen, tempW, y, spriteSheet9, 285);
 				tempW = (temp == 0) ? 45 : 250;
 				sprintf(tempstr, "%d", extra_lives);
 				JE_textShade(VGAScreen, tempW, y + 3, tempstr, 15, 1, FULL_SHADE);
@@ -2961,7 +2963,8 @@ void JE_inGameDisplays(void)
 			{
 				for (uint i = 0; i < extra_lives; ++i)
 				{
-					blit_sprite2(VGAScreen, tempW, y, spriteSheet9, 285);
+					if (!present_hud_blit(VGAScreen, &spriteSheet9, tempW, y, 285, false))
+						blit_sprite2(VGAScreen, tempW, y, spriteSheet9, 285);
 
 					tempW += (temp == 0) ? 12 : -12;
 				}
@@ -2985,7 +2988,8 @@ void JE_inGameDisplays(void)
 
 		for (uint j = player[i].superbombs; j > 0; --j)
 		{
-			blit_sprite2(VGAScreen, x, 160, spriteSheet9, 304);
+			if (!present_hud_blit(VGAScreen, &spriteSheet9, x, 160, 304, false))
+				blit_sprite2(VGAScreen, x, 160, spriteSheet9, 304);
 			x += (i == 0) ? 12 : -12;
 		}
 	}

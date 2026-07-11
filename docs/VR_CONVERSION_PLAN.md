@@ -32,9 +32,24 @@
   legacy paints something else there); and the artifact does NOT reproduce
   in static flat self-captures of the same build (OTYR_CAPTURE) -- it is
   temporal and/or head-parallax dependent. Candidate for Stage B
-  single-quad assembly rendering. In-play text (lives, cash, INSERT COIN)
-  still draws flat in the frame (text-proud feature is next).
-  One unreproduced sighting of non-cloaking enemies rendering
+  single-quad assembly rendering. In-play overlay text and HUD icons
+  (cash, lives, WARNING, timer, game over, insert coin) now render PROUD
+  of the playfield at 0.090 (ABI v13): fonthand glyph draws and the
+  JE_inGameDisplays icon blits record as OTYR_CAT_TEXT inside a per-tick
+  window (open at present_frame_reset, closed at JE_showVGA, gated to
+  game_screen and the play region, so pause/menu/sidebar/bottom-bar text
+  stays in the frame), the font tables export through the old-sprite
+  cache, and the host hue/value-shades glyphs in-shader (including the
+  legacy unsafe value wrap). Drop shadows are multiplicative glyph
+  quads on a sub-plane 0.0008 below the glyphs (a one-OrderBias gap
+  quantized to equal depth and flickered against the unordered shadow
+  node). Atlas-slot shader decode rounds before mod/floor: slots at
+  exact multiples of the atlas row width (column 0) arrived a hair
+  under the integer and sampled empty atlas space, deleting specific
+  glyphs (the S/C of INSERT COIN); the old-table blend-shot shader had
+  the same latent bug. Verified: turbo hash gate bit-identical (28,960
+  ticks), harness glyph-vs-frame verification clean, flat captures show
+  the full string with shadows. Awaiting headset pass. One unreproduced sighting of non-cloaking enemies rendering
   semi-transparent for part of a run. Smoothie-filter/darken levels and
   background3over==2 levels need a fallback (slice level uses neither).
 
