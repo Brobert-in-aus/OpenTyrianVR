@@ -335,26 +335,34 @@ public partial class Main : Node3D
         GD.Print($"OpenTyrianVR: session up, data={dataDir}");
     }
 
-    // OTYR_CAPTURE=1: save the viewport to user://cap_N.png every ~2 s
-    // (self-service visual verification; window capture is unreliable on
-    // multi-monitor setups and XR grabs the window entirely).
-    private static readonly bool CaptureMode =
-        System.Environment.GetEnvironmentVariable("OTYR_CAPTURE") == "1";
+    // OTYR_CAPTURE=N: save the viewport to user://cap_N.png every ~2 s,
+    // N captures total (OTYR_CAPTURE=1 keeps the historical 40); for
+    // self-service visual verification -- window capture is unreliable on
+    // multi-monitor setups and XR grabs the window entirely.
+    private static readonly int CaptureCount = ParseCaptureCount();
     private double _captureAccumulator;
     private int _captureIndex;
+
+    private static int ParseCaptureCount()
+    {
+        string value = System.Environment.GetEnvironmentVariable("OTYR_CAPTURE") ?? "";
+        if (!int.TryParse(value, out int count) || count <= 0)
+            return 0;
+        return count == 1 ? 40 : count;
+    }
 
     public override void _Process(double delta)
     {
         if (!_sessionLive)
             return;
 
-        if (CaptureMode)
+        if (CaptureCount > 0)
         {
             _captureAccumulator += delta;
-            if (_captureAccumulator >= 2.0 && _captureIndex < 40)
+            if (_captureAccumulator >= 2.0 && _captureIndex < CaptureCount)
             {
                 _captureAccumulator = 0;
-                GetViewport().GetTexture().GetImage().SavePng($"user://cap_{_captureIndex++:D2}.png");
+                GetViewport().GetTexture().GetImage().SavePng($"user://cap_{_captureIndex++:D3}.png");
             }
         }
 
@@ -362,8 +370,10 @@ public partial class Main : Node3D
         PollPlayerState();
         _snapshotLayer.Poll(_session, _palette);
         // Menus, pause, and quit-to-title stop gameplay ticks; the 3D scene
-        // (sprites AND background layers) must not linger over them.
-        _snapshotLayer.Visible = _inGameplay;
+        // (sprites AND background layers) must not linger over them.  A
+        // legacy-fallback level (smoothie warp) draws its complete frame
+        // flat instead -- the 3D layers would double every entity.
+        _snapshotLayer.Visible = _inGameplay && _frame.LegacyFallback == 0;
         UpdateChecklistInput();
         SubmitInput();
         UpdateDiagnostics(delta);
@@ -432,7 +442,7 @@ public partial class Main : Node3D
                 // (keying there punched black holes in the title logo).
                 // Data is premultiplied (keyed pixels fully zero) so
                 // linear/mipmap filtering can't bleed key-colored fringes.
-                if (Render3DBackground && _frame.InLevel != 0 && index == OtyrNative.BgKeyIndex)
+                if (Render3DBackground && _frame.InLevel != 0 && _frame.LegacyFallback == 0 && index == OtyrNative.BgKeyIndex)
                 {
                     _rgba[i * 4 + 0] = 0;
                     _rgba[i * 4 + 1] = 0;

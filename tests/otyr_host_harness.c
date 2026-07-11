@@ -589,13 +589,39 @@ int main(void)
 	}
 
 	{
+		/* Default window verifies the current level; OTYR_BG_SWEEP=<secs>
+		 * extends it across the attract cycle -- the maps are refetched on
+		 * every sheet-epoch change, so each demo level's export is verified
+		 * bit-exact in turn. */
+		DWORD window_ms = 15000;
+		const char *sweep = getenv("OTYR_BG_SWEEP");
+		if (sweep != NULL && atoi(sweep) > 0)
+			window_ms = (DWORD)atoi(sweep) * 1000u;
+
 		unsigned int bg_checked[OTYR_BG_LAYER_COUNT] = { 0 };
 		unsigned int bg_bad[OTYR_BG_LAYER_COUNT] = { 0 };
+		uint32_t epoch = bg_maps[0].sheet_epoch;
+		unsigned int epochs_seen = 1;
 		DWORD bg_start = GetTickCount();
-		while (GetTickCount() - bg_start < 15000)
+		while (GetTickCount() - bg_start < window_ms)
 		{
 			if (p_snapshot(g_session, snapshot, sizeof(OtyrSnapshot), 1000) != OTYR_OK)
 				continue;
+			if (snapshot->sheet_epoch != epoch)
+			{
+				epoch = snapshot->sheet_epoch;
+				++epochs_seen;
+				for (uint32_t l = 0; l < OTYR_BG_LAYER_COUNT; ++l)
+				{
+					bg_maps[l].struct_size = sizeof(OtyrBackgroundMap);
+					if (p_background_map(g_session, l, &bg_maps[l], sizeof(OtyrBackgroundMap)) != OTYR_OK)
+						die("background_map refetch");
+				}
+				printf("  bg sweep: epoch %u maps refetched (%ux%u/%ux%u/%ux%u)\n",
+				       epoch, bg_maps[0].width, bg_maps[0].height,
+				       bg_maps[1].width, bg_maps[1].height,
+				       bg_maps[2].width, bg_maps[2].height);
+			}
 			for (uint32_t l = 0; l < OTYR_BG_LAYER_COUNT; ++l)
 			{
 				const OtyrBackgroundDraw *draw = &snapshot->background[l];
@@ -605,13 +631,14 @@ int main(void)
 				if (bg_reconstruct_hash(&bg_maps[l], draw) != draw->hash)
 				{
 					if (++bg_bad[l] <= 4)
-						printf("  BG MISMATCH layer %u tick %u offset %d at (%d,%d) blend %u\n",
-						       l, snapshot->level_tick, draw->tile_offset,
+						printf("  BG MISMATCH epoch %u layer %u tick %u offset %d at (%d,%d) blend %u\n",
+						       epoch, l, snapshot->level_tick, draw->tile_offset,
 						       draw->x, draw->y, draw->blend);
 				}
 			}
 		}
-		printf("bg verify: layer ticks checked %u/%u/%u, mismatches %u/%u/%u, over modes %u/%u/%u\n",
+		printf("bg verify: %u epochs, layer ticks checked %u/%u/%u, mismatches %u/%u/%u, over modes %u/%u/%u\n",
+		       epochs_seen,
 		       bg_checked[0], bg_checked[1], bg_checked[2],
 		       bg_bad[0], bg_bad[1], bg_bad[2],
 		       snapshot->background[0].over_mode,

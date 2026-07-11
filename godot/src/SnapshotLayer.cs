@@ -134,10 +134,22 @@ public unsafe partial class SnapshotLayer : Node3D
                     // the baked tiles beneath); a depth-only bias encodes
                     // the paint order against the tiles and each other.
                     DEPTH = FRAGCOORD.z + (v_decal > 0.0 ? 0.00001 + v_decal * 0.00002 : 0.0);
+                    // Rounded decode (see the text layer): custom data can
+                    // arrive a hair under the integer and wrap the atlas
+                    // origin at column boundaries.
+                    float cid = floor(cell + 0.5);
+                    vec2 uv0 = UV;
+                    // 2x2 sprites (flag bit 8): one quad; pick the legacy
+                    // cell (+0/+1/+19/+20) by UV quadrant.
+                    if (mod(floor(v_flags / 8.0), 2.0) >= 1.0) {
+                        vec2 q = step(vec2(0.5), uv0);
+                        cid += q.x + q.y * 19.0;
+                        uv0 = fract(uv0 * 2.0);
+                    }
                     // Half-texel inset keeps edge fragments inside this cell
                     // (no atlas bleeding from neighboring cells).
-                    vec2 cell_origin_px = vec2(mod(cell, 32.0) * 12.0, floor(cell / 32.0) * 14.0);
-                    vec2 cell_px = clamp(UV * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));
+                    vec2 cell_origin_px = vec2(mod(cid, 32.0) * 12.0, floor(cid / 32.0) * 14.0);
+                    vec2 cell_px = clamp(uv0 * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));
                     vec2 uv = (cell_origin_px + cell_px) / vec2(384.0, 448.0);
                     vec2 s = texture(atlas, uv).rg;
                     if (s.g < 0.5)  // opacity plane: index 0 is real black
@@ -293,10 +305,12 @@ public unsafe partial class SnapshotLayer : Node3D
                 uniform sampler2D atlas : filter_nearest;
 
                 varying float cell;
+                varying float v_flags;
                 varying float v_decal;
 
                 void vertex() {
                     cell = INSTANCE_CUSTOM.x;
+                    v_flags = INSTANCE_CUSTOM.y;
                     v_decal = INSTANCE_CUSTOM.w;
                 }
 
@@ -305,8 +319,15 @@ public unsafe partial class SnapshotLayer : Node3D
                     // interleave with the statics on their plane by record
                     // order (self-shadows under owners, late shadows over).
                     DEPTH = FRAGCOORD.z + (v_decal > 0.0 ? 0.00001 + v_decal * 0.00002 : 0.0);
-                    vec2 cell_origin_px = vec2(mod(cell, 32.0) * 12.0, floor(cell / 32.0) * 14.0);
-                    vec2 cell_px = clamp(UV * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));
+                    float cid = floor(cell + 0.5);
+                    vec2 uv0 = UV;
+                    if (mod(floor(v_flags / 8.0), 2.0) >= 1.0) {  // 2x2 quad
+                        vec2 q = step(vec2(0.5), uv0);
+                        cid += q.x + q.y * 19.0;
+                        uv0 = fract(uv0 * 2.0);
+                    }
+                    vec2 cell_origin_px = vec2(mod(cid, 32.0) * 12.0, floor(cid / 32.0) * 14.0);
+                    vec2 cell_px = clamp(uv0 * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));
                     if (texture(atlas, (cell_origin_px + cell_px) / vec2(384.0, 448.0)).g < 0.5)
                         discard;
                     ALBEDO = vec3(0.5);  // halve brightness, keep hue
@@ -682,17 +703,12 @@ public unsafe partial class SnapshotLayer : Node3D
                 // dynamic stays in the frame): shadows as translucent dark
                 // quads, structures as map-locked coplanar cells.
 
-                if (sprite.Kind == 1)  // SPRITE2X2: four cells (i, i+1, i+19, i+20)
-                {
-                    AddCell(sprite, i, sprite.Index,      0, 0);
-                    AddCell(sprite, i, sprite.Index + 1,  OtyrNative.SheetCellW, 0);
-                    AddCell(sprite, i, sprite.Index + 19, 0, OtyrNative.SheetCellH);
-                    AddCell(sprite, i, sprite.Index + 20, OtyrNative.SheetCellW, OtyrNative.SheetCellH);
-                }
-                else
-                {
-                    AddCell(sprite, i, sprite.Index, 0, 0);
-                }
+                // SPRITE2X2 renders as a SINGLE 24x28 quad (the shader picks
+                // the legacy cell -- +0/+1/+19/+20 -- by UV quadrant): the
+                // sprite moves, pairs, and bands as one rigid unit.  Per-cell
+                // quads interpolated independently and could shear a sprite
+                // across its own cells (the dome-square / wedge artifacts).
+                AddCell(sprite, i, sprite.Index, 0, 0);
             }
         }
     }
@@ -839,8 +855,9 @@ public unsafe partial class SnapshotLayer : Node3D
         if (_cellCount >= _cells.Length)
             return;
 
-        float centerX = sprite.X + pixelOffsetX + OtyrNative.SheetCellW / 2f;
-        float centerY = sprite.Y + pixelOffsetY + OtyrNative.SheetCellH / 2f;
+        bool big = sprite.Kind == 1;  // 2x2: one 24x28 quad
+        float centerX = sprite.X + pixelOffsetX + (big ? OtyrNative.SheetCellW : OtyrNative.SheetCellW / 2f);
+        float centerY = sprite.Y + pixelOffsetY + (big ? OtyrNative.SheetCellH : OtyrNative.SheetCellH / 2f);
 
         ref RenderCell cell = ref _cells[_cellCount];
         // Darken blits (shadows, iced) go to the multiplicative shadow
@@ -848,7 +865,9 @@ public unsafe partial class SnapshotLayer : Node3D
         bool darken = (sprite.Flags & 4) != 0;
         cell.SheetId = darken ? ShadowLayerBase + sprite.SheetId : sprite.SheetId;
         cell.CellIndex = cellIndex - 1;
-        cell.Flags = sprite.Flags;
+        // Bit 8 tells the shader (and the transform pass) this is a 2x2
+        // quad; the record flags only use bits 1/2/4.
+        cell.Flags = (byte)(sprite.Flags | (big ? 8 : 0));
         cell.FilterColor = sprite.FilterColor;
         bool isEnemy = sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB;
         bool isShadow = sprite.Category == (byte)OtyrNative.Category.Shadow;
@@ -920,12 +939,14 @@ public unsafe partial class SnapshotLayer : Node3D
             // Pixel-scaled quads: the old-table and text layers store the
             // sprite size in Flags/FilterColor.
             bool pixelQuad = id == OldLayer || id == TextLayer || id == TextShadowLayer;
+            // Sheet-layer 2x2 sprites render as one 24x28 quad (flag bit 8).
+            bool big = !pixelQuad && id != GlowLayer && (cell.Flags & 8) != 0;
 
             // Cull cells fully outside the visible play region (frame copies
             // draw columns 24..288, rows 0..184): legacy clips these at the
             // margins, so they must not float past the lane edges.
-            float halfW = id == GlowLayer ? 1f : pixelQuad ? cell.Flags / 2f : OtyrNative.SheetCellW / 2f;
-            float halfH = id == GlowLayer ? 1f : pixelQuad ? cell.FilterColor / 2f : OtyrNative.SheetCellH / 2f;
+            float halfW = id == GlowLayer ? 1f : pixelQuad ? cell.Flags / 2f : big ? OtyrNative.SheetCellW : OtyrNative.SheetCellW / 2f;
+            float halfH = id == GlowLayer ? 1f : pixelQuad ? cell.FilterColor / 2f : big ? OtyrNative.SheetCellH : OtyrNative.SheetCellH / 2f;
             float frameX = px.X - 24f;
             if (frameX + halfW <= 0f || frameX - halfW >= 264f ||
                 px.Y + halfH <= 0f || px.Y - halfH >= 184f)
@@ -942,9 +963,11 @@ public unsafe partial class SnapshotLayer : Node3D
             }
 
             // The old-table and text layers use a unit-pixel quad scaled to
-            // the sprite's size (stored in Flags/FilterColor).
+            // the sprite's size (stored in Flags/FilterColor); 2x2 sheet
+            // sprites scale the 12x14 cell quad to 24x28.
             Basis basis = pixelQuad
                 ? Basis.Identity.Scaled(new Vector3(cell.Flags, cell.FilterColor, 1f))
+                : big ? Basis.Identity.Scaled(new Vector3(2f, 2f, 1f))
                 : Basis.Identity;
 
             _multiMesh[id].SetInstanceTransform(instance,

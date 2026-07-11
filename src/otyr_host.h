@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 13u
+#define OTYR_ABI_VERSION 14u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -146,7 +146,11 @@ typedef struct OtyrFrame
 	                           gates the background color key: menus redraw
 	                           the frame fully and may legitimately use the
 	                           key index in art (v12) */
-	uint8_t  reserved[3];
+	uint8_t  legacy_fallback; /* nonzero while the level's presentation fell
+	                             back to full legacy drawing (smoothie warp
+	                             filters); the frame is complete and opaque --
+	                             hide the 3D layers and show it flat (v14) */
+	uint8_t  reserved[2];
 } OtyrFrame;
 
 typedef struct OtyrPlayerState

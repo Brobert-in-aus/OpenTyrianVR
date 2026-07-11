@@ -50,8 +50,28 @@
   the same latent bug. Verified: turbo hash gate bit-identical (28,960
   ticks), harness glyph-vs-frame verification clean, flat captures show
   the full string with shadows. Awaiting headset pass. One unreproduced sighting of non-cloaking enemies rendering
-  semi-transparent for part of a run. Smoothie-filter/darken levels and
-  background3over==2 levels need a fallback (slice level uses neither).
+  semi-transparent for part of a run.
+- Phase 4 kickoff (2026-07-11, autonomous slice): 2x2 sprites render as a
+  SINGLE 24x28 quad (the shader picks the legacy cell -- +0/+1/+19/+20 --
+  by UV quadrant): one pairing/interpolation/band decision per sprite, so
+  cells can no longer shear against each other (the dome-square/wedge
+  artifact class). Smoothie-warp levels fall back per tick to full legacy
+  drawing: effective suppression is recomputed at the top of each tick,
+  and OtyrFrame.legacy_fallback (v14) tells the host to hide its 3D
+  layers and show the complete flat frame (verified with the
+  OTYR_FORCE_SMOOTHIE debug env). Presentation-mode inventory across the
+  five shipped demos (TYRIAN 9, SAVARA 12, SOH JIN 13, MINES 7,
+  DELIANI 5): no demo level uses smoothies; background3over==2 is live on
+  SAVARA and SOH JIN; background2over is only ever 0/1. FINDING for
+  Stage B: background3over==1 (TYRIAN late, SAVARA, DELIANI) is a
+  FOREGROUND draw -- layer 3 paints over the player and all shots
+  (tyrian2.c ~1514) -- but the host maps it to the platform plane
+  (0.030, under the player); over modes also CHANGE mid-level via
+  events, so honoring them as heights needs a transition treatment
+  (relates to the reported "layer jumping"). Tooling: OTYR_CAPTURE=N
+  (capture count), OTYR_MUTE=1 (silent solo runs), and the harness bg
+  verification is epoch-aware (OTYR_BG_SWEEP=secs spans the whole demo
+  cycle, refetching maps per level).
 
 ## 1. Product direction
 

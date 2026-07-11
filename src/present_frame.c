@@ -18,6 +18,8 @@
  */
 #include "present_frame.h"
 
+#include "backgrnd.h"
+#include "config.h"
 #include "video.h"
 
 #include <assert.h>
@@ -40,6 +42,17 @@ void present_frame_reset(void)
 	present_sound_count = 0;
 	memset(present_backgrounds, 0, sizeof(present_backgrounds));
 	present_text_window = true;
+
+	/* Smoothie filters (lava/water/iced blur, the starShowVGA warp) read
+	   and rewrite the composited frame mid-draw-order; with suppression
+	   they would warp a key-filled buffer.  Fall back to full legacy
+	   drawing while any is active (one-tick lag on transitions: both
+	   values are last tick's -- acceptable).  Unhosted, the config flags
+	   are all false and this is a no-op. */
+	present_legacy_fallback = anySmoothies || starShowVGASpecialCode != 0;
+	present_suppress_entity_draw = present_config_suppress_entity && !present_legacy_fallback;
+	present_suppress_background = present_config_suppress_background && !present_legacy_fallback;
+	present_suppress_text = present_config_suppress_text && !present_legacy_fallback;
 }
 
 void present_background(int layer, Sint32 tile_offset, Sint16 x, Sint16 y,
@@ -106,6 +119,11 @@ unsigned int present_record(PresentCategory category, PresentBlitKind kind,
 }
 
 bool present_suppress_entity_draw = false;
+
+bool present_config_suppress_entity = false;
+bool present_config_suppress_background = false;
+bool present_config_suppress_text = false;
+bool present_legacy_fallback = false;
 
 bool present_text_window = false;
 bool present_suppress_text = false;

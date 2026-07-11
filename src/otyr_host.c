@@ -107,6 +107,7 @@ static struct
 	uint32_t frame_number;
 	uint32_t frame_level_tick;
 	uint8_t frame_in_level;
+	uint8_t frame_legacy_fallback;
 	uint8_t pixels[OTYR_FRAME_WIDTH * OTYR_FRAME_HEIGHT];
 	uint32_t palette_argb[256];
 
@@ -585,10 +586,15 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 
 	otyr_hosted = true;
 	windowHasFocus = true;  /* no window: the host always "has focus" */
-	present_suppress_entity_draw = (config->flags & OTYR_CONFIG_SUPPRESS_ENTITY_DRAW) != 0;
-	present_suppress_background = (config->flags & OTYR_CONFIG_SUPPRESS_BACKGROUND) != 0;
+	/* Configured wishes; the effective flags are recomputed each gameplay
+	   tick (present_frame_reset) so smoothie levels can fall back. */
+	present_config_suppress_entity = (config->flags & OTYR_CONFIG_SUPPRESS_ENTITY_DRAW) != 0;
+	present_config_suppress_background = (config->flags & OTYR_CONFIG_SUPPRESS_BACKGROUND) != 0;
+	present_config_suppress_text = (config->flags & OTYR_CONFIG_SUPPRESS_TEXT) != 0;
+	present_suppress_entity_draw = present_config_suppress_entity;
+	present_suppress_background = present_config_suppress_background;
+	present_suppress_text = present_config_suppress_text;
 	present_background_hash = (config->flags & OTYR_CONFIG_BACKGROUND_HASHES) != 0;
-	present_suppress_text = (config->flags & OTYR_CONFIG_SUPPRESS_TEXT) != 0;
 	memset(session.bg_maps, 0, sizeof(session.bg_maps));
 
 	session.state = SESSION_RUNNING;
@@ -710,6 +716,7 @@ int32_t otyr_session_acquire_frame(uint64_t handle, OtyrFrame *frame,
 			memcpy(frame->palette, session.palette_argb, sizeof(session.palette_argb));
 			frame->level_tick = session.frame_level_tick;
 			frame->in_level = session.frame_in_level;
+			frame->legacy_fallback = session.frame_legacy_fallback;
 			memset(frame->reserved, 0, sizeof(frame->reserved));
 			result = OTYR_OK;
 			break;
@@ -938,6 +945,7 @@ void otyr_host_present(SDL_Surface *screen)
 	++session.frame_number;
 	session.frame_level_tick = session.level_tick;
 	session.frame_in_level = otyr_in_level;
+	session.frame_legacy_fallback = present_legacy_fallback && otyr_in_level;
 
 	/* Publish the presentation snapshot for this tick (records complete by
 	   present time; sheet pointers resolve to stable ids). */

@@ -18,11 +18,14 @@
  */
 #include "video.h"
 
+#include "backgrnd.h"
+#include "config.h"
 #include "keyboard.h"
 #include "opentyr.h"
 #include "otyr_host_internal.h"
 #include "palette.h"
 #include "present_frame.h"
+#include "varz.h"
 #include "video_scale.h"
 
 #include <assert.h>
@@ -339,6 +342,23 @@ void JE_showVGA(void)
 	/* Close the in-play text recording window: draws after the tick's
 	   present (pause screens, dialogs, glow loops) belong to the frame. */
 	present_text_window = false;
+
+	/* Presentation-mode inventory (OTYR_TRACE only): one line whenever the
+	   level's draw-mode word changes, to map which levels use elevated
+	   layer modes or the smoothie warp effects. */
+	{
+		static Uint32 last_mode = 0xffffffffu;
+		Uint32 mode = ((Uint32)lvlFileNum << 24) |
+		              ((Uint32)present_backgrounds[1].over << 16) |
+		              ((Uint32)present_backgrounds[2].over << 8) |
+		              ((Uint32)starShowVGASpecialCode << 1) |
+		              (anySmoothies ? 1u : 0u);
+		if (mode != last_mode)
+		{
+			last_mode = mode;
+			otyr_trace("mode", mode, 0);
+		}
+	}
 
 	if (otyr_hosted)
 	{

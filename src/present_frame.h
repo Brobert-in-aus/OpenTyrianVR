@@ -115,6 +115,19 @@ void present_sound(Uint8 channel, Uint8 sample);
  * carries only backgrounds, HUD, and text. */
 extern bool present_suppress_entity_draw;
 
+/* --- Per-tick legacy fallback ------------------------------------------ */
+
+/* The host's configured suppression wishes (set once at session create).
+ * The EFFECTIVE flags above are recomputed at the top of every gameplay
+ * tick: levels whose presentation the 3D path cannot reproduce -- the
+ * smoothie warp/blur filters read and rewrite the composited frame -- fall
+ * back to full legacy drawing for the duration (present_legacy_fallback
+ * set; the host shows the flat frame and hides its 3D layers). */
+extern bool present_config_suppress_entity;
+extern bool present_config_suppress_background;
+extern bool present_config_suppress_text;
+extern bool present_legacy_fallback;
+
 /* --- In-play text and HUD icons ---------------------------------------- */
 
 /* The recording window for in-play overlay text: opened by

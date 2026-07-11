@@ -719,6 +719,17 @@ static enum LevelTickResult JE_levelTick(void)
 	if (otyr_hosted)
 		otyr_host_level_tick();
 
+	/* Debug (OTYR_FORCE_SMOOTHIE env): force the water smoothie so the
+	   legacy-fallback presentation path can be exercised on any level.
+	   Changes frame content -- never set during hash gates. */
+	{
+		static int force_smoothie = -1;
+		if (force_smoothie < 0)
+			force_smoothie = SDL_getenv("OTYR_FORCE_SMOOTHIE") != NULL;
+		if (force_smoothie)
+			smoothies[2-1] = true;
+	}
+
 	present_frame_reset();
 
 	//tempScreenSeg = game_screen; /* side-effect of game_screen */
