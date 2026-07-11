@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 14;
+    public const uint AbiVersion = 15;
 
     // Palette index of the suppressed background fill (the frame color key);
     // index-0 black in sprite/HUD art stays opaque.
@@ -267,7 +267,9 @@ public static unsafe class OtyrNative
         public byte LegacyFallback;  // level fell back to full legacy drawing
                                      // (smoothie warp); frame is complete and
                                      // opaque -- hide the 3D layers (v14)
-        public byte R2, R3;
+        public byte MenuPresent;  // present came mid-tick from a pause/menu
+                                  // loop: hide the 3D layers immediately (v15)
+        public byte R3;
     }
 
     [StructLayout(LayoutKind.Sequential)]

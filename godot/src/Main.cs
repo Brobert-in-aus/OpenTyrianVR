@@ -373,7 +373,11 @@ public partial class Main : Node3D
         // (sprites AND background layers) must not linger over them.  A
         // legacy-fallback level (smoothie warp) draws its complete frame
         // flat instead -- the 3D layers would double every entity.
-        _snapshotLayer.Visible = _inGameplay && _frame.LegacyFallback == 0;
+        // MenuPresent hides the scene the INSTANT a pause/menu present
+        // arrives; the tick-staleness check (250 ms) alone left the whole
+        // 3D scene floating over the menu for a beat.
+        _snapshotLayer.Visible = _inGameplay && _frame.LegacyFallback == 0 &&
+            _frame.MenuPresent == 0;
         UpdateChecklistInput();
         SubmitInput();
         UpdateDiagnostics(delta);

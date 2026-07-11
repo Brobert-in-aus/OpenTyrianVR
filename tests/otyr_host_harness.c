@@ -199,6 +199,13 @@ int main(void)
 
 	OtyrConfig config = { .struct_size = sizeof(OtyrConfig), .abi_version = OTYR_ABI_VERSION,
 	                      .flags = OTYR_CONFIG_BACKGROUND_HASHES };
+	/* OTYR_SUPPRESS=1: run with the host's real suppression flags so the
+	 * dumped frame shows ONLY what leaks flat past the gates (record-vs-
+	 * frame verification is meaningless in this mode; ignore its output). */
+	if (getenv("OTYR_SUPPRESS") != NULL)
+		config.flags |= OTYR_CONFIG_SUPPRESS_ENTITY_DRAW |
+		                OTYR_CONFIG_SUPPRESS_BACKGROUND |
+		                OTYR_CONFIG_SUPPRESS_TEXT;
 	snprintf(config.data_dir, sizeof(config.data_dir), "tyrian21");
 	snprintf(config.hash_log, sizeof(config.hash_log), "captures\\hash-hosted.log");
 

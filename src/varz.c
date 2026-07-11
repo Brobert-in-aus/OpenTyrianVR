@@ -705,10 +705,15 @@ void JE_doSpecialShot(JE_byte playerNum, uint *armor, uint *shield)
 {
 	if (player[0].items.special > 0)
 	{
-		if (shotRepeat[SHOT_SPECIAL] == 0 && specialWait == 0 && flareDuration < 2 && zinglonDuration < 2)
-			blit_sprite2(VGAScreen, 47, 4, spriteSheet9, 94);
-		else
-			blit_sprite2(VGAScreen, 47, 4, spriteSheet9, 93);
+		/* Special ready/charging lamp: in-play HUD, so it records proud
+		   like the JE_inGameDisplays blits.  This raw blit was the pause
+		   "pip": ungated, it landed flat in the frame every tick and froze
+		   into the menu backdrop. */
+		const unsigned int lamp =
+			(shotRepeat[SHOT_SPECIAL] == 0 && specialWait == 0 &&
+			 flareDuration < 2 && zinglonDuration < 2) ? 94 : 93;
+		if (!present_hud_blit(VGAScreen, &spriteSheet9, 47, 4, lamp, false))
+			blit_sprite2(VGAScreen, 47, 4, spriteSheet9, lamp);
 	}
 
 	if (shotRepeat[SHOT_SPECIAL] > 0)

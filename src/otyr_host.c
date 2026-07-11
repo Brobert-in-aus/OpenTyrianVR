@@ -108,6 +108,7 @@ static struct
 	uint32_t frame_level_tick;
 	uint8_t frame_in_level;
 	uint8_t frame_legacy_fallback;
+	uint8_t frame_menu_present;
 	uint8_t pixels[OTYR_FRAME_WIDTH * OTYR_FRAME_HEIGHT];
 	uint32_t palette_argb[256];
 
@@ -718,6 +719,7 @@ int32_t otyr_session_acquire_frame(uint64_t handle, OtyrFrame *frame,
 			frame->level_tick = session.frame_level_tick;
 			frame->in_level = session.frame_in_level;
 			frame->legacy_fallback = session.frame_legacy_fallback;
+			frame->menu_present = session.frame_menu_present;
 			memset(frame->reserved, 0, sizeof(frame->reserved));
 			result = OTYR_OK;
 			break;
@@ -947,6 +949,7 @@ void otyr_host_present(SDL_Surface *screen)
 	session.frame_level_tick = session.level_tick;
 	session.frame_in_level = otyr_in_level;
 	session.frame_legacy_fallback = present_legacy_fallback && otyr_in_level;
+	session.frame_menu_present = otyr_in_level && !otyr_tick_present;
 
 	OtyrSnapshot *snapshot = &session.snapshot;
 

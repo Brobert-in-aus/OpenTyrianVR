@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 14u
+#define OTYR_ABI_VERSION 15u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -150,7 +150,12 @@ typedef struct OtyrFrame
 	                             back to full legacy drawing (smoothie warp
 	                             filters); the frame is complete and opaque --
 	                             hide the 3D layers and show it flat (v14) */
-	uint8_t  reserved[2];
+	uint8_t  menu_present;  /* nonzero when this present came MID-TICK from a
+	                           pause/menu/dialog loop rather than the tick's
+	                           own present: the flat frame shows the menu, so
+	                           hide the 3D layers immediately instead of
+	                           waiting out tick-staleness (v15) */
+	uint8_t  reserved[1];
 } OtyrFrame;
 
 typedef struct OtyrPlayerState

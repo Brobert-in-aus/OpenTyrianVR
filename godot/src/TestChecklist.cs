@@ -13,10 +13,12 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Player ship solid + opaque the whole level",
-        "No speckle around ship during fights",
-        "Explosions look right (no sliding bursts)",
-        "Dome + big ships still solid at any angle",
+        "Pause: pip GONE (was the special-ready lamp)",
+        "Pause entry: menu instant, no 3D scene lingering",
+        "In-play: special lamp floats proud by the icon",
+        "Unpause: HUD + scene return instantly",
+        "Sway: platform statics glued, no blur",
+        "True-ground statics still fine",
         "Anything else off? tell Claude after",
     };
 

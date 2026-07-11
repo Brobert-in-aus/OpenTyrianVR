@@ -188,7 +188,27 @@
   drop the OTYR_CAT_TEXT layer (frozen HUD must not float over the
   menu), and fire no sounds.  Hash gate bit-identical (76,544 ticks);
   harness record verify unchanged (demo presents are all
-  tick-completing).  The tripwire stays armed.  NEW (confirmed in code): statics
+  tick-completing).  The tripwire stays armed.
+- Headset round 5 (2026-07-12): the partial-snapshot fix held but the
+  pip SURVIVED it, and pause entry showed the full 3D scene floating
+  over the menu for a beat.  TRUE pip root cause, nailed by headless
+  repro (harness OTYR_SUPPRESS=1 + OTYR_FORCE_SPECIAL dumps the
+  suppressed frame -- exactly one leak remained, a 6x13 red bar at
+  game (47,4)): the special-weapon READY/CHARGING LAMP in
+  JE_doSpecialShot (varz.c) was a raw ungated blit_sprite2 (sheet 9,
+  cells 93/94) -- flat in the frame EVERY tick (visible in-play under
+  the proud icon, exactly as the user reported), frozen into the menu
+  backdrop, lower half darkened by the menu bar shade.  Now routed
+  through present_hud_blit like every other in-play HUD blit.  Also
+  confirmed working this round: 85 latch-capability trace lines
+  (carrier-class saves firing in real play).  The pause TRANSITION
+  (3D scene lingering ~250 ms until tick-staleness tripped) is fixed
+  by ABI v15: OtyrFrame.menu_present marks mid-tick presents and the
+  host hides the 3D layers the instant one arrives.  Verified: the
+  suppressed frame's play region is pixel-clean top-left, hash gate
+  bit-identical (86,761 ticks), harness PASS on ABI 15.  Harness
+  gained OTYR_SUPPRESS=1 (run with the host's real suppression flags
+  so the dumped frame shows only what leaks past the gates).  NEW (confirmed in code): statics
   riding floating platforms (aux 2, and top-band aux 1 with elevated
   surface) visibly swim/blur against their platform under head motion
   -- BackgroundLayer.OnRender smooth-scrolls the ELEVATED tile layers
