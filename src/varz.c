@@ -334,6 +334,17 @@ void JE_getShipInfo(void)
 		const char *force_ship = SDL_getenv("OTYR_FORCE_SHIP");
 		if (force_ship != NULL && atoi(force_ship) > 0)
 			player[0].items.ship = (JE_byte)atoi(force_ship);
+		/* OTYR_FORCE_ARCADE=1: arcade-mode presentation (lives HUD, labels)
+		   during demos, for HUD debugging. */
+		if (SDL_getenv("OTYR_FORCE_ARCADE") != NULL)
+			onePlayerAction = true;
+		/* OTYR_FORCE_SPECIAL=<id>: give player 1 a special weapon so the
+		   in-play HUD icon path can be exercised through the demos. */
+		{
+			const char *force_special = SDL_getenv("OTYR_FORCE_SPECIAL");
+			if (force_special != NULL && atoi(force_special) > 0)
+				player[0].items.special = (JE_byte)atoi(force_special);
+		}
 	}
 
 	shipGrPtr = &spriteSheet9;

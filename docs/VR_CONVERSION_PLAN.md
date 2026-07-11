@@ -109,6 +109,25 @@
   brightest glyph pixels were keyed out ("flashes to black");
   JE_endLevelAni now ends the level presentation (otyr_host_level_end)
   before drawing.
+- Headset round 3 (2026-07-11): ship solid (flat-varying fix confirmed
+  in-headset). Fixed: pause/in-game menu run mid-tick and their presents
+  closed the in-play text window, so ONE tick of HUD blits leaked into
+  the frame and froze under the pause backdrop (the "orange rectangle");
+  the window reopens before the tick's draw phase. Investigated the
+  "ghost player duplicate" at top-left: it is the SPECIAL-WEAPON HUD
+  icon rendering CORRECTLY -- Astral Zone's art is literally a small
+  ship + green ? + swirl + red core with transparent gaps, it floats
+  proud (0.09) over the void corner, parallaxes with the head, and its
+  art changes when arcade powerups swap the special ("blue orbs
+  sometimes"). Legibility of corner HUD icons over the void is a
+  Phase 4 spatial-HUD concern, not a defect. OPEN (Stage B): first
+  spawn of a to-be-mover (the purple carrier) classifies as
+  terrain-baked art until it first moves (never-moved + opaque-cell
+  heuristic) and renders as a ground decal -- reads as translucent vs
+  its later solid spawns; the ground-classification pass owns this.
+  OPEN (cosmetic): sub-art-pixel sliver at the ship quad's top/left
+  edges, needs a dedicated look. Debug envs: OTYR_FORCE_ARCADE,
+  OTYR_FORCE_SPECIAL join OTYR_FORCE_SHIP for demo-based HUD repro.
 
 ## 1. Product direction
 

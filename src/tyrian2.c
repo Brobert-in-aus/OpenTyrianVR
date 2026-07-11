@@ -1994,6 +1994,12 @@ draw_player_shot_loop_end:
 
 	draw_boss_bar();
 
+	/* Pause and the in-game menu run mid-tick and their presents close the
+	   in-play text window; the rest of THIS tick's HUD draws are in-play,
+	   so reopen it (otherwise one tick of HUD leaked into the frame and
+	   froze under the pause/menu backdrop). */
+	present_text_window = true;
+
 	JE_inGameDisplays();
 
 	VGAScreen = VGAScreenSeg; /* side-effect of game_screen */
