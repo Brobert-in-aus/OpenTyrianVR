@@ -234,6 +234,7 @@ void otyr_host_thread_exit(int code)
 }
 
 bool otyr_in_level = false;
+bool otyr_tick_present = false;
 
 void otyr_host_level_tick(void)
 {
@@ -947,9 +948,39 @@ void otyr_host_present(SDL_Surface *screen)
 	session.frame_in_level = otyr_in_level;
 	session.frame_legacy_fallback = present_legacy_fallback && otyr_in_level;
 
+	OtyrSnapshot *snapshot = &session.snapshot;
+
+	/* Only the tick-completing present (JE_starShowVGA) publishes sprite
+	   records.  Pause and the in-game menu present MID-TICK: the record
+	   buffer is partial, and publishing it froze whichever fragments the
+	   interrupted tick had recorded over the menu backdrop for the whole
+	   pause (the round-4 "pip" -- a piece of the special-weapon HUD icon).
+	   Mid-tick presents keep the last complete tick's records, minus the
+	   in-play text/HUD layer (frozen HUD would float over the menu box),
+	   and fire no sounds. */
+	if (otyr_in_level && !otyr_tick_present)
+	{
+		snapshot->struct_size = sizeof(OtyrSnapshot);
+		unsigned int kept = 0;
+		for (unsigned int i = 0; i < snapshot->sprite_count; ++i)
+			if (snapshot->sprites[i].category != OTYR_CAT_TEXT)
+			{
+				if (kept != i)
+					snapshot->sprites[kept] = snapshot->sprites[i];
+				++kept;
+			}
+		snapshot->sprite_count = kept;
+		snapshot->sound_count = 0;
+		snapshot->level_tick = session.level_tick;
+
+		SDL_CondBroadcast(session.frame_ready);
+		SDL_UnlockMutex(session.mutex);
+		return;
+	}
+	otyr_tick_present = false;
+
 	/* Publish the presentation snapshot for this tick (records complete by
 	   present time; sheet pointers resolve to stable ids). */
-	OtyrSnapshot *snapshot = &session.snapshot;
 	snapshot->struct_size = sizeof(OtyrSnapshot);
 	snapshot->level_tick = session.level_tick;
 	snapshot->sheet_epoch = session.sheet_epoch;

@@ -204,12 +204,18 @@ public unsafe partial class BackgroundLayer : Node3D
         }
     }
 
+    // Sub-tick scroll offset per layer (interpolated origin minus this
+    // tick's origin): quads riding an elevated layer add this so they move
+    // with the smooth-scrolled tiles instead of stepping against them.
+    private readonly Vector2[] _subTickPx = new Vector2[OtyrNative.BgLayerCount];
+
     /// <summary>Called every render frame with the tick interpolation phase;
     /// smooth-scrolls the elevated layers.</summary>
     public void OnRender(float t)
     {
         for (int l = 1; l < OtyrNative.BgLayerCount; l++)
         {
+            _subTickPx[l] = Vector2.Zero;
             if (_currDraw[l].Drawn == 0 || _quads[l].Position.Z <= 0.001f)
                 continue;
 
@@ -222,7 +228,23 @@ public unsafe partial class BackgroundLayer : Node3D
                     origin = prev.Lerp(curr, t);
             }
             _materials[l].SetShaderParameter("origin_px", origin);
+            _subTickPx[l] = origin - curr;
         }
+    }
+
+    /// <summary>Sub-tick scroll offset of the elevated layer sitting at the
+    /// given lane height, or zero when no layer matches (the ground layer
+    /// steps per tick and contributes none).</summary>
+    public Vector2 SubTickOffsetAt(float z)
+    {
+        for (int l = 1; l < OtyrNative.BgLayerCount; l++)
+        {
+            if (_currDraw[l].Drawn == 0)
+                continue;
+            if (Mathf.Abs(LayerHeight(l, _currDraw[l].OverMode) - z) < 0.0005f)
+                return _subTickPx[l];
+        }
+        return Vector2.Zero;
     }
 
     /// <summary>Height of the topmost elevated map layer whose art covers the

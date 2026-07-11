@@ -151,6 +151,9 @@ void JE_starShowVGA(void)
 				src += game_screen->pitch;
 			}
 		}
+		/* This present completes the tick: its record buffer is whole, so
+		   the host may publish it (pause/menu presents mid-tick may not). */
+		otyr_tick_present = true;
 		JE_showVGA();
 	}
 

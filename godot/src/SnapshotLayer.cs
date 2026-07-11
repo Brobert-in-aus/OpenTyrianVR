@@ -962,6 +962,15 @@ public unsafe partial class SnapshotLayer : Node3D
 
             Vector2 px = cell.HasPrev ? cell.PrevPx.Lerp(cell.CurrPx, t) : cell.CurrPx;
 
+            // Decals riding an ELEVATED layer (platform statics, shadows on
+            // clouds) follow that layer's sub-tick smooth scroll: they step
+            // per tick like the ground decals, but their underlay glides
+            // between ticks, so without this they swim/blur against their
+            // own platform under head motion.  Ground decals contribute
+            // zero (the ground layer steps too).
+            if (cell.DecalOrder > 0f && cell.Z > 0.001f && _background != null)
+                px += _background.SubTickOffsetAt(cell.Z);
+
             int id = cell.SheetId;
 
             // Pixel-scaled quads: the old-table and text layers store the

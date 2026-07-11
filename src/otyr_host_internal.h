@@ -64,6 +64,11 @@ void otyr_host_game_input(struct GameInput *input);
  * (tyrian2.c); the publish-time reclassification pass reads it. */
 extern Uint8 otyr_enemy_moved[100];
 
+/* Set by JE_starShowVGA before its present: marks the tick-completing
+ * present, the only one that may publish sprite records (pause and the
+ * in-game menu present mid-tick with a partial record buffer). */
+extern bool otyr_tick_present;
+
 /* Hosted config/save directory; empty string means "use the default". */
 const char *otyr_host_user_dir(void);
 
