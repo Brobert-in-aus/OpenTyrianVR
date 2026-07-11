@@ -2606,6 +2606,12 @@ void JE_endLevelAni(void)
 
 	Sint8 i;
 
+	/* The level's play presentation is over: this screen is a full-redraw
+	   legacy UI whose text glow ramps INTO palette index 254 (set_colors
+	   maps 254 to white below) -- with the level color key still armed the
+	   host punched out exactly the brightest glyph pixels. */
+	otyr_host_level_end();
+
 	if (!constantPlay)
 	{
 		// Grant ShipEdit privileges

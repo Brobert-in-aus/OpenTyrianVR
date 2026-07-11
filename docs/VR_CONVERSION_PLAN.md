@@ -89,6 +89,26 @@
   Debug: OTYR_FORCE_SHIP=<id> substitutes player 1's ship in demos;
   solo Godot runs need CLI --xr-mode off or the engine hijacks an awake
   headset regardless of OTYR_FLAT.
+- Headset round 2 (2026-07-11): explosion fix held (speckle and sliding
+  bursts PASSED) but the ship stayed ghosted with a solid-color core,
+  the special-weapon HUD icon drew as a solid bar, and 2x2 flyers went
+  translucent over platforms. ROOT CAUSE (whole family): per-instance
+  custom data was read through SMOOTH varyings -- barycentric
+  interpolation of four identical 8.0s can yield 7.9998, and at
+  power-of-two decode boundaries that flips flag bits (floor(x/8) loses
+  the 2x2 bit -> one cell stretched; floor(x/2) gains phantom blend ->
+  55% alpha; mod(x,2) gains phantom filter -> hue-forced solid colors).
+  The INSERT COIN column-0 glyph loss was the same mechanism via
+  mod(304-eps,16). Pipeline-dependent (flat desktop often exact, VR
+  multiview not), which is why solo captures could pass while the
+  headset failed. Fix: ALL per-instance varyings are now `flat`
+  (exact provoking-vertex values) across the six snapshot shaders;
+  the rounded decodes stay as belt-and-braces. Also fixed: the
+  level-complete glow text ramps INTO palette index 254 (set_colors
+  maps it to white) while the level color key was still armed, so the
+  brightest glyph pixels were keyed out ("flashes to black");
+  JE_endLevelAni now ends the level presentation (otyr_host_level_end)
+  before drawing.
 
 ## 1. Product direction
 

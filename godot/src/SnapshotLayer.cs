@@ -116,10 +116,17 @@ public unsafe partial class SnapshotLayer : Node3D
                 uniform sampler2D atlas : filter_nearest;
                 uniform sampler2D palette : source_color, filter_nearest;
 
-                varying float cell;
-                varying float v_flags;
-                varying float v_filter;
-                varying float v_decal;
+                // FLAT: per-instance integers must arrive bit-exact.
+                // Smooth varyings interpolate (a*w0+b*w1+c*w2) even when all
+                // vertices agree, and 8.0 arriving as 7.9998 flipped every
+                // power-of-two flag decode (2x2 bit lost -> one cell
+                // stretched; phantom blend -> ghost ship; phantom filter ->
+                // solid hue blocks).  Pipeline-dependent, so flat desktop
+                // runs could pass while the headset broke.
+                varying flat float cell;
+                varying flat float v_flags;
+                varying flat float v_filter;
+                varying flat float v_decal;
 
                 void vertex() {
                     cell = INSTANCE_CUSTOM.x;
@@ -212,7 +219,7 @@ public unsafe partial class SnapshotLayer : Node3D
 
                 uniform sampler2D palette : source_color, filter_nearest;
 
-                varying float pal_index;
+                varying flat float pal_index;  // flat: see the sprite shader
 
                 void vertex() {
                     pal_index = INSTANCE_CUSTOM.x;
@@ -253,7 +260,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 uniform sampler2D atlas : filter_nearest;
                 uniform sampler2D palette : source_color, filter_nearest;
 
-                varying vec3 slot_wh;
+                varying flat vec3 slot_wh;  // flat: see the sprite shader
 
                 void vertex() {
                     slot_wh = INSTANCE_CUSTOM.xyz;
@@ -307,9 +314,10 @@ public unsafe partial class SnapshotLayer : Node3D
 
                 uniform sampler2D atlas : filter_nearest;
 
-                varying float cell;
-                varying float v_flags;
-                varying float v_decal;
+                // FLAT: see the sprite shader.
+                varying flat float cell;
+                varying flat float v_flags;
+                varying flat float v_decal;
 
                 void vertex() {
                     cell = INSTANCE_CUSTOM.x;
@@ -371,7 +379,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 uniform sampler2D atlas : filter_nearest;
                 uniform sampler2D palette : source_color, filter_nearest;
 
-                varying vec4 v_data;  // slot, w + h*65, mode + hue*4, value byte
+                varying flat vec4 v_data;  // slot, w + h*65, mode + hue*4, value byte
 
                 void vertex() {
                     v_data = INSTANCE_CUSTOM;
@@ -441,7 +449,7 @@ public unsafe partial class SnapshotLayer : Node3D
 
                 uniform sampler2D atlas : filter_nearest;
 
-                varying vec4 v_data;
+                varying flat vec4 v_data;  // flat: see the sprite shader
 
                 void vertex() {
                     v_data = INSTANCE_CUSTOM;

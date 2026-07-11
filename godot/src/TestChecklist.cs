@@ -16,7 +16,6 @@ public partial class TestChecklist : Node3D
         "Player ship solid + opaque the whole level",
         "No speckle around ship during fights",
         "Explosions look right (no sliding bursts)",
-        "WARNING text proud (let armor drop below 6)",
         "Dome + big ships still solid at any angle",
         "Anything else off? tell Claude after",
     };
