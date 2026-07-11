@@ -72,6 +72,23 @@
   (capture count), OTYR_MUTE=1 (silent solo runs), and the harness bg
   verification is epoch-aware (OTYR_BG_SWEEP=secs spans the whole demo
   cycle, refetching maps per level).
+- Headset pass (2026-07-11): text-proud VERIFIED (cash, level-start
+  flash, pause remnant gone, sidebar/bottom bar flat); dome nearly
+  correct under single-quad (two pairs of transparent pixels remain on
+  the lower section -- possibly genuine art transparency, visible only
+  because the structure floats; folds into the Stage B height work).
+  Menu text stays flat by design until the Phase 4 menu redesign.
+  REGRESSION found and fixed: the player ship smeared/shredded --
+  EXPLOSION slot ids recycle every 3-12 ticks, so a recycled slot
+  paired a new burst with a dead one within the 16px radius and the
+  quad slid across whatever it followed; the player-following sparkles
+  smeared translucent explosion art over the ship every frame (the
+  long-standing "speckle", writ large once 2x2s became single quads).
+  Explosion cells no longer interpolate (bursts live 3-12 ticks, drift
+  ~1px/tick; stepping imperceptible) -- this retires the speckle class.
+  Debug: OTYR_FORCE_SHIP=<id> substitutes player 1's ship in demos;
+  solo Godot runs need CLI --xr-mode off or the engine hijacks an awake
+  headset regardless of OTYR_FLAT.
 
 ## 1. Product direction
 

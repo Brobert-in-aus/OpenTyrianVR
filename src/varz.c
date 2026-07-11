@@ -327,6 +327,15 @@ void JE_getShipInfo(void)
 {
 	JE_boolean extraShip, extraShip2;
 
+	/* Debug (OTYR_FORCE_SHIP env): substitute player 1's ship so ship
+	   graphics variants (the two-part shipGr==0/1 ships) can be exercised
+	   through the demos.  Changes sim state -- never set for hash gates. */
+	{
+		const char *force_ship = SDL_getenv("OTYR_FORCE_SHIP");
+		if (force_ship != NULL && atoi(force_ship) > 0)
+			player[0].items.ship = (JE_byte)atoi(force_ship);
+	}
+
 	shipGrPtr = &spriteSheet9;
 	shipGr2ptr = &spriteSheet9;
 
@@ -344,6 +353,7 @@ void JE_getShipInfo(void)
 		shipGr = ships[player[0].items.ship].shipgraphic;
 		player[0].armor = ships[player[0].items.ship].dmg;
 	}
+	otyr_trace("shipgr", shipGr, player[0].items.ship);
 
 	extraShip2 = player[1].items.ship > 90;
 	if (extraShip2)

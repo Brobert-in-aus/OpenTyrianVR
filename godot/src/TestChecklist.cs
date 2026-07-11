@@ -13,13 +13,11 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Cash number floats proud above everything",
-        "Level-start flash text proud + readable",
+        "Player ship solid + opaque the whole level",
+        "No speckle around ship during fights",
+        "Explosions look right (no sliding bursts)",
         "WARNING text proud (let armor drop below 6)",
-        "Pause screen: no cash/text remnant behind it",
-        "Sidebar + bottom text bar unchanged (flat)",
-        "Dome + big ships solid at any head angle",
-        "No dissolve/shear on ships at screen edges",
+        "Dome + big ships still solid at any angle",
         "Anything else off? tell Claude after",
     };
 

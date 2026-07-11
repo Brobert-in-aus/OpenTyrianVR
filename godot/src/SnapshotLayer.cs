@@ -141,8 +141,11 @@ public unsafe partial class SnapshotLayer : Node3D
                     vec2 uv0 = UV;
                     // 2x2 sprites (flag bit 8): one quad; pick the legacy
                     // cell (+0/+1/+19/+20) by UV quadrant.
-                    if (mod(floor(v_flags / 8.0), 2.0) >= 1.0) {
+                    bool dbg_big = mod(floor(v_flags / 8.0), 2.0) >= 1.0;
+                    vec2 dbg_q = vec2(0.0);
+                    if (dbg_big) {
                         vec2 q = step(vec2(0.5), uv0);
+                        dbg_q = q;
                         cid += q.x + q.y * 19.0;
                         uv0 = fract(uv0 * 2.0);
                     }
@@ -903,7 +906,15 @@ public unsafe partial class SnapshotLayer : Node3D
         // Baked structures (and statics stacked on them) are locked to the
         // map tiles beneath; the tile layers step per tick, so interpolating
         // the art over them would swim against its own baked underlay.
-        if (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2))
+        // Explosions don't interpolate either: their slot ids recycle every
+        // few ticks, so a recycled slot paired a NEW burst with a dead one
+        // within the radius and the quad slid across whatever it followed --
+        // for the player-following shield/thruster sparkles that smeared
+        // translucent explosion art over the ship every frame (the
+        // long-standing "speckle", writ large by single-quad 2x2s).  Bursts
+        // live 3-12 ticks and drift ~1px/tick; stepping is imperceptible.
+        bool isExplosion = sprite.Category == (byte)OtyrNative.Category.Explosion;
+        if (isExplosion || (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2)))
         {
             _cellSource[_cellCount] = OtyrNative.NoSource;
             ++_cellCount;
