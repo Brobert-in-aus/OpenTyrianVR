@@ -348,12 +348,12 @@ public unsafe partial class BackgroundLayer : Node3D
         float waterFrac = opaque > 0 ? water / (float)opaque : 0f;
         // The water gate keys on the whole atlas, so a level that OPENS on
         // water and transitions to land (SAVARA) arms once and lifts its
-        // land-baked clouds too.  0.15: majority-land atlases still carry
-        // enough water shapes; pure-land levels stay off until they prove
-        // a case for arming.
-        _cloudActive = cloudFrac > 0.02f && cloudFrac < 0.45f && waterFrac > 0.15f;
+        // land-baked clouds too.  Cloud floor 0.5%: SAVARA's baked clouds
+        // are sparse across the full tile set (read 0.9% in-session); the
+        // water gate carries the false-positive load.
+        _cloudActive = cloudFrac > 0.005f && cloudFrac < 0.45f && waterFrac > 0.15f;
         GD.Print($"OpenTyrianVR: water-cloud split {(_cloudActive ? "ARMED" : "off")} " +
-                 $"(cloud {cloudFrac:P1}, water {waterFrac:P1} of ground art)");
+                 $"(cloud {cloudFrac:P1}, water {waterFrac:P1} of ground art, epoch {_mapEpoch})");
         if (!_cloudActive)
         {
             _materials[0].SetShaderParameter("cloud_mode", 0);
@@ -424,14 +424,21 @@ public unsafe partial class BackgroundLayer : Node3D
     /// draw order.  Shadows pass true: they fall on clouds too.</summary>
     public float SurfaceZAt(Vector2 framePx, bool includeClouds = false)
     {
-        int lowestLayer = includeClouds ? 1 : 2;
-        for (int l = OtyrNative.BgLayerCount - 1; l >= lowestLayer; l--)
+        for (int l = OtyrNative.BgLayerCount - 1; l >= 1; l--)
         {
             if (_currDraw[l].Drawn == 0)
                 continue;
             float z = LayerHeight(l, _currDraw[l].OverMode);
             if (z <= 0.001f)
                 continue;  // coplanar layers are not ridable surfaces
+            // Ridability is the layer's ROLE, not its index: on SAVARA the
+            // CLOUD layer is layer 2 (over mode 2), and the old index rule
+            // bounced surface-following ground objects up to cloud height
+            // whenever a cloud drifted over them.  Only the platform plane
+            // is ridable; cloud-height layers count for shadows alone.
+            bool platform = Mathf.Abs(z - PlatformZ) <= 0.0005f;
+            if (!platform && !includeClouds)
+                continue;
             if (OpaqueAt(l, framePx))
                 return z;
         }
