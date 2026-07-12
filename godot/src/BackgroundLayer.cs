@@ -288,6 +288,11 @@ public unsafe partial class BackgroundLayer : Node3D
         _cloudQuad.Visible = _cloudActive && _currDraw[1].Drawn != 0;
         if (_cloudQuad.Visible)
             _cloudMaterial.SetShaderParameter("origin_px", Origin(1, _currDraw[1]));
+        // No in-place copy while lifted: the darkened-shadow look reads
+        // wrong over land (user call, 2026-07-12).  Clouds cast nothing
+        // until the real directional-sun shadow pass.
+        if (_cloudActive)
+            _quads[1].Visible = false;
     }
 
     // Classify layer 0's atlas pixels: cloud art is bright and desaturated,
@@ -382,9 +387,8 @@ public unsafe partial class BackgroundLayer : Node3D
             return;
         }
 
-        // Layer 1's own quad becomes the in-place shadow; the cloud quad
+        // Layer 1's own quad hides (see OnSnapshot); the cloud quad
         // re-renders the same layer lifted.
-        _materials[1].SetShaderParameter("cloud_mode", 1);
         _cloudMaterial.SetShaderParameter("tilemap", _tilemapTex[1]);
         _cloudMaterial.SetShaderParameter("atlas", _atlasTex[1]);
         _cloudMaterial.SetShaderParameter("map_size", _mapSize[1]);
