@@ -708,6 +708,15 @@ public partial class Main : Node3D
 
         _editorBands ??= BuildEditorBands();
 
+        // Home: snap the orbit to lane-perpendicular (the lane is tilted
+        // -42, so the zero-parallax view is pitch -48, NOT straight down --
+        // "straight down" is still ~45 degrees oblique to the lane).
+        if (EditorKeyPressed(Key.Home))
+        {
+            _editorYaw = 0f;
+            _editorPitch = -48f;
+        }
+
         if (_editorSelected != 0 && _frame.InLevel != 0)
         {
             float current = _snapshotLayer.EditorHeightOf(_editorSelected);
@@ -715,9 +724,11 @@ public partial class Main : Node3D
             if (EditorKeyPressed(Key.Up))
                 _snapshotLayer.EditorSetHeight(_editorSelected,
                     (float.IsNaN(current) ? 0.004f : current) + step);
+            // No floor: nudging below the tile plane is a legitimate probe
+            // (sink an object through the ground to verify alignment).
             if (EditorKeyPressed(Key.Down))
                 _snapshotLayer.EditorSetHeight(_editorSelected,
-                    Math.Max(0f, (float.IsNaN(current) ? 0.004f : current) - step));
+                    (float.IsNaN(current) ? 0.004f : current) - step);
 
             // Band assignment keys (1..9, 0, -, = -- height-ordered).
             foreach (ref readonly EditorBand band in _editorBands.AsSpan())
