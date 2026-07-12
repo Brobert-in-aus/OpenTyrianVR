@@ -13,10 +13,12 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Ground statics aligned + solid again",
-        "Platform statics still solid",
-        "First-spawn flyers solid everywhere",
-        "Clouds translucent EVERY run (restart to check)",
+        "Heights read right in 3D (sweep levels, PgUp/PgDn jumps)",
+        "No per-eye shimmer/ghosting anywhere (close one eye to compare)",
+        "Enemy stacking sane (segmented ships, crossing flyers)",
+        "SAVARA: water clouds float, selectable height held",
+        "SAVARA V: storm sea ripples in 3D, entities crisp above",
+        "Ship shadow stable while head-tilting",
         "Anything else off? quote frame numbers",
     };
 

@@ -457,6 +457,11 @@ public partial class Main : Node3D
     // OTYR_INVULN=1 so the parked ghost player survives the level.
     private static readonly bool HeightEditor =
         System.Environment.GetEnvironmentVariable("OTYR_HEIGHT_EDITOR") == "1";
+    // Ghost-mode testing outside the editor (invulnerable VR level sweeps):
+    // the debug keys (N skip, K kill-all, PageUp/Down level jump) arm with
+    // the same OTYR_INVULN the native side requires for them.
+    private static readonly bool InvulnSession =
+        System.Environment.GetEnvironmentVariable("OTYR_INVULN") == "1";
     // The unified band table drives the legend, the assignment keys, and
     // numpad +/- stepping.  Cls != null assigns a JSON class ("ground" =
     // surface-following); otherwise the band's height is set explicitly.
@@ -646,6 +651,14 @@ public partial class Main : Node3D
         _snapshotLayer.SetStorm(_frame.StormWater);
         if (HeightEditor)
             UpdateHeightEditor();
+        else if (InvulnSession)
+        {
+            // Invulnerable VR sweep: level jump on the keyboard.
+            if (EditorKeyPressed(Key.Pagedown))
+                EditorJumpLevel(1);
+            if (EditorKeyPressed(Key.Pageup))
+                EditorJumpLevel(-1);
+        }
         UpdateChecklistInput();
         SubmitInput();
         UpdateDiagnostics(delta);
@@ -1025,6 +1038,13 @@ public partial class Main : Node3D
         if (Input.IsKeyPressed(Key.Ctrl)) buttons |= OtyrNative.Buttons.LeftSidekick;
         if (Input.IsKeyPressed(Key.Alt)) buttons |= OtyrNative.Buttons.RightSidekick;
         if (Input.IsKeyPressed(Key.P)) buttons |= OtyrNative.Buttons.UiPause;
+        if (InvulnSession)
+        {
+            // Ghost sweep: past bosses / kill-gates from the keyboard
+            // (native side ignores these without OTYR_INVULN anyway).
+            if (Input.IsKeyPressed(Key.N)) buttons |= OtyrNative.Buttons.DebugSkip;
+            if (Input.IsKeyPressed(Key.K)) buttons |= OtyrNative.Buttons.DebugKill;
+        }
 
         // VR controllers (Godot's default OpenXR action map).
         if (_xrActive && _leftHand != null && _rightHand != null)
