@@ -139,10 +139,10 @@
       "class": "ground"
     },
     "135": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "136": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "137": {
       "class": "ground"
@@ -187,7 +187,7 @@
       "class": "ground"
     },
     "15": {
-      "height": 0.0315000005066395,
+      "height": 0.033500000834465,
       "seen": "demo sheet=5 index=58 ticks=1037"
     },
     "150": {
@@ -230,19 +230,19 @@
       "class": "air-high"
     },
     "162": {
-      "class": "air-high",
+      "class": "ground",
       "seen": "demo sheet=5 index=58 ticks=1729"
     },
     "163": {
-      "class": "ground",
+      "class": "air-mid",
       "seen": "demo sheet=5 index=144 ticks=159"
     },
     "164": {
-      "class": "ground",
+      "class": "pickup",
       "seen": "demo sheet=5 index=30 ticks=959"
     },
     "165": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "166": {
       "class": "ground",
@@ -347,7 +347,7 @@
       "class": "ground"
     },
     "194": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "195": {
       "class": "ground"
@@ -576,25 +576,25 @@
       "seen": "demo sheet=5 index=68 ticks=192"
     },
     "260": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "261": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "262": {
       "class": "ground"
     },
     "263": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "264": {
       "class": "ground"
     },
     "265": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "266": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "267": {
       "class": "ground"
@@ -603,29 +603,29 @@
       "class": "ground"
     },
     "269": {
-      "class": "air-high"
+      "class": "ground"
     },
     "27": {
       "class": "air-high",
       "seen": "demo sheet=5 index=70 ticks=155"
     },
     "270": {
-      "class": "air-high"
+      "class": "ground"
     },
     "271": {
-      "class": "air-high"
+      "height": 0.00600000005215406
     },
     "272": {
-      "class": "air-high"
+      "class": "ground"
     },
     "273": {
-      "class": "air-high"
+      "class": "ground"
     },
     "274": {
       "class": "air-high"
     },
     "275": {
-      "class": "air-high"
+      "class": "ground"
     },
     "276": {
       "class": "air-high"
@@ -653,22 +653,22 @@
       "class": "ground"
     },
     "283": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "284": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "285": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "286": {
       "class": "ground"
     },
     "287": {
-      "class": "air-high"
+      "class": "ground"
     },
     "288": {
-      "class": "air-high"
+      "class": "ground"
     },
     "289": {
       "class": "air-high"
@@ -712,7 +712,7 @@
       "seen": "demo sheet=5 index=228 ticks=939"
     },
     "30": {
-      "class": "air-mid",
+      "height": 0.033500000834465,
       "seen": "demo sheet=5 index=108 ticks=851"
     },
     "300": {
@@ -750,38 +750,38 @@
       "seen": "demo sheet=6 index=297 ticks=327"
     },
     "309": {
-      "class": "air-high"
+      "height": 0.00600000005215406
     },
     "31": {
-      "height": 0.033500000834465,
+      "height": 0.0355000011622906,
       "seen": "demo sheet=5 index=146 ticks=493"
     },
     "310": {
-      "class": "air-high"
+      "height": 0.00600000005215406
     },
     "311": {
-      "class": "air-high"
+      "height": 0.00600000005215406
     },
     "312": {
-      "class": "air-high"
+      "height": 0.00600000005215406
     },
     "313": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "314": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "315": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "316": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "317": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "318": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "319": {
       "class": "ground"
@@ -794,41 +794,41 @@
       "class": "ground"
     },
     "321": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "322": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "323": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "324": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "325": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "326": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "327": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "328": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "329": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "33": {
       "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=294 ticks=735"
     },
     "330": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "331": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "332": {
       "class": "air-high"
@@ -849,41 +849,41 @@
       "class": "air-high"
     },
     "338": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "339": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "34": {
       "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=296 ticks=1300"
     },
     "340": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "341": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "342": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "343": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "344": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "345": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "346": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "347": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "348": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "349": {
       "class": "ground",
@@ -1297,7 +1297,7 @@
       "class": "ground"
     },
     "462": {
-      "class": "ground"
+      "class": "air-mid"
     },
     "463": {
       "class": "ground"
@@ -1433,7 +1433,7 @@
       "class": "air-low"
     },
     "500": {
-      "class": "ground",
+      "class": "air-mid",
       "seen": "demo sheet=5 index=188 ticks=879"
     },
     "501": {
@@ -1598,22 +1598,22 @@
       "class": "air-high"
     },
     "546": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "547": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "548": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "549": {
-      "class": "air-high"
+      "height": 0.0052000000141561
     },
     "55": {
       "class": "air-low"
     },
     "550": {
-      "class": "air-high"
+      "height": 0.00999999977648258
     },
     "551": {
       "class": "ground"
@@ -1688,16 +1688,16 @@
       "class": "air-high"
     },
     "573": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "574": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "575": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "576": {
-      "class": "air-high"
+      "height": 0.0031999999191612
     },
     "577": {
       "class": "ground"
