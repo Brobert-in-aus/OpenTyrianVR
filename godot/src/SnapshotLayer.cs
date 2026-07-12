@@ -1363,7 +1363,11 @@ public unsafe partial class SnapshotLayer : Node3D
             bool overridden = cell.EntityType != 0 &&
                 _editorHeights.TryGetValue(cell.EntityType, out editH);
             if (overridden)
-                z = editH + i * OrderBias;
+                // Inverted bias (user-verified on the segmented object 30):
+                // its later-entered sections reuse EARLIER slots, so
+                // ascending record order put first-entered on top; descending
+                // makes the last section to enter draw over the rest.
+                z = editH + (_cellCount - i) * OrderBias;
             // The lift exists for VR multiview (per-eye depth-precision
             // ghosting); viewed obliquely it parallaxes decals up to ~1 px
             // off their baked underlay.  The editor is flat single-view,
