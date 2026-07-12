@@ -306,6 +306,13 @@ public unsafe partial class BackgroundLayer : Node3D
             FetchMaps(session);
         }
         _stormTick = snapshot.LevelTick;
+        // Ground scroll rate this tick (px, +y down-screen): apron ghosts
+        // ride it when their own cell never paired a velocity (statics).
+        if (_currDraw[0].Drawn != 0 && snapshot.Background(0).Drawn != 0)
+        {
+            float dy = Origin(0, snapshot.Background(0)).Y - Origin(0, _currDraw[0]).Y;
+            GroundScrollDy = dy > -0.5f && dy < 6f ? Mathf.Max(dy, 0f) : GroundScrollDy;
+        }
         // E2 de-parallax: rebase each layer's origin to its fixed offset.
         // Deltas are PER TICK and pair with that tick's draw record: the
         // elevated layers lerp prev->curr origins per render frame, and
@@ -663,6 +670,9 @@ public unsafe partial class BackgroundLayer : Node3D
     /// <summary>Play-region position of map tile (0,0) for a draw record: the
     /// record pins map cell (row0, col0) at frame (x, y); draw x is in
     /// pre-composite coordinates (play area publishes shifted -24).</summary>
+    /// <summary>Ground layer's down-screen scroll (px per tick).</summary>
+    public float GroundScrollDy { get; private set; } = 1f;
+
     // E2: per-layer parallax delta this tick and last tick (drawn minus
     // fixed offset) -- each draw record rebases with ITS OWN tick's delta.
     private readonly int[] _layerParallax = new int[OtyrNative.BgLayerCount];

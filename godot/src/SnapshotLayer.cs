@@ -763,6 +763,82 @@ public unsafe partial class SnapshotLayer : Node3D
                 AddCell(sprite, i, sprite.Index, 0, 0);
             }
         }
+
+        UpdateApronGhosts();
+    }
+
+    // E1 apron ghosts: the sim frees enemies just past the legacy bottom
+    // edge while the apron terrain flows on for another ~56 px, so ships
+    // and structures popped out mid-apron.  An enemy cell that existed low
+    // on screen last tick with no matching cell this tick continues as a
+    // GHOST -- visual only, sliding at its last paired velocity (statics:
+    // the ground scroll rate) until it exits the apron.  Ghost cells carry
+    // DecalOrder = -1 so they never seed further ghosts and skip decal
+    // machinery.
+    private struct ApronGhost
+    {
+        public RenderCell Cell;
+        public Vector2 Velocity;
+    }
+    private readonly System.Collections.Generic.List<ApronGhost> _ghosts = new();
+    private uint _ghostEpoch;
+
+    private void UpdateApronGhosts()
+    {
+        if (_snapshot.SheetEpoch != _ghostEpoch)
+        {
+            _ghosts.Clear();
+            _ghostEpoch = _snapshot.SheetEpoch;
+        }
+        int realCells = _cellCount;
+        float scrollDy = Mathf.Clamp(_background?.GroundScrollDy ?? 1f, 0.25f, 4f);
+
+        // Advance survivors and re-emit them as cells.
+        for (int g = _ghosts.Count - 1; g >= 0; g--)
+        {
+            ApronGhost ghost = _ghosts[g];
+            ghost.Cell.PrevPx = ghost.Cell.CurrPx;
+            ghost.Cell.CurrPx += ghost.Velocity;
+            ghost.Cell.HasPrev = true;
+            if (ghost.Cell.CurrPx.Y > 240f + OtyrNative.SheetCellH || _cellCount >= _cells.Length)
+            {
+                _ghosts.RemoveAt(g);
+                continue;
+            }
+            _ghosts[g] = ghost;
+            _cellSource[_cellCount] = OtyrNative.NoSource;
+            _cells[_cellCount++] = ghost.Cell;
+        }
+
+        // Scan last tick's real enemy cells low on screen for disappearances.
+        for (int p = 0; p < _prevCellCount; p++)
+        {
+            ref readonly RenderCell prev = ref _prevCells[p];
+            if (prev.EntityType == 0 || prev.DecalOrder < 0f || prev.CurrPx.Y <= 180f)
+                continue;
+            Vector2 velocity = prev.HasPrev ? prev.CurrPx - prev.PrevPx : new Vector2(0f, scrollDy);
+            if (velocity.Y < 0f)
+                continue;  // climbing back up: let the sim's own cull stand
+            Vector2 predicted = prev.CurrPx + velocity;
+            // Sheet + proximity only: animation advances CellIndex between
+            // ticks, and an index test would ghost-duplicate live enemies.
+            bool matched = false;
+            for (int c = 0; c < realCells && !matched; c++)
+                matched = _cells[c].SheetId == prev.SheetId &&
+                          _cells[c].CurrPx.DistanceSquaredTo(predicted) < 12f * 12f;
+            if (matched || _cellCount >= _cells.Length)
+                continue;
+            var ghost = new ApronGhost { Cell = prev, Velocity = velocity };
+            ghost.Cell.PrevPx = prev.CurrPx;
+            ghost.Cell.CurrPx = predicted;
+            ghost.Cell.HasPrev = true;
+            ghost.Cell.EntityType = 0;    // not pickable/editable
+            ghost.Cell.Flags &= 8;        // keep the 2x2 bit only (no halos)
+            ghost.Cell.DecalOrder = -1f;  // ghost sentinel
+            _ghosts.Add(ghost);
+            _cellSource[_cellCount] = OtyrNative.NoSource;
+            _cells[_cellCount++] = ghost.Cell;
+        }
     }
 
     private void AddGlow(in OtyrNative.SnapshotSprite sprite, uint recordIndex)
