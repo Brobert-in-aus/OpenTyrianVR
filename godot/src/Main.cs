@@ -149,10 +149,13 @@ public partial class Main : Node3D
         var camera = new XRCamera3D { Name = "XRCamera" };
         if (!_xrActive)
         {
-            // Approximate a seated player looking down at the board; the
-            // height editor leans steeper so hover heights read clearly.
-            camera.Position = HeightEditor ? new Vector3(0f, 1.95f, 0.25f) : new Vector3(0f, 1.6f, 0f);
-            camera.RotationDegrees = new Vector3(HeightEditor ? -48f : -25f, 0f, 0f);
+            // Approximate a seated player looking down at the board.  The
+            // height editor wants the OPPOSITE of steep: a low grazing view
+            // (the lane is tilted -42, so a steep camera pitch approaches
+            // perpendicular and flattens all height separation) from close
+            // in, so hover heights read as clear vertical offsets.
+            camera.Position = HeightEditor ? new Vector3(0f, 1.26f, -0.05f) : new Vector3(0f, 1.6f, 0f);
+            camera.RotationDegrees = new Vector3(HeightEditor ? -15f : -25f, 0f, 0f);
         }
         origin.AddChild(camera);
         camera.MakeCurrent();
