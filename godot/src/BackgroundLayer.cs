@@ -26,9 +26,11 @@ public unsafe partial class BackgroundLayer : Node3D
     private const int AtlasCols = 8;  // 8x9 grid of 24x28 shapes
 
     // E1 wide canvas: the quads cover the FULL authored map width (336/360
-    // px vs the 264 legacy window) plus a below-screen apron and an
-    // above-screen strip -- the shader is transparent beyond the map, so
-    // one rect serves all layers.  Play-region coordinates.
+    // px vs the 264 legacy window) plus an above strip and a below-screen
+    // apron -- the shader is transparent beyond (and in unauthored holes
+    // of) the map, and the backing only backs the play region, so holes
+    // fade into the void.  Play-region coordinates.  (User call: full
+    // width beats clamping to the legacy-reachable window.)
     private const float CanvasX0 = -40f, CanvasY0 = -28f;
     private const float CanvasW = 376f, CanvasH = 268f;
 
@@ -217,11 +219,11 @@ public unsafe partial class BackgroundLayer : Node3D
 
         // The E1 wide canvas in lane-local coordinates (the lane maps the
         // full 320x200 frame; play area publishes at -24).
-        var quadMesh = new QuadMesh
+        QuadMesh LayerMesh(int l) => new QuadMesh
         {
             Size = new Vector2(CanvasW / 320f * LaneWidth, CanvasH / 200f * LaneHeight),
         };
-        float centerX = ((CanvasX0 + CanvasW / 2f) / 320f - 0.5f) * LaneWidth;
+        float LayerCenterX(int l) => ((CanvasX0 + CanvasW / 2f) / 320f - 0.5f) * LaneWidth;
         float centerY = (0.5f - (CanvasY0 + CanvasH / 2f) / 200f) * LaneHeight;
 
         for (int l = 0; l < OtyrNative.BgLayerCount; l++)
@@ -243,9 +245,9 @@ public unsafe partial class BackgroundLayer : Node3D
             _quads[l] = new MeshInstance3D
             {
                 Name = $"BgLayer{l}",
-                Mesh = quadMesh,
+                Mesh = LayerMesh(l),
                 MaterialOverride = _materials[l],
-                Position = new Vector3(centerX, centerY, LayerHeight(l, 0)),
+                Position = new Vector3(LayerCenterX(l), centerY, LayerHeight(l, 0)),
                 Visible = false,
             };
             AddChild(_quads[l]);
@@ -265,21 +267,26 @@ public unsafe partial class BackgroundLayer : Node3D
         _cloudQuad = new MeshInstance3D
         {
             Name = "WaterClouds",
-            Mesh = quadMesh,
+            Mesh = LayerMesh(1),
             MaterialOverride = _cloudMaterial,
-            Position = new Vector3(centerX, centerY, WaterCloudHeight),
+            Position = new Vector3(LayerCenterX(1), centerY, WaterCloudHeight),
             Visible = false,
         };
         AddChild(_cloudQuad);
 
-        // Opaque backing behind everything: where the suppressed legacy frame
-        // and the tile layers are all transparent, the board reads as black
-        // (menus, erased HUD rects, astral events) instead of see-through.
+        // Opaque backing behind the PLAY REGION only: where the suppressed
+        // legacy frame and the tile layers are all transparent there, the
+        // board reads as black (erased HUD rects, astral events) instead of
+        // see-through.  The E1 margins deliberately have no backing -- rows
+        // whose outer map columns are unauthored fade into the void instead
+        // of showing a hard black slab.  (Menus draw the frame opaque, so
+        // they never needed the backing.)
         AddChild(new MeshInstance3D
         {
             Name = "Backing",
-            Mesh = new QuadMesh { Size = new Vector2(LaneWidth, LaneHeight) },
-            Position = new Vector3(0f, 0f, -0.0012f),
+            Mesh = new QuadMesh { Size = new Vector2(264f / 320f * LaneWidth, 184f / 200f * LaneHeight) },
+            Position = new Vector3((132f / 320f - 0.5f) * LaneWidth,
+                                   (0.5f - 92f / 200f) * LaneHeight, -0.0012f),
             MaterialOverride = new StandardMaterial3D
             {
                 AlbedoColor = new Color(0f, 0f, 0f),
@@ -299,10 +306,16 @@ public unsafe partial class BackgroundLayer : Node3D
             FetchMaps(session);
         }
         _stormTick = snapshot.LevelTick;
-        // E2 de-parallax: rebase each layer's origin to its fixed offset
-        // (deltas exported per tick; Origin() subtracts).
+        // E2 de-parallax: rebase each layer's origin to its fixed offset.
+        // Deltas are PER TICK and pair with that tick's draw record: the
+        // elevated layers lerp prev->curr origins per render frame, and
+        // rebasing the prev draw with the CURRENT delta made the clouds
+        // wobble during strafes (user-caught).
         for (int l = 0; l < OtyrNative.BgLayerCount; l++)
+        {
+            _prevParallax[l] = _layerParallax[l];
             _layerParallax[l] = snapshot.LayerParallax(l);
+        }
 
         for (int l = 0; l < OtyrNative.BgLayerCount; l++)
         {
@@ -476,7 +489,7 @@ public unsafe partial class BackgroundLayer : Node3D
             Vector2 origin = curr;
             if (_prevDraw[l].Drawn != 0)
             {
-                Vector2 prev = Origin(l, _prevDraw[l]);
+                Vector2 prev = Origin(l, _prevDraw[l], prev: true);
                 if (prev.DistanceTo(curr) <= TeleportGuardPx)
                     origin = prev.Lerp(curr, t);
             }
@@ -650,10 +663,12 @@ public unsafe partial class BackgroundLayer : Node3D
     /// <summary>Play-region position of map tile (0,0) for a draw record: the
     /// record pins map cell (row0, col0) at frame (x, y); draw x is in
     /// pre-composite coordinates (play area publishes shifted -24).</summary>
-    // E2: per-layer parallax delta this tick (drawn minus fixed offset).
+    // E2: per-layer parallax delta this tick and last tick (drawn minus
+    // fixed offset) -- each draw record rebases with ITS OWN tick's delta.
     private readonly int[] _layerParallax = new int[OtyrNative.BgLayerCount];
+    private readonly int[] _prevParallax = new int[OtyrNative.BgLayerCount];
 
-    private Vector2 Origin(int layer, in OtyrNative.BackgroundDraw draw)
+    private Vector2 Origin(int layer, in OtyrNative.BackgroundDraw draw, bool prev = false)
     {
         int width = Math.Max((int)_mapSize[layer].X, 1);
         int row0 = (int)Math.Floor(draw.TileOffset / (double)width);
@@ -661,7 +676,8 @@ public unsafe partial class BackgroundLayer : Node3D
         // Subtracting the parallax delta pins the layer at its fixed
         // mid-swing offset (E2); enemy records rebase by the same deltas,
         // so terrain-glued art stays glued.
-        return new Vector2(draw.X - 24 - col0 * 24 - _layerParallax[layer], draw.Y - row0 * 28);
+        int parallax = prev ? _prevParallax[layer] : _layerParallax[layer];
+        return new Vector2(draw.X - 24 - col0 * 24 - parallax, draw.Y - row0 * 28);
     }
 
     private void FetchMaps(ulong session)

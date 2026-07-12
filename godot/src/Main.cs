@@ -23,6 +23,9 @@ public partial class Main : Node3D
 
     private Image _image = null!;
     private ImageTexture _texture = null!;
+    private ShaderMaterial _laneMaterial = null!;
+    private MeshInstance3D _hudSidebar = null!;
+    private MeshInstance3D _hudBottomBar = null!;
     private OtyrNative.Frame _frame;
     private readonly byte[] _rgba = new byte[OtyrNative.FrameWidth * OtyrNative.FrameHeight * 4];
     private readonly uint[] _palette = new uint[256];
@@ -259,14 +262,26 @@ public partial class Main : Node3D
                 render_mode unshaded, depth_prepass_alpha;
 
                 uniform sampler2D frame : source_color, filter_linear_mipmap_anisotropic;
+                // UV sub-rect of the frame this quad shows (the HUD split
+                // renders sidebar/bottom-bar regions on their own quads).
+                uniform vec2 uv0 = vec2(0.0, 0.0);
+                uniform vec2 uv1 = vec2(1.0, 1.0);
+                // E1 HUD split: 1 = discard the sidebar (x >= 264) and the
+                // bottom bar (y >= 184) here; they render relocated.
+                uniform int hud_split = 0;
 
                 void fragment() {
                     vec2 size = vec2(textureSize(frame, 0));
-                    vec2 pixel = UV * size;
+                    vec2 pixel = (uv0 + UV * (uv1 - uv0)) * size;
                     vec2 seam = floor(pixel + 0.5);
                     vec2 dudv = fwidth(pixel);
                     pixel = seam + clamp((pixel - seam) / dudv, -0.5, 0.5);
                     vec4 c = texture(frame, pixel / size);
+                    // HUD split: alpha-zero (NOT discard) so the depth
+                    // prepass also skips these texels and the tile canvas
+                    // shows through where the sidebar/bottom bar sat.
+                    if (hud_split == 1 && (pixel.x >= 264.0 || pixel.y >= 184.0))
+                        c = vec4(0.0);
                     // Alpha carries the background color key (the suppressed
                     // fill index); the tile layers render just behind this
                     // plane.  Texture data is premultiplied: un-premultiply
@@ -278,6 +293,7 @@ public partial class Main : Node3D
         };
         var material = new ShaderMaterial { Shader = shader };
         material.SetShaderParameter("frame", _texture);
+        _laneMaterial = material;
 
         var lane = new MeshInstance3D
         {
@@ -287,10 +303,43 @@ public partial class Main : Node3D
         };
         _playfieldRoot.AddChild(lane);
 
+        // E1 HUD split: the sidebar (frame x 264..320) and bottom bar
+        // (y 184..200 under the play area) render on their own quads,
+        // floated clear of the widened diorama; the lane discards those
+        // regions while the split is live (in-level, 3D showing).
+        _hudSidebar = BuildHudQuad(shader, "HudSidebar",
+            new Vector2(264f / 320f, 0f), new Vector2(1f, 1f),
+            56f, 200f, frameCenterX: 372f, frameCenterY: 100f, yawDeg: -18f);
+        _hudBottomBar = BuildHudQuad(shader, "HudBottomBar",
+            new Vector2(0f, 184f / 200f), new Vector2(264f / 320f, 1f),
+            264f, 16f, frameCenterX: 132f, frameCenterY: 254f, yawDeg: 0f);
+
         BuildHandSteering();
 
         _snapshotLayer = new SnapshotLayer { Name = "SnapshotLayer", EnableBackground = Render3DBackground };
         _playfieldRoot.AddChild(_snapshotLayer);
+
+        MeshInstance3D BuildHudQuad(Shader laneShader, string name, Vector2 uv0, Vector2 uv1,
+                                    float widthPx, float heightPx,
+                                    float frameCenterX, float frameCenterY, float yawDeg)
+        {
+            var m = new ShaderMaterial { Shader = laneShader };
+            m.SetShaderParameter("frame", _texture);
+            m.SetShaderParameter("uv0", uv0);
+            m.SetShaderParameter("uv1", uv1);
+            var quad = new MeshInstance3D
+            {
+                Name = name,
+                Mesh = new QuadMesh { Size = new Vector2(widthPx / 320f * LaneWidth, heightPx / 200f * LaneHeight) },
+                MaterialOverride = m,
+                Position = new Vector3((frameCenterX / 320f - 0.5f) * LaneWidth,
+                                       (0.5f - frameCenterY / 200f) * LaneHeight, 0.03f),
+                Rotation = new Vector3(0f, Mathf.DegToRad(yawDeg), 0f),
+                Visible = false,
+            };
+            _playfieldRoot.AddChild(quad);
+            return quad;
+        }
 
         GetViewport().Msaa3D = Viewport.Msaa.Msaa4X;
         GetViewport().Scaling3DScale = 1.4f;
@@ -300,7 +349,8 @@ public partial class Main : Node3D
             Name = "Diagnostics",
             Text = "starting...",
             PixelSize = 0.0008f,
-            Position = new Vector3(0f, -0.47f, 0.02f),
+            // Below the relocated bottom bar (E1 HUD split).
+            Position = new Vector3(0f, -0.56f, 0.02f),
             Modulate = new Color(0.6f, 1.0f, 0.6f),
         };
         _playfieldRoot.AddChild(_diagnostics);
@@ -649,6 +699,13 @@ public partial class Main : Node3D
             ? _frame.InLevel != 0 && _frame.LegacyFallback == 0
             : _inGameplay && _frame.LegacyFallback == 0 && _frame.MenuPresent == 0;
         _snapshotLayer.SetStorm(_frame.StormWater);
+        // E1 HUD split follows the 3D scene: in-level the lane drops the
+        // sidebar/bottom-bar regions and the floating quads show them;
+        // menus/fallback restore the whole flat frame.
+        bool hudSplit = _snapshotLayer.Visible;
+        _laneMaterial.SetShaderParameter("hud_split", hudSplit ? 1 : 0);
+        _hudSidebar.Visible = hudSplit;
+        _hudBottomBar.Visible = hudSplit;
         if (HeightEditor)
             UpdateHeightEditor();
         else if (InvulnSession)
