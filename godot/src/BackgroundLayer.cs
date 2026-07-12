@@ -304,7 +304,10 @@ public unsafe partial class BackgroundLayer : Node3D
             float mx = Mathf.Max(c.R, Mathf.Max(c.G, c.B));
             float mn = Mathf.Min(c.R, Mathf.Min(c.G, c.B));
             float sat = mx <= 0f ? 0f : (mx - mn) / mx;
-            isCloud[i] = mx > 0.55f && sat < 0.35f;
+            // Clouds are bright, desaturated, and COOL (white to bluish) --
+            // over land too.  The coolness test keeps warm-bright terrain
+            // (tan dirt speckle, rock highlights) out of the mask.
+            isCloud[i] = mx > 0.55f && sat < 0.35f && c.B >= c.R - 0.01f;
             isWater[i] = c.B > mx - 0.02f && c.B > c.R + 0.08f && mx > 0.15f;
         }
 
@@ -321,7 +324,12 @@ public unsafe partial class BackgroundLayer : Node3D
         }
         float cloudFrac = opaque > 0 ? cloud / (float)opaque : 0f;
         float waterFrac = opaque > 0 ? water / (float)opaque : 0f;
-        _cloudActive = cloudFrac > 0.02f && cloudFrac < 0.45f && waterFrac > 0.25f;
+        // The water gate keys on the whole atlas, so a level that OPENS on
+        // water and transitions to land (SAVARA) arms once and lifts its
+        // land-baked clouds too.  0.15: majority-land atlases still carry
+        // enough water shapes; pure-land levels stay off until they prove
+        // a case for arming.
+        _cloudActive = cloudFrac > 0.02f && cloudFrac < 0.45f && waterFrac > 0.15f;
         GD.Print($"OpenTyrianVR: water-cloud split {(_cloudActive ? "ARMED" : "off")} " +
                  $"(cloud {cloudFrac:P1}, water {waterFrac:P1} of ground art)");
         if (!_cloudActive)
