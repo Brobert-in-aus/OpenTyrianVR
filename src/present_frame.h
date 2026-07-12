@@ -92,6 +92,9 @@ typedef struct PresentSprite
 	Uint16 source_id;               /* stable entity identity across ticks
 	                                   (slot-based) for host interpolation;
 	                                   PRESENT_NO_SOURCE for transient art */
+	Uint16 entity_type;             /* enemies: eDat index (enemytype); 0 for
+	                                   everything else.  Keys the authored
+	                                   hover-height metadata (Stage B). */
 	Sprite2_array *sheet;
 } PresentSprite;
 

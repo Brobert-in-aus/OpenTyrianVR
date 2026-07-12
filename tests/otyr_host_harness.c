@@ -626,6 +626,20 @@ int main(void)
 		unsigned int moving_statics = 0;
 		uint32_t last_seen_tick = 0;
 
+		/* Per-enemytype observation inventory (Stage B hover heights):
+		 * which types actually appear in the demos, in which bands, with
+		 * which aux classification and observed per-tick motion.  Dumped as
+		 * CSV for the offline height classifier. */
+		struct {
+			uint16_t type; uint32_t ticks;
+			uint16_t cat_seen, aux_seen;    /* bitmasks */
+			int16_t min_dy, max_dy; uint32_t dy_n; int32_t dy_sum;
+			uint8_t sheet; uint16_t index0;
+		} etypes[512];
+		unsigned int etype_count = 0;
+		struct { uint16_t type; int16_t x, y; uint32_t tick; uint8_t valid; } eprev[100];
+		memset(eprev, 0, sizeof(eprev));
+
 		DWORD bg_start = GetTickCount();
 		while (GetTickCount() - bg_start < window_ms)
 		{
@@ -750,6 +764,51 @@ int main(void)
 					else
 						slot_track[s].valid = 0;  /* absent: don't chain across respawns */
 				}
+
+				/* Per-enemytype inventory update. */
+				for (unsigned int s = 0; s < 100; ++s)
+				{
+					if (!seen[s] || first_rec[s]->entity_type == 0)
+					{
+						if (!seen[s])
+							eprev[s].valid = 0;
+						continue;
+					}
+					const OtyrSnapshotSprite *rec = first_rec[s];
+					unsigned int e;
+					for (e = 0; e < etype_count; ++e)
+						if (etypes[e].type == rec->entity_type)
+							break;
+					if (e == etype_count)
+					{
+						if (etype_count >= 512)
+							continue;
+						memset(&etypes[e], 0, sizeof(etypes[e]));
+						etypes[e].type = rec->entity_type;
+						etypes[e].min_dy = 32767;
+						etypes[e].max_dy = -32768;
+						etypes[e].sheet = rec->sheet_id;
+						etypes[e].index0 = rec->index;
+						++etype_count;
+					}
+					++etypes[e].ticks;
+					etypes[e].cat_seen |= (uint16_t)(1u << (rec->category & 15));
+					etypes[e].aux_seen |= (uint16_t)(1u << (rec->aux & 15));
+					if (eprev[s].valid && eprev[s].type == rec->entity_type &&
+					    snapshot->level_tick == eprev[s].tick + 1)
+					{
+						int16_t dy = rec->y - eprev[s].y;
+						if (dy < etypes[e].min_dy) etypes[e].min_dy = dy;
+						if (dy > etypes[e].max_dy) etypes[e].max_dy = dy;
+						etypes[e].dy_sum += dy;
+						++etypes[e].dy_n;
+					}
+					eprev[s].valid = 1;
+					eprev[s].type = rec->entity_type;
+					eprev[s].x = rec->x;
+					eprev[s].y = rec->y;
+					eprev[s].tick = snapshot->level_tick;
+				}
 			}
 			for (uint32_t l = 0; l < OTYR_BG_LAYER_COUNT; ++l)
 			{
@@ -775,6 +834,25 @@ int main(void)
 		       snapshot->background[2].over_mode);
 		printf("static->mover promotions: %u, moving statics: %u\n",
 		       promotions, moving_statics);
+
+		/* Dump the per-type observations for the height classifier. */
+		{
+			FILE *csv = fopen("captures\\etype_observed.csv", "w");
+			if (csv != NULL)
+			{
+				fprintf(csv, "type,ticks,cat_mask,aux_mask,min_dy,max_dy,avg_dy_x100,sheet,index0\n");
+				for (unsigned int e = 0; e < etype_count; ++e)
+					fprintf(csv, "%u,%u,%u,%u,%d,%d,%d,%u,%u\n",
+					        etypes[e].type, etypes[e].ticks,
+					        etypes[e].cat_seen, etypes[e].aux_seen,
+					        etypes[e].dy_n ? etypes[e].min_dy : 0,
+					        etypes[e].dy_n ? etypes[e].max_dy : 0,
+					        etypes[e].dy_n ? (int)(etypes[e].dy_sum * 100 / (int32_t)etypes[e].dy_n) : 0,
+					        etypes[e].sheet, etypes[e].index0);
+				fclose(csv);
+				printf("enemy types observed: %u (captures\\etype_observed.csv)\n", etype_count);
+			}
+		}
 		if (bg_checked[0] == 0)
 			die("background layer 1 never drawn during demo verify window");
 		if (bg_bad[0] + bg_bad[1] + bg_bad[2] != 0)

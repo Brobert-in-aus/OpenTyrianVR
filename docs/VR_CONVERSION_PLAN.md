@@ -287,7 +287,28 @@
   the in-shader depth bias remains as flat-mode belt-and-braces.
   LESSON (repeat offender, now policy): NEVER arbitrate same-plane
   draw order with sub-1e-4 depth-space offsets -- multiview resolves
-  them per-eye; use real geometry or explicit render priority.  NEW (confirmed in code): statics
+  them per-eye; use real geometry or explicit render priority.
+- Round 8 (2026-07-12): ALL LAYERING CHECKS GREEN in-headset; clouds
+  nudged more transparent (0.82 factor, user-tuned).  Stage B hover
+  heights groundwork landed (ABI v16): records export enemytype (eDat
+  index); OTYR_DUMP_EDAT dumps per-type static data; the harness sweep
+  inventories demo-observed types (112 of 851 across the five demos,
+  captures/etype_observed.csv); tools/classify_heights.ps1 generates
+  godot/hover_heights.json (ground rides the surface beneath +offset,
+  pickup/air-low/air-mid/air-high absolute); the host applies it to
+  MOVERS with unlisted types keeping legacy bands.  Manual assignment
+  workflow in docs/HOVER_HEIGHTS.md -- the user's pass is next.  Hash
+  gate bit-identical (77,691 ticks; an earlier 45k-mismatch scare was
+  the input-kills-demo artifact, diagnosed via level markers: the
+  second SAVARA truncated ~2,288 ticks early).  The long sweep also
+  logged 2 static->mover promotions (event-granted movers, benign by
+  design) -- noted, not chased.  NEXT (user direction, plan drafted,
+  clarifications pending): E1 break out of the window (full map strip
+  width, below-screen apron with ghost continuation, sidebar/bottom
+  bar as repositionable quads); E2 faux-parallax removal (aim-vs-
+  visual divergence for interactive ground units needs an in-headset
+  verdict); E3 deep ground for planetary levels (scale-preserving
+  push; per-level presentation config; comfort toggle).  NEW (confirmed in code): statics
   riding floating platforms (aux 2, and top-band aux 1 with elevated
   surface) visibly swim/blur against their platform under head motion
   -- BackgroundLayer.OnRender smooth-scrolls the ELEVATED tile layers

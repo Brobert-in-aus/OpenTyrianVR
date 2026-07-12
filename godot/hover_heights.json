@@ -1,0 +1,2677 @@
+﻿{
+    "_comment":  "Stage B hover heights, first pass (episode 1). class: ground (rides the surface beneath, +offset), pickup, air-low, air-mid, air-high, or an explicit {height: \u003clane Z\u003e}. Unlisted types keep the legacy category band. Edit freely; the host reloads at level start.",
+    "classes":  {
+                    "ground":  0.004,
+                    "pickup":  0.04,
+                    "air-low":  0.045,
+                    "air-mid":  0.055,
+                    "air-high":  0.07
+                },
+    "types":  {
+                  "0":  {
+                            "class":  "ground"
+                        },
+                  "1":  {
+                            "class":  "ground"
+                        },
+                  "2":  {
+                            "class":  "ground"
+                        },
+                  "3":  {
+                            "class":  "ground",
+                            "seen":  "demo sheet=5 index=228 ticks=939"
+                        },
+                  "4":  {
+                            "class":  "ground",
+                            "seen":  "demo sheet=5 index=180 ticks=2611"
+                        },
+                  "5":  {
+                            "class":  "ground",
+                            "seen":  "demo sheet=5 index=241 ticks=2048"
+                        },
+                  "6":  {
+                            "class":  "ground"
+                        },
+                  "7":  {
+                            "class":  "ground"
+                        },
+                  "8":  {
+                            "class":  "ground"
+                        },
+                  "9":  {
+                            "class":  "ground"
+                        },
+                  "10":  {
+                             "class":  "ground"
+                         },
+                  "11":  {
+                             "class":  "ground"
+                         },
+                  "12":  {
+                             "class":  "ground"
+                         },
+                  "13":  {
+                             "class":  "ground"
+                         },
+                  "14":  {
+                             "class":  "ground"
+                         },
+                  "15":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=58 ticks=1037"
+                         },
+                  "16":  {
+                             "class":  "ground"
+                         },
+                  "17":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=286 ticks=531"
+                         },
+                  "18":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=26 ticks=155"
+                         },
+                  "19":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=28 ticks=630"
+                         },
+                  "20":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=30 ticks=52"
+                         },
+                  "21":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=24 ticks=161"
+                         },
+                  "22":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=22 ticks=950"
+                         },
+                  "23":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=20 ticks=75"
+                         },
+                  "24":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=288 ticks=154"
+                         },
+                  "25":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=290 ticks=145"
+                         },
+                  "26":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=68 ticks=192"
+                         },
+                  "27":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=70 ticks=155"
+                         },
+                  "28":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=68 ticks=830"
+                         },
+                  "29":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=70 ticks=438"
+                         },
+                  "30":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=108 ticks=851"
+                         },
+                  "31":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=5 index=146 ticks=493"
+                         },
+                  "32":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=292 ticks=1395"
+                         },
+                  "33":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=294 ticks=735"
+                         },
+                  "34":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=296 ticks=1300"
+                         },
+                  "35":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=298 ticks=1524"
+                         },
+                  "36":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=300 ticks=895"
+                         },
+                  "37":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=302 ticks=1328"
+                         },
+                  "38":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=264 ticks=368"
+                         },
+                  "39":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=226 ticks=217"
+                         },
+                  "40":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=172 ticks=1993"
+                         },
+                  "41":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=188 ticks=415"
+                         },
+                  "42":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=34 ticks=75"
+                         },
+                  "43":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=36 ticks=75"
+                         },
+                  "44":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=72 ticks=103"
+                         },
+                  "45":  {
+                             "class":  "air-high",
+                             "seen":  "demo sheet=5 index=74 ticks=103"
+                         },
+                  "46":  {
+                             "class":  "ground"
+                         },
+                  "47":  {
+                             "class":  "ground"
+                         },
+                  "48":  {
+                             "class":  "ground"
+                         },
+                  "49":  {
+                             "class":  "ground"
+                         },
+                  "50":  {
+                             "class":  "ground"
+                         },
+                  "51":  {
+                             "class":  "ground"
+                         },
+                  "52":  {
+                             "class":  "ground"
+                         },
+                  "53":  {
+                             "class":  "ground"
+                         },
+                  "54":  {
+                             "class":  "ground"
+                         },
+                  "55":  {
+                             "class":  "ground"
+                         },
+                  "56":  {
+                             "class":  "ground"
+                         },
+                  "57":  {
+                             "class":  "ground"
+                         },
+                  "58":  {
+                             "class":  "ground"
+                         },
+                  "59":  {
+                             "class":  "ground"
+                         },
+                  "60":  {
+                             "class":  "ground"
+                         },
+                  "61":  {
+                             "class":  "ground"
+                         },
+                  "62":  {
+                             "class":  "ground"
+                         },
+                  "63":  {
+                             "class":  "ground"
+                         },
+                  "64":  {
+                             "class":  "ground"
+                         },
+                  "65":  {
+                             "class":  "ground"
+                         },
+                  "66":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=172 ticks=122"
+                         },
+                  "67":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=174 ticks=129"
+                         },
+                  "68":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=176 ticks=136"
+                         },
+                  "69":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=178 ticks=141"
+                         },
+                  "70":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=210 ticks=145"
+                         },
+                  "71":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=212 ticks=149"
+                         },
+                  "72":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=214 ticks=152"
+                         },
+                  "73":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=250 ticks=168"
+                         },
+                  "74":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=252 ticks=162"
+                         },
+                  "75":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=254 ticks=158"
+                         },
+                  "76":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=286 ticks=152"
+                         },
+                  "77":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=288 ticks=147"
+                         },
+                  "78":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=290 ticks=142"
+                         },
+                  "79":  {
+                             "class":  "ground",
+                             "seen":  "demo sheet=6 index=292 ticks=135"
+                         },
+                  "80":  {
+                             "class":  "air-high"
+                         },
+                  "81":  {
+                             "class":  "air-high"
+                         },
+                  "82":  {
+                             "class":  "air-high"
+                         },
+                  "83":  {
+                             "class":  "air-high"
+                         },
+                  "84":  {
+                             "class":  "air-high"
+                         },
+                  "85":  {
+                             "class":  "air-high"
+                         },
+                  "86":  {
+                             "class":  "air-high"
+                         },
+                  "87":  {
+                             "class":  "air-high"
+                         },
+                  "88":  {
+                             "class":  "air-high"
+                         },
+                  "89":  {
+                             "class":  "air-high"
+                         },
+                  "90":  {
+                             "class":  "air-high"
+                         },
+                  "91":  {
+                             "class":  "ground"
+                         },
+                  "92":  {
+                             "class":  "ground"
+                         },
+                  "93":  {
+                             "class":  "ground"
+                         },
+                  "94":  {
+                             "class":  "ground"
+                         },
+                  "95":  {
+                             "class":  "ground"
+                         },
+                  "96":  {
+                             "class":  "ground"
+                         },
+                  "97":  {
+                             "class":  "ground"
+                         },
+                  "98":  {
+                             "class":  "ground"
+                         },
+                  "99":  {
+                             "class":  "ground"
+                         },
+                  "100":  {
+                              "class":  "ground"
+                          },
+                  "101":  {
+                              "class":  "ground"
+                          },
+                  "102":  {
+                              "class":  "ground"
+                          },
+                  "103":  {
+                              "class":  "ground"
+                          },
+                  "104":  {
+                              "class":  "ground"
+                          },
+                  "105":  {
+                              "class":  "ground"
+                          },
+                  "106":  {
+                              "class":  "ground"
+                          },
+                  "107":  {
+                              "class":  "ground"
+                          },
+                  "108":  {
+                              "class":  "ground"
+                          },
+                  "109":  {
+                              "class":  "ground"
+                          },
+                  "110":  {
+                              "class":  "ground"
+                          },
+                  "111":  {
+                              "class":  "ground"
+                          },
+                  "112":  {
+                              "class":  "ground"
+                          },
+                  "113":  {
+                              "class":  "ground"
+                          },
+                  "114":  {
+                              "class":  "ground"
+                          },
+                  "115":  {
+                              "class":  "ground"
+                          },
+                  "116":  {
+                              "class":  "ground"
+                          },
+                  "117":  {
+                              "class":  "ground"
+                          },
+                  "118":  {
+                              "class":  "ground"
+                          },
+                  "119":  {
+                              "class":  "ground"
+                          },
+                  "120":  {
+                              "class":  "ground"
+                          },
+                  "121":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=5 index=115 ticks=30"
+                          },
+                  "122":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=5 index=117 ticks=30"
+                          },
+                  "123":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=5 index=77 ticks=58"
+                          },
+                  "124":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=5 index=79 ticks=58"
+                          },
+                  "125":  {
+                              "class":  "air-high"
+                          },
+                  "126":  {
+                              "class":  "air-high"
+                          },
+                  "127":  {
+                              "class":  "air-high"
+                          },
+                  "128":  {
+                              "class":  "air-high"
+                          },
+                  "129":  {
+                              "class":  "ground"
+                          },
+                  "130":  {
+                              "class":  "ground"
+                          },
+                  "131":  {
+                              "class":  "ground"
+                          },
+                  "132":  {
+                              "class":  "ground"
+                          },
+                  "133":  {
+                              "class":  "ground"
+                          },
+                  "134":  {
+                              "class":  "ground"
+                          },
+                  "135":  {
+                              "class":  "ground"
+                          },
+                  "136":  {
+                              "class":  "ground"
+                          },
+                  "137":  {
+                              "class":  "ground"
+                          },
+                  "138":  {
+                              "class":  "ground"
+                          },
+                  "139":  {
+                              "class":  "ground"
+                          },
+                  "140":  {
+                              "class":  "ground"
+                          },
+                  "141":  {
+                              "class":  "ground"
+                          },
+                  "142":  {
+                              "class":  "air-high"
+                          },
+                  "143":  {
+                              "class":  "air-high"
+                          },
+                  "144":  {
+                              "class":  "ground"
+                          },
+                  "145":  {
+                              "class":  "air-high"
+                          },
+                  "146":  {
+                              "class":  "air-high"
+                          },
+                  "147":  {
+                              "class":  "ground"
+                          },
+                  "148":  {
+                              "class":  "ground"
+                          },
+                  "149":  {
+                              "class":  "ground"
+                          },
+                  "150":  {
+                              "class":  "ground"
+                          },
+                  "151":  {
+                              "class":  "ground"
+                          },
+                  "152":  {
+                              "class":  "ground"
+                          },
+                  "153":  {
+                              "class":  "air-high"
+                          },
+                  "154":  {
+                              "class":  "air-high"
+                          },
+                  "155":  {
+                              "class":  "air-high"
+                          },
+                  "156":  {
+                              "class":  "air-high"
+                          },
+                  "157":  {
+                              "class":  "air-high"
+                          },
+                  "158":  {
+                              "class":  "air-high"
+                          },
+                  "159":  {
+                              "class":  "air-high"
+                          },
+                  "160":  {
+                              "class":  "air-high"
+                          },
+                  "161":  {
+                              "class":  "air-high"
+                          },
+                  "162":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=5 index=58 ticks=1729"
+                          },
+                  "163":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=5 index=144 ticks=159"
+                          },
+                  "164":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=5 index=30 ticks=959"
+                          },
+                  "165":  {
+                              "class":  "ground"
+                          },
+                  "166":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=5 index=106 ticks=441"
+                          },
+                  "167":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=5 index=22 ticks=705"
+                          },
+                  "168":  {
+                              "class":  "ground"
+                          },
+                  "169":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=5 index=98 ticks=125"
+                          },
+                  "170":  {
+                              "class":  "ground"
+                          },
+                  "171":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=5 index=62 ticks=1630"
+                          },
+                  "172":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=5 index=100 ticks=1964"
+                          },
+                  "173":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=5 index=138 ticks=2325"
+                          },
+                  "174":  {
+                              "class":  "ground"
+                          },
+                  "175":  {
+                              "class":  "ground"
+                          },
+                  "176":  {
+                              "class":  "ground"
+                          },
+                  "177":  {
+                              "class":  "ground"
+                          },
+                  "178":  {
+                              "class":  "ground"
+                          },
+                  "179":  {
+                              "class":  "ground"
+                          },
+                  "180":  {
+                              "class":  "ground"
+                          },
+                  "181":  {
+                              "class":  "ground"
+                          },
+                  "182":  {
+                              "class":  "ground"
+                          },
+                  "183":  {
+                              "class":  "ground"
+                          },
+                  "184":  {
+                              "class":  "ground"
+                          },
+                  "185":  {
+                              "class":  "ground"
+                          },
+                  "186":  {
+                              "class":  "ground"
+                          },
+                  "187":  {
+                              "class":  "ground"
+                          },
+                  "188":  {
+                              "class":  "ground"
+                          },
+                  "189":  {
+                              "class":  "ground"
+                          },
+                  "190":  {
+                              "class":  "ground"
+                          },
+                  "191":  {
+                              "class":  "ground"
+                          },
+                  "192":  {
+                              "class":  "ground"
+                          },
+                  "193":  {
+                              "class":  "ground"
+                          },
+                  "194":  {
+                              "class":  "air-high"
+                          },
+                  "195":  {
+                              "class":  "ground"
+                          },
+                  "196":  {
+                              "class":  "ground"
+                          },
+                  "197":  {
+                              "class":  "air-high"
+                          },
+                  "198":  {
+                              "class":  "air-high"
+                          },
+                  "199":  {
+                              "class":  "ground"
+                          },
+                  "200":  {
+                              "class":  "ground"
+                          },
+                  "201":  {
+                              "class":  "ground"
+                          },
+                  "202":  {
+                              "class":  "ground"
+                          },
+                  "203":  {
+                              "class":  "ground"
+                          },
+                  "204":  {
+                              "class":  "ground"
+                          },
+                  "205":  {
+                              "class":  "ground"
+                          },
+                  "206":  {
+                              "class":  "ground"
+                          },
+                  "207":  {
+                              "class":  "ground"
+                          },
+                  "208":  {
+                              "class":  "ground"
+                          },
+                  "209":  {
+                              "class":  "ground"
+                          },
+                  "210":  {
+                              "class":  "ground"
+                          },
+                  "211":  {
+                              "class":  "ground"
+                          },
+                  "212":  {
+                              "class":  "ground"
+                          },
+                  "213":  {
+                              "class":  "ground"
+                          },
+                  "214":  {
+                              "class":  "ground"
+                          },
+                  "215":  {
+                              "class":  "ground"
+                          },
+                  "216":  {
+                              "class":  "ground"
+                          },
+                  "217":  {
+                              "class":  "ground"
+                          },
+                  "218":  {
+                              "class":  "ground"
+                          },
+                  "219":  {
+                              "class":  "ground"
+                          },
+                  "220":  {
+                              "class":  "ground"
+                          },
+                  "221":  {
+                              "class":  "ground"
+                          },
+                  "222":  {
+                              "class":  "ground"
+                          },
+                  "223":  {
+                              "class":  "ground"
+                          },
+                  "224":  {
+                              "class":  "ground"
+                          },
+                  "225":  {
+                              "class":  "ground"
+                          },
+                  "226":  {
+                              "class":  "ground"
+                          },
+                  "227":  {
+                              "class":  "ground"
+                          },
+                  "228":  {
+                              "class":  "air-high"
+                          },
+                  "229":  {
+                              "class":  "air-high"
+                          },
+                  "230":  {
+                              "class":  "air-high"
+                          },
+                  "231":  {
+                              "class":  "air-mid"
+                          },
+                  "232":  {
+                              "class":  "air-mid"
+                          },
+                  "233":  {
+                              "class":  "air-high"
+                          },
+                  "234":  {
+                              "class":  "air-high"
+                          },
+                  "235":  {
+                              "class":  "air-high"
+                          },
+                  "236":  {
+                              "class":  "ground"
+                          },
+                  "237":  {
+                              "class":  "air-high"
+                          },
+                  "238":  {
+                              "class":  "air-high"
+                          },
+                  "239":  {
+                              "class":  "air-high"
+                          },
+                  "240":  {
+                              "class":  "air-high"
+                          },
+                  "241":  {
+                              "class":  "air-high"
+                          },
+                  "242":  {
+                              "class":  "air-high"
+                          },
+                  "243":  {
+                              "class":  "air-high"
+                          },
+                  "244":  {
+                              "class":  "air-high"
+                          },
+                  "245":  {
+                              "class":  "air-high"
+                          },
+                  "246":  {
+                              "class":  "air-high"
+                          },
+                  "247":  {
+                              "class":  "air-high"
+                          },
+                  "248":  {
+                              "class":  "air-high"
+                          },
+                  "249":  {
+                              "class":  "air-high"
+                          },
+                  "250":  {
+                              "class":  "air-high"
+                          },
+                  "251":  {
+                              "class":  "air-high"
+                          },
+                  "252":  {
+                              "class":  "air-mid"
+                          },
+                  "253":  {
+                              "class":  "air-high"
+                          },
+                  "254":  {
+                              "class":  "air-high"
+                          },
+                  "255":  {
+                              "class":  "air-mid"
+                          },
+                  "256":  {
+                              "class":  "air-high"
+                          },
+                  "257":  {
+                              "class":  "air-high"
+                          },
+                  "258":  {
+                              "class":  "air-high"
+                          },
+                  "259":  {
+                              "class":  "ground"
+                          },
+                  "260":  {
+                              "class":  "ground"
+                          },
+                  "261":  {
+                              "class":  "ground"
+                          },
+                  "262":  {
+                              "class":  "ground"
+                          },
+                  "263":  {
+                              "class":  "ground"
+                          },
+                  "264":  {
+                              "class":  "ground"
+                          },
+                  "265":  {
+                              "class":  "ground"
+                          },
+                  "266":  {
+                              "class":  "ground"
+                          },
+                  "267":  {
+                              "class":  "ground"
+                          },
+                  "268":  {
+                              "class":  "ground"
+                          },
+                  "269":  {
+                              "class":  "air-high"
+                          },
+                  "270":  {
+                              "class":  "air-high"
+                          },
+                  "271":  {
+                              "class":  "air-high"
+                          },
+                  "272":  {
+                              "class":  "air-high"
+                          },
+                  "273":  {
+                              "class":  "air-high"
+                          },
+                  "274":  {
+                              "class":  "air-high"
+                          },
+                  "275":  {
+                              "class":  "air-high"
+                          },
+                  "276":  {
+                              "class":  "air-high"
+                          },
+                  "277":  {
+                              "class":  "air-high"
+                          },
+                  "278":  {
+                              "class":  "air-high"
+                          },
+                  "279":  {
+                              "class":  "air-high"
+                          },
+                  "280":  {
+                              "class":  "air-high"
+                          },
+                  "281":  {
+                              "class":  "air-high"
+                          },
+                  "282":  {
+                              "class":  "ground"
+                          },
+                  "283":  {
+                              "class":  "ground"
+                          },
+                  "284":  {
+                              "class":  "ground"
+                          },
+                  "285":  {
+                              "class":  "ground"
+                          },
+                  "286":  {
+                              "class":  "ground"
+                          },
+                  "287":  {
+                              "class":  "air-high"
+                          },
+                  "288":  {
+                              "class":  "air-high"
+                          },
+                  "289":  {
+                              "class":  "air-high"
+                          },
+                  "290":  {
+                              "class":  "air-high"
+                          },
+                  "291":  {
+                              "class":  "air-high"
+                          },
+                  "292":  {
+                              "class":  "air-high"
+                          },
+                  "293":  {
+                              "class":  "air-high"
+                          },
+                  "294":  {
+                              "class":  "air-high"
+                          },
+                  "295":  {
+                              "class":  "air-high"
+                          },
+                  "296":  {
+                              "class":  "air-high"
+                          },
+                  "297":  {
+                              "class":  "air-high"
+                          },
+                  "298":  {
+                              "class":  "air-high"
+                          },
+                  "299":  {
+                              "class":  "air-high"
+                          },
+                  "300":  {
+                              "class":  "air-high"
+                          },
+                  "301":  {
+                              "class":  "air-high"
+                          },
+                  "302":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=220 ticks=256"
+                          },
+                  "303":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=222 ticks=247"
+                          },
+                  "304":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=256 ticks=301"
+                          },
+                  "305":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=258 ticks=297"
+                          },
+                  "306":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=260 ticks=288"
+                          },
+                  "307":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=262 ticks=261"
+                          },
+                  "308":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=297 ticks=327"
+                          },
+                  "309":  {
+                              "class":  "air-high"
+                          },
+                  "310":  {
+                              "class":  "air-high"
+                          },
+                  "311":  {
+                              "class":  "air-high"
+                          },
+                  "312":  {
+                              "class":  "air-high"
+                          },
+                  "313":  {
+                              "class":  "air-high"
+                          },
+                  "314":  {
+                              "class":  "air-high"
+                          },
+                  "315":  {
+                              "class":  "air-high"
+                          },
+                  "316":  {
+                              "class":  "air-high"
+                          },
+                  "317":  {
+                              "class":  "ground"
+                          },
+                  "318":  {
+                              "class":  "ground"
+                          },
+                  "319":  {
+                              "class":  "ground"
+                          },
+                  "320":  {
+                              "class":  "ground"
+                          },
+                  "321":  {
+                              "class":  "ground"
+                          },
+                  "322":  {
+                              "class":  "ground"
+                          },
+                  "323":  {
+                              "class":  "ground"
+                          },
+                  "324":  {
+                              "class":  "ground"
+                          },
+                  "325":  {
+                              "class":  "air-high"
+                          },
+                  "326":  {
+                              "class":  "air-high"
+                          },
+                  "327":  {
+                              "class":  "air-high"
+                          },
+                  "328":  {
+                              "class":  "air-high"
+                          },
+                  "329":  {
+                              "class":  "air-high"
+                          },
+                  "330":  {
+                              "class":  "air-high"
+                          },
+                  "331":  {
+                              "class":  "air-high"
+                          },
+                  "332":  {
+                              "class":  "air-high"
+                          },
+                  "333":  {
+                              "class":  "air-high"
+                          },
+                  "334":  {
+                              "class":  "air-high"
+                          },
+                  "335":  {
+                              "class":  "air-high"
+                          },
+                  "336":  {
+                              "class":  "air-high"
+                          },
+                  "337":  {
+                              "class":  "air-high"
+                          },
+                  "338":  {
+                              "class":  "air-high"
+                          },
+                  "339":  {
+                              "class":  "air-high"
+                          },
+                  "340":  {
+                              "class":  "air-high"
+                          },
+                  "341":  {
+                              "class":  "air-high"
+                          },
+                  "342":  {
+                              "class":  "air-high"
+                          },
+                  "343":  {
+                              "class":  "air-high"
+                          },
+                  "344":  {
+                              "class":  "air-high"
+                          },
+                  "345":  {
+                              "class":  "air-high"
+                          },
+                  "346":  {
+                              "class":  "air-high"
+                          },
+                  "347":  {
+                              "class":  "air-high"
+                          },
+                  "348":  {
+                              "class":  "air-high"
+                          },
+                  "349":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=30 ticks=83"
+                          },
+                  "350":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=32 ticks=83"
+                          },
+                  "351":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=58 ticks=116"
+                          },
+                  "352":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=60 ticks=116"
+                          },
+                  "353":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=62 ticks=116"
+                          },
+                  "354":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=64 ticks=116"
+                          },
+                  "355":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=96 ticks=162"
+                          },
+                  "356":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=98 ticks=162"
+                          },
+                  "357":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=100 ticks=162"
+                          },
+                  "358":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=102 ticks=162"
+                          },
+                  "359":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=134 ticks=208"
+                          },
+                  "360":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=136 ticks=208"
+                          },
+                  "361":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=138 ticks=208"
+                          },
+                  "362":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=140 ticks=208"
+                          },
+                  "363":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=173 ticks=255"
+                          },
+                  "364":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=175 ticks=255"
+                          },
+                  "365":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=177 ticks=255"
+                          },
+                  "366":  {
+                              "class":  "ground"
+                          },
+                  "367":  {
+                              "class":  "ground"
+                          },
+                  "368":  {
+                              "class":  "ground"
+                          },
+                  "369":  {
+                              "class":  "ground"
+                          },
+                  "370":  {
+                              "class":  "ground"
+                          },
+                  "371":  {
+                              "class":  "ground"
+                          },
+                  "372":  {
+                              "class":  "ground"
+                          },
+                  "373":  {
+                              "class":  "ground"
+                          },
+                  "374":  {
+                              "class":  "ground"
+                          },
+                  "375":  {
+                              "class":  "ground"
+                          },
+                  "376":  {
+                              "class":  "ground"
+                          },
+                  "377":  {
+                              "class":  "ground"
+                          },
+                  "378":  {
+                              "class":  "ground"
+                          },
+                  "379":  {
+                              "class":  "ground"
+                          },
+                  "380":  {
+                              "class":  "ground"
+                          },
+                  "381":  {
+                              "class":  "ground"
+                          },
+                  "382":  {
+                              "class":  "ground"
+                          },
+                  "383":  {
+                              "class":  "ground"
+                          },
+                  "384":  {
+                              "class":  "ground"
+                          },
+                  "385":  {
+                              "class":  "ground"
+                          },
+                  "386":  {
+                              "class":  "ground"
+                          },
+                  "387":  {
+                              "class":  "ground"
+                          },
+                  "388":  {
+                              "class":  "ground"
+                          },
+                  "389":  {
+                              "class":  "ground"
+                          },
+                  "390":  {
+                              "class":  "pickup"
+                          },
+                  "391":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=255 index=7 ticks=2046"
+                          },
+                  "392":  {
+                              "class":  "pickup",
+                              "seen":  "demo sheet=255 index=31 ticks=151"
+                          },
+                  "393":  {
+                              "class":  "ground"
+                          },
+                  "394":  {
+                              "class":  "pickup",
+                              "seen":  "demo sheet=255 index=32 ticks=1245"
+                          },
+                  "395":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=255 index=14 ticks=28"
+                          },
+                  "396":  {
+                              "class":  "pickup"
+                          },
+                  "397":  {
+                              "class":  "ground"
+                          },
+                  "398":  {
+                              "class":  "pickup"
+                          },
+                  "399":  {
+                              "class":  "ground"
+                          },
+                  "400":  {
+                              "class":  "air-high"
+                          },
+                  "401":  {
+                              "class":  "air-high"
+                          },
+                  "402":  {
+                              "class":  "air-high"
+                          },
+                  "403":  {
+                              "class":  "air-high"
+                          },
+                  "404":  {
+                              "class":  "air-high"
+                          },
+                  "405":  {
+                              "class":  "air-high"
+                          },
+                  "406":  {
+                              "class":  "air-high"
+                          },
+                  "407":  {
+                              "class":  "air-high"
+                          },
+                  "408":  {
+                              "class":  "air-high"
+                          },
+                  "409":  {
+                              "class":  "air-high"
+                          },
+                  "410":  {
+                              "class":  "air-high"
+                          },
+                  "411":  {
+                              "class":  "air-high"
+                          },
+                  "412":  {
+                              "class":  "air-high"
+                          },
+                  "413":  {
+                              "class":  "air-high"
+                          },
+                  "414":  {
+                              "class":  "air-high"
+                          },
+                  "415":  {
+                              "class":  "air-high"
+                          },
+                  "416":  {
+                              "class":  "air-high"
+                          },
+                  "417":  {
+                              "class":  "ground"
+                          },
+                  "418":  {
+                              "class":  "ground"
+                          },
+                  "419":  {
+                              "class":  "ground"
+                          },
+                  "420":  {
+                              "class":  "ground"
+                          },
+                  "421":  {
+                              "class":  "ground"
+                          },
+                  "422":  {
+                              "class":  "ground"
+                          },
+                  "423":  {
+                              "class":  "ground"
+                          },
+                  "424":  {
+                              "class":  "ground"
+                          },
+                  "425":  {
+                              "class":  "ground"
+                          },
+                  "426":  {
+                              "class":  "ground"
+                          },
+                  "427":  {
+                              "class":  "ground"
+                          },
+                  "428":  {
+                              "class":  "ground"
+                          },
+                  "429":  {
+                              "class":  "ground"
+                          },
+                  "430":  {
+                              "class":  "ground"
+                          },
+                  "431":  {
+                              "class":  "ground"
+                          },
+                  "432":  {
+                              "class":  "ground"
+                          },
+                  "433":  {
+                              "class":  "ground"
+                          },
+                  "434":  {
+                              "class":  "ground"
+                          },
+                  "435":  {
+                              "class":  "ground"
+                          },
+                  "436":  {
+                              "class":  "ground"
+                          },
+                  "437":  {
+                              "class":  "ground"
+                          },
+                  "438":  {
+                              "class":  "ground"
+                          },
+                  "439":  {
+                              "class":  "ground"
+                          },
+                  "440":  {
+                              "class":  "ground"
+                          },
+                  "441":  {
+                              "class":  "ground"
+                          },
+                  "442":  {
+                              "class":  "ground"
+                          },
+                  "443":  {
+                              "class":  "ground"
+                          },
+                  "444":  {
+                              "class":  "ground"
+                          },
+                  "445":  {
+                              "class":  "ground"
+                          },
+                  "446":  {
+                              "class":  "ground"
+                          },
+                  "447":  {
+                              "class":  "ground"
+                          },
+                  "448":  {
+                              "class":  "ground"
+                          },
+                  "449":  {
+                              "class":  "ground"
+                          },
+                  "450":  {
+                              "class":  "ground"
+                          },
+                  "451":  {
+                              "class":  "ground"
+                          },
+                  "452":  {
+                              "class":  "ground"
+                          },
+                  "453":  {
+                              "class":  "ground"
+                          },
+                  "454":  {
+                              "class":  "ground"
+                          },
+                  "455":  {
+                              "class":  "ground"
+                          },
+                  "456":  {
+                              "class":  "air-high"
+                          },
+                  "457":  {
+                              "class":  "air-high"
+                          },
+                  "458":  {
+                              "class":  "ground"
+                          },
+                  "459":  {
+                              "class":  "ground"
+                          },
+                  "460":  {
+                              "class":  "ground"
+                          },
+                  "461":  {
+                              "class":  "ground"
+                          },
+                  "462":  {
+                              "class":  "ground"
+                          },
+                  "463":  {
+                              "class":  "ground"
+                          },
+                  "464":  {
+                              "class":  "ground"
+                          },
+                  "465":  {
+                              "class":  "ground"
+                          },
+                  "466":  {
+                              "class":  "ground"
+                          },
+                  "467":  {
+                              "class":  "ground"
+                          },
+                  "468":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=81 ticks=59"
+                          },
+                  "469":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=83 ticks=59"
+                          },
+                  "470":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=85 ticks=59"
+                          },
+                  "471":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=119 ticks=62"
+                          },
+                  "472":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=121 ticks=62"
+                          },
+                  "473":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=123 ticks=62"
+                          },
+                  "474":  {
+                              "class":  "pickup"
+                          },
+                  "475":  {
+                              "class":  "pickup"
+                          },
+                  "476":  {
+                              "class":  "ground"
+                          },
+                  "477":  {
+                              "class":  "ground"
+                          },
+                  "478":  {
+                              "class":  "ground"
+                          },
+                  "479":  {
+                              "class":  "ground"
+                          },
+                  "480":  {
+                              "class":  "ground"
+                          },
+                  "481":  {
+                              "class":  "ground"
+                          },
+                  "482":  {
+                              "class":  "ground"
+                          },
+                  "483":  {
+                              "class":  "ground"
+                          },
+                  "484":  {
+                              "class":  "ground"
+                          },
+                  "485":  {
+                              "class":  "ground"
+                          },
+                  "486":  {
+                              "class":  "ground"
+                          },
+                  "487":  {
+                              "class":  "ground"
+                          },
+                  "488":  {
+                              "class":  "ground"
+                          },
+                  "489":  {
+                              "class":  "ground"
+                          },
+                  "490":  {
+                              "class":  "ground"
+                          },
+                  "491":  {
+                              "class":  "ground"
+                          },
+                  "492":  {
+                              "class":  "ground"
+                          },
+                  "493":  {
+                              "class":  "ground"
+                          },
+                  "494":  {
+                              "class":  "ground"
+                          },
+                  "495":  {
+                              "class":  "ground"
+                          },
+                  "496":  {
+                              "class":  "ground"
+                          },
+                  "497":  {
+                              "class":  "ground"
+                          },
+                  "498":  {
+                              "class":  "ground"
+                          },
+                  "499":  {
+                              "class":  "ground"
+                          },
+                  "500":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=5 index=188 ticks=879"
+                          },
+                  "501":  {
+                              "class":  "ground"
+                          },
+                  "502":  {
+                              "class":  "pickup"
+                          },
+                  "503":  {
+                              "class":  "ground"
+                          },
+                  "504":  {
+                              "class":  "pickup"
+                          },
+                  "505":  {
+                              "class":  "ground"
+                          },
+                  "506":  {
+                              "class":  "ground"
+                          },
+                  "507":  {
+                              "class":  "pickup"
+                          },
+                  "508":  {
+                              "class":  "pickup"
+                          },
+                  "509":  {
+                              "class":  "pickup"
+                          },
+                  "510":  {
+                              "class":  "pickup"
+                          },
+                  "511":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=6 index=19 ticks=890"
+                          },
+                  "512":  {
+                              "class":  "ground"
+                          },
+                  "513":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=255 index=159 ticks=385"
+                          },
+                  "514":  {
+                              "class":  "ground"
+                          },
+                  "515":  {
+                              "class":  "ground"
+                          },
+                  "516":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=7 index=20 ticks=86"
+                          },
+                  "517":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=7 index=22 ticks=86"
+                          },
+                  "518":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=7 index=24 ticks=86"
+                          },
+                  "519":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=7 index=58 ticks=114"
+                          },
+                  "520":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=7 index=60 ticks=114"
+                          },
+                  "521":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=7 index=62 ticks=114"
+                          },
+                  "522":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=7 index=20 ticks=217"
+                          },
+                  "523":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=7 index=22 ticks=217"
+                          },
+                  "524":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=7 index=5 ticks=41"
+                          },
+                  "525":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=7 index=58 ticks=217"
+                          },
+                  "526":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=7 index=60 ticks=217"
+                          },
+                  "527":  {
+                              "class":  "air-high",
+                              "seen":  "demo sheet=7 index=43 ticks=23"
+                          },
+                  "528":  {
+                              "class":  "air-high"
+                          },
+                  "529":  {
+                              "class":  "ground"
+                          },
+                  "530":  {
+                              "class":  "ground"
+                          },
+                  "531":  {
+                              "class":  "ground"
+                          },
+                  "532":  {
+                              "class":  "ground"
+                          },
+                  "533":  {
+                              "class":  "ground"
+                          },
+                  "534":  {
+                              "class":  "ground"
+                          },
+                  "535":  {
+                              "class":  "ground"
+                          },
+                  "536":  {
+                              "class":  "air-high"
+                          },
+                  "537":  {
+                              "class":  "air-high"
+                          },
+                  "538":  {
+                              "class":  "air-high"
+                          },
+                  "539":  {
+                              "class":  "air-high"
+                          },
+                  "540":  {
+                              "class":  "air-high"
+                          },
+                  "541":  {
+                              "class":  "air-high"
+                          },
+                  "542":  {
+                              "class":  "air-high"
+                          },
+                  "543":  {
+                              "class":  "ground"
+                          },
+                  "544":  {
+                              "class":  "ground"
+                          },
+                  "545":  {
+                              "class":  "air-high"
+                          },
+                  "546":  {
+                              "class":  "air-high"
+                          },
+                  "547":  {
+                              "class":  "air-high"
+                          },
+                  "548":  {
+                              "class":  "air-high"
+                          },
+                  "549":  {
+                              "class":  "air-high"
+                          },
+                  "550":  {
+                              "class":  "air-high"
+                          },
+                  "551":  {
+                              "class":  "ground"
+                          },
+                  "552":  {
+                              "class":  "air-high"
+                          },
+                  "553":  {
+                              "class":  "air-high"
+                          },
+                  "554":  {
+                              "class":  "ground"
+                          },
+                  "555":  {
+                              "class":  "ground"
+                          },
+                  "556":  {
+                              "class":  "air-mid"
+                          },
+                  "557":  {
+                              "class":  "air-mid"
+                          },
+                  "558":  {
+                              "class":  "air-mid"
+                          },
+                  "559":  {
+                              "class":  "air-high"
+                          },
+                  "560":  {
+                              "class":  "air-high"
+                          },
+                  "561":  {
+                              "class":  "ground"
+                          },
+                  "562":  {
+                              "class":  "ground"
+                          },
+                  "563":  {
+                              "class":  "ground"
+                          },
+                  "564":  {
+                              "class":  "ground"
+                          },
+                  "565":  {
+                              "class":  "ground"
+                          },
+                  "566":  {
+                              "class":  "ground"
+                          },
+                  "567":  {
+                              "class":  "ground"
+                          },
+                  "568":  {
+                              "class":  "air-high"
+                          },
+                  "569":  {
+                              "class":  "air-high"
+                          },
+                  "570":  {
+                              "class":  "air-high"
+                          },
+                  "571":  {
+                              "class":  "air-high"
+                          },
+                  "572":  {
+                              "class":  "air-high"
+                          },
+                  "573":  {
+                              "class":  "air-high"
+                          },
+                  "574":  {
+                              "class":  "air-high"
+                          },
+                  "575":  {
+                              "class":  "air-high"
+                          },
+                  "576":  {
+                              "class":  "air-high"
+                          },
+                  "577":  {
+                              "class":  "ground"
+                          },
+                  "578":  {
+                              "class":  "ground"
+                          },
+                  "579":  {
+                              "class":  "ground"
+                          },
+                  "580":  {
+                              "class":  "ground"
+                          },
+                  "581":  {
+                              "class":  "ground"
+                          },
+                  "582":  {
+                              "class":  "ground"
+                          },
+                  "583":  {
+                              "class":  "ground"
+                          },
+                  "584":  {
+                              "class":  "ground"
+                          },
+                  "585":  {
+                              "class":  "ground"
+                          },
+                  "586":  {
+                              "class":  "ground"
+                          },
+                  "587":  {
+                              "class":  "ground"
+                          },
+                  "588":  {
+                              "class":  "ground"
+                          },
+                  "589":  {
+                              "class":  "ground"
+                          },
+                  "590":  {
+                              "class":  "ground"
+                          },
+                  "591":  {
+                              "class":  "ground"
+                          },
+                  "592":  {
+                              "class":  "ground"
+                          },
+                  "593":  {
+                              "class":  "ground"
+                          },
+                  "594":  {
+                              "class":  "ground"
+                          },
+                  "595":  {
+                              "class":  "ground"
+                          },
+                  "596":  {
+                              "class":  "ground"
+                          },
+                  "597":  {
+                              "class":  "air-high"
+                          },
+                  "598":  {
+                              "class":  "ground"
+                          },
+                  "599":  {
+                              "class":  "ground"
+                          },
+                  "600":  {
+                              "class":  "ground"
+                          },
+                  "601":  {
+                              "class":  "ground"
+                          },
+                  "602":  {
+                              "class":  "ground"
+                          },
+                  "603":  {
+                              "class":  "ground"
+                          },
+                  "604":  {
+                              "class":  "ground"
+                          },
+                  "605":  {
+                              "class":  "ground"
+                          },
+                  "606":  {
+                              "class":  "ground"
+                          },
+                  "607":  {
+                              "class":  "ground"
+                          },
+                  "608":  {
+                              "class":  "ground"
+                          },
+                  "609":  {
+                              "class":  "ground"
+                          },
+                  "610":  {
+                              "class":  "ground"
+                          },
+                  "611":  {
+                              "class":  "ground"
+                          },
+                  "612":  {
+                              "class":  "ground"
+                          },
+                  "613":  {
+                              "class":  "ground"
+                          },
+                  "614":  {
+                              "class":  "ground"
+                          },
+                  "615":  {
+                              "class":  "ground"
+                          },
+                  "616":  {
+                              "class":  "ground"
+                          },
+                  "617":  {
+                              "class":  "ground"
+                          },
+                  "618":  {
+                              "class":  "ground"
+                          },
+                  "619":  {
+                              "class":  "ground"
+                          },
+                  "620":  {
+                              "class":  "ground"
+                          },
+                  "621":  {
+                              "class":  "ground"
+                          },
+                  "622":  {
+                              "class":  "ground"
+                          },
+                  "623":  {
+                              "class":  "ground"
+                          },
+                  "624":  {
+                              "class":  "ground"
+                          },
+                  "625":  {
+                              "class":  "ground"
+                          },
+                  "626":  {
+                              "class":  "ground"
+                          },
+                  "627":  {
+                              "class":  "ground"
+                          },
+                  "628":  {
+                              "class":  "ground"
+                          },
+                  "629":  {
+                              "class":  "ground"
+                          },
+                  "630":  {
+                              "class":  "ground"
+                          },
+                  "631":  {
+                              "class":  "ground"
+                          },
+                  "632":  {
+                              "class":  "ground"
+                          },
+                  "633":  {
+                              "class":  "ground"
+                          },
+                  "634":  {
+                              "class":  "ground"
+                          },
+                  "635":  {
+                              "class":  "ground"
+                          },
+                  "636":  {
+                              "class":  "ground"
+                          },
+                  "637":  {
+                              "class":  "ground"
+                          },
+                  "638":  {
+                              "class":  "ground"
+                          },
+                  "639":  {
+                              "class":  "ground"
+                          },
+                  "640":  {
+                              "class":  "ground"
+                          },
+                  "641":  {
+                              "class":  "ground"
+                          },
+                  "642":  {
+                              "class":  "ground"
+                          },
+                  "643":  {
+                              "class":  "ground"
+                          },
+                  "644":  {
+                              "class":  "ground"
+                          },
+                  "645":  {
+                              "class":  "ground"
+                          },
+                  "646":  {
+                              "class":  "ground"
+                          },
+                  "647":  {
+                              "class":  "ground"
+                          },
+                  "648":  {
+                              "class":  "ground"
+                          },
+                  "649":  {
+                              "class":  "ground"
+                          },
+                  "650":  {
+                              "class":  "ground"
+                          },
+                  "651":  {
+                              "class":  "ground"
+                          },
+                  "652":  {
+                              "class":  "ground"
+                          },
+                  "653":  {
+                              "class":  "ground"
+                          },
+                  "654":  {
+                              "class":  "ground"
+                          },
+                  "655":  {
+                              "class":  "ground"
+                          },
+                  "656":  {
+                              "class":  "ground"
+                          },
+                  "657":  {
+                              "class":  "ground"
+                          },
+                  "658":  {
+                              "class":  "ground"
+                          },
+                  "659":  {
+                              "class":  "ground"
+                          },
+                  "660":  {
+                              "class":  "ground"
+                          },
+                  "661":  {
+                              "class":  "ground"
+                          },
+                  "662":  {
+                              "class":  "ground"
+                          },
+                  "663":  {
+                              "class":  "ground"
+                          },
+                  "664":  {
+                              "class":  "ground"
+                          },
+                  "665":  {
+                              "class":  "ground"
+                          },
+                  "666":  {
+                              "class":  "ground"
+                          },
+                  "667":  {
+                              "class":  "ground"
+                          },
+                  "668":  {
+                              "class":  "ground"
+                          },
+                  "669":  {
+                              "class":  "ground"
+                          },
+                  "670":  {
+                              "class":  "ground"
+                          },
+                  "671":  {
+                              "class":  "ground"
+                          },
+                  "672":  {
+                              "class":  "ground"
+                          },
+                  "673":  {
+                              "class":  "ground"
+                          },
+                  "674":  {
+                              "class":  "ground"
+                          },
+                  "675":  {
+                              "class":  "ground"
+                          },
+                  "676":  {
+                              "class":  "ground"
+                          },
+                  "677":  {
+                              "class":  "ground"
+                          },
+                  "678":  {
+                              "class":  "ground"
+                          },
+                  "679":  {
+                              "class":  "ground"
+                          },
+                  "680":  {
+                              "class":  "ground"
+                          },
+                  "681":  {
+                              "class":  "ground"
+                          },
+                  "682":  {
+                              "class":  "ground"
+                          },
+                  "683":  {
+                              "class":  "ground"
+                          },
+                  "684":  {
+                              "class":  "ground"
+                          },
+                  "685":  {
+                              "class":  "ground"
+                          },
+                  "686":  {
+                              "class":  "ground"
+                          },
+                  "687":  {
+                              "class":  "ground"
+                          },
+                  "688":  {
+                              "class":  "ground"
+                          },
+                  "689":  {
+                              "class":  "ground"
+                          },
+                  "690":  {
+                              "class":  "ground"
+                          },
+                  "691":  {
+                              "class":  "ground"
+                          },
+                  "692":  {
+                              "class":  "ground"
+                          },
+                  "693":  {
+                              "class":  "ground"
+                          },
+                  "694":  {
+                              "class":  "ground"
+                          },
+                  "695":  {
+                              "class":  "ground"
+                          },
+                  "696":  {
+                              "class":  "ground"
+                          },
+                  "697":  {
+                              "class":  "ground"
+                          },
+                  "698":  {
+                              "class":  "ground"
+                          },
+                  "699":  {
+                              "class":  "ground"
+                          },
+                  "700":  {
+                              "class":  "ground"
+                          },
+                  "701":  {
+                              "class":  "ground"
+                          },
+                  "702":  {
+                              "class":  "ground"
+                          },
+                  "703":  {
+                              "class":  "ground"
+                          },
+                  "704":  {
+                              "class":  "ground"
+                          },
+                  "705":  {
+                              "class":  "ground"
+                          },
+                  "706":  {
+                              "class":  "ground"
+                          },
+                  "707":  {
+                              "class":  "ground"
+                          },
+                  "708":  {
+                              "class":  "ground"
+                          },
+                  "709":  {
+                              "class":  "ground"
+                          },
+                  "710":  {
+                              "class":  "ground"
+                          },
+                  "711":  {
+                              "class":  "ground"
+                          },
+                  "712":  {
+                              "class":  "ground"
+                          },
+                  "713":  {
+                              "class":  "ground"
+                          },
+                  "714":  {
+                              "class":  "ground"
+                          },
+                  "715":  {
+                              "class":  "ground"
+                          },
+                  "716":  {
+                              "class":  "ground"
+                          },
+                  "717":  {
+                              "class":  "ground"
+                          },
+                  "718":  {
+                              "class":  "ground"
+                          },
+                  "719":  {
+                              "class":  "ground"
+                          },
+                  "720":  {
+                              "class":  "ground"
+                          },
+                  "721":  {
+                              "class":  "ground"
+                          },
+                  "722":  {
+                              "class":  "ground"
+                          },
+                  "723":  {
+                              "class":  "ground"
+                          },
+                  "724":  {
+                              "class":  "ground"
+                          },
+                  "725":  {
+                              "class":  "ground"
+                          },
+                  "726":  {
+                              "class":  "ground"
+                          },
+                  "727":  {
+                              "class":  "ground"
+                          },
+                  "728":  {
+                              "class":  "ground"
+                          },
+                  "729":  {
+                              "class":  "ground"
+                          },
+                  "730":  {
+                              "class":  "ground"
+                          },
+                  "731":  {
+                              "class":  "ground"
+                          },
+                  "732":  {
+                              "class":  "ground"
+                          },
+                  "733":  {
+                              "class":  "ground"
+                          },
+                  "734":  {
+                              "class":  "ground"
+                          },
+                  "735":  {
+                              "class":  "ground"
+                          },
+                  "736":  {
+                              "class":  "ground"
+                          },
+                  "737":  {
+                              "class":  "ground"
+                          },
+                  "738":  {
+                              "class":  "ground"
+                          },
+                  "739":  {
+                              "class":  "air-high"
+                          },
+                  "740":  {
+                              "class":  "air-high"
+                          },
+                  "741":  {
+                              "class":  "air-high"
+                          },
+                  "742":  {
+                              "class":  "air-high"
+                          },
+                  "743":  {
+                              "class":  "air-high"
+                          },
+                  "744":  {
+                              "class":  "air-high"
+                          },
+                  "745":  {
+                              "class":  "air-high"
+                          },
+                  "746":  {
+                              "class":  "air-high"
+                          },
+                  "747":  {
+                              "class":  "air-high"
+                          },
+                  "748":  {
+                              "class":  "air-high"
+                          },
+                  "749":  {
+                              "class":  "air-high"
+                          },
+                  "750":  {
+                              "class":  "air-high"
+                          },
+                  "751":  {
+                              "class":  "air-high"
+                          },
+                  "752":  {
+                              "class":  "ground"
+                          },
+                  "753":  {
+                              "class":  "air-high"
+                          },
+                  "754":  {
+                              "class":  "air-high"
+                          },
+                  "755":  {
+                              "class":  "ground"
+                          },
+                  "756":  {
+                              "class":  "air-high"
+                          },
+                  "757":  {
+                              "class":  "air-high"
+                          },
+                  "758":  {
+                              "class":  "air-high"
+                          },
+                  "759":  {
+                              "class":  "air-high"
+                          },
+                  "760":  {
+                              "class":  "ground"
+                          },
+                  "761":  {
+                              "class":  "ground"
+                          },
+                  "762":  {
+                              "class":  "ground"
+                          },
+                  "763":  {
+                              "class":  "air-high"
+                          },
+                  "764":  {
+                              "class":  "air-high"
+                          },
+                  "765":  {
+                              "class":  "air-high"
+                          },
+                  "766":  {
+                              "class":  "air-high"
+                          },
+                  "767":  {
+                              "class":  "ground"
+                          },
+                  "768":  {
+                              "class":  "air-high"
+                          },
+                  "769":  {
+                              "class":  "air-high"
+                          },
+                  "770":  {
+                              "class":  "air-high"
+                          },
+                  "771":  {
+                              "class":  "air-high"
+                          },
+                  "772":  {
+                              "class":  "ground"
+                          },
+                  "773":  {
+                              "class":  "ground"
+                          },
+                  "774":  {
+                              "class":  "ground"
+                          },
+                  "775":  {
+                              "class":  "ground"
+                          },
+                  "776":  {
+                              "class":  "ground"
+                          },
+                  "777":  {
+                              "class":  "ground"
+                          },
+                  "778":  {
+                              "class":  "ground"
+                          },
+                  "779":  {
+                              "class":  "ground"
+                          },
+                  "780":  {
+                              "class":  "ground"
+                          },
+                  "781":  {
+                              "class":  "ground"
+                          },
+                  "782":  {
+                              "class":  "ground"
+                          },
+                  "783":  {
+                              "class":  "ground"
+                          },
+                  "784":  {
+                              "class":  "ground"
+                          },
+                  "785":  {
+                              "class":  "ground"
+                          },
+                  "786":  {
+                              "class":  "ground"
+                          },
+                  "787":  {
+                              "class":  "ground"
+                          },
+                  "788":  {
+                              "class":  "ground"
+                          },
+                  "789":  {
+                              "class":  "ground"
+                          },
+                  "790":  {
+                              "class":  "ground"
+                          },
+                  "791":  {
+                              "class":  "ground"
+                          },
+                  "792":  {
+                              "class":  "ground"
+                          },
+                  "793":  {
+                              "class":  "ground"
+                          },
+                  "794":  {
+                              "class":  "ground"
+                          },
+                  "795":  {
+                              "class":  "ground"
+                          },
+                  "796":  {
+                              "class":  "ground"
+                          },
+                  "797":  {
+                              "class":  "ground"
+                          },
+                  "798":  {
+                              "class":  "ground"
+                          },
+                  "799":  {
+                              "class":  "ground"
+                          },
+                  "800":  {
+                              "class":  "ground"
+                          },
+                  "801":  {
+                              "class":  "ground"
+                          },
+                  "802":  {
+                              "class":  "ground"
+                          },
+                  "803":  {
+                              "class":  "ground"
+                          },
+                  "804":  {
+                              "class":  "ground"
+                          },
+                  "805":  {
+                              "class":  "ground"
+                          },
+                  "806":  {
+                              "class":  "ground"
+                          },
+                  "807":  {
+                              "class":  "ground"
+                          },
+                  "808":  {
+                              "class":  "ground"
+                          },
+                  "809":  {
+                              "class":  "ground"
+                          },
+                  "810":  {
+                              "class":  "ground"
+                          },
+                  "811":  {
+                              "class":  "ground"
+                          },
+                  "812":  {
+                              "class":  "ground"
+                          },
+                  "813":  {
+                              "class":  "ground"
+                          },
+                  "814":  {
+                              "class":  "ground"
+                          },
+                  "815":  {
+                              "class":  "ground"
+                          },
+                  "816":  {
+                              "class":  "ground"
+                          },
+                  "817":  {
+                              "class":  "ground"
+                          },
+                  "818":  {
+                              "class":  "ground"
+                          },
+                  "819":  {
+                              "class":  "air-high"
+                          },
+                  "820":  {
+                              "class":  "air-high"
+                          },
+                  "821":  {
+                              "class":  "air-high"
+                          },
+                  "822":  {
+                              "class":  "ground"
+                          },
+                  "823":  {
+                              "class":  "ground"
+                          },
+                  "824":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=5 index=22 ticks=570"
+                          },
+                  "825":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=5 index=3 ticks=50"
+                          },
+                  "826":  {
+                              "class":  "ground"
+                          },
+                  "827":  {
+                              "class":  "ground"
+                          },
+                  "828":  {
+                              "class":  "ground"
+                          },
+                  "829":  {
+                              "class":  "ground"
+                          },
+                  "830":  {
+                              "class":  "ground"
+                          },
+                  "831":  {
+                              "class":  "ground"
+                          },
+                  "832":  {
+                              "class":  "ground"
+                          },
+                  "833":  {
+                              "class":  "ground"
+                          },
+                  "834":  {
+                              "class":  "ground"
+                          },
+                  "835":  {
+                              "class":  "ground"
+                          },
+                  "836":  {
+                              "class":  "ground"
+                          },
+                  "837":  {
+                              "class":  "ground"
+                          },
+                  "838":  {
+                              "class":  "air-high"
+                          },
+                  "839":  {
+                              "class":  "ground"
+                          },
+                  "840":  {
+                              "class":  "air-high"
+                          },
+                  "841":  {
+                              "class":  "ground"
+                          },
+                  "842":  {
+                              "class":  "air-high"
+                          },
+                  "843":  {
+                              "class":  "ground",
+                              "seen":  "demo sheet=8 index=85 ticks=15"
+                          },
+                  "844":  {
+                              "class":  "ground"
+                          },
+                  "845":  {
+                              "class":  "ground"
+                          },
+                  "846":  {
+                              "class":  "ground"
+                          },
+                  "847":  {
+                              "class":  "ground"
+                          },
+                  "848":  {
+                              "class":  "ground"
+                          },
+                  "849":  {
+                              "class":  "ground"
+                          },
+                  "850":  {
+                              "class":  "ground"
+                          }
+              }
+}

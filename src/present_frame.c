@@ -99,6 +99,7 @@ unsigned int present_record_id(PresentCategory category, PresentBlitKind kind,
 	sprite->y = y;
 	sprite->index = index;
 	sprite->source_id = source_id;
+	sprite->entity_type = 0;
 	sprite->sheet = sheet;
 	return present_sprite_count++;
 }

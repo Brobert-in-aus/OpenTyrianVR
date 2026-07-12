@@ -1006,7 +1006,7 @@ void otyr_host_present(SDL_Surface *screen)
 		out->sheet_id = in->sheet != NULL ? sheet_id_for(in->sheet) : OTYR_SHEET_INVALID;
 		out->aux = in->aux;
 		out->source_id = in->source_id;
-		memset(out->reserved, 0, sizeof(out->reserved));
+		out->entity_type = in->entity_type;
 	}
 
 	/* Stacked statics recorded BEFORE their base (e.g. a dome crown whose

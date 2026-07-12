@@ -97,6 +97,7 @@ public unsafe partial class SnapshotLayer : Node3D
     {
         _snapshot.StructSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.Snapshot>();
         _sheet.StructSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.SpriteSheet>();
+        LoadHoverHeights();
 
         _paletteImage = Image.CreateEmpty(256, 1, false, Image.Format.Rgba8);
         _paletteTexture = ImageTexture.CreateFromImage(_paletteImage);
@@ -757,6 +758,50 @@ public unsafe partial class SnapshotLayer : Node3D
         ++_cellCount;
     }
 
+    // Stage B hover heights: per-enemytype class from the user-editable
+    // res://hover_heights.json.  "ground" rides the surface beneath (+offset);
+    // the air classes are absolute lane heights; unlisted types keep the
+    // legacy category band.  Loaded once; classes resolve to heights here.
+    private readonly System.Collections.Generic.Dictionary<ushort, float> _typeHeights = new();
+    private float _groundClassOffset = -1f;  // <0: "ground" class absent
+
+    private void LoadHoverHeights()
+    {
+        const string path = "res://hover_heights.json";
+        if (!FileAccess.FileExists(path))
+        {
+            GD.Print("OpenTyrianVR: no hover_heights.json, legacy bands only");
+            return;
+        }
+        var parsed = Json.ParseString(FileAccess.GetFileAsString(path));
+        if (parsed.VariantType != Variant.Type.Dictionary)
+        {
+            GD.PushWarning("OpenTyrianVR: hover_heights.json did not parse; ignoring");
+            return;
+        }
+        var root = parsed.AsGodotDictionary();
+        var classes = root["classes"].AsGodotDictionary();
+        _groundClassOffset = classes.ContainsKey("ground") ? (float)classes["ground"].AsDouble() : -1f;
+        var types = root["types"].AsGodotDictionary();
+        foreach (var key in types.Keys)
+        {
+            if (!ushort.TryParse(key.AsString(), out ushort type))
+                continue;
+            var entry = types[key].AsGodotDictionary();
+            if (entry.ContainsKey("height"))
+                _typeHeights[type] = (float)entry["height"].AsDouble();
+            else if (entry.ContainsKey("class"))
+            {
+                string cls = entry["class"].AsString();
+                if (cls == "ground")
+                    _typeHeights[type] = float.NegativeInfinity;  // marker: surface + offset
+                else if (classes.ContainsKey(cls))
+                    _typeHeights[type] = (float)classes[cls].AsDouble();
+            }
+        }
+        GD.Print($"OpenTyrianVR: hover heights loaded ({_typeHeights.Count} types)");
+    }
+
     // One surface decision per entity per tick: querying per cell split
     // multi-cell structures across heights when they straddled a platform
     // edge (4 cells floating, 2 on the ground).
@@ -916,6 +961,20 @@ public unsafe partial class SnapshotLayer : Node3D
             float surface = _background?.SurfaceZAt(new Vector2(centerX - 24f, centerY), includeClouds: true) ?? 0f;
             band = surface > 0f ? surface : BackgroundLayer.GroundZ;
             decalOrder = (recordIndex + 1f) / OtyrNative.SnapshotSpriteMax;
+        }
+        else if (isEnemy && sprite.EntityType != 0 &&
+                 _typeHeights.TryGetValue(sprite.EntityType, out float typeHeight))
+        {
+            // Authored hover height (Stage B): "ground" class rides the
+            // surface actually beneath (terrain or platform) plus a small
+            // offset; air classes are absolute lane heights.
+            if (float.IsNegativeInfinity(typeHeight))
+            {
+                float below = SurfaceForSource(sprite.SourceId, centerX, centerY);
+                band = (below > 0f ? below : 0f) + Math.Max(_groundClassOffset, 0.002f);
+            }
+            else
+                band = typeHeight;
         }
         else
         {

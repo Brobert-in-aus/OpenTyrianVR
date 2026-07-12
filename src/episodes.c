@@ -24,6 +24,8 @@
 #include "lvlmast.h"
 #include "opentyr.h"
 
+#include <stdlib.h>
+
 /* MAIN Weapons Data */
 JE_WeaponPortType weaponPort;
 JE_WeaponType     weapons[WEAP_NUM + 1]; /* [0..weapnum] */
@@ -213,8 +215,43 @@ void JE_loadItemDat(void)
 		fread_s16_die(&enemyDat[i].value,         1, f);
 		fread_u16_die(&enemyDat[i].eenemydie,     1, f);
 	}
-	
+
 	fclose(f);
+
+	/* OTYR_DUMP_EDAT=<path>: dump the loaded enemy data as CSV, one row per
+	   type, for the Stage B hover-height classification (appends per episode;
+	   the episode column disambiguates).  Presentation tooling only. */
+	{
+		const char *dump = getenv("OTYR_DUMP_EDAT");
+		if (dump != NULL && dump[0] != '\0')
+		{
+			FILE *d = fopen(dump, "a");
+			if (d != NULL)
+			{
+				fprintf(d, "episode,type,ground,size,armor,value,xmove,ymove,"
+				           "xaccel,yaccel,xcaccel,ycaccel,xrev,yrev,animate,"
+				           "shapebank,egraphic0,launchtype,enemydie,tur0\n");
+				for (int i = 0; i < ENEMY_NUM + 1; ++i)
+				{
+					if (enemyDat[i].egraphic[0] == 0 && enemyDat[i].armor == 0 &&
+					    enemyDat[i].shapebank == 0)
+						continue;  /* empty slot */
+					fprintf(d, "%d,%d,%d,%u,%u,%d,%d,%d,%d,%d,%d,%d,%d,%d,%u,%u,%u,%u,%u,%u\n",
+					        episodeNum, i,
+					        (enemyDat[i].explosiontype & 1) == 0 ? 1 : 0,
+					        enemyDat[i].esize, enemyDat[i].armor, enemyDat[i].value,
+					        enemyDat[i].xmove, enemyDat[i].ymove,
+					        enemyDat[i].xaccel, enemyDat[i].yaccel,
+					        enemyDat[i].xcaccel, enemyDat[i].ycaccel,
+					        enemyDat[i].xrev, enemyDat[i].yrev,
+					        enemyDat[i].animate, enemyDat[i].shapebank,
+					        enemyDat[i].egraphic[0], enemyDat[i].elaunchtype,
+					        enemyDat[i].eenemydie, enemyDat[i].tur[0]);
+				}
+				fclose(d);
+			}
+		}
+	}
 }
 
 void JE_initEpisode(JE_byte newEpisode)

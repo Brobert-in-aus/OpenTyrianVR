@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 15;
+    public const uint AbiVersion = 16;
 
     // Palette index of the suppressed background fill (the frame color key);
     // index-0 black in sprite/HUD art stays opaque.
@@ -85,7 +85,8 @@ public static unsafe class OtyrNative
         public byte SheetId;
         public byte Aux;  // per-category metadata; enemies: terrain-art flag
         public ushort SourceId;  // stable entity id across ticks; 0xffff none
-        public byte R3, R4;  // pads to exactly 16 bytes
+        public ushort EntityType;  // enemies: eDat index, keys hover-height
+                                   // metadata; 0 otherwise (v16)
     }
 
     public const ushort NoSource = 0xffff;

@@ -246,7 +246,7 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 		}
 	}
 
-	present_record_id(enemy_band_category, PRESENT_BLIT_SPRITE2,
+	unsigned int rec = present_record_id(enemy_band_category, PRESENT_BLIT_SPRITE2,
 	                  enemy[i].filter != 0 ? PRESENT_FLAG_FILTER : 0, enemy[i].filter,
 	                  terrain_art,
 	                  (Uint16)(0x1000 | i),
@@ -254,6 +254,8 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 	                  enemy[i].ex + x_offset + tempMapXOfs,
 	                  enemy[i].ey + y_offset,
 	                  cell_index);
+	if (rec < PRESENT_SPRITE_MAX)
+		present_sprites[rec].entity_type = enemy[i].enemytype;
 }
 
 /* Simulates one enemy band for this tick, recording (not performing) the
