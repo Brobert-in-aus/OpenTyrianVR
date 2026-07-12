@@ -160,6 +160,25 @@ public partial class Main : Node3D
         }
         if (HeightEditor)
             _editorCamera = camera;
+
+        // OTYR_TOPDOWN=1 (flat, diagnostics): an orthographic camera looking
+        // straight down the lane normal, so captures are linearly mappable
+        // to legacy frame pixels -- used with the harness OTYR_DUMP_TICK to
+        // measure sprite-vs-tile alignment mechanically.
+        if (!_xrActive &&
+            System.Environment.GetEnvironmentVariable("OTYR_TOPDOWN") == "1")
+        {
+            var ortho = new Camera3D
+            {
+                Name = "TopdownProbe",
+                Projection = Camera3D.ProjectionType.Orthogonal,
+                Size = 0.625f,  // full lane height; width follows aspect
+                Position = new Vector3(0f, 0f, 1.0f),
+            };
+            _playfieldRoot.AddChild(ortho);
+            ortho.MakeCurrent();
+            GD.Print("OpenTyrianVR: TOPDOWN probe camera active");
+        }
         origin.AddChild(camera);
         camera.MakeCurrent();
 

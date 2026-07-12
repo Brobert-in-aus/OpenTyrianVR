@@ -310,6 +310,32 @@ int main(void)
 		       periods, avg, 1000.0 / avg, min_period, max_period);
 	}
 
+	/* OTYR_DUMP_TICK=N: write the legacy frame nearest gameplay tick N as
+	 * captures\legacy_tick_N.bmp, for pixel comparison against a topdown
+	 * host capture of the same deterministic demo tick. */
+	{
+		const char *dump_tick = getenv("OTYR_DUMP_TICK");
+		if (dump_tick != NULL && atoi(dump_tick) > 0)
+		{
+			uint32_t target = (uint32_t)atoi(dump_tick);
+			printf("waiting for tick %u to dump legacy frame...\n", target);
+			DWORD dump_start = GetTickCount();
+			while (GetTickCount() - dump_start < 120000)
+			{
+				if (p_acquire_frame(g_session, frame, sizeof(OtyrFrame), 1000) != OTYR_OK)
+					continue;
+				if (frame->level_tick >= target)
+				{
+					char path[128];
+					snprintf(path, sizeof(path), "captures\\legacy_tick_%u.bmp", target);
+					write_bmp(path, frame);
+					printf("dumped tick %u (wanted %u)\n", frame->level_tick, target);
+					break;
+				}
+			}
+		}
+	}
+
 	/* Phase 4: presentation snapshot + sprite sheets (ABI v6). */
 	OtyrSnapshot *snapshot = calloc(1, sizeof(OtyrSnapshot));
 	snapshot->struct_size = sizeof(OtyrSnapshot);
