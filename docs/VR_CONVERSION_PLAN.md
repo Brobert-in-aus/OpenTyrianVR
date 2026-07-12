@@ -309,6 +309,28 @@
   visual divergence for interactive ground units needs an in-headset
   verdict); E3 deep ground for planetary levels (scale-preserving
   push; per-level presentation config; comfort toggle).
+- GATE STRATEGY for sim-breaking changes (E2-full, decided 2026-07-12):
+  TWO-BASELINE GATING behind a config flag.  (1) The sim de-parallax
+  (pinned mapX*Ofs, widened player travel, naturally-neutralized
+  shot-follow codes) lives behind OTYR_CONFIG_SIM_DEPARALLAX in the
+  ABI handshake -- a config flag, NOT an env (envs leak between
+  launches; the host opts in explicitly, the standalone exe via a
+  --sim-deparallax arg).  (2) GATE A (legacy) is the existing demo
+  hash baseline with the flag OFF and must stay bit-identical FOREVER:
+  it proves the legacy sim is untouched and keeps gating every non-E2
+  change exactly as today.  (3) GATE B (deparallax) replays the same
+  demo inputs with the flag ON against its own baseline, created ONCE
+  when E2-full lands in a dedicated re-baseline commit.  Demo playback
+  under the modified sim is still fully deterministic (demos are input
+  recordings), so B catches unintended drift; intentional sim
+  revisions re-baseline B in a commit that names the cause.  (4)
+  CAVEAT: the recorded demo inputs were played against legacy
+  parallax, so under the new sim the run diverges (deaths, level
+  progress) and B's tick coverage degrades wherever the demo dies
+  early -- acceptable for a determinism net; record fresh demos under
+  the flag if coverage matters.  (5) The host harness switches to
+  flag-ON once the VR product defaults to it; the editor and VR
+  sessions follow the product default.
 - Round 11 (2026-07-12, evening): height authoring COMPLETE through
   DELIANI (TYRIAN, ASTEROID1/2, SAVARA, MINES, BUBBLES?, DELIANI --
   user-driven editor passes).  Fix cascade this round: collider flag

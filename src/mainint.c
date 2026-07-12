@@ -3638,11 +3638,28 @@ redo:
 					JE_integer step_x = target_ease_step(
 						input.target_x - this_player->x,
 						&this_player->target_ramp_x, max_speed);
-					this_player->x += step_x;
-
-					this_player->y += target_ease_step(
+					JE_integer step_y = target_ease_step(
 						input.target_y - this_player->y,
 						&this_player->target_ramp_y, max_speed);
+
+					/* External impulses (magnet walls, collision knockback)
+					   are the ONLY writers of the velocity accumulators in
+					   target mode (the keyboard accelerators are cut above),
+					   and they still integrate into position each tick.  When
+					   one opposes the pursuit, cede authority in proportion:
+					   at the +/-4 velocity clamp the pursuit yields entirely,
+					   so the ship bounces at legacy strength instead of
+					   creeping through the MINES magnet walls (5 px/tick
+					   pursuit vs 4 px/tick push). */
+					if (this_player->x_velocity != 0 &&
+					    (step_x > 0) != (this_player->x_velocity > 0))
+						step_x = step_x * (4 - MIN(4, abs(this_player->x_velocity))) / 4;
+					if (this_player->y_velocity != 0 &&
+					    (step_y > 0) != (this_player->y_velocity > 0))
+						step_y = step_y * (4 - MIN(4, abs(this_player->y_velocity))) / 4;
+
+					this_player->x += step_x;
+					this_player->y += step_y;
 
 					/* Lean from the actual sideways step. */
 					target_banking_active = true;
