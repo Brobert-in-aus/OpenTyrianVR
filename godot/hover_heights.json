@@ -297,7 +297,7 @@
       "class": "ground"
     },
     "18": {
-      "class": "ground",
+      "class": "pickup",
       "seen": "demo sheet=5 index=26 ticks=155"
     },
     "180": {
@@ -331,7 +331,7 @@
       "class": "ground"
     },
     "19": {
-      "class": "ground",
+      "class": "pickup",
       "seen": "demo sheet=5 index=28 ticks=630"
     },
     "190": {
@@ -402,7 +402,7 @@
       "class": "ground"
     },
     "21": {
-      "class": "ground",
+      "class": "pickup",
       "seen": "demo sheet=5 index=24 ticks=161"
     },
     "210": {
@@ -436,7 +436,7 @@
       "class": "ground"
     },
     "22": {
-      "class": "ground",
+      "class": "pickup",
       "seen": "demo sheet=5 index=22 ticks=950"
     },
     "220": {
@@ -538,7 +538,7 @@
       "class": "air-high"
     },
     "25": {
-      "class": "ground",
+      "class": "air-mid",
       "seen": "demo sheet=5 index=290 ticks=145"
     },
     "250": {
@@ -708,7 +708,7 @@
       "class": "air-high"
     },
     "3": {
-      "class": "ground",
+      "class": "air-mid",
       "seen": "demo sheet=5 index=228 ticks=939"
     },
     "30": {
@@ -1288,7 +1288,7 @@
       "class": "ground"
     },
     "46": {
-      "class": "ground"
+      "class": "air-low"
     },
     "460": {
       "class": "ground"
@@ -1315,30 +1315,30 @@
       "class": "ground"
     },
     "468": {
-      "class": "ground",
+      "class": "mid-under",
       "seen": "demo sheet=6 index=81 ticks=59"
     },
     "469": {
-      "class": "ground",
+      "class": "mid-under",
       "seen": "demo sheet=6 index=83 ticks=59"
     },
     "47": {
-      "class": "ground"
+      "class": "air-low"
     },
     "470": {
-      "class": "ground",
+      "class": "mid-under",
       "seen": "demo sheet=6 index=85 ticks=59"
     },
     "471": {
-      "class": "ground",
+      "class": "mid-under",
       "seen": "demo sheet=6 index=119 ticks=62"
     },
     "472": {
-      "class": "ground",
+      "class": "mid-under",
       "seen": "demo sheet=6 index=121 ticks=62"
     },
     "473": {
-      "class": "ground",
+      "class": "mid-under",
       "seen": "demo sheet=6 index=123 ticks=62"
     },
     "474": {
@@ -1360,7 +1360,7 @@
       "class": "ground"
     },
     "48": {
-      "class": "ground"
+      "class": "air-low"
     },
     "480": {
       "class": "ground"
@@ -1393,7 +1393,7 @@
       "class": "ground"
     },
     "49": {
-      "class": "ground"
+      "class": "air-low"
     },
     "490": {
       "class": "ground"
@@ -1430,7 +1430,7 @@
       "seen": "demo sheet=5 index=241 ticks=2048"
     },
     "50": {
-      "class": "ground"
+      "class": "air-low"
     },
     "500": {
       "class": "ground",
@@ -1464,7 +1464,7 @@
       "class": "pickup"
     },
     "51": {
-      "class": "ground"
+      "class": "air-low"
     },
     "510": {
       "class": "pickup"
@@ -1503,7 +1503,7 @@
       "seen": "demo sheet=7 index=58 ticks=114"
     },
     "52": {
-      "class": "ground"
+      "class": "air-low"
     },
     "520": {
       "class": "ground",
@@ -1544,7 +1544,7 @@
       "class": "ground"
     },
     "53": {
-      "class": "ground"
+      "class": "air-low"
     },
     "530": {
       "class": "ground"
@@ -1577,7 +1577,7 @@
       "class": "air-high"
     },
     "54": {
-      "class": "ground"
+      "class": "air-low"
     },
     "540": {
       "class": "air-high"
@@ -1610,7 +1610,7 @@
       "class": "air-high"
     },
     "55": {
-      "class": "ground"
+      "class": "air-low"
     },
     "550": {
       "class": "air-high"
@@ -1643,7 +1643,7 @@
       "class": "air-high"
     },
     "56": {
-      "class": "ground"
+      "class": "air-low"
     },
     "560": {
       "class": "air-high"
@@ -1676,7 +1676,7 @@
       "class": "air-high"
     },
     "57": {
-      "class": "ground"
+      "class": "air-low"
     },
     "570": {
       "class": "air-high"
@@ -1709,7 +1709,7 @@
       "class": "ground"
     },
     "58": {
-      "class": "ground"
+      "class": "air-low"
     },
     "580": {
       "class": "ground"
@@ -1742,7 +1742,7 @@
       "class": "ground"
     },
     "59": {
-      "class": "ground"
+      "class": "air-low"
     },
     "590": {
       "class": "ground"
@@ -1778,7 +1778,7 @@
       "class": "air-mid"
     },
     "60": {
-      "class": "ground"
+      "class": "air-low"
     },
     "600": {
       "class": "ground"
@@ -1811,7 +1811,7 @@
       "class": "ground"
     },
     "61": {
-      "class": "ground"
+      "class": "air-low"
     },
     "610": {
       "class": "ground"
@@ -1844,7 +1844,7 @@
       "class": "ground"
     },
     "62": {
-      "class": "ground"
+      "class": "air-low"
     },
     "620": {
       "class": "ground"
@@ -1877,7 +1877,7 @@
       "class": "ground"
     },
     "63": {
-      "class": "ground"
+      "class": "air-low"
     },
     "630": {
       "class": "ground"
@@ -1910,7 +1910,7 @@
       "class": "ground"
     },
     "64": {
-      "class": "ground"
+      "class": "air-low"
     },
     "640": {
       "class": "ground"
@@ -1943,7 +1943,7 @@
       "class": "ground"
     },
     "65": {
-      "class": "ground"
+      "class": "air-low"
     },
     "650": {
       "class": "ground"
@@ -1976,7 +1976,7 @@
       "class": "ground"
     },
     "66": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=172 ticks=122"
     },
     "660": {
@@ -2010,7 +2010,7 @@
       "class": "ground"
     },
     "67": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=174 ticks=129"
     },
     "670": {
@@ -2044,7 +2044,7 @@
       "class": "ground"
     },
     "68": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=176 ticks=136"
     },
     "680": {
@@ -2078,7 +2078,7 @@
       "class": "ground"
     },
     "69": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=178 ticks=141"
     },
     "690": {
@@ -2115,7 +2115,7 @@
       "class": "air-mid"
     },
     "70": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=210 ticks=145"
     },
     "700": {
@@ -2149,7 +2149,7 @@
       "class": "ground"
     },
     "71": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=212 ticks=149"
     },
     "710": {
@@ -2183,7 +2183,7 @@
       "class": "ground"
     },
     "72": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=214 ticks=152"
     },
     "720": {

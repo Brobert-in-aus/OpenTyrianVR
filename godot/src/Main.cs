@@ -160,25 +160,6 @@ public partial class Main : Node3D
         }
         if (HeightEditor)
             _editorCamera = camera;
-
-        // OTYR_TOPDOWN=1 (flat, diagnostics): an orthographic camera looking
-        // straight down the lane normal, so captures are linearly mappable
-        // to legacy frame pixels -- used with the harness OTYR_DUMP_TICK to
-        // measure sprite-vs-tile alignment mechanically.
-        if (!_xrActive &&
-            System.Environment.GetEnvironmentVariable("OTYR_TOPDOWN") == "1")
-        {
-            var ortho = new Camera3D
-            {
-                Name = "TopdownProbe",
-                Projection = Camera3D.ProjectionType.Orthogonal,
-                Size = 0.625f,  // full lane height; width follows aspect
-                Position = new Vector3(0f, 0f, 1.0f),
-            };
-            _playfieldRoot.AddChild(ortho);
-            ortho.MakeCurrent();
-            GD.Print("OpenTyrianVR: TOPDOWN probe camera active");
-        }
         origin.AddChild(camera);
         camera.MakeCurrent();
 
@@ -217,6 +198,25 @@ public partial class Main : Node3D
         _playfieldRoot.Position = new Vector3(0f, 1.05f, -0.9f);
         _playfieldRoot.RotationDegrees = new Vector3(-42f, 0f, 0f);
         AddChild(_playfieldRoot);
+
+        // OTYR_TOPDOWN=1 (flat, diagnostics): an orthographic camera looking
+        // straight down the lane normal, so captures are linearly mappable
+        // to legacy frame pixels -- used with the harness OTYR_DUMP_TICK to
+        // measure sprite-vs-tile alignment mechanically.
+        if (!_xrActive &&
+            System.Environment.GetEnvironmentVariable("OTYR_TOPDOWN") == "1")
+        {
+            var ortho = new Camera3D
+            {
+                Name = "TopdownProbe",
+                Projection = Camera3D.ProjectionType.Orthogonal,
+                Size = 0.625f,  // full lane height; width follows aspect
+                Position = new Vector3(0f, 0f, 1.0f),
+            };
+            _playfieldRoot.AddChild(ortho);
+            ortho.MakeCurrent();
+            GD.Print("OpenTyrianVR: TOPDOWN probe camera active");
+        }
 
         if (HeightEditor)
         {
@@ -565,10 +565,16 @@ public partial class Main : Node3D
             }
         }
 
-        PollFrame();
+        // Captures run BEFORE any polling: the viewport texture is the
+        // PREVIOUS render frame, which corresponds to the pre-poll frame
+        // and snapshot state -- so the logged tick matches the image's
+        // actual content (capturing after PollFrame mixed tick N pixels
+        // with a tick N-1 scene and faked a 1-px tile offset in the
+        // alignment probe).
         while (_captureAtIndex < CaptureAt.Length && _frame.FrameNumber >= CaptureAt[_captureAtIndex])
         {
             CaptureViewport.GetTexture().GetImage().SavePng($"user://cap_at_{CaptureAt[_captureAtIndex]}.png");
+            GD.Print($"OpenTyrianVR: cap_at_{CaptureAt[_captureAtIndex]} level_tick={_frame.LevelTick}");
             ++_captureAtIndex;
         }
 
@@ -584,6 +590,8 @@ public partial class Main : Node3D
                 System.Threading.Tasks.Task.Run(() => image.SaveJpg(path, 0.8f));
             }
         }
+
+        PollFrame();
         PollPlayerState();
         _snapshotLayer.Poll(_session, _palette);
         // Menus, pause, and quit-to-title stop gameplay ticks; the 3D scene
