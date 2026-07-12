@@ -521,6 +521,11 @@ public unsafe partial class SnapshotLayer : Node3D
             }
 
             UpdatePalette(paletteArgb);
+            // A real tick re-bands ground-class types per instance; drop
+            // their paused-preview overrides so banding wins.
+            foreach (ushort t in _editorGroundTemp)
+                _editorHeights.Remove(t);
+            _editorGroundTemp.Clear();
             BuildSprites();
             _background?.OnSnapshot(session, in _snapshot);
 
@@ -754,6 +759,7 @@ public unsafe partial class SnapshotLayer : Node3D
         ref RenderCell cell = ref _cells[_cellCount];
         cell.SheetId = GlowLayer;
         cell.CellIndex = paletteIndex;
+        cell.EntityType = 0;  // reused array slot: clear stale enemy types
         cell.Flags = 0;
         cell.FilterColor = 0;
         cell.Z = BandHeight[(byte)OtyrNative.Category.Superpixel] + recordIndex * OrderBias;
@@ -818,25 +824,33 @@ public unsafe partial class SnapshotLayer : Node3D
     // --- Height editor support (OTYR_HEIGHT_EDITOR) --------------------
 
     /// <summary>Nearest enemy cell to a screen point (editor picking).
-    /// Returns false when nothing is within pickRadius pixels.</summary>
-    public bool TryPick(Camera3D camera, Vector2 screenPos, float pickRadius,
+    /// Each cell's pick radius is its own PROJECTED quad size plus a
+    /// margin, so picking works at any zoom (a fixed screen radius made
+    /// close-up selection impossible: sprites grew, the radius did not).</summary>
+    public bool TryPick(Camera3D camera, Vector2 screenPos,
                         out ushort entityType, out Vector3 worldPos)
     {
         entityType = 0;
         worldPos = Vector3.Zero;
-        float best = pickRadius * pickRadius;
+        float best = float.MaxValue;
         for (int i = 0; i < _cellCount; i++)
         {
             ref readonly RenderCell cell = ref _cells[i];
             if (cell.EntityType == 0)
                 continue;
-            Vector3 world = ToGlobal(CellLanePos(in cell));
+            Vector3 lane = CellLanePos(in cell);
+            Vector3 world = ToGlobal(lane);
             if (camera.IsPositionBehind(world))
                 continue;
-            float d2 = camera.UnprojectPosition(world).DistanceSquaredTo(screenPos);
-            if (d2 < best)
+            Vector2 screen = camera.UnprojectPosition(world);
+            float dist = screen.DistanceTo(screenPos);
+            // Projected half-size: art half-width in lane units, projected.
+            float halfPx = (cell.Flags & 8) != 0 ? OtyrNative.SheetCellW : OtyrNative.SheetCellW / 2f;
+            Vector2 edge = camera.UnprojectPosition(ToGlobal(lane + new Vector3(halfPx * PxToMeters, 0f, 0f)));
+            float radius = screen.DistanceTo(edge) + 12f;
+            if (dist <= radius && dist < best)
             {
-                best = d2;
+                best = dist;
                 entityType = cell.EntityType;
                 worldPos = world;
             }
@@ -977,19 +991,37 @@ public unsafe partial class SnapshotLayer : Node3D
         _editorPending[entityType] = height.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
     }
 
+    // Ground-class assignments made while PAUSED get a temporary override
+    // sampled from a live instance's surface so they move immediately; the
+    // next real snapshot clears them and true per-instance banding takes
+    // over.
+    private readonly System.Collections.Generic.HashSet<ushort> _editorGroundTemp = new();
+
     /// <summary>Editor: assign a class by name (resolves through the loaded
-    /// classes table; "ground" applies from the next tick).</summary>
+    /// classes table; "ground" surface-resolves per instance).</summary>
     public void EditorSetClass(ushort entityType, string cls, float classHeight)
     {
         if (cls == "ground")
         {
             _typeHeights[entityType] = float.NegativeInfinity;
-            _editorHeights.Remove(entityType);  // surface-resolved next tick
+            _editorHeights.Remove(entityType);
+            // Paused preview: approximate with the first live instance's
+            // surface so the assignment is visible before the next tick.
+            for (int i = 0; i < _cellCount; i++)
+            {
+                if (_cells[i].EntityType != entityType)
+                    continue;
+                float surface = _background?.SurfaceZAt(_cells[i].CurrPx - new Vector2(24f, 0f)) ?? 0f;
+                _editorHeights[entityType] = surface + 0.0012f;
+                _editorGroundTemp.Add(entityType);
+                break;
+            }
         }
         else
         {
             _typeHeights[entityType] = classHeight;
             _editorHeights[entityType] = classHeight;
+            _editorGroundTemp.Remove(entityType);
         }
         _editorPending[entityType] = cls;
     }
@@ -1087,6 +1119,8 @@ public unsafe partial class SnapshotLayer : Node3D
         ref RenderCell cell = ref _cells[_cellCount];
         cell.SheetId = OldLayer;
         cell.CellIndex = sprite.Index;
+        cell.EntityType = 0;  // reused array slot: stale enemy types here
+                              // made the editor move/highlight these cells
         // Repurposed for the old layer: quad scale in pixels (fits a byte).
         cell.Flags = (byte)size.X;
         cell.FilterColor = (byte)size.Y;
@@ -1122,6 +1156,8 @@ public unsafe partial class SnapshotLayer : Node3D
         ref RenderCell cell = ref _cells[_cellCount];
         cell.SheetId = darken ? TextShadowLayer : TextLayer;
         cell.CellIndex = slot;
+        cell.EntityType = 0;  // reused array slot: stale enemy types here
+                              // broke the Player 1 HUD text under the editor
         // Repurposed like the old-table layer: quad scale in pixels.
         cell.Flags = (byte)size.X;
         cell.FilterColor = (byte)size.Y;
@@ -1315,19 +1351,25 @@ public unsafe partial class SnapshotLayer : Node3D
             // above their platform/cloud.  Real depth wins everywhere; the
             // shader bias stays as flat-mode belt-and-braces.
             // Height-editor live override FIRST (decals included -- statics
-            // are the objects most worth tuning), then the decal lift on
-            // top; applies to frozen (paused) cells too, so nudges are
-            // visible without unpausing.
+            // are the objects most worth tuning); applies to frozen (paused)
+            // cells too, so nudges are visible without unpausing.  The
+            // override keeps per-record draw order (i * OrderBias -- a flat
+            // override z-fought overlapping instances of the SAME type) and
+            // suppresses the decal lift (an overridden platform-under decal
+            // otherwise gained the lift back and hid at the platform plane
+            // until unpause re-banded it).
             float z = cell.Z;
-            if (cell.EntityType != 0 &&
-                _editorHeights.TryGetValue(cell.EntityType, out float editH))
-                z = editH;
+            float editH = 0f;
+            bool overridden = cell.EntityType != 0 &&
+                _editorHeights.TryGetValue(cell.EntityType, out editH);
+            if (overridden)
+                z = editH + i * OrderBias;
             // The lift exists for VR multiview (per-eye depth-precision
             // ghosting); viewed obliquely it parallaxes decals up to ~1 px
             // off their baked underlay.  The editor is flat single-view,
             // where the in-shader depth bias alone is reliable -- skip the
             // lift there so alignment reads pixel-true at any orbit angle.
-            if (cell.DecalOrder > 0f && !FlatEditorMode)
+            if (cell.DecalOrder > 0f && !overridden && !FlatEditorMode)
                 z += (z > 0.001f ? 0.0015f : 0.0006f) + cell.DecalOrder * 0.0004f;
             int instance = _instanceCount[id]++;
             if (instance >= _multiMesh[id].InstanceCount)

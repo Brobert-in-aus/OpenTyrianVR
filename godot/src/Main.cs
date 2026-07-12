@@ -626,8 +626,9 @@ public partial class Main : Node3D
     /// so drags accumulate per motion event.</summary>
     public override void _Input(InputEvent ev)
     {
-        // Bare mouse = camera; Ctrl reserves the mouse for selection.
-        if (!HeightEditor || Input.IsKeyPressed(Key.Ctrl))
+        // Bare mouse = camera; Ctrl (objects) and Alt (layers) reserve the
+        // mouse for selection.
+        if (!HeightEditor || Input.IsKeyPressed(Key.Ctrl) || Input.IsKeyPressed(Key.Alt))
             return;
 
         if (ev is InputEventMouseMotion motion)
@@ -666,27 +667,32 @@ public partial class Main : Node3D
     {
         UpdateEditorCamera();
 
+        // Ctrl+click selects OBJECTS only; Alt+click selects fixed LAYERS
+        // (clouds, platforms, ground).  Falling from object-pick through to
+        // layers grabbed the layer whenever the zoom put cell centers out
+        // of reach, making close-up object selection impossible.
         bool click = Input.IsMouseButtonPressed(MouseButton.Left) &&
-                     Input.IsKeyPressed(Key.Ctrl);  // bare drag = orbit
+                     (Input.IsKeyPressed(Key.Ctrl) || Input.IsKeyPressed(Key.Alt));
         if (click && !_editorLastClick)
         {
             var cam = GetViewport().GetCamera3D();
             if (cam != null)
             {
                 Vector2 mouse = GetViewport().GetMousePosition();
-                if (_snapshotLayer.TryPick(cam, mouse, 48f, out ushort picked, out _))
+                if (Input.IsKeyPressed(Key.Alt))
+                {
+                    if (_snapshotLayer.TryPickLayer(cam, mouse, out int layer, out float layerZ, out string layerName))
+                    {
+                        _editorSelected = 0;
+                        _editorSelectedLayer = layer;
+                        _editorSelectedLayerZ = layerZ;
+                        _editorSelectedLayerName = layerName;
+                    }
+                }
+                else if (_snapshotLayer.TryPick(cam, mouse, out ushort picked, out _))
                 {
                     _editorSelected = picked;
                     _editorSelectedLayer = -1;
-                }
-                // No enemy near the cursor: fall through to the background
-                // layers (clouds, platforms, ground) for inspection.
-                else if (_snapshotLayer.TryPickLayer(cam, mouse, out int layer, out float layerZ, out string layerName))
-                {
-                    _editorSelected = 0;
-                    _editorSelectedLayer = layer;
-                    _editorSelectedLayerZ = layerZ;
-                    _editorSelectedLayerName = layerName;
                 }
             }
         }

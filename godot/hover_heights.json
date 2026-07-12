@@ -187,7 +187,7 @@
       "class": "ground"
     },
     "15": {
-      "class": "air-high",
+      "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=58 ticks=1037"
     },
     "150": {
@@ -787,7 +787,7 @@
       "class": "ground"
     },
     "32": {
-      "class": "air-high",
+      "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=292 ticks=1395"
     },
     "320": {
@@ -821,7 +821,7 @@
       "class": "air-high"
     },
     "33": {
-      "class": "air-high",
+      "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=294 ticks=735"
     },
     "330": {
@@ -855,7 +855,7 @@
       "class": "air-high"
     },
     "34": {
-      "class": "air-high",
+      "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=296 ticks=1300"
     },
     "340": {
@@ -890,7 +890,7 @@
       "seen": "demo sheet=6 index=30 ticks=83"
     },
     "35": {
-      "class": "air-high",
+      "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=298 ticks=1524"
     },
     "350": {
@@ -934,7 +934,7 @@
       "seen": "demo sheet=6 index=134 ticks=208"
     },
     "36": {
-      "class": "air-high",
+      "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=300 ticks=895"
     },
     "360": {
@@ -974,7 +974,7 @@
       "class": "ground"
     },
     "37": {
-      "class": "air-high",
+      "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=302 ticks=1328"
     },
     "370": {
@@ -1008,7 +1008,7 @@
       "class": "ground"
     },
     "38": {
-      "class": "air-high",
+      "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=264 ticks=368"
     },
     "380": {
@@ -1042,7 +1042,7 @@
       "class": "ground"
     },
     "39": {
-      "class": "air-high",
+      "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=226 ticks=217"
     },
     "390": {
@@ -1080,11 +1080,11 @@
       "class": "ground"
     },
     "4": {
-      "class": "ground",
+      "class": "air-mid",
       "seen": "demo sheet=5 index=180 ticks=2611"
     },
     "40": {
-      "class": "air-high",
+      "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=172 ticks=1993"
     },
     "400": {
@@ -1118,7 +1118,7 @@
       "class": "air-high"
     },
     "41": {
-      "class": "air-high",
+      "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=188 ticks=415"
     },
     "410": {
@@ -2217,7 +2217,7 @@
       "class": "ground"
     },
     "73": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=250 ticks=168"
     },
     "730": {
@@ -2251,7 +2251,7 @@
       "class": "air-high"
     },
     "74": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=252 ticks=162"
     },
     "740": {
@@ -2285,7 +2285,7 @@
       "class": "air-high"
     },
     "75": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=254 ticks=158"
     },
     "750": {
@@ -2319,7 +2319,7 @@
       "class": "air-high"
     },
     "76": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=286 ticks=152"
     },
     "760": {
@@ -2353,7 +2353,7 @@
       "class": "air-high"
     },
     "77": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=288 ticks=147"
     },
     "770": {
@@ -2387,7 +2387,7 @@
       "class": "ground"
     },
     "78": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=290 ticks=142"
     },
     "780": {
@@ -2421,7 +2421,7 @@
       "class": "ground"
     },
     "79": {
-      "class": "ground",
+      "class": "platform-under",
       "seen": "demo sheet=6 index=292 ticks=135"
     },
     "790": {
