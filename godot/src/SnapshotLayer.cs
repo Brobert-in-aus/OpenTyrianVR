@@ -943,9 +943,12 @@ public unsafe partial class SnapshotLayer : Node3D
     }
 
     // Hazard (collider) markers: red halos under every record whose contact
-    // damages the player (flag bit 64, mirroring JE_playerCollide).
+    // damages the player (flag bit 64, mirroring JE_playerCollide); blue
+    // halos for magnet objects (flag bit 128 -- attract/push force fields,
+    // the MINES wall bumpers).  Same B toggle.
     private readonly System.Collections.Generic.List<MeshInstance3D> _hazardMarkers = new();
     private StandardMaterial3D? _hazardMaterial;
+    private StandardMaterial3D? _magnetMaterial;
     public bool HazardMarkersEnabled = true;
 
     public void EditorHazardMarkers()
@@ -962,22 +965,32 @@ public unsafe partial class SnapshotLayer : Node3D
                 CullMode = BaseMaterial3D.CullModeEnum.Disabled,
                 RenderPriority = 9,
             };
+            _magnetMaterial ??= new StandardMaterial3D
+            {
+                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+                Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+                BlendMode = BaseMaterial3D.BlendModeEnum.Add,
+                AlbedoColor = new Color(0.2f, 0.45f, 1f, 0.30f),
+                CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+                RenderPriority = 9,
+            };
             for (int i = 0; i < _cellCount && used < 64; i++)
             {
                 ref readonly RenderCell cell = ref _cells[i];
-                if (cell.EntityType == 0 || (cell.Flags & 64) == 0)
+                if (cell.EntityType == 0 || (cell.Flags & (64 | 128)) == 0)
                     continue;
                 if (used == _hazardMarkers.Count)
                 {
                     var marker = new MeshInstance3D
                     {
                         Mesh = new QuadMesh { Size = new Vector2(16f / 320f * LaneWidth, 18f / 200f * LaneHeight) },
-                        MaterialOverride = _hazardMaterial,
                     };
                     AddChild(marker);
                     _hazardMarkers.Add(marker);
                 }
                 var m = _hazardMarkers[used];
+                // Damage wins the color when an object is both.
+                m.MaterialOverride = (cell.Flags & 64) != 0 ? _hazardMaterial : _magnetMaterial;
                 bool big = (cell.Flags & 8) != 0;
                 m.Scale = big ? new Vector3(2f, 2f, 1f) : Vector3.One;
                 m.Position = CellLanePos(in cell) + new Vector3(0f, 0f, -0.0015f);
@@ -1317,9 +1330,14 @@ public unsafe partial class SnapshotLayer : Node3D
             // whenever they crossed one -- the platform drew over them
             // ("transparent over platforms, solid over true ground").
             // A "ground"-class entry also lands here: surface-riding IS the
-            // ground class for statics.
+            // ground class for statics -- and it OUTRANKS the top-band
+            // platform floor: DELIANI draws plain ground decorations in the
+            // enemy-top band, and the unconditional floor hoisted them to
+            // platform height while their ground-band twins sat on the
+            // ground (types 237/238, snap-back on unpause).  Unauthored
+            // top statics keep the floor (legacy paint order).
             float below = SurfaceForSource(sprite.SourceId, centerX, centerY);
-            band = sprite.Category == (byte)OtyrNative.Category.EnemyTop
+            band = sprite.Category == (byte)OtyrNative.Category.EnemyTop && !hasAuthored
                 ? Math.Max(below, BackgroundLayer.PlatformZ)
                 : (below > 0f ? below : BackgroundLayer.GroundZ);
             decalOrder = (recordIndex + 1f) / OtyrNative.SnapshotSpriteMax;

@@ -254,6 +254,12 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 	if (enemyAvail[i] == 0 && !enemy[i].scoreitem && enemy[i].evalue <= 20000 &&
 	    (enemyDat[enemy[i].enemytype].explosiontype & 1) == 0)
 		rec_flags |= PRESENT_FLAG_COLLIDER;
+	/* Magnet objects (252 attract, 253/254 short-range push, 255 magneto
+	   repulse) shove the player without damaging them -- the MINES wall
+	   bumpers.  Marked so the editor can show them as force objects. */
+	for (unsigned int t = 0; t < 3; ++t)
+		if (enemy[i].tur[t] >= 252 && enemy[i].tur[t] <= 255)
+			rec_flags |= PRESENT_FLAG_MAGNET;
 
 	unsigned int rec = present_record_id(enemy_band_category, PRESENT_BLIT_SPRITE2,
 	                  rec_flags, enemy[i].filter,

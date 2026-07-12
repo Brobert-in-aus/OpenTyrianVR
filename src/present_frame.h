@@ -83,6 +83,10 @@ enum
 	                                   scoreitem, evalue <= 20000, explosiontype
 	                                   bit 0 clear); drives the height editor's
 	                                   hazard markers */
+	PRESENT_FLAG_MAGNET = 128,      /* any turret slot carries a magnet code
+	                                   (252 attract, 253/254 short-range push,
+	                                   255 magneto repulse); drives the height
+	                                   editor's blue force markers */
 };
 
 typedef struct PresentSprite
