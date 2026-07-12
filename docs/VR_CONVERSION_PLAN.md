@@ -355,7 +355,21 @@
   wave.  Combined self-test (both scripts, unchanged sim):
   bit-identical over 94791 lines; fabricated sweep inside a real stop
   window is run-to-run deterministic and diverges from baseline
-  exactly at the scheduled tick.
+  exactly at the scheduled tick.  (8) EARLY-FIRE BLOCKS + LEVEL-END
+  SCHEDULE (user catch, 2026-07-12): gates must not release EARLY
+  either (an early wave-clear or boss kill shifts the whole downstream
+  timeline and misaligns every later schedule entry), and boss deaths
+  gate LEVEL ENDS via readyToEndLevel -- a different path from the
+  scroll stops.  otyr_gate_release_blocked()/otyr_level_end_blocked()
+  hold the kill-driven release/end sites until one tick before the
+  scheduled tick; OTYR_DEMO_END_LOG/_SCRIPT record and replay
+  endLevel triggers (ep1 attract set: 10 ends, 2 per loop;
+  captures/demo_ends.txt) with the same sweep fallback.  ALL-SCRIPTS
+  self-test (death+gate+end, unchanged sim): bit-identical over 94791
+  lines.  NOTE: event-driven stop clears (eventtype sets
+  stopBackgroundNum=0 directly) are scroll-position-locked and
+  correctly bypass the blocks; only kill-driven releases can drift
+  and only they are guarded.
 - Round 11 (2026-07-12, evening): height authoring COMPLETE through
   DELIANI (TYRIAN, ASTEROID1/2, SAVARA, MINES, BUBBLES?, DELIANI --
   user-driven editor passes).  Fix cascade this round: collider flag

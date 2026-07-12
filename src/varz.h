@@ -342,6 +342,13 @@ JE_byte JE_playerDamage(JE_byte temp, Player *);
    call once per gameplay tick.  No-op outside demo playback. */
 void otyr_demo_death_tick(void);
 
+/* Gate B early-fire blocks: scheduled scroll-stop releases and level ends
+   must not happen BEFORE their legacy tick (early boss kills / early wave
+   clears shift the whole downstream timeline).  Always false outside demo
+   playback or without the corresponding script. */
+bool otyr_gate_release_blocked(void);
+bool otyr_level_end_blocked(void);
+
 void JE_setupExplosion(JE_integer x, JE_integer y, JE_integer deltaY, JE_integer type, bool fixedPosition, bool followPlayer);
 void JE_setupExplosionLarge(JE_boolean enemyground, JE_byte explonum, JE_integer x, JE_integer y);
 

@@ -1093,6 +1093,35 @@ static unsigned int otyr_gate_script_pos = 0;
 static int otyr_gate_script_on = -1;
 static bool otyr_gate_prev_stopped = false;
 
+/* Level-end schedule: boss deaths are gates too -- the level ends via
+   readyToEndLevel && enemyOnScreen == 0, a different path from the
+   scroll stops.  OTYR_DEMO_END_LOG records each endLevel trigger tick;
+   OTYR_DEMO_END_SCRIPT blocks EARLY ends (early boss kill under a
+   changed sim) and sweeps the hostiles if the end missed its tick. */
+static Uint32 otyr_end_script[64];
+static unsigned int otyr_end_script_len = 0;
+static unsigned int otyr_end_script_pos = 0;
+static int otyr_end_script_on = -1;
+static bool otyr_end_prev = false;
+
+/* Release/end blocking: scheduled events must not fire EARLY either, or
+   the whole downstream timeline shifts and every later schedule entry
+   misaligns.  Organic events fire in the iteration before their
+   observation tick, so blocking ends one tick before the schedule. */
+bool otyr_gate_release_blocked(void)
+{
+	return play_demo && otyr_gate_script_on == 1 &&
+	       otyr_gate_script_pos < otyr_gate_script_len &&
+	       otyr_demo_tick_count + 1 < otyr_gate_script[otyr_gate_script_pos];
+}
+
+bool otyr_level_end_blocked(void)
+{
+	return play_demo && otyr_end_script_on == 1 &&
+	       otyr_end_script_pos < otyr_end_script_len &&
+	       otyr_demo_tick_count + 1 < otyr_end_script[otyr_end_script_pos];
+}
+
 static unsigned int otyr_script_read(const char *env, Uint32 *out, unsigned int max)
 {
 	const char *path = SDL_getenv(env);
@@ -1140,6 +1169,30 @@ void otyr_demo_death_tick(void)
 		                                        otyr_gate_script,
 		                                        COUNTOF(otyr_gate_script));
 		otyr_gate_script_on = otyr_gate_script_len > 0;
+		otyr_end_script_len = otyr_script_read("OTYR_DEMO_END_SCRIPT",
+		                                       otyr_end_script,
+		                                       COUNTOF(otyr_end_script));
+		otyr_end_script_on = otyr_end_script_len > 0;
+	}
+
+	/* Level-end schedule: observe endLevel at tick starts. */
+	{
+		if (!otyr_end_prev && endLevel)
+			otyr_script_append("OTYR_DEMO_END_LOG", otyr_demo_tick_count);
+		if (otyr_end_script_on == 1 && otyr_end_script_pos < otyr_end_script_len)
+		{
+			if (otyr_demo_tick_count == otyr_end_script[otyr_end_script_pos])
+			{
+				++otyr_end_script_pos;
+				if (!endLevel)
+					for (unsigned int i = 0; i < COUNTOF(enemyAvail); ++i)
+						if (enemyAvail[i] == 0)
+							enemyAvail[i] = 1;
+			}
+			else if (otyr_demo_tick_count > otyr_end_script[otyr_end_script_pos])
+				++otyr_end_script_pos;
+		}
+		otyr_end_prev = endLevel;
 	}
 
 	/* Kill-gate schedule: observe stop-state at tick starts.  The

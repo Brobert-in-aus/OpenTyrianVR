@@ -2061,7 +2061,8 @@ draw_player_shot_loop_end:
 
 	/*Start backgrounds if no enemies on screen
 	  End level if number of enemies left to kill equals 0.*/
-	if (stopBackgroundNum == 9 && backMove == 0 && !enemyStillExploding)
+	if (stopBackgroundNum == 9 && backMove == 0 && !enemyStillExploding &&
+	    !otyr_gate_release_blocked())
 	{
 		backMove = 1;
 		backMove2 = 2;
@@ -2082,7 +2083,7 @@ draw_player_shot_loop_end:
 
 	if (!endLevel && enemyOnScreen == 0)
 	{
-		if (readyToEndLevel && !enemyStillExploding)
+		if (readyToEndLevel && !enemyStillExploding && !otyr_level_end_blocked())
 		{
 			if (levelTimerCountdown > 0)
 			{
@@ -2096,7 +2097,7 @@ draw_player_shot_loop_end:
 				reallyEndLevel = true;
 			}
 		}
-		if (stopBackgrounds)
+		if (stopBackgrounds && !otyr_gate_release_blocked())
 		{
 			stopBackgrounds = false;
 			backMove = 1;
