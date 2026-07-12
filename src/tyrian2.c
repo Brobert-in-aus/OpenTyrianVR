@@ -768,7 +768,10 @@ static enum LevelTickResult JE_levelTick(void)
 		if (force_smoothie < 0)
 			force_smoothie = SDL_getenv("OTYR_FORCE_SMOOTHIE") != NULL;
 		if (force_smoothie)
+		{
 			smoothies[2-1] = true;
+			smoothie_data[2-1] = 3;  /* SAVARA V's real hue row (blue) */
+		}
 	}
 
 	present_frame_reset();
@@ -1020,7 +1023,10 @@ static enum LevelTickResult JE_levelTick(void)
 		lava_filter(game_screen, VGAScreen);
 		VGAScreen = game_screen;
 	}
-	if (smoothies[2-1] && processorType > 2)
+	/* Suppressed background = key-filled buffer; the water filter would
+	   smear the key fill (254 tests "blue").  The host renders the storm
+	   ripple on its background quads instead (frame.storm_water, v20). */
+	if (smoothies[2-1] && processorType > 2 && !present_suppress_background)
 	{
 		water_filter(game_screen, VGAScreen);
 		VGAScreen = game_screen;
@@ -3216,6 +3222,15 @@ new_game:
 		fread_u8_die( &eventRec[x].eventdat4, 1, level_f);
 	}
 	eventRec[x].eventtime = 65500;  /*Not needed but just in case*/
+
+	/* OTYR_DUMP_EVENTS: print this level's smoothie/effect events so the
+	   host storm port can target what the level actually requests. */
+	if (SDL_getenv("OTYR_DUMP_EVENTS") != NULL)
+		for (x = 0; x < maxEvent; x++)
+			if (eventRec[x].eventtype == 64)
+				printf("# smoothie event: time=%u smoothie=%d on=%d data=%d\n",
+				       eventRec[x].eventtime, eventRec[x].eventdat,
+				       eventRec[x].eventdat2, eventRec[x].eventdat3);
 
 	/*debuginfo('Level loaded.');*/
 

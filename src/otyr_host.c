@@ -19,6 +19,7 @@
 #include "otyr_host.h"
 #include "otyr_host_internal.h"
 
+#include "backgrnd.h"
 #include "config.h"
 #include "game_input.h"
 #include "keyboard.h"
@@ -110,6 +111,7 @@ static struct
 	uint8_t frame_in_level;
 	uint8_t frame_legacy_fallback;
 	uint8_t frame_menu_present;
+	uint8_t frame_storm_water;       /* v20: host-rendered water smoothie */
 	uint16_t applied_debug_section;  /* edge detect for the v18 level jump */
 	uint8_t pixels[OTYR_FRAME_WIDTH * OTYR_FRAME_HEIGHT];
 	uint32_t palette_argb[256];
@@ -737,7 +739,7 @@ int32_t otyr_session_acquire_frame(uint64_t handle, OtyrFrame *frame,
 			frame->in_level = session.frame_in_level;
 			frame->legacy_fallback = session.frame_legacy_fallback;
 			frame->menu_present = session.frame_menu_present;
-			memset(frame->reserved, 0, sizeof(frame->reserved));
+			frame->storm_water = session.frame_storm_water;
 			result = OTYR_OK;
 			break;
 		}
@@ -993,6 +995,11 @@ void otyr_host_present(SDL_Surface *screen)
 	session.frame_in_level = otyr_in_level;
 	session.frame_legacy_fallback = present_legacy_fallback && otyr_in_level;
 	session.frame_menu_present = otyr_in_level && !otyr_tick_present;
+	/* Water smoothie (storm): host-rendered ripple on the background
+	   quads; the native filter is skipped under suppression. */
+	session.frame_storm_water =
+		(otyr_in_level && smoothies[2-1] && !present_legacy_fallback)
+			? (uint8_t)(0x10 | ((uint8_t)smoothie_data[2-1] & 0x0f)) : 0;
 
 	OtyrSnapshot *snapshot = &session.snapshot;
 

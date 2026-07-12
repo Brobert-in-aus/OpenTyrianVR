@@ -643,6 +643,7 @@ public partial class Main : Node3D
         _snapshotLayer.Visible = HeightEditor
             ? _frame.InLevel != 0 && _frame.LegacyFallback == 0
             : _inGameplay && _frame.LegacyFallback == 0 && _frame.MenuPresent == 0;
+        _snapshotLayer.SetStorm(_frame.StormWater);
         if (HeightEditor)
             UpdateHeightEditor();
         UpdateChecklistInput();

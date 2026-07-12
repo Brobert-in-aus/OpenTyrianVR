@@ -78,6 +78,20 @@ public unsafe partial class BackgroundLayer : Node3D
     private readonly OtyrNative.BackgroundDraw[] _currDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
     private readonly OtyrNative.BackgroundDraw[] _prevDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
 
+    // Storm (host-rendered water smoothie): palette hue row, -1 off.
+    private int _stormHue = -1;
+    private uint _stormTick;
+
+    /// <summary>Frame.StormWater passthrough: 0 off, else 0x10 | hue.</summary>
+    public void SetStorm(byte code)
+    {
+        int hue = code == 0 ? -1 : (code & 0x0f) << 4;
+        if (hue == _stormHue)
+            return;
+        _stormHue = hue;
+        _materials[0].SetShaderParameter("storm_hue", hue);
+    }
+
     // Water-cloud split state (see WaterCloudZ).
     private MeshInstance3D _cloudQuad = null!;
     private ShaderMaterial _cloudMaterial = null!;
@@ -117,22 +131,48 @@ public unsafe partial class BackgroundLayer : Node3D
                 // 1: darken everything -- the in-place shadow copy of a
                 // lifted water-cloud layer.
                 uniform int cloud_mode = 0;
+                // Storm (water smoothie, SAVARA V): blue-row pixels smear
+                // downward with a flowing waver and recolor into hue row
+                // storm_hue -- the legacy water_filter, minus its frame
+                // feedback (time-scrolling the waver stands in for the
+                // cascade).  0 = off.
+                uniform int storm_hue = -1;
+                uniform float storm_time = 0.0;
+
+                // Palette index at one integer map pixel; -1 = transparent.
+                int map_index(ivec2 mp) {
+                    if (mp.x < 0 || mp.y < 0)
+                        return -1;
+                    ivec2 tile = mp / ivec2(24, 28);
+                    if (tile.x >= map_size.x || tile.y >= map_size.y)
+                        return -1;
+                    int idx = int(texelFetch(tilemap, tile, 0).r * 255.0 + 0.5);
+                    if (idx > 200)  // 0xff = empty cell
+                        return -1;
+                    ivec2 ap = ivec2((idx % 8) * 24, (idx / 8) * 28) + (mp - tile * ivec2(24, 28));
+                    int pi = int(texelFetch(atlas, ap, 0).r * 255.0 + 0.5);
+                    return pi == 0 ? -1 : pi;  // palette 0 = transparent
+                }
 
                 // Palette RGB at one integer map pixel; a = coverage.
                 vec4 sample_map(ivec2 mp) {
-                    if (mp.x < 0 || mp.y < 0)
+                    int pi = map_index(mp);
+                    if (pi < 0)
                         return vec4(0.0);
-                    ivec2 tile = mp / ivec2(24, 28);
-                    if (tile.x >= map_size.x || tile.y >= map_size.y)
-                        return vec4(0.0);
-                    int idx = int(texelFetch(tilemap, tile, 0).r * 255.0 + 0.5);
-                    if (idx > 200)  // 0xff = empty cell
-                        return vec4(0.0);
-                    ivec2 ap = ivec2((idx % 8) * 24, (idx / 8) * 28) + (mp - tile * ivec2(24, 28));
-                    float pi = floor(texelFetch(atlas, ap, 0).r * 255.0 + 0.5);
-                    if (pi < 0.5)  // palette 0 = transparent
-                        return vec4(0.0);
-                    vec3 rgb = texture(palette, vec2((pi + 0.5) / 256.0, 0.5)).rgb;
+                    if (storm_hue >= 0 && (pi & 0x30) != 0) {
+                        // Legacy waver: abs(((w>>10)&7)-4)-1 over the pixel
+                        // index; time scroll makes the smear flow downward.
+                        int w = mp.y * 320 + mp.x + int(storm_time * 96.0);
+                        int value = pi & 0x0f;
+                        int taps = 1;
+                        for (int i = 1; i <= 3; i++) {
+                            int waver = abs(((w >> 10) & 7) - 4) - 1 + ((w >> (3 + i)) & 1);
+                            int pj = map_index(mp + ivec2(waver, i));
+                            if (pj >= 0) { value += pj & 0x0f; ++taps; }
+                        }
+                        pi = storm_hue | (value / taps);
+                    }
+                    vec3 rgb = texture(palette, vec2((float(pi) + 0.5) / 256.0, 0.5)).rgb;
                     if (cloud_mode == 1)
                         rgb *= 0.45;
                     return vec4(rgb, 1.0);
@@ -245,6 +285,7 @@ public unsafe partial class BackgroundLayer : Node3D
             _mapEpoch = snapshot.SheetEpoch;
             FetchMaps(session);
         }
+        _stormTick = snapshot.LevelTick;
 
         for (int l = 0; l < OtyrNative.BgLayerCount; l++)
         {
@@ -403,6 +444,11 @@ public unsafe partial class BackgroundLayer : Node3D
     /// smooth-scrolls the elevated layers.</summary>
     public void OnRender(float t)
     {
+        // Storm flow: advance the waver in sub-tick time so the smear runs
+        // smoothly between ticks (and freezes with the sim on pause).
+        if (_stormHue >= 0)
+            _materials[0].SetShaderParameter("storm_time", _stormTick + t);
+
         for (int l = 1; l < OtyrNative.BgLayerCount; l++)
         {
             _subTickPx[l] = Vector2.Zero;

@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 19u
+#define OTYR_ABI_VERSION 20u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -170,7 +170,11 @@ typedef struct OtyrFrame
 	                           own present: the flat frame shows the menu, so
 	                           hide the 3D layers immediately instead of
 	                           waiting out tick-staleness (v15) */
-	uint8_t  reserved[1];
+	uint8_t  storm_water;   /* water smoothie (storm) is active and HOST-
+	                           rendered: 0 off, else 0x10 | hue row (the
+	                           legacy water_filter recolor row).  The native
+	                           filter and the legacy fallback are both
+	                           skipped for it under suppression (v20) */
 } OtyrFrame;
 
 typedef struct OtyrPlayerState

@@ -49,8 +49,15 @@ void present_frame_reset(void)
 	   they would warp a key-filled buffer.  Fall back to full legacy
 	   drawing while any is active (one-tick lag on transitions: both
 	   values are last tick's -- acceptable).  Unhosted, the config flags
-	   are all false and this is a no-op. */
-	present_legacy_fallback = anySmoothies || starShowVGASpecialCode != 0;
+	   are all false and this is a no-op.
+	   EXCEPT the water smoothie (SAVARA V storm): it is HOST-rendered as
+	   a ripple shader on the background quads (frame.storm_water, v20),
+	   and its native filter is skipped under suppression, so it no
+	   longer forces the flat fallback. */
+	bool unhandled_smoothies =
+		(processorType > 2 && smoothies[1-1]) ||
+		(processorType > 1 && (smoothies[3-1] || smoothies[4-1] || smoothies[5-1]));
+	present_legacy_fallback = unhandled_smoothies || starShowVGASpecialCode != 0;
 	present_suppress_entity_draw = present_config_suppress_entity && !present_legacy_fallback;
 	present_suppress_background = present_config_suppress_background && !present_legacy_fallback;
 	present_suppress_text = present_config_suppress_text && !present_legacy_fallback;

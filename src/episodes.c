@@ -255,6 +255,36 @@ void JE_loadItemDat(void)
 	}
 }
 
+/* OTYR_DUMP_EVENTS companion: scan one level record's event table straight
+   from the .lvl file (layout mirrors JE_loadMap) and print the smoothie
+   requests -- the host storm port needs to know what each level asks for. */
+static void otyr_dump_level_events(int section, int lvlnum)
+{
+	FILE *f = dir_fopen_die(data_dir(), levelFile, "rb");
+	fseek(f, lvlPos[(lvlnum - 1) * 2], SEEK_SET);
+	fseek(f, 2 + 6, SEEK_CUR);  /* map/shape file chars + mapX/X2/X3 */
+	Uint16 n;
+	fread_u16_die(&n, 1, f);
+	fseek(f, n * 2, SEEK_CUR);  /* levelEnemy table */
+	fread_u16_die(&n, 1, f);
+	for (Uint16 i = 0; i < n; ++i)
+	{
+		Uint16 time; Uint8 type, d4; Sint16 d1, d2; Sint8 d3, d5, d6;
+		fread_u16_die(&time, 1, f);
+		fread_u8_die(&type, 1, f);
+		fread_s16_die(&d1, 1, f);
+		fread_s16_die(&d2, 1, f);
+		fread_s8_die(&d3, 1, f);
+		fread_s8_die(&d5, 1, f);
+		fread_s8_die(&d6, 1, f);
+		fread_u8_die(&d4, 1, f);
+		if (type == 64)
+			printf("    section %3d smoothie: time=%5u num=%d on=%d data=%d\n",
+			       section, time, d1, d2, d3);
+	}
+	fclose(f);
+}
+
 /* OTYR_DUMP_SECTIONS=1: list the episode script's sections with their
    playable levels ("]L" lines), so the height editor's OTYR_START_SECTION
    has addressable targets (secret levels included).  Sections count from 1
@@ -279,8 +309,12 @@ static void otyr_dump_sections(void)
 		if (buffer[0] == '*')
 			++section;
 		else if (buffer[0] == ']' && buffer[1] == 'L' && len > 13)
+		{
 			printf("  section %3d: level '%.9s' (lvl file %d)\n",
 			       section, buffer + 13, atoi(buffer + 25));
+			if (getenv("OTYR_DUMP_EVENTS") != NULL)
+				otyr_dump_level_events(section, atoi(buffer + 25));
+		}
 	}
 	fclose(f);
 	fflush(stdout);

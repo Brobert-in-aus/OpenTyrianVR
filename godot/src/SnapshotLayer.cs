@@ -1023,6 +1023,9 @@ public unsafe partial class SnapshotLayer : Node3D
     /// <summary>Editor: whole-layer highlight passthrough (-1 hides).</summary>
     public void EditorHighlightLayer(int layer) => _background?.EditorHighlightLayer(layer);
 
+    /// <summary>Frame.StormWater passthrough (host-rendered water smoothie).</summary>
+    public void SetStorm(byte code) => _background?.SetStorm(code);
+
     /// <summary>Editor: human-readable band description for a type --
     /// pending edit, assigned class, explicit height, or the legacy band.</summary>
     public string EditorDescribe(ushort entityType)
