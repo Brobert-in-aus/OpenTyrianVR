@@ -1151,6 +1151,19 @@ public unsafe partial class SnapshotLayer : Node3D
     public string? EditorPendingOf(ushort entityType) =>
         _editorPending.TryGetValue(entityType, out string? v) ? v : null;
 
+    /// <summary>Editor: distinct live band heights of a type's on-screen
+    /// cells -- surface-following diagnosis (which surface did each
+    /// instance actually resolve to?).</summary>
+    public string EditorLiveZOf(ushort entityType)
+    {
+        var seen = new System.Collections.Generic.SortedSet<float>();
+        for (int i = 0; i < _cellCount; i++)
+            if (_cells[i].EntityType == entityType)
+                seen.Add(Mathf.Round(_cells[i].Z * 1000f) / 1000f);
+        return seen.Count == 0 ? "" :
+            string.Join("/", System.Linq.Enumerable.Select(seen, z => z.ToString("0.###")));
+    }
+
     // Water-cloud layer height (editor-adjustable, saved to
     // classes["water-clouds"]).
     private bool _waterCloudDirty;

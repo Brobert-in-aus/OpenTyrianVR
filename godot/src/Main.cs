@@ -838,7 +838,8 @@ public partial class Main : Node3D
             _editorLabel.Visible = true;
             bool onScreen = _snapshotLayer.TryLocateType(_editorSelected, out _);
             string heightText = float.IsNaN(selectedHeight)
-                ? "surface-following" : selectedHeight.ToString("0.####");
+                ? $"surface-following [live {_snapshotLayer.EditorLiveZOf(_editorSelected)}]"
+                : selectedHeight.ToString("0.####");
             _editorLabel.Text =
                 $"selected type {_editorSelected}  h={heightText}  " +
                 _snapshotLayer.EditorDescribe(_editorSelected) +
