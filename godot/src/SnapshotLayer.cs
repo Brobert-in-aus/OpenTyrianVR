@@ -1444,7 +1444,13 @@ public unsafe partial class SnapshotLayer : Node3D
             // off their baked underlay.  The editor is flat single-view,
             // where the in-shader depth bias alone is reliable -- skip the
             // lift there so alignment reads pixel-true at any orbit angle.
-            if (cell.DecalOrder > 0f && !overridden && !FlatEditorMode)
+            // EXCEPT shadows: they have no baked underlay to align with,
+            // and unlifted they sit exactly on the ground quad's depth-
+            // prepass plane -- the depth-test tie flickered the player
+            // shadow in and out with camera tilt.
+            bool isShadowCell = cell.SheetId >= ShadowLayerBase &&
+                                cell.SheetId < ShadowLayerBase + OtyrNative.SheetCount;
+            if (cell.DecalOrder > 0f && !overridden && (!FlatEditorMode || isShadowCell))
                 z += (z > 0.001f ? 0.0015f : 0.0006f) + cell.DecalOrder * 0.0004f;
             int instance = _instanceCount[id]++;
             if (instance >= _multiMesh[id].InstanceCount)
