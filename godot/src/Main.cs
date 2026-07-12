@@ -224,7 +224,7 @@ public partial class Main : Node3D
                 HorizontalAlignment = HorizontalAlignment.Left,
             };
             _playfieldRoot.AddChild(_editorLegend);
-            GD.Print("OpenTyrianVR: HEIGHT EDITOR (ctrl+click select, drag orbit, RMB-drag pan, wheel zoom, Up/Down nudge, Shift coarse, 1-8 class, S save, P pause, N skip)");
+            GD.Print("OpenTyrianVR: HEIGHT EDITOR (ctrl+click select, drag orbit, RMB-drag pan, wheel zoom, Up/Down nudge, Shift coarse, 1..= bands, numpad +/- step, S save, P pause, N skip)");
         }
 
         _image = Image.CreateEmpty(OtyrNative.FrameWidth, OtyrNative.FrameHeight, true, Image.Format.Rgba8);
