@@ -757,6 +757,7 @@ static enum LevelTickResult JE_levelTick(void)
 {
 
 	statehash_tick();
+	otyr_demo_death_tick();
 	if (otyr_hosted)
 		otyr_host_level_tick();
 

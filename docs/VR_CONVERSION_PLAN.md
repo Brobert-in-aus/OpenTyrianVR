@@ -330,7 +330,21 @@
   early -- acceptable for a determinism net; record fresh demos under
   the flag if coverage matters.  (5) The host harness switches to
   flag-ON once the VR product defaults to it; the editor and VR
-  sessions follow the product default.
+  sessions follow the product default.  (6) DEMO DEATH SCHEDULE
+  (user idea, built+verified 2026-07-12): OTYR_DEMO_DEATH_LOG records
+  each demo death's tick under legacy (passive; recorder run stayed
+  bit-identical; ep1 demos die 15x per gate window, 3 per attract
+  loop).  OTYR_DEMO_DEATH_SCRIPT replays the schedule under a changed
+  sim: lethal damage clamps to 1 armor until just before each
+  scheduled tick (window closes one tick early -- the fatal blow can
+  begin in the prior iteration) and the death is FORCED through the
+  normal damage path only if the pilot survived the scheduled tick.
+  Self-test: script active on the unchanged sim is bit-identical over
+  94791 lines (organic deaths preempt every force); force path is
+  run-to-run deterministic and diverges from baseline exactly at the
+  scheduled tick.  Gate B therefore keeps the legacy macro timeline
+  (deaths, respawns, level ends) and near-full tick coverage; only
+  kill-gated scroll stops remain a divergence risk.
 - Round 11 (2026-07-12, evening): height authoring COMPLETE through
   DELIANI (TYRIAN, ASTEROID1/2, SAVARA, MINES, BUBBLES?, DELIANI --
   user-driven editor passes).  Fix cascade this round: collider flag

@@ -1064,6 +1064,63 @@ void JE_wipeShieldArmorBars(void)
 	}
 }
 
+/* Demo death schedule (Gate B, docs/VR_CONVERSION_PLAN.md): pin the demo's
+   macro timeline to the legacy baseline when the sim diverges.
+   OTYR_DEMO_DEATH_LOG=<path> records the demo tick of each player death
+   under the legacy sim (passive).  OTYR_DEMO_DEATH_SCRIPT=<path> replays
+   the schedule: lethal damage before a scheduled tick clamps to leave 1
+   armor, and if the player SURVIVES a scheduled tick the death is forced
+   through the normal damage path at its end -- so with an unchanged sim
+   the organic death always preempts the force and a scripted run is
+   bit-identical to the baseline (the mechanism's self-test). */
+static Uint32 otyr_demo_tick_count = 0;
+static Uint32 otyr_death_script[64];
+static unsigned int otyr_death_script_len = 0;
+static unsigned int otyr_death_script_pos = 0;
+static int otyr_death_script_on = -1;  /* -1 unchecked */
+static bool otyr_death_forcing = false;
+
+static void otyr_death_script_load(void)
+{
+	otyr_death_script_on = 0;
+	const char *path = SDL_getenv("OTYR_DEMO_DEATH_SCRIPT");
+	if (path == NULL || path[0] == '\0')
+		return;
+	FILE *f = fopen(path, "r");
+	if (f == NULL)
+		return;
+	while (otyr_death_script_len < COUNTOF(otyr_death_script) &&
+	       fscanf(f, "%u", &otyr_death_script[otyr_death_script_len]) == 1)
+		++otyr_death_script_len;
+	fclose(f);
+	otyr_death_script_on = otyr_death_script_len > 0;
+}
+
+void otyr_demo_death_tick(void)
+{
+	if (!play_demo)
+		return;
+	++otyr_demo_tick_count;
+	if (otyr_death_script_on < 0)
+		otyr_death_script_load();
+	if (otyr_death_script_on != 1 || otyr_death_script_pos >= otyr_death_script_len)
+		return;
+	/* End-of-scheduled-tick semantics: force only if the player SURVIVED
+	   the tick the baseline died in (an organic death preempts). */
+	if (otyr_demo_tick_count == otyr_death_script[otyr_death_script_pos] + 1)
+	{
+		++otyr_death_script_pos;
+		if (player[0].is_alive)
+		{
+			otyr_death_forcing = true;
+			JE_playerDamage(255, &player[0]);
+			otyr_death_forcing = false;
+		}
+	}
+	else if (otyr_demo_tick_count > otyr_death_script[otyr_death_script_pos] + 1)
+		++otyr_death_script_pos;
+}
+
 JE_byte JE_playerDamage(JE_byte temp,
                         Player *this_player)
 {
@@ -1075,6 +1132,21 @@ JE_byte JE_playerDamage(JE_byte temp,
 		otyr_invuln = SDL_getenv("OTYR_INVULN") != NULL ? 1 : 0;
 	if (otyr_invuln)
 		return 0;
+
+	/* Death-schedule clamp: lethal demo damage leaves 1 armor (min HP 1)
+	   until just before the scheduled death.  The window closes one tick
+	   EARLY: the fatal blow can begin in the iteration before the recorded
+	   death tick (damage processing spans the tick boundary), and clamping
+	   it deferred the death and diverged the self-test.  Worst case under
+	   a changed sim: the pilot dies one tick ahead of schedule. */
+	if (play_demo && !otyr_death_forcing && otyr_death_script_on == 1 &&
+	    otyr_death_script_pos < otyr_death_script_len &&
+	    otyr_demo_tick_count + 1 < otyr_death_script[otyr_death_script_pos])
+	{
+		int lethal = this_player->shield + this_player->armor;
+		if (temp >= lethal && lethal > 1)
+			temp = (JE_byte)(lethal - 1);
+	}
 
 	int playerDamage = 0;
 	soundQueue[7] = S_SHIELD_HIT;
@@ -1103,6 +1175,21 @@ JE_byte JE_playerDamage(JE_byte temp,
 					levelEnd = 40;
 					tempVolume = tyrMusicVolume;
 					soundQueue[1] = S_EXPLOSION_22;
+
+					/* Death-schedule recorder (passive; legacy runs). */
+					if (play_demo)
+					{
+						const char *log = SDL_getenv("OTYR_DEMO_DEATH_LOG");
+						if (log != NULL && log[0] != '\0')
+						{
+							FILE *f = fopen(log, "a");
+							if (f != NULL)
+							{
+								fprintf(f, "%u\n", otyr_demo_tick_count);
+								fclose(f);
+							}
+						}
+					}
 				}
 			}
 			else
