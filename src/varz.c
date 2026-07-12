@@ -1080,19 +1080,51 @@ static unsigned int otyr_death_script_pos = 0;
 static int otyr_death_script_on = -1;  /* -1 unchecked */
 static bool otyr_death_forcing = false;
 
-static void otyr_death_script_load(void)
+/* Kill-gate schedule (same Gate B pattern): kill-gated scroll stops
+   release when their wave dies, and a diverged sim can leave the wave
+   alive and stall the level.  OTYR_DEMO_GATE_LOG records the tick each
+   stop RELEASES in the legacy demo (observed at the following tick
+   start); OTYR_DEMO_GATE_SCRIPT sweeps the hostile slots (the K-bind
+   mechanism) if a scheduled release hasn't happened, so the gate opens
+   on the legacy timeline. */
+static Uint32 otyr_gate_script[128];
+static unsigned int otyr_gate_script_len = 0;
+static unsigned int otyr_gate_script_pos = 0;
+static int otyr_gate_script_on = -1;
+static bool otyr_gate_prev_stopped = false;
+
+static unsigned int otyr_script_read(const char *env, Uint32 *out, unsigned int max)
 {
-	otyr_death_script_on = 0;
-	const char *path = SDL_getenv("OTYR_DEMO_DEATH_SCRIPT");
+	const char *path = SDL_getenv(env);
 	if (path == NULL || path[0] == '\0')
-		return;
+		return 0;
 	FILE *f = fopen(path, "r");
 	if (f == NULL)
-		return;
-	while (otyr_death_script_len < COUNTOF(otyr_death_script) &&
-	       fscanf(f, "%u", &otyr_death_script[otyr_death_script_len]) == 1)
-		++otyr_death_script_len;
+		return 0;
+	unsigned int len = 0;
+	while (len < max && fscanf(f, "%u", &out[len]) == 1)
+		++len;
 	fclose(f);
+	return len;
+}
+
+static void otyr_script_append(const char *env, Uint32 tick)
+{
+	const char *path = SDL_getenv(env);
+	if (path == NULL || path[0] == '\0')
+		return;
+	FILE *f = fopen(path, "a");
+	if (f == NULL)
+		return;
+	fprintf(f, "%u\n", tick);
+	fclose(f);
+}
+
+static void otyr_death_script_load(void)
+{
+	otyr_death_script_len = otyr_script_read("OTYR_DEMO_DEATH_SCRIPT",
+	                                         otyr_death_script,
+	                                         COUNTOF(otyr_death_script));
 	otyr_death_script_on = otyr_death_script_len > 0;
 }
 
@@ -1102,7 +1134,38 @@ void otyr_demo_death_tick(void)
 		return;
 	++otyr_demo_tick_count;
 	if (otyr_death_script_on < 0)
+	{
 		otyr_death_script_load();
+		otyr_gate_script_len = otyr_script_read("OTYR_DEMO_GATE_SCRIPT",
+		                                        otyr_gate_script,
+		                                        COUNTOF(otyr_gate_script));
+		otyr_gate_script_on = otyr_gate_script_len > 0;
+	}
+
+	/* Kill-gate schedule: observe stop-state at tick starts.  The
+	   recorder logs the first tick that sees a stop RELEASED; the
+	   replayer, at that same tick, sweeps the hostiles if the stop is
+	   still holding (organic releases make it a no-op). */
+	{
+		bool stopped = stopBackgrounds || stopBackgroundNum != 0;
+		if (otyr_gate_prev_stopped && !stopped)
+			otyr_script_append("OTYR_DEMO_GATE_LOG", otyr_demo_tick_count);
+		if (otyr_gate_script_on == 1 && otyr_gate_script_pos < otyr_gate_script_len)
+		{
+			if (otyr_demo_tick_count == otyr_gate_script[otyr_gate_script_pos])
+			{
+				++otyr_gate_script_pos;
+				if (stopped)
+					for (unsigned int i = 0; i < COUNTOF(enemyAvail); ++i)
+						if (enemyAvail[i] == 0)
+							enemyAvail[i] = 1;
+			}
+			else if (otyr_demo_tick_count > otyr_gate_script[otyr_gate_script_pos])
+				++otyr_gate_script_pos;
+		}
+		otyr_gate_prev_stopped = stopped;
+	}
+
 	if (otyr_death_script_on != 1 || otyr_death_script_pos >= otyr_death_script_len)
 		return;
 	/* End-of-scheduled-tick semantics: force only if the player SURVIVED
@@ -1178,18 +1241,7 @@ JE_byte JE_playerDamage(JE_byte temp,
 
 					/* Death-schedule recorder (passive; legacy runs). */
 					if (play_demo)
-					{
-						const char *log = SDL_getenv("OTYR_DEMO_DEATH_LOG");
-						if (log != NULL && log[0] != '\0')
-						{
-							FILE *f = fopen(log, "a");
-							if (f != NULL)
-							{
-								fprintf(f, "%u\n", otyr_demo_tick_count);
-								fclose(f);
-							}
-						}
-					}
+						otyr_script_append("OTYR_DEMO_DEATH_LOG", otyr_demo_tick_count);
 				}
 			}
 			else

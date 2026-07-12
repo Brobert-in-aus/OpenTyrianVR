@@ -343,8 +343,19 @@
   94791 lines (organic deaths preempt every force); force path is
   run-to-run deterministic and diverges from baseline exactly at the
   scheduled tick.  Gate B therefore keeps the legacy macro timeline
-  (deaths, respawns, level ends) and near-full tick coverage; only
-  kill-gated scroll stops remain a divergence risk.
+  (deaths, respawns, level ends) and near-full tick coverage.  (7)
+  KILL-GATE SCHEDULE (user idea, built+verified 2026-07-12): the same
+  pattern closes the last coverage hole.  OTYR_DEMO_GATE_LOG records
+  the tick each scroll stop RELEASES in the legacy demo (observed at
+  tick starts; ep1 attract set: 5 releases, one per loop, committed
+  as captures/demo_gates.txt); OTYR_DEMO_GATE_SCRIPT sweeps the
+  hostile slots (the K-bind mechanism) at a scheduled release tick if
+  the stop is still holding, so kill-gated sections open on the
+  legacy timeline even when the diverged demo's shots missed the
+  wave.  Combined self-test (both scripts, unchanged sim):
+  bit-identical over 94791 lines; fabricated sweep inside a real stop
+  window is run-to-run deterministic and diverges from baseline
+  exactly at the scheduled tick.
 - Round 11 (2026-07-12, evening): height authoring COMPLETE through
   DELIANI (TYRIAN, ASTEROID1/2, SAVARA, MINES, BUBBLES?, DELIANI --
   user-driven editor passes).  Fix cascade this round: collider flag
