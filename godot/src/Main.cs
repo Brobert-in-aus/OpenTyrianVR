@@ -438,12 +438,16 @@ public partial class Main : Node3D
     // OTYR_INVULN=1 so the parked ghost player survives the level.
     private static readonly bool HeightEditor =
         System.Environment.GetEnvironmentVariable("OTYR_HEIGHT_EDITOR") == "1";
+    // Class keys 1-8, ordered by HEIGHT (1 = lowest band, 8 = topmost).
     private static readonly string[] EditorClasses =
     {
-        "ground", "pickup", "air-low", "air-mid", "air-high",
-        "platform-under", "mid-under", "over-top",  // keys 6-8
+        "ground", "mid-under", "platform-under", "air-low",
+        "air-mid", "air-high", "pickup", "over-top",
     };
     private ushort _editorSelected;
+    private int _editorSelectedLayer = -1;
+    private string _editorSelectedLayerName = "";
+    private float _editorSelectedLayerZ;
     private Label3D _editorLabel = null!;
     private Label3D _editorLegend = null!;
     private bool _editorLastClick;
@@ -610,9 +614,24 @@ public partial class Main : Node3D
         if (click && !_editorLastClick)
         {
             var cam = GetViewport().GetCamera3D();
-            if (cam != null && _snapshotLayer.TryPick(cam, GetViewport().GetMousePosition(), 48f,
-                                                      out ushort picked, out _))
-                _editorSelected = picked;
+            if (cam != null)
+            {
+                Vector2 mouse = GetViewport().GetMousePosition();
+                if (_snapshotLayer.TryPick(cam, mouse, 48f, out ushort picked, out _))
+                {
+                    _editorSelected = picked;
+                    _editorSelectedLayer = -1;
+                }
+                // No enemy near the cursor: fall through to the background
+                // layers (clouds, platforms, ground) for inspection.
+                else if (_snapshotLayer.TryPickLayer(cam, mouse, out int layer, out float layerZ, out string layerName))
+                {
+                    _editorSelected = 0;
+                    _editorSelectedLayer = layer;
+                    _editorSelectedLayerZ = layerZ;
+                    _editorSelectedLayerName = layerName;
+                }
+            }
         }
         _editorLastClick = click;
 
@@ -635,10 +654,13 @@ public partial class Main : Node3D
             GD.Print($"OpenTyrianVR: editor saved {_snapshotLayer.EditorSave()} type edit(s)");
 
         _snapshotLayer.EditorHighlight(_editorSelected);
+        _snapshotLayer.EditorHighlightLayer(_editorSelectedLayer);
 
         float selectedHeight = 0f;
+        bool hasSelection = false;
         if (_editorSelected != 0)
         {
+            hasSelection = true;
             selectedHeight = _snapshotLayer.EditorHeightOf(_editorSelected);
             _editorLabel.Visible = true;
             bool onScreen = _snapshotLayer.TryLocateType(_editorSelected, out _);
@@ -647,10 +669,19 @@ public partial class Main : Node3D
                 _snapshotLayer.EditorDescribe(_editorSelected) +
                 (onScreen ? "" : "  (not on screen)");
         }
+        else if (_editorSelectedLayer >= 0)
+        {
+            hasSelection = true;
+            selectedHeight = _editorSelectedLayerZ;
+            _editorLabel.Visible = true;
+            _editorLabel.Text =
+                $"selected {_editorSelectedLayerName}  h={selectedHeight:0.####}  " +
+                "(layer heights are structural -- not editable here)";
+        }
         else
             _editorLabel.Visible = false;
 
-        _editorLegend.Text = BuildEditorLegend(_editorSelected != 0, selectedHeight);
+        _editorLegend.Text = BuildEditorLegend(hasSelection, selectedHeight);
     }
 
     private string BuildEditorLegend(bool hasSelection, float selectedHeight)

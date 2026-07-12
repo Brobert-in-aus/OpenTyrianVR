@@ -876,7 +876,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
                 Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
                 BlendMode = BaseMaterial3D.BlendModeEnum.Add,
-                AlbedoColor = new Color(1f, 0.85f, 0.25f, 0.4f),
+                AlbedoColor = new Color(1f, 0.85f, 0.25f, 0.18f),
                 CullMode = BaseMaterial3D.CullModeEnum.Disabled,
                 RenderPriority = 10,
             };
@@ -888,7 +888,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 {
                     var marker = new MeshInstance3D
                     {
-                        Mesh = new QuadMesh { Size = new Vector2(30f / 320f * LaneWidth, 34f / 200f * LaneHeight) },
+                        Mesh = new QuadMesh { Size = new Vector2(15f / 320f * LaneWidth, 17f / 200f * LaneHeight) },
                         MaterialOverride = _editorMarkerMaterial,
                     };
                     AddChild(marker);
@@ -902,6 +902,27 @@ public unsafe partial class SnapshotLayer : Node3D
         for (int i = used; i < _editorMarkers.Count; i++)
             _editorMarkers[i].Visible = false;
     }
+
+    /// <summary>Editor: pick the topmost background layer under the cursor
+    /// (fallback when no enemy is within pick radius).</summary>
+    public bool TryPickLayer(Camera3D camera, Vector2 screenPos, out int layer, out float z, out string name)
+    {
+        layer = -1;
+        z = 0f;
+        name = "";
+        if (_background == null)
+            return false;
+        Transform3D inv = _background.GlobalTransform.AffineInverse();
+        Vector3 origin = inv * camera.ProjectRayOrigin(screenPos);
+        Vector3 dir = (inv.Basis * camera.ProjectRayNormal(screenPos)).Normalized();
+        if (!_background.TryPickLayer(origin, dir, out layer, out z))
+            return false;
+        name = _background.LayerName(layer);
+        return true;
+    }
+
+    /// <summary>Editor: whole-layer highlight passthrough (-1 hides).</summary>
+    public void EditorHighlightLayer(int layer) => _background?.EditorHighlightLayer(layer);
 
     /// <summary>Editor: human-readable band description for a type --
     /// pending edit, assigned class, explicit height, or the legacy band.</summary>

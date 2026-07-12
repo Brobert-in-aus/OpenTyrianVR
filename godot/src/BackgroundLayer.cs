@@ -283,34 +283,115 @@ public unsafe partial class BackgroundLayer : Node3D
         int lowestLayer = includeClouds ? 1 : 2;
         for (int l = OtyrNative.BgLayerCount - 1; l >= lowestLayer; l--)
         {
-            if (_currDraw[l].Drawn == 0 || _tilesCpu[l] == null)
+            if (_currDraw[l].Drawn == 0)
                 continue;
             float z = LayerHeight(l, _currDraw[l].OverMode);
             if (z <= 0.001f)
                 continue;  // coplanar layers are not ridable surfaces
-
-            Vector2 mp = framePx - Origin(l, _currDraw[l]);
-            int tx = (int)Mathf.Floor(mp.X / OtyrNative.BgTileW);
-            int ty = (int)Mathf.Floor(mp.Y / OtyrNative.BgTileH);
-            if (tx < 0 || ty < 0 || tx >= _mapSize[l].X || ty >= _mapSize[l].Y)
-                continue;
-            byte shape = _tilesCpu[l][ty * _mapSize[l].X + tx];
-            if (shape == OtyrNative.BgTileEmpty)
-                continue;
-            // Pixel-granular: a PLACED tile can still be transparent at this
-            // pixel (sparse decoration art).  Tile-granular banding hoisted
-            // ground statics under such tiles to platform height -- they
-            // floated misaligned above their own baked terrain.
-            if (_atlasCpu[l] == null)
-                return z;
-            int px = (int)mp.X - tx * OtyrNative.BgTileW;
-            int py = (int)mp.Y - ty * OtyrNative.BgTileH;
-            int ax = (shape % AtlasCols) * OtyrNative.BgTileW + px;
-            int ay = (shape / AtlasCols) * OtyrNative.BgTileH + py;
-            if (_atlasCpu[l][ay * AtlasCols * OtyrNative.BgTileW + ax] != 0)
+            if (OpaqueAt(l, framePx))
                 return z;
         }
         return 0f;
+    }
+
+    // Pixel-granular art test: a PLACED tile can still be transparent at
+    // the queried pixel (sparse decoration art).  Tile-granular banding
+    // hoisted ground statics under such tiles to platform height -- they
+    // floated misaligned above their own baked terrain.
+    private bool OpaqueAt(int l, Vector2 framePx)
+    {
+        if (_tilesCpu[l] == null)
+            return false;
+        Vector2 mp = framePx - Origin(l, _currDraw[l]);
+        int tx = (int)Mathf.Floor(mp.X / OtyrNative.BgTileW);
+        int ty = (int)Mathf.Floor(mp.Y / OtyrNative.BgTileH);
+        if (tx < 0 || ty < 0 || tx >= _mapSize[l].X || ty >= _mapSize[l].Y)
+            return false;
+        byte shape = _tilesCpu[l][ty * _mapSize[l].X + tx];
+        if (shape == OtyrNative.BgTileEmpty)
+            return false;
+        if (_atlasCpu[l] == null)
+            return true;
+        int px = (int)mp.X - tx * OtyrNative.BgTileW;
+        int py = (int)mp.Y - ty * OtyrNative.BgTileH;
+        int ax = (shape % AtlasCols) * OtyrNative.BgTileW + px;
+        int ay = (shape / AtlasCols) * OtyrNative.BgTileH + py;
+        return _atlasCpu[l][ay * AtlasCols * OtyrNative.BgTileW + ax] != 0;
+    }
+
+    /// <summary>Editor: pick the topmost layer whose art is opaque where
+    /// the (local-space) ray crosses its plane.  Returns the layer index
+    /// and its current height.</summary>
+    public bool TryPickLayer(Vector3 localOrigin, Vector3 localDir, out int layer, out float z)
+    {
+        layer = -1;
+        z = 0f;
+        if (Mathf.Abs(localDir.Z) < 1e-5f)
+            return false;
+        float best = float.NegativeInfinity;
+        for (int l = 0; l < OtyrNative.BgLayerCount; l++)
+        {
+            if (_currDraw[l].Drawn == 0)
+                continue;
+            float lz = LayerHeight(l, _currDraw[l].OverMode);
+            float t = (lz - localOrigin.Z) / localDir.Z;
+            if (t <= 0f)
+                continue;
+            Vector3 hit = localOrigin + localDir * t;
+            var playPx = new Vector2((hit.X / LaneWidth + 0.5f) * 320f,
+                                     (0.5f - hit.Y / LaneHeight) * 200f);
+            if (playPx.X < 0f || playPx.X >= PlayW || playPx.Y < 0f || playPx.Y >= PlayH)
+                continue;
+            if (lz > best && OpaqueAt(l, playPx))
+            {
+                best = lz;
+                layer = l;
+                z = lz;
+            }
+        }
+        return layer >= 0;
+    }
+
+    /// <summary>Editor: name a layer by its current role.</summary>
+    public string LayerName(int l)
+    {
+        float z = LayerHeight(l, _currDraw[l].OverMode);
+        if (l == 0) return "ground layer";
+        if (z <= 0.001f) return $"layer {l} (coplanar/terrain)";
+        return Mathf.Abs(z - PlatformZ) <= 0.0005f ? $"platforms (layer {l})" : $"clouds (layer {l})";
+    }
+
+    // Whole-layer selection highlight (editor): a faint additive quad the
+    // size of the play region hovering just over the layer's plane.
+    private MeshInstance3D? _layerHighlight;
+
+    public void EditorHighlightLayer(int l)
+    {
+        if (l < 0)
+        {
+            if (_layerHighlight != null)
+                _layerHighlight.Visible = false;
+            return;
+        }
+        if (_layerHighlight == null)
+        {
+            _layerHighlight = new MeshInstance3D
+            {
+                Mesh = new QuadMesh { Size = new Vector2(PlayW / 320f * LaneWidth, PlayH / 200f * LaneHeight) },
+                MaterialOverride = new StandardMaterial3D
+                {
+                    ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+                    Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+                    BlendMode = BaseMaterial3D.BlendModeEnum.Add,
+                    AlbedoColor = new Color(1f, 0.85f, 0.25f, 0.10f),
+                    CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+                    RenderPriority = 10,
+                },
+            };
+            AddChild(_layerHighlight);
+        }
+        _layerHighlight.Position = _quads[l].Position + new Vector3(0f, 0f, 0.002f);
+        _layerHighlight.Visible = true;
     }
 
     /// <summary>Play-region position of map tile (0,0) for a draw record: the
