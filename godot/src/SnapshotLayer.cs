@@ -1338,7 +1338,16 @@ public unsafe partial class SnapshotLayer : Node3D
         // long-standing "speckle", writ large by single-quad 2x2s).  Bursts
         // live 3-12 ticks and drift ~1px/tick; stepping is imperceptible.
         bool isExplosion = sprite.Category == (byte)OtyrNative.Category.Explosion;
-        if (isExplosion || (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2)))
+        // An authored FIXED height opts an aux-2 record back into mover
+        // interpolation.  Aux 2 is the native's slow-mover-over-a-static
+        // guess, and it flips per tick as a crawling enemy (tank turret)
+        // crosses baked statics -- alternating stepped/interpolated motion
+        // reads as flicker.  A fixed height says "free mover here": nothing
+        // to glue to.  Aux-1 art and ground-class (surface-following)
+        // authored heights keep stepping with the tile layers.
+        bool authoredFloat = hasAuthored && !float.IsNegativeInfinity(authored);
+        if (isExplosion || (isEnemy && sprite.Aux == 1) ||
+            (isEnemy && sprite.Aux == 2 && !authoredFloat))
         {
             _cellSource[_cellCount] = OtyrNative.NoSource;
             ++_cellCount;
