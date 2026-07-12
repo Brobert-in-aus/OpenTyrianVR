@@ -253,6 +253,37 @@ void JE_loadItemDat(void)
 			}
 		}
 	}
+
+	/* OTYR_DUMP_SHOTFOLLOW=1: list every weapon whose shots carry the
+	   player-follow codes (sx/sy > 100: 101 follows both axes, 120 one
+	   axis) and the weapon ports referencing them.  In legacy these shots
+	   drift WITH the player so they stay lined up against the parallax-
+	   shifted world; under the E2 de-parallax the drift reads as a curve. */
+	if (getenv("OTYR_DUMP_SHOTFOLLOW") != NULL)
+	{
+		for (int w = 0; w <= WEAP_NUM; ++w)
+		{
+			bool follows = false;
+			for (int i = 0; i < 8; ++i)
+				follows = follows || weapons[w].sx[i] > 100 || weapons[w].sy[i] > 100;
+			if (!follows)
+				continue;
+			printf("# shot-follow weapon %d: sx", w);
+			for (int i = 0; i < 8; ++i)
+				printf(" %d", weapons[w].sx[i]);
+			printf("  sy");
+			for (int i = 0; i < 8; ++i)
+				printf(" %d", weapons[w].sy[i]);
+			printf("\n");
+			for (int p = 0; p <= PORT_NUM; ++p)
+				for (int m = 0; m < 2; ++m)
+					for (int pw = 0; pw < 11; ++pw)
+						if (weaponPort[p].op[m][pw] == w)
+							printf("#   port %d '%s' mode %d power %d\n",
+							       p, weaponPort[p].name, m + 1, pw + 1);
+		}
+		fflush(stdout);
+	}
 }
 
 /* OTYR_DUMP_EVENTS companion: scan one level record's event table straight

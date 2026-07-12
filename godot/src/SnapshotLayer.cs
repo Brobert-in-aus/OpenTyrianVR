@@ -711,6 +711,8 @@ public unsafe partial class SnapshotLayer : Node3D
         _textOrder = 0;
 
         // Same-source cells are emitted contiguously; index the runs.
+        _pairRunSource = OtyrNative.NoSource;
+        _pairRunOrdinal = 0;
         _prevRuns.Clear();
         for (int i = 0; i < _prevCellCount;)
         {
@@ -1277,11 +1279,32 @@ public unsafe partial class SnapshotLayer : Node3D
     /// <summary>Pairs a cell with last tick's nearest same-source cell on
     /// the same render layer (within a small radius, so genuinely new cells
     /// appear in place instead of stretching from a sibling).</summary>
+    private ushort _pairRunSource = OtyrNative.NoSource;
+    private int _pairRunOrdinal;
+
     private void PairWithPrevious(ref RenderCell cell, ushort sourceId)
     {
         _cellSource[_cellCount] = sourceId;
+        _pairRunOrdinal = sourceId == _pairRunSource ? _pairRunOrdinal + 1 : 0;
+        _pairRunSource = sourceId;
         if (sourceId == OtyrNative.NoSource || !_prevRuns.TryGetValue(sourceId, out var run))
             return;
+
+        // Ordinal-first: same-source cells emit in a stable record order,
+        // so cell N pairs with last tick's cell N.  Nearest-match alone let
+        // a fast-falling stacked enemy's TOP cell pair with last tick's
+        // BOTTOM cell (closer than its own previous position) -- the halves
+        // interpolated apart and a seam opened between them (user-caught).
+        // Nearest remains the fallback for run-shape changes (edge-of-
+        // screen row gating).
+        int ordinalIdx = run.Start + _pairRunOrdinal;
+        if (_pairRunOrdinal < run.Count && _prevCells[ordinalIdx].SheetId == cell.SheetId &&
+            _prevCells[ordinalIdx].CurrPx.DistanceTo(cell.CurrPx) < PairRadiusPx)
+        {
+            cell.PrevPx = _prevCells[ordinalIdx].CurrPx;
+            cell.HasPrev = true;
+            return;
+        }
 
         float bestDist = PairRadiusPx;
         int bestIdx = -1;

@@ -309,7 +309,9 @@ public partial class Main : Node3D
         // regions while the split is live (in-level, 3D showing).
         _hudSidebar = BuildHudQuad(shader, "HudSidebar",
             new Vector2(264f / 320f, 0f), new Vector2(1f, 1f),
-            56f, 200f, frameCenterX: 372f, frameCenterY: 100f, yawDeg: -18f);
+            56f, 200f, frameCenterX: 364f, frameCenterY: 100f, yawDeg: -18f);
+        // Left edge flush against the wide canvas's right edge (frame 336;
+        // user call -- the gap read as disconnected).
         _hudBottomBar = BuildHudQuad(shader, "HudBottomBar",
             new Vector2(0f, 184f / 200f), new Vector2(264f / 320f, 1f),
             264f, 16f, frameCenterX: 132f, frameCenterY: 254f, yawDeg: 0f);
