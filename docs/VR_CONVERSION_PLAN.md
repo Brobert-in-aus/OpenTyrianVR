@@ -309,6 +309,30 @@
   visual divergence for interactive ground units needs an in-headset
   verdict); E3 deep ground for planetary levels (scale-preserving
   push; per-level presentation config; comfort toggle).
+- Round 11 (2026-07-12, evening): height authoring COMPLETE through
+  DELIANI (TYRIAN, ASTEROID1/2, SAVARA, MINES, BUBBLES?, DELIANI --
+  user-driven editor passes).  Fix cascade this round: collider flag
+  now mirrors the real JE_playerCollide fallthrough (scoreitem, not
+  evalue -- halos + B toggle actually work); same-band enemies stack
+  by screen Y (slot order is unstable, object-30 column); DEBUG_KILL
+  K bind (v19) releases kill-gated scroll stops; aux-2 flip flicker
+  fixed by authored-fixed-height interpolation opt-in (550 turret);
+  editor shadow depth-tie flicker (shadows keep the lift flat);
+  band INVERSION applied to 692 untouched types (auto-classifier had
+  flyer/ground swapped; sweep-evidence protected 36 correct entries);
+  SAVARA water clouds: baked into COPLANAR LAYER 1 -- whole-layer
+  lift at classes[water-clouds] (editor-adjustable via Alt+click +
+  Up/Down), arming = overlay cloud>35% + ground water>15%, in-place
+  shadow copy disabled (user call: real shadows will replace);
+  ridable surface = platform ROLE not layer index (SAVARA clouds on
+  layer 2 bounced surface-followers); magnet objects (tur 252-255,
+  MINES bumpers) get blue B-toggle halos (flag 128); ground class
+  outranks the top-band platform floor AND surface-glues sim-truth
+  statics (flag 32: never-latched; sparse art failed the opaque-cell
+  test and split DELIANI decorations -0.0008 vs +0.004).  KNOWN: 
+  SAVARA V (smoothies) renders flat by design -- host-side effect
+  port queued; next headset pass must re-verify multiview layering
+  (many transparent-order changes landed flat-only this round).
 - Round 10 (2026-07-12): the per-instance +/-1 sprite-vs-destroyed-art
   offsets are CONFIRMED AUTHENTIC LEGACY DATA (user eyeballed the same
   slivers in the legacy exe): event spawn positions quantize against
