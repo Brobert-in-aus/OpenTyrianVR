@@ -149,9 +149,10 @@ public partial class Main : Node3D
         var camera = new XRCamera3D { Name = "XRCamera" };
         if (!_xrActive)
         {
-            // Approximate a seated player looking down at the board.
-            camera.Position = new Vector3(0f, 1.6f, 0f);
-            camera.RotationDegrees = new Vector3(-25f, 0f, 0f);
+            // Approximate a seated player looking down at the board; the
+            // height editor leans steeper so hover heights read clearly.
+            camera.Position = HeightEditor ? new Vector3(0f, 1.95f, 0.25f) : new Vector3(0f, 1.6f, 0f);
+            camera.RotationDegrees = new Vector3(HeightEditor ? -48f : -25f, 0f, 0f);
         }
         origin.AddChild(camera);
         camera.MakeCurrent();
@@ -191,6 +192,22 @@ public partial class Main : Node3D
         _playfieldRoot.Position = new Vector3(0f, 1.05f, -0.9f);
         _playfieldRoot.RotationDegrees = new Vector3(-42f, 0f, 0f);
         AddChild(_playfieldRoot);
+
+        if (HeightEditor)
+        {
+            _editorLabel = new Label3D
+            {
+                Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
+                FontSize = 40,
+                PixelSize = 0.0004f,
+                Modulate = new Color(1f, 0.9f, 0.3f),
+                OutlineSize = 8,
+                Visible = false,
+                NoDepthTest = true,
+            };
+            AddChild(_editorLabel);
+            GD.Print("OpenTyrianVR: HEIGHT EDITOR (click select, Up/Down nudge, Shift coarse, 1-5 class, S save, P pause, N skip level)");
+        }
 
         _image = Image.CreateEmpty(OtyrNative.FrameWidth, OtyrNative.FrameHeight, true, Image.Format.Rgba8);
         _texture = ImageTexture.CreateFromImage(_image);
@@ -396,6 +413,33 @@ public partial class Main : Node3D
     private SubViewport? _spectator;
     private Camera3D? _spectatorCamera;
 
+    // OTYR_HEIGHT_EDITOR=1: flat leaned-camera hover-height editor.  Click an
+    // enemy to select its type; Up/Down nudge height (Shift = coarse), 1-5
+    // assign classes (ground/pickup/air-low/air-mid/air-high), S saves to
+    // hover_heights.json, P pauses the game, N skips the level.  Pair with
+    // OTYR_INVULN=1 so the parked ghost player survives the level.
+    private static readonly bool HeightEditor =
+        System.Environment.GetEnvironmentVariable("OTYR_HEIGHT_EDITOR") == "1";
+    private static readonly string[] EditorClasses =
+    {
+        "ground", "pickup", "air-low", "air-mid", "air-high",
+        "platform-under", "mid-under", "over-top",  // keys 6-8
+    };
+    private ushort _editorSelected;
+    private Label3D _editorLabel = null!;
+    private bool _editorLastClick;
+    private readonly System.Collections.Generic.HashSet<Key> _editorHeld = new();
+
+    private bool EditorKeyPressed(Key k)
+    {
+        bool down = Input.IsKeyPressed(k);
+        if (down && _editorHeld.Add(k))
+            return true;
+        if (!down)
+            _editorHeld.Remove(k);
+        return false;
+    }
+
     // The viewport captures read from: the spectator in XR, the window flat.
     private Viewport CaptureViewport => _spectator ?? GetViewport();
 
@@ -460,9 +504,13 @@ public partial class Main : Node3D
         // flat instead -- the 3D layers would double every entity.
         // MenuPresent hides the scene the INSTANT a pause/menu present
         // arrives; the tick-staleness check (250 ms) alone left the whole
-        // 3D scene floating over the menu for a beat.
-        _snapshotLayer.Visible = _inGameplay && _frame.LegacyFallback == 0 &&
-            _frame.MenuPresent == 0;
+        // 3D scene floating over the menu for a beat.  The height editor
+        // works ON the frozen paused scene, so it keeps it visible.
+        _snapshotLayer.Visible = HeightEditor
+            ? _frame.InLevel != 0 && _frame.LegacyFallback == 0
+            : _inGameplay && _frame.LegacyFallback == 0 && _frame.MenuPresent == 0;
+        if (HeightEditor)
+            UpdateHeightEditor();
         UpdateChecklistInput();
         SubmitInput();
         UpdateDiagnostics(delta);
@@ -483,6 +531,48 @@ public partial class Main : Node3D
             _checklist.MoveCursor();
         _lastCheckPressed = check;
         _lastSkipPressed = skip;
+    }
+
+    private void UpdateHeightEditor()
+    {
+        bool click = Input.IsMouseButtonPressed(MouseButton.Left);
+        if (click && !_editorLastClick)
+        {
+            var cam = GetViewport().GetCamera3D();
+            if (cam != null && _snapshotLayer.TryPick(cam, GetViewport().GetMousePosition(), 48f,
+                                                      out ushort picked, out _))
+                _editorSelected = picked;
+        }
+        _editorLastClick = click;
+
+        if (_editorSelected != 0)
+        {
+            float step = Input.IsKeyPressed(Key.Shift) ? 0.01f : 0.002f;
+            if (EditorKeyPressed(Key.Up))
+                _snapshotLayer.EditorSetHeight(_editorSelected,
+                    _snapshotLayer.EditorHeightOf(_editorSelected) + step);
+            if (EditorKeyPressed(Key.Down))
+                _snapshotLayer.EditorSetHeight(_editorSelected,
+                    Math.Max(0f, _snapshotLayer.EditorHeightOf(_editorSelected) - step));
+            for (int c = 0; c < EditorClasses.Length; c++)
+                if (EditorKeyPressed(Key.Key1 + c) &&
+                    _snapshotLayer.ClassHeights.TryGetValue(EditorClasses[c], out float classH))
+                    _snapshotLayer.EditorSetClass(_editorSelected, EditorClasses[c], classH);
+        }
+
+        if (EditorKeyPressed(Key.S))
+            GD.Print($"OpenTyrianVR: editor saved {_snapshotLayer.EditorSave()} type edit(s)");
+
+        if (_editorSelected != 0 && _snapshotLayer.TryLocateType(_editorSelected, out Vector3 anchor))
+        {
+            _editorLabel.Visible = true;
+            _editorLabel.GlobalPosition = anchor + new Vector3(0f, 0.045f, 0.02f);
+            string? pending = _snapshotLayer.EditorPendingOf(_editorSelected);
+            _editorLabel.Text = $"type {_editorSelected}  h={_snapshotLayer.EditorHeightOf(_editorSelected):0.####}"
+                + (pending != null ? $"\n[{pending}] unsaved" : "");
+        }
+        else
+            _editorLabel.Visible = false;
     }
 
     private void PollPlayerState()
@@ -557,6 +647,25 @@ public partial class Main : Node3D
     private void SubmitInput()
     {
         var buttons = OtyrNative.Buttons.None;
+
+        if (HeightEditor)
+        {
+            // Editor: menu navigation + pause + skip only.  Arrows and the
+            // class keys belong to the editor; the ghost player never moves
+            // or fires.
+            if (Input.IsKeyPressed(Key.Enter)) buttons |= OtyrNative.Buttons.UiConfirm;
+            if (Input.IsKeyPressed(Key.Escape)) buttons |= OtyrNative.Buttons.UiCancel;
+            if (Input.IsKeyPressed(Key.Space)) buttons |= OtyrNative.Buttons.UiSpace;
+            if (Input.IsKeyPressed(Key.P)) buttons |= OtyrNative.Buttons.UiPause;
+            if (Input.IsKeyPressed(Key.N)) buttons |= OtyrNative.Buttons.DebugSkip;
+
+            if (buttons == _lastButtons)
+                return;
+            _lastButtons = buttons;
+            var editorInput = OtyrNative.InputFrame.Create(buttons);
+            OtyrNative.SubmitInput(_session, in editorInput, editorInput.StructSize);
+            return;
+        }
 
         // Keyboard (flat testing and desk-side debugging).
         if (Input.IsKeyPressed(Key.Up)) buttons |= OtyrNative.Buttons.Up;

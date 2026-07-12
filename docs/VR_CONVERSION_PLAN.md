@@ -308,7 +308,38 @@
   bar as repositionable quads); E2 faux-parallax removal (aim-vs-
   visual divergence for interactive ground units needs an in-headset
   verdict); E3 deep ground for planetary levels (scale-preserving
-  push; per-level presentation config; comfort toggle).  NEW (confirmed in code): statics
+  push; per-level presentation config; comfort toggle).
+- Round 9 (2026-07-12): expansion clarifications ANSWERED.  E1: no
+  gameplay change (offscreen enemies behave per legacy; below-screen
+  are already sim-dead -- ghosts are visual only).  E2 mechanics
+  confirmed against mainint.c ~4590: swing is 24/48/72 px for
+  ground/platform/cloud layers across the player travel, opposite the
+  player, feeding on the 336/360-px-wide maps.  E3: shootables ride
+  the deep terrain (leaning divergence accepted; NOTE ground turrets
+  DO shoot back -- the no-shootback assumption does not hold);
+  player/shots stay at lane depth; per-level manual config, which
+  must also cover mid-level altitude transitions (cloud-deck passes)
+  and the level-1 underflying-boss depth-from-scale case.  Height
+  HIERARCHY user-specified and audited against the legacy paint
+  order: UI 0.090 > over-top 0.075 (bg3over==1 foreground decks +
+  topEnemyOver/skyEnemyOverAll variants + overflyers) > player/
+  shots/pickups ~0.040 > flyers 0.032-0.038 (BELOW the player --
+  matches legacy default) > platform objects 0.0315 > platforms
+  0.030 > platform-under 0.0285 (under-platform spikes, legacy
+  ground-band records) > clouds 0.020/0.025 > mid-under 0.012
+  (underflying boss) > ground objects > ground.  Two signed-off
+  deviations from legacy: flyers render above cloud decks (hazard
+  visibility; per-type editor overrides can send atmospheric types
+  beneath), and enemy shots share the player plane.  HEIGHT EDITOR
+  shipped (ABI v17): OTYR_HEIGHT_EDITOR=1 + OTYR_INVULN=1 flat mode
+  -- leaned camera, ghost player, click-select by type, Up/Down
+  nudge (Shift coarse), 1-8 class keys, live even while paused, P
+  pause, N=DEBUG_SKIP past bosses (native, armed only with
+  OTYR_INVULN), S saves to hover_heights.json.  Both envs are sim
+  mutations: never in normal sessions.  Shot bands moved 0.050 ->
+  0.041 per the hierarchy.  Hash gate bit-identical (77,386 ticks,
+  solo rerun -- two more concurrent-run false alarms reinforced the
+  rule: NEVER run the gate while another game instance is active).  NEW (confirmed in code): statics
   riding floating platforms (aux 2, and top-band aux 1 with elevated
   surface) visibly swim/blur against their platform under head motion
   -- BackgroundLayer.OnRender smooth-scrolls the ELEVATED tile layers

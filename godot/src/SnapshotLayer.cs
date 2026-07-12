@@ -29,8 +29,8 @@ public unsafe partial class SnapshotLayer : Node3D
         0.036f,  // EnemyGroundA (above platforms, below the player)
         0.085f,  // EnemyTop (high band)
         0.036f,  // EnemyGroundB
-        0.050f,  // EnemyShot
-        0.050f,  // PlayerShot
+        0.041f,  // EnemyShot (the player layer carries all projectiles)
+        0.041f,  // PlayerShot
         0.040f,  // Player
         -0.0002f, // Shadow (fallback; normally surface-following, see AddCell)
         0.040f,  // Sidekick
@@ -652,6 +652,7 @@ public unsafe partial class SnapshotLayer : Node3D
         public Vector2 CurrPx;     // cell center, frame pixels
         public Vector2 PrevPx;     // previous-tick center (== CurrPx if new)
         public bool HasPrev;
+        public ushort EntityType;  // enemies: eDat index (height editor)
     }
 
     private RenderCell[] _cells = new RenderCell[OtyrNative.SnapshotSpriteMax * 4];
@@ -763,7 +764,11 @@ public unsafe partial class SnapshotLayer : Node3D
     // the air classes are absolute lane heights; unlisted types keep the
     // legacy category band.  Loaded once; classes resolve to heights here.
     private readonly System.Collections.Generic.Dictionary<ushort, float> _typeHeights = new();
+    private readonly System.Collections.Generic.Dictionary<string, float> _classHeights = new();
     private float _groundClassOffset = -1f;  // <0: "ground" class absent
+
+    /// <summary>Class name -> height table from hover_heights.json (editor).</summary>
+    public System.Collections.Generic.IReadOnlyDictionary<string, float> ClassHeights => _classHeights;
 
     private void LoadHoverHeights()
     {
@@ -781,6 +786,8 @@ public unsafe partial class SnapshotLayer : Node3D
         }
         var root = parsed.AsGodotDictionary();
         var classes = root["classes"].AsGodotDictionary();
+        foreach (var key in classes.Keys)
+            _classHeights[key.AsString()] = (float)classes[key].AsDouble();
         _groundClassOffset = classes.ContainsKey("ground") ? (float)classes["ground"].AsDouble() : -1f;
         var types = root["types"].AsGodotDictionary();
         foreach (var key in types.Keys)
@@ -801,6 +808,141 @@ public unsafe partial class SnapshotLayer : Node3D
         }
         GD.Print($"OpenTyrianVR: hover heights loaded ({_typeHeights.Count} types)");
     }
+
+    // --- Height editor support (OTYR_HEIGHT_EDITOR) --------------------
+
+    /// <summary>Nearest enemy cell to a screen point (editor picking).
+    /// Returns false when nothing is within pickRadius pixels.</summary>
+    public bool TryPick(Camera3D camera, Vector2 screenPos, float pickRadius,
+                        out ushort entityType, out Vector3 worldPos)
+    {
+        entityType = 0;
+        worldPos = Vector3.Zero;
+        float best = pickRadius * pickRadius;
+        for (int i = 0; i < _cellCount; i++)
+        {
+            ref readonly RenderCell cell = ref _cells[i];
+            if (cell.EntityType == 0)
+                continue;
+            Vector3 world = ToGlobal(CellLanePos(in cell));
+            if (camera.IsPositionBehind(world))
+                continue;
+            float d2 = camera.UnprojectPosition(world).DistanceSquaredTo(screenPos);
+            if (d2 < best)
+            {
+                best = d2;
+                entityType = cell.EntityType;
+                worldPos = world;
+            }
+        }
+        return entityType != 0;
+    }
+
+    /// <summary>World position of the first live cell of a type, for
+    /// anchoring the editor's selection label; false if none this tick.</summary>
+    public bool TryLocateType(ushort entityType, out Vector3 worldPos)
+    {
+        for (int i = 0; i < _cellCount; i++)
+        {
+            if (_cells[i].EntityType == entityType)
+            {
+                worldPos = ToGlobal(CellLanePos(in _cells[i]));
+                return true;
+            }
+        }
+        worldPos = Vector3.Zero;
+        return false;
+    }
+
+    private Vector3 CellLanePos(in RenderCell cell)
+    {
+        float h = _editorHeights.TryGetValue(cell.EntityType, out float o) && cell.DecalOrder == 0f
+            ? o : cell.Z;
+        return new Vector3(((cell.CurrPx.X - 24f) / 320f - 0.5f) * LaneWidth,
+                           (0.5f - cell.CurrPx.Y / 200f) * LaneHeight, h);
+    }
+
+    // Editor overrides: resolved heights applied live (also mid-pause, via
+    // WriteTransforms) and the class/height strings pending a save.
+    private readonly System.Collections.Generic.Dictionary<ushort, float> _editorHeights = new();
+    private readonly System.Collections.Generic.Dictionary<ushort, string> _editorPending = new();
+
+    /// <summary>Editor: current effective height of a type (edited, table,
+    /// or a representative live cell's band).</summary>
+    public float EditorHeightOf(ushort entityType)
+    {
+        if (_editorHeights.TryGetValue(entityType, out float h))
+            return h;
+        if (_typeHeights.TryGetValue(entityType, out float t) && !float.IsNegativeInfinity(t))
+            return t;
+        for (int i = 0; i < _cellCount; i++)
+            if (_cells[i].EntityType == entityType)
+                return _cells[i].Z;
+        return 0.04f;
+    }
+
+    /// <summary>Editor: set an explicit height for a type (applies live).</summary>
+    public void EditorSetHeight(ushort entityType, float height)
+    {
+        _editorHeights[entityType] = height;
+        _typeHeights[entityType] = height;
+        _editorPending[entityType] = height.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    /// <summary>Editor: assign a class by name (resolves through the loaded
+    /// classes table; "ground" applies from the next tick).</summary>
+    public void EditorSetClass(ushort entityType, string cls, float classHeight)
+    {
+        if (cls == "ground")
+        {
+            _typeHeights[entityType] = float.NegativeInfinity;
+            _editorHeights.Remove(entityType);  // surface-resolved next tick
+        }
+        else
+        {
+            _typeHeights[entityType] = classHeight;
+            _editorHeights[entityType] = classHeight;
+        }
+        _editorPending[entityType] = cls;
+    }
+
+    /// <summary>Editor: write pending edits back into hover_heights.json,
+    /// preserving untouched entries.  Returns the number saved.</summary>
+    public int EditorSave()
+    {
+        const string path = "res://hover_heights.json";
+        if (!FileAccess.FileExists(path) || _editorPending.Count == 0)
+            return 0;
+        var root = Json.ParseString(FileAccess.GetFileAsString(path)).AsGodotDictionary();
+        var types = root["types"].AsGodotDictionary();
+        foreach (var (type, value) in _editorPending)
+        {
+            var entry = types.ContainsKey(type.ToString())
+                ? types[type.ToString()].AsGodotDictionary()
+                : new Godot.Collections.Dictionary();
+            if (float.TryParse(value, System.Globalization.NumberStyles.Float,
+                               System.Globalization.CultureInfo.InvariantCulture, out float h))
+            {
+                entry["height"] = h;
+                entry.Remove("class");
+            }
+            else
+            {
+                entry["class"] = value;
+                entry.Remove("height");
+            }
+            types[type.ToString()] = entry;
+        }
+        using var f = FileAccess.Open(path, FileAccess.ModeFlags.Write);
+        f.StoreString(Json.Stringify(root, "  "));
+        int saved = _editorPending.Count;
+        _editorPending.Clear();
+        return saved;
+    }
+
+    /// <summary>Editor: the pending (unsaved) edit for a type, if any.</summary>
+    public string? EditorPendingOf(ushort entityType) =>
+        _editorPending.TryGetValue(entityType, out string? v) ? v : null;
 
     // One surface decision per entity per tick: querying per cell split
     // multi-cell structures across heights when they straddled a platform
@@ -936,6 +1078,7 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.FilterColor = sprite.FilterColor;
         bool isEnemy = sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB;
         bool isShadow = sprite.Category == (byte)OtyrNative.Category.Shadow;
+        cell.EntityType = isEnemy ? sprite.EntityType : (ushort)0;
         float band;
         float decalOrder = 0f;
         if (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2))
@@ -1073,6 +1216,11 @@ public unsafe partial class SnapshotLayer : Node3D
             float z = cell.Z;
             if (cell.DecalOrder > 0f)
                 z += (z > 0.001f ? 0.0015f : 0.0006f) + cell.DecalOrder * 0.0004f;
+            // Height-editor live override: applies to frozen (paused) cells
+            // too, so nudges are visible without unpausing.
+            else if (cell.EntityType != 0 &&
+                     _editorHeights.TryGetValue(cell.EntityType, out float editH))
+                z = editH;
             int instance = _instanceCount[id]++;
             if (instance >= _multiMesh[id].InstanceCount)
             {

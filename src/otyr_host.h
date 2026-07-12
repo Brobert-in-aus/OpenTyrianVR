@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 16u
+#define OTYR_ABI_VERSION 17u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -73,6 +73,11 @@ extern "C" {
 #define OTYR_BUTTON_UI_CANCEL      (1u << 9)   /* Escape */
 #define OTYR_BUTTON_UI_SPACE       (1u << 10)  /* Space */
 #define OTYR_BUTTON_UI_PAUSE       (1u << 11)  /* P */
+#define OTYR_BUTTON_DEBUG_SKIP     (1u << 12)  /* height editor: force level
+                                                  end past progress blockers
+                                                  (sim mutation; editor-only,
+                                                  ignored unless OTYR_INVULN
+                                                  ghost mode is active) (v17) */
 
 /* OtyrConfig.flags bits. */
 #define OTYR_CONFIG_ENABLE_AUDIO           (1u << 0)

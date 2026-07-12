@@ -5,6 +5,33 @@ classes. The host applies it to MOVING enemies (statics/riders already sit on
 their surfaces via the decal path). Unlisted types keep the legacy category
 band, so partial edits are always safe.
 
+## The height editor (preferred workflow)
+
+Launch flat with:
+
+```
+OTYR_FLAT=1 OTYR_HEIGHT_EDITOR=1 OTYR_INVULN=1
+Godot_..._console.exe --path <repo>\godot --xr-mode off
+```
+
+The camera leans steeply so heights read at a glance. Navigate the menus
+(Enter/Esc/Space) into a game — the ship parks invulnerable and never moves
+or fires while the level plays itself. Then:
+
+- **Click** an enemy to select its TYPE (the label shows type id + height;
+  every live instance of the type moves together)
+- **Up/Down** nudge height ±0.002 (**Shift** = ±0.01), visible immediately,
+  even while paused
+- **1–8** assign classes: ground / pickup / air-low / air-mid / air-high /
+  platform-under / mid-under / over-top ("ground" resolves against the
+  surface beneath from the next tick)
+- **P** pauses the game (the scene stays up for selection); **N** skips the
+  level past progress blockers like end bosses
+- **S** saves all pending edits back to hover_heights.json
+
+Both `OTYR_HEIGHT_EDITOR` and `OTYR_INVULN` mutate behavior and must never be
+set for normal sessions (the hash gate only holds without them).
+
 ## File format
 
 ```json

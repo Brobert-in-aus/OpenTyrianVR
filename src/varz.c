@@ -1067,6 +1067,15 @@ void JE_wipeShieldArmorBars(void)
 JE_byte JE_playerDamage(JE_byte temp,
                         Player *this_player)
 {
+	/* OTYR_INVULN=1: height-editor ghost mode -- the player absorbs
+	   nothing (sim mutation, so debug env only; never set in normal
+	   play where the hash gate must hold). */
+	static int otyr_invuln = -1;
+	if (otyr_invuln < 0)
+		otyr_invuln = SDL_getenv("OTYR_INVULN") != NULL ? 1 : 0;
+	if (otyr_invuln)
+		return 0;
+
 	int playerDamage = 0;
 	soundQueue[7] = S_SHIELD_HIT;
 

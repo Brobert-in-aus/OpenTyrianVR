@@ -894,6 +894,19 @@ static void apply_pending_input_locked(void)
 		if (scancode != SDL_SCANCODE_UNKNOWN)
 			push_key_event(scancode, (pending & (1u << bit)) != 0);
 	}
+
+	/* DEBUG_SKIP (v17): the height editor's way past progress blockers.
+	   A sim mutation, so it only arms alongside the OTYR_INVULN ghost
+	   mode; normal sessions ignore the bit entirely. */
+	if ((changed & pending & OTYR_BUTTON_DEBUG_SKIP) &&
+	    SDL_getenv("OTYR_INVULN") != NULL && otyr_in_level)
+	{
+		levelTimer = true;
+		levelTimerCountdown = 0;
+		endLevel = true;
+		levelEnd = 40;
+	}
+
 	session.applied_buttons = pending;
 }
 

@@ -36,12 +36,21 @@ foreach ($e in $edat) {
 
 $out = [ordered]@{
     _comment = 'Stage B hover heights, first pass (episode 1). class: ground (rides the surface beneath, +offset), pickup, air-low, air-mid, air-high, or an explicit {height: <lane Z>}. Unlisted types keep the legacy category band. Edit freely; the host reloads at level start.'
+    # The height hierarchy (user-specified 2026-07-12): UI 0.090 > special-top
+    # 0.075 (foreground cloud decks, overflyers) > player/shots/pickups ~0.040
+    # > flyers 0.032-0.038 (BELOW the player) > platform objects 0.0315 >
+    # platforms 0.030 > platform-under 0.0285 (e.g. under-platform spikes) >
+    # clouds 0.020/0.025 > mid-under 0.012 (underflying boss) > ground
+    # objects > ground.
     classes = [ordered]@{
-        'ground'   = 0.004   # offset ABOVE the surface beneath (terrain or platform)
-        'pickup'   = 0.040
-        'air-low'  = 0.045
-        'air-mid'  = 0.055
-        'air-high' = 0.070
+        'ground'         = 0.004   # offset ABOVE the surface beneath
+        'pickup'         = 0.040
+        'air-low'        = 0.033
+        'air-mid'        = 0.0355
+        'air-high'       = 0.038
+        'platform-under' = 0.0285  # pokes out below the floating platforms
+        'mid-under'      = 0.012   # between clouds and ground (underflying boss)
+        'over-top'       = 0.075   # above the player (reserved; scene-change decks)
     }
     types = $types
 }
