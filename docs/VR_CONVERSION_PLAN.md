@@ -309,6 +309,21 @@
   visual divergence for interactive ground units needs an in-headset
   verdict); E3 deep ground for planetary levels (scale-preserving
   push; per-level presentation config; comfort toggle).
+- Round 10 (2026-07-12): the per-instance +/-1 sprite-vs-destroyed-art
+  offsets are CONFIRMED AUTHENTIC LEGACY DATA (user eyeballed the same
+  slivers in the legacy exe): event spawn positions quantize against
+  tile-fixed destroyed art in original Tyrian; the renderer reproduces
+  them faithfully (tick-matched probe: static scenes bit-exact).  Any
+  cosmetic correction would be a deliberate divergence -- user's call,
+  not a defect.  Also fixed: ship no longer darkened by its own shadow
+  (shadows draw before sprites, no depth write; explicit transparent
+  priorities: tiles 0/+5, shadows 1, sprites 2, text 4); menu art on
+  the key index renders again (volume slider borders) -- keying pauses
+  during menu presents and the native side blackens the frozen
+  backdrop key fill at pause/menu/help entry, which also delivers the
+  black pause backdrop.  Queued: virtual-sun shadow projection (the
+  light-follows-camera swing), above-cloud shadow pass (cloud
+  transparency holes), boss HP bar as selectable pseudo-type.
 - Round 9 (2026-07-12): expansion clarifications ANSWERED.  E1: no
   gameplay change (offscreen enemies behave per legacy; below-screen
   are already sim-dead -- ghosts are visual only).  E2 mechanics

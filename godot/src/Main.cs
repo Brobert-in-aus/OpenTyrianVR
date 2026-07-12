@@ -888,7 +888,12 @@ public partial class Main : Node3D
                 // (keying there punched black holes in the title logo).
                 // Data is premultiplied (keyed pixels fully zero) so
                 // linear/mipmap filtering can't bleed key-colored fringes.
-                if (Render3DBackground && _frame.InLevel != 0 && _frame.LegacyFallback == 0 && index == OtyrNative.BgKeyIndex)
+                // Keying pauses during menu presents: menu art legitimately
+                // uses the key index (the volume slider borders), and the
+                // native side blackens the frozen backdrop fill at menu
+                // entry so nothing magenta shows through.
+                if (Render3DBackground && _frame.InLevel != 0 && _frame.LegacyFallback == 0 &&
+                    _frame.MenuPresent == 0 && index == OtyrNative.BgKeyIndex)
                 {
                     _rgba[i * 4 + 0] = 0;
                     _rgba[i * 4 + 1] = 0;

@@ -171,6 +171,24 @@ bool present_hud_blit(SDL_Surface *screen, Sprite2_array *sheet,
 	return present_suppress_text;
 }
 
+void present_blacken_key_fill(SDL_Surface *seg)
+{
+	/* Pause/menu backdrops freeze the suppressed frame, whose play region
+	   is the key-index fill.  The host stops color-keying during menu
+	   presents (menu art legitimately uses index 254 -- the volume slider
+	   borders), so the fill must become real black first or it renders as
+	   the palette's magenta.  Same pattern as the tally fix. */
+	if (!otyr_hosted || !present_config_suppress_background)
+		return;
+	for (int y = 0; y < 184; ++y)
+	{
+		Uint8 *row = (Uint8 *)seg->pixels + y * seg->pitch;
+		for (int x = 0; x < 264; ++x)
+			if (row[x] == PRESENT_BG_KEY_INDEX)
+				row[x] = 0;
+	}
+}
+
 void present_draw_from(SDL_Surface *surface, unsigned int from)
 {
 	for (unsigned int i = from; i < present_sprite_count; i++)

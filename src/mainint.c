@@ -1453,6 +1453,8 @@ JE_boolean JE_inGameSetup(void)
 	SDL_Surface *temp_surface = VGAScreen;
 	VGAScreen = VGAScreenSeg; /* side-effect of game_screen */
 
+	present_blacken_key_fill(VGAScreenSeg);
+
 	enum MenuItemIndex
 	{
 		MENU_ITEM_MUSIC_VOLUME = 0,
@@ -1843,6 +1845,8 @@ void JE_inGameHelp(void)
 
 	SDL_Surface *temp_surface = VGAScreen;
 	VGAScreen = VGAScreenSeg; /* side-effect of game_screen */
+
+	present_blacken_key_fill(VGAScreenSeg);
 
 	//tempScreenSeg = VGAScreenSeg;
 
@@ -3269,6 +3273,8 @@ void JE_pauseGame(void)
 
 	SDL_Surface *temp_surface = VGAScreen;
 	VGAScreen = VGAScreenSeg; /* side-effect of game_screen */
+
+	present_blacken_key_fill(VGAScreenSeg);
 
 	//tempScreenSeg = VGAScreenSeg; // sega000
 	if (!superPause)

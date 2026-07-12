@@ -192,6 +192,11 @@ extern bool present_suppress_background;
  * black that must stay opaque in the frame overlay. */
 #define PRESENT_BG_KEY_INDEX 254
 
+/* Blackens the key fill in the seg play region before a pause/menu freezes
+ * it as a backdrop (the host stops keying during menu presents so menu art
+ * on index 254 -- volume slider borders -- can render). */
+void present_blacken_key_fill(SDL_Surface *seg);
+
 /* When set, each background draw also rasters its layer standalone (against
  * a zeroed scratch frame) and publishes an FNV-1a hash so a host-side
  * reconstruction can be verified mechanically. */
