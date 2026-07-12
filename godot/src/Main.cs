@@ -438,12 +438,50 @@ public partial class Main : Node3D
     // OTYR_INVULN=1 so the parked ghost player survives the level.
     private static readonly bool HeightEditor =
         System.Environment.GetEnvironmentVariable("OTYR_HEIGHT_EDITOR") == "1";
-    // Class keys 1-8, ordered by HEIGHT (1 = lowest band, 8 = topmost).
-    private static readonly string[] EditorClasses =
+    // The unified band table drives the legend, the assignment keys, and
+    // numpad +/- stepping.  Cls != null assigns a JSON class ("ground" =
+    // surface-following); otherwise the band's height is set explicitly.
+    // Key != '\0' binds the band to the 1..= row (12 keys); key-less bands
+    // (air-low/high, UI/text) are reachable via numpad +/- stepping.
+    private struct EditorBand
     {
-        "ground", "mid-under", "platform-under", "air-low",
-        "air-mid", "air-high", "pickup", "over-top",
-    };
+        public float Z; public string? Cls; public string Label; public char Key;
+    }
+    private EditorBand[]? _editorBands;  // ascending by height; [0] = ground class
+
+    private EditorBand[] BuildEditorBands()
+    {
+        var c = _snapshotLayer.ClassHeights;
+        float H(string name, float fallback) => c.TryGetValue(name, out float v) ? v : fallback;
+        return new[]
+        {
+            new EditorBand { Z = float.NaN, Cls = "ground", Label = "ground (+surf)", Key = '1' },
+            new EditorBand { Z = 0.0006f, Label = "ground objects", Key = '2' },
+            new EditorBand { Z = H("mid-under", 0.012f), Cls = "mid-under", Label = "mid-under", Key = '3' },
+            new EditorBand { Z = 0.020f, Label = "clouds (lo)", Key = '4' },
+            new EditorBand { Z = 0.025f, Label = "clouds (hi)", Key = '5' },
+            new EditorBand { Z = H("platform-under", 0.0285f), Cls = "platform-under", Label = "platform-under", Key = '6' },
+            new EditorBand { Z = 0.030f, Label = "platforms", Key = '7' },
+            new EditorBand { Z = 0.0315f, Label = "platform objects", Key = '8' },
+            new EditorBand { Z = H("air-low", 0.033f), Cls = "air-low", Label = "air-low", Key = '\0' },
+            new EditorBand { Z = H("air-mid", 0.0355f), Cls = "air-mid", Label = "air-mid", Key = '9' },
+            new EditorBand { Z = H("air-high", 0.038f), Cls = "air-high", Label = "air-high", Key = '\0' },
+            new EditorBand { Z = H("pickup", 0.040f), Cls = "pickup", Label = "player/pickup", Key = '0' },
+            new EditorBand { Z = 0.041f, Label = "shots", Key = '-' },
+            new EditorBand { Z = H("over-top", 0.075f), Cls = "over-top", Label = "over-top", Key = '=' },
+            new EditorBand { Z = 0.090f, Label = "UI/text", Key = '\0' },
+        };
+    }
+
+    private void EditorAssignBand(in EditorBand band)
+    {
+        if (band.Cls != null)
+            _snapshotLayer.EditorSetClass(_editorSelected, band.Cls,
+                float.IsNaN(band.Z) ? 0f : band.Z);
+        else
+            _snapshotLayer.EditorSetHeight(_editorSelected, band.Z);
+    }
+
     private ushort _editorSelected;
     private int _editorSelectedLayer = -1;
     private string _editorSelectedLayerName = "";
@@ -635,19 +673,45 @@ public partial class Main : Node3D
         }
         _editorLastClick = click;
 
+        _editorBands ??= BuildEditorBands();
+
         if (_editorSelected != 0 && _frame.InLevel != 0)
         {
+            float current = _snapshotLayer.EditorHeightOf(_editorSelected);
             float step = Input.IsKeyPressed(Key.Shift) ? 0.01f : 0.002f;
             if (EditorKeyPressed(Key.Up))
                 _snapshotLayer.EditorSetHeight(_editorSelected,
-                    _snapshotLayer.EditorHeightOf(_editorSelected) + step);
+                    (float.IsNaN(current) ? 0.004f : current) + step);
             if (EditorKeyPressed(Key.Down))
                 _snapshotLayer.EditorSetHeight(_editorSelected,
-                    Math.Max(0f, _snapshotLayer.EditorHeightOf(_editorSelected) - step));
-            for (int c = 0; c < EditorClasses.Length; c++)
-                if (EditorKeyPressed(Key.Key1 + c) &&
-                    _snapshotLayer.ClassHeights.TryGetValue(EditorClasses[c], out float classH))
-                    _snapshotLayer.EditorSetClass(_editorSelected, EditorClasses[c], classH);
+                    Math.Max(0f, (float.IsNaN(current) ? 0.004f : current) - step));
+
+            // Band assignment keys (1..9, 0, -, = -- height-ordered).
+            foreach (ref readonly EditorBand band in _editorBands.AsSpan())
+            {
+                if (band.Key == '\0')
+                    continue;
+                Key key = band.Key switch
+                {
+                    '0' => Key.Key0,
+                    '-' => Key.Minus,
+                    '=' => Key.Equal,
+                    _ => Key.Key1 + (band.Key - '1'),
+                };
+                if (EditorKeyPressed(key))
+                    EditorAssignBand(in band);
+            }
+
+            // Numpad +/-: step the selection through ALL bands, including
+            // the key-less ones (air-low/high, UI/text).
+            int dir = (EditorKeyPressed(Key.KpAdd) ? 1 : 0) - (EditorKeyPressed(Key.KpSubtract) ? 1 : 0);
+            if (dir != 0)
+            {
+                int index = EditorBandIndex(current);
+                int next = Math.Clamp(index + dir, 0, _editorBands.Length - 1);
+                if (next != index)
+                    EditorAssignBand(in _editorBands[next]);
+            }
         }
 
         if (EditorKeyPressed(Key.S))
@@ -664,8 +728,10 @@ public partial class Main : Node3D
             selectedHeight = _snapshotLayer.EditorHeightOf(_editorSelected);
             _editorLabel.Visible = true;
             bool onScreen = _snapshotLayer.TryLocateType(_editorSelected, out _);
+            string heightText = float.IsNaN(selectedHeight)
+                ? "surface-following" : selectedHeight.ToString("0.####");
             _editorLabel.Text =
-                $"selected type {_editorSelected}  h={selectedHeight:0.####}  " +
+                $"selected type {_editorSelected}  h={heightText}  " +
                 _snapshotLayer.EditorDescribe(_editorSelected) +
                 (onScreen ? "" : "  (not on screen)");
         }
@@ -684,32 +750,44 @@ public partial class Main : Node3D
         _editorLegend.Text = BuildEditorLegend(hasSelection, selectedHeight);
     }
 
+    /// <summary>Index of the band closest to the given height (NaN = the
+    /// ground class at index 0); used for legend marking and stepping.</summary>
+    private int EditorBandIndex(float height)
+    {
+        if (float.IsNaN(height))
+            return 0;
+        int best = 1;
+        float bestDelta = float.MaxValue;
+        for (int i = 1; i < _editorBands!.Length; i++)
+        {
+            float d = Math.Abs(_editorBands[i].Z - height);
+            if (d < bestDelta)
+            {
+                bestDelta = d;
+                best = i;
+            }
+        }
+        return best;
+    }
+
     private string BuildEditorLegend(bool hasSelection, float selectedHeight)
     {
-        var rows = new System.Collections.Generic.List<(float z, string name)>
-        {
-            (0.090f, "UI/text"),
-            (0.041f, "shots"),
-            (0.040f, "player"),
-            (0.0315f, "platform objects"),
-            (0.030f, "platforms"),
-            (0.025f, "clouds (hi)"),
-            (0.020f, "clouds (lo)"),
-            (0.0006f, "ground objects"),
-            (0.000f, "ground"),
-        };
-        foreach (var (name, h) in _snapshotLayer.ClassHeights)
-            if (name != "ground" && name != "pickup")  // pickup == player plane
-                rows.Add((h, name));
-        rows.Sort((a, b) => b.z.CompareTo(a.z));
+        _editorBands ??= BuildEditorBands();
+        int marked = hasSelection ? EditorBandIndex(selectedHeight) : -1;
+        // Only mark when actually AT the band (not merely nearest).
+        if (marked > 0 && Math.Abs(_editorBands[marked].Z - selectedHeight) > 0.0008f)
+            marked = -1;
 
-        var sb = new System.Text.StringBuilder("HEIGHT BANDS\n");
-        foreach (var (z, name) in rows)
+        var sb = new System.Text.StringBuilder("HEIGHT BANDS   key\n");
+        for (int i = _editorBands.Length - 1; i >= 0; i--)
         {
-            bool here = hasSelection && Math.Abs(z - selectedHeight) < 0.0008f;
-            sb.Append(here ? "> " : "  ").Append(z.ToString("0.####").PadRight(7)).Append(name).Append('\n');
+            ref readonly EditorBand band = ref _editorBands[i];
+            sb.Append(i == marked ? "> " : "  ")
+              .Append((float.IsNaN(band.Z) ? "+surf" : band.Z.ToString("0.####")).PadRight(7))
+              .Append(band.Label.PadRight(17))
+              .Append(band.Key == '\0' ? "+/-" : band.Key.ToString())
+              .Append('\n');
         }
-        sb.Append("  +surf  ground class (movers)");
         return sb.ToString();
     }
 

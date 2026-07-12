@@ -948,13 +948,15 @@ public unsafe partial class SnapshotLayer : Node3D
     private readonly System.Collections.Generic.Dictionary<ushort, string> _editorPending = new();
 
     /// <summary>Editor: current effective height of a type (edited, table,
-    /// or a representative live cell's band).</summary>
+    /// or a representative live cell's band).  NaN = ground class (surface-
+    /// following, no fixed height -- the readout must not show a stale
+    /// number for it).</summary>
     public float EditorHeightOf(ushort entityType)
     {
         if (_editorHeights.TryGetValue(entityType, out float h))
             return h;
-        if (_typeHeights.TryGetValue(entityType, out float t) && !float.IsNegativeInfinity(t))
-            return t;
+        if (_typeHeights.TryGetValue(entityType, out float t))
+            return float.IsNegativeInfinity(t) ? float.NaN : t;
         for (int i = 0; i < _cellCount; i++)
             if (_cells[i].EntityType == entityType)
                 return _cells[i].Z;
