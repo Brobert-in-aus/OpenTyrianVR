@@ -708,13 +708,14 @@ public partial class Main : Node3D
 
         _editorBands ??= BuildEditorBands();
 
-        // Home: snap the orbit to lane-perpendicular (the lane is tilted
-        // -42, so the zero-parallax view is pitch -48, NOT straight down --
-        // "straight down" is still ~45 degrees oblique to the lane).
+        // Home: snap the orbit to lane-perpendicular.  The lane is tilted
+        // -42 about X, which rotates its NORMAL to 42 degrees elevation --
+        // so the zero-parallax view is pitch -42 exactly (user-corrected;
+        // and straight down at -90 is 48 degrees oblique to the lane).
         if (EditorKeyPressed(Key.Home))
         {
             _editorYaw = 0f;
-            _editorPitch = -48f;
+            _editorPitch = -42f;
         }
 
         if (_editorSelected != 0 && _frame.InLevel != 0)
