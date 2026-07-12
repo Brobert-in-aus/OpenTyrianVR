@@ -201,18 +201,19 @@ public partial class Main : Node3D
 
         if (HeightEditor)
         {
+            // Selection readout: a fixed line between the lane's bottom edge
+            // and the diagnostics text, matching its size (a floating label
+            // over the game world was unreadable against the art).
             _editorLabel = new Label3D
             {
-                Billboard = BaseMaterial3D.BillboardModeEnum.Enabled,
-                FontSize = 40,
-                PixelSize = 0.0004f,
+                Name = "EditorSelection",
+                PixelSize = 0.0008f,
+                Position = new Vector3(0f, -0.40f, 0.02f),
                 Modulate = new Color(1f, 0.9f, 0.3f),
-                OutlineSize = 8,
                 Visible = false,
-                NoDepthTest = true,
             };
-            AddChild(_editorLabel);
-            GD.Print("OpenTyrianVR: HEIGHT EDITOR (click select, Up/Down nudge, Shift coarse, 1-5 class, S save, P pause, N skip level)");
+            _playfieldRoot.AddChild(_editorLabel);
+            GD.Print("OpenTyrianVR: HEIGHT EDITOR (ctrl+click select, drag orbit, RMB-drag pan, wheel zoom, Up/Down nudge, Shift coarse, 1-8 class, S save, P pause, N skip)");
         }
 
         _image = Image.CreateEmpty(OtyrNative.FrameWidth, OtyrNative.FrameHeight, true, Image.Format.Rgba8);
@@ -552,7 +553,8 @@ public partial class Main : Node3D
     /// so drags accumulate per motion event.</summary>
     public override void _Input(InputEvent ev)
     {
-        if (!HeightEditor || !Input.IsKeyPressed(Key.Ctrl))
+        // Bare mouse = camera; Ctrl reserves the mouse for selection.
+        if (!HeightEditor || Input.IsKeyPressed(Key.Ctrl))
             return;
 
         if (ev is InputEventMouseMotion motion)
@@ -592,7 +594,7 @@ public partial class Main : Node3D
         UpdateEditorCamera();
 
         bool click = Input.IsMouseButtonPressed(MouseButton.Left) &&
-                     !Input.IsKeyPressed(Key.Ctrl);  // Ctrl+click = orbit
+                     Input.IsKeyPressed(Key.Ctrl);  // bare drag = orbit
         if (click && !_editorLastClick)
         {
             var cam = GetViewport().GetCamera3D();
@@ -620,13 +622,15 @@ public partial class Main : Node3D
         if (EditorKeyPressed(Key.S))
             GD.Print($"OpenTyrianVR: editor saved {_snapshotLayer.EditorSave()} type edit(s)");
 
-        if (_editorSelected != 0 && _snapshotLayer.TryLocateType(_editorSelected, out Vector3 anchor))
+        if (_editorSelected != 0)
         {
             _editorLabel.Visible = true;
-            _editorLabel.GlobalPosition = anchor + new Vector3(0f, 0.045f, 0.02f);
             string? pending = _snapshotLayer.EditorPendingOf(_editorSelected);
-            _editorLabel.Text = $"type {_editorSelected}  h={_snapshotLayer.EditorHeightOf(_editorSelected):0.####}"
-                + (pending != null ? $"\n[{pending}] unsaved" : "");
+            bool onScreen = _snapshotLayer.TryLocateType(_editorSelected, out _);
+            _editorLabel.Text =
+                $"selected type {_editorSelected}  h={_snapshotLayer.EditorHeightOf(_editorSelected):0.####}"
+                + (pending != null ? $"  [{pending}] UNSAVED" : "")
+                + (onScreen ? "" : "  (not on screen)");
         }
         else
             _editorLabel.Visible = false;
