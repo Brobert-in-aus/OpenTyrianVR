@@ -369,10 +369,11 @@ public unsafe partial class BackgroundLayer : Node3D
         }
         float cloudFrac = overlayOpaque > 0 ? cloud / (float)overlayOpaque : 0f;
         float waterFrac = waterOpaque > 0 ? water / (float)waterOpaque : 0f;
-        // Whole-layer lift wants the overlay to be MOSTLY cloud; the
-        // layer-0 water gate keeps terrain-detail overlays (structure
-        // paint on other levels) grounded.
-        _cloudActive = cloudFrac > 0.5f && waterFrac > 0.15f;
+        // Whole-layer lift wants the overlay to be dominantly cloud; the
+        // bright-pixel test undercounts cloud EDGES, so SAVARA's all-cloud
+        // overlay reads 48.7% -- the bar sits at 0.35 and the layer-0
+        // water gate carries the false-positive load.
+        _cloudActive = cloudFrac > 0.35f && waterFrac > 0.15f;
         GD.Print($"OpenTyrianVR: water-cloud split {(_cloudActive ? "ARMED" : "off")} " +
                  $"(overlay cloud {cloudFrac:P1}, ground water {waterFrac:P1}, epoch {_mapEpoch})");
         if (!_cloudActive)
