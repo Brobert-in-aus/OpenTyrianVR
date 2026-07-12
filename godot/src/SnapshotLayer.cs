@@ -895,9 +895,16 @@ public unsafe partial class SnapshotLayer : Node3D
         float decalOrder = 0f;
         if (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2))
         {
+            // Every static/rider decals the surface actually beneath it:
+            // platform art if a platform covers its center, ground
+            // otherwise.  Banding non-TOP categories to the ground put
+            // first-spawn/static enemies UNDER the elevated platform layer
+            // whenever they crossed one -- the platform drew over them
+            // ("transparent over platforms, solid over true ground").
+            float below = SurfaceForSource(sprite.SourceId, centerX, centerY);
             band = sprite.Category == (byte)OtyrNative.Category.EnemyTop
-                ? Math.Max(SurfaceForSource(sprite.SourceId, centerX, centerY), BackgroundLayer.PlatformZ)
-                : BackgroundLayer.GroundZ;
+                ? Math.Max(below, BackgroundLayer.PlatformZ)
+                : (below > 0f ? below : BackgroundLayer.GroundZ);
             decalOrder = (recordIndex + 1f) / OtyrNative.SnapshotSpriteMax;
         }
         else if (isShadow)
@@ -992,6 +999,17 @@ public unsafe partial class SnapshotLayer : Node3D
             // Frame pixels (game_screen, composited -24) -> lane local.
             float laneX = (frameX / 320f - 0.5f) * LaneWidth;
             float laneY = (0.5f - px.Y / 200f) * LaneHeight;
+
+            // Decals on an ELEVATED layer get a real geometric lift above
+            // it (~0.5 mm of parallax, imperceptible): the in-shader depth
+            // bias that arbitrates the coplanar ground decals proved
+            // pipeline-dependent under VR multiview -- the layer's art
+            // blended over its own riders (destroyed-state tiles showing
+            // through intact structures).  Real depth wins in every
+            // pipeline.  Ground decals stay exactly coplanar (proven path).
+            float z = cell.Z;
+            if (cell.DecalOrder > 0f && z > 0.001f)
+                z += 0.0015f;
             int instance = _instanceCount[id]++;
             if (instance >= _multiMesh[id].InstanceCount)
             {
@@ -1008,7 +1026,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 : Basis.Identity;
 
             _multiMesh[id].SetInstanceTransform(instance,
-                new Transform3D(basis, new Vector3(laneX, laneY, cell.Z)));
+                new Transform3D(basis, new Vector3(laneX, laneY, z)));
             _multiMesh[id].SetInstanceCustomData(instance,
                 id == TextLayer || id == TextShadowLayer
                     ? new Color(cell.CellIndex, cell.Flags + cell.FilterColor * 65f, cell.Aux0, cell.Aux1)

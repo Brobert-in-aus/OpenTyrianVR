@@ -155,6 +155,22 @@ public partial class Main : Node3D
         }
         origin.AddChild(camera);
         camera.MakeCurrent();
+        _xrCamera = camera;
+
+        // XR swapchains are not readable through the main viewport texture
+        // (run captures came back black), so captures in XR render a
+        // spectator SubViewport whose camera mirrors the head pose.
+        if (_xrActive && (CaptureRun || CaptureAt.Length > 0))
+        {
+            _spectator = new SubViewport
+            {
+                Size = new Vector2I(1280, 720),
+                RenderTargetUpdateMode = SubViewport.UpdateMode.Always,
+            };
+            _spectatorCamera = new Camera3D { Fov = 80f };
+            _spectator.AddChild(_spectatorCamera);
+            AddChild(_spectator);
+        }
 
         _leftHand = new XRController3D { Name = "LeftHand", Tracker = "left_hand", Pose = "aim" };
         _rightHand = new XRController3D { Name = "RightHand", Tracker = "right_hand", Pose = "aim" };
@@ -370,6 +386,13 @@ public partial class Main : Node3D
     private int _captureRunCount;
     private const int CaptureRunMax = 1800;  // ~60 min runaway guard
 
+    private XRCamera3D _xrCamera = null!;
+    private SubViewport? _spectator;
+    private Camera3D? _spectatorCamera;
+
+    // The viewport captures read from: the spectator in XR, the window flat.
+    private Viewport CaptureViewport => _spectator ?? GetViewport();
+
     private static int ParseCaptureCount()
     {
         string value = System.Environment.GetEnvironmentVariable("OTYR_CAPTURE") ?? "";
@@ -405,9 +428,11 @@ public partial class Main : Node3D
         }
 
         PollFrame();
+        if (_spectatorCamera != null)
+            _spectatorCamera.GlobalTransform = _xrCamera.GlobalTransform;
         while (_captureAtIndex < CaptureAt.Length && _frame.FrameNumber >= CaptureAt[_captureAtIndex])
         {
-            GetViewport().GetTexture().GetImage().SavePng($"user://cap_at_{CaptureAt[_captureAtIndex]}.png");
+            CaptureViewport.GetTexture().GetImage().SavePng($"user://cap_at_{CaptureAt[_captureAtIndex]}.png");
             ++_captureAtIndex;
         }
 
@@ -418,7 +443,7 @@ public partial class Main : Node3D
             {
                 _captureRunAccumulator = 0;
                 ++_captureRunCount;
-                var image = GetViewport().GetTexture().GetImage();
+                var image = CaptureViewport.GetTexture().GetImage();
                 string path = $"user://cap_f{_frame.FrameNumber:D6}.jpg";
                 System.Threading.Tasks.Task.Run(() => image.SaveJpg(path, 0.8f));
             }

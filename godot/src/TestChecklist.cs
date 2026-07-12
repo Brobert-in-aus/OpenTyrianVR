@@ -14,11 +14,11 @@ public partial class TestChecklist : Node3D
     private static readonly string[] Items =
     {
         "Platform statics SOLID (no destroyed art thru)",
-        "Platform statics still glued when swaying",
-        "True-ground statics unchanged",
-        "Clouds/scenery layering still right",
-        "Quote frame numbers for anything odd",
-        "Anything else off? tell Claude after",
+        "Flyers solid over platforms AND ground",
+        "First-spawn enemies solid everywhere",
+        "Clouds translucent again (the kept look)",
+        "Platform statics glued when swaying",
+        "Anything else off? quote frame numbers",
     };
 
     private readonly bool[] _done = new bool[Items.Length];

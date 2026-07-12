@@ -226,7 +226,28 @@
   frame numbers addressable) and OTYR_CAPTURE_RUN=1 (user test runs:
   a capture every 2 s named cap_f<frame>.jpg, background-encoded, so
   quoted frame numbers map to the nearest screenshot; stale files
-  wiped at launch).  NEW (confirmed in code): statics
+  wiped at launch).
+- Headset round 6 (2026-07-12): the RenderPriority experiment was
+  WRONG -- it broke the kept-on-purpose translucent cloud look
+  (clouds drew first and blended against the black backing) without
+  fixing the riders, and the user's frame-quoted debrief exposed the
+  real defects.  (1) BANDING: aux-1/aux-2 decals of non-TOP categories
+  banded to GroundZ unconditionally, so first-spawn/static enemies
+  crossing a platform sat UNDER the elevated platform layer, which
+  drew over them -- exactly "solid over true ground, transparent over
+  platforms".  All static/rider decals now band to the surface
+  actually beneath them (platform art if it covers their center,
+  ground otherwise).  (2) SAME-PLANE FIGHT: the 1e-5 in-shader depth
+  bias that arbitrates coplanar ground decals is pipeline-dependent
+  and loses under VR multiview (flat captures pass, headset ghosts) --
+  elevated-surface decals now get a REAL geometric lift (+0.0015 lane
+  units, ~0.5 mm parallax, imperceptible) above their layer, resolved
+  by ordinary depth in every pipeline; ground decals stay exactly
+  coplanar (proven path).  RenderPriority reverted -- clouds
+  translucent again by construction.  (3) XR swapchains are not
+  readable via the main viewport (run captures came back black): in
+  XR, captures now render a 1280x720 spectator SubViewport (shared
+  World3D) whose camera mirrors the head pose.  NEW (confirmed in code): statics
   riding floating platforms (aux 2, and top-band aux 1 with elevated
   surface) visibly swim/blur against their platform under head motion
   -- BackgroundLayer.OnRender smooth-scrolls the ELEVATED tile layers

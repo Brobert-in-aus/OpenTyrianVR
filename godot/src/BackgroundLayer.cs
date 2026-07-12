@@ -141,15 +141,15 @@ public unsafe partial class BackgroundLayer : Node3D
 
         for (int l = 0; l < OtyrNative.BgLayerCount; l++)
         {
-            // Tile layers draw FIRST among transparents.  Godot sorts the
-            // transparent pass by node-origin distance, which put the
-            // ELEVATED layers (platforms at +0.030, in front of the sprite
-            // multimesh origins) after the rider decals sharing their plane
-            // -- the platform's baked art (destroyed-state craters) blended
-            // over the intact structures riding it.  The ground layer sits
-            // BEHIND the multimesh origins, which is why true-ground decals
-            // never showed it.
-            _materials[l] = new ShaderMaterial { Shader = shader, RenderPriority = -10 };
+            // Default transparent sorting (node-origin distance): the
+            // elevated layers draw LAST among transparents, which is what
+            // gives the clouds their kept-on-purpose translucent look over
+            // the scene.  Entities above them survive via their real depth;
+            // decals riding a layer sit at a real geometric lift above it
+            // (see SnapshotLayer) rather than fighting it in depth-bias
+            // space -- a RenderPriority experiment here broke the cloud
+            // look without fixing the riders (headset round 6).
+            _materials[l] = new ShaderMaterial { Shader = shader };
             _materials[l].SetShaderParameter("palette", _palette);
             _materials[l].SetShaderParameter("alpha_mul", 1.0f);
 
