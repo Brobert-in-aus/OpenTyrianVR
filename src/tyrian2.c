@@ -246,8 +246,14 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 		}
 	}
 
+	Uint8 rec_flags = enemy[i].filter != 0 ? PRESENT_FLAG_FILTER : 0;
+	/* Mirrors JE_playerCollide's damage condition exactly. */
+	if (enemyAvail[i] == 0 && enemy[i].evalue <= 0 &&
+	    (enemyDat[enemy[i].enemytype].explosiontype & 1) == 0)
+		rec_flags |= PRESENT_FLAG_COLLIDER;
+
 	unsigned int rec = present_record_id(enemy_band_category, PRESENT_BLIT_SPRITE2,
-	                  enemy[i].filter != 0 ? PRESENT_FLAG_FILTER : 0, enemy[i].filter,
+	                  rec_flags, enemy[i].filter,
 	                  terrain_art,
 	                  (Uint16)(0x1000 | i),
 	                  enemy[i].sprite2s,

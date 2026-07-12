@@ -180,6 +180,11 @@ void present_blacken_key_fill(SDL_Surface *seg)
 	   the palette's magenta.  Same pattern as the tally fix. */
 	if (!otyr_hosted || !present_config_suppress_background)
 		return;
+	/* The height editor pauses precisely to inspect heights against the
+	   terrain -- keep the key fill (and so the see-through terrain view)
+	   there; the black backdrop is a VR-presentation nicety. */
+	if (SDL_getenv("OTYR_HEIGHT_EDITOR") != NULL)
+		return;
 	for (int y = 0; y < 184; ++y)
 	{
 		Uint8 *row = (Uint8 *)seg->pixels + y * seg->pitch;

@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 17;
+    public const uint AbiVersion = 18;
 
     // Palette index of the suppressed background fill (the frame color key);
     // index-0 black in sprite/HUD art stays opaque.
@@ -237,6 +237,9 @@ public static unsafe class OtyrNative
         public byte TargetSpeed;  // 0 = default (2 px/tick)
         public short TargetX;
         public short TargetY;
+        public ushort DebugSection;  // nonzero: jump the episode script to
+                                     // this section (editor level select;
+                                     // native ignores without OTYR_INVULN) (v18)
 
         public static InputFrame Create(Buttons buttons) => new()
         {

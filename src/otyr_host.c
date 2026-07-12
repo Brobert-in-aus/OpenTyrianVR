@@ -22,6 +22,7 @@
 #include "config.h"
 #include "game_input.h"
 #include "keyboard.h"
+#include "mainint.h"
 #include "palette.h"
 #include "player.h"
 #include "present_frame.h"
@@ -109,6 +110,7 @@ static struct
 	uint8_t frame_in_level;
 	uint8_t frame_legacy_fallback;
 	uint8_t frame_menu_present;
+	uint16_t applied_debug_section;  /* edge detect for the v18 level jump */
 	uint8_t pixels[OTYR_FRAME_WIDTH * OTYR_FRAME_HEIGHT];
 	uint32_t palette_argb[256];
 
@@ -686,6 +688,21 @@ int32_t otyr_session_submit_input(uint64_t handle, const OtyrInputFrame *input,
 	session.pending_target_speed = input->target_speed;
 	session.pending_target_x = input->target_x;
 	session.pending_target_y = input->target_y;
+
+	/* debug_section (v18): jump the episode script mid-level.  A sim
+	   mutation, so it only arms alongside the OTYR_INVULN ghost mode
+	   (height-editor level select); edge-triggered on value change. */
+	if (input->debug_section != 0 &&
+	    input->debug_section != session.applied_debug_section &&
+	    SDL_getenv("OTYR_INVULN") != NULL && otyr_in_level)
+	{
+		mainLevel = input->debug_section;
+		saveLevel = input->debug_section;
+		jumpSection = true;
+		reallyEndLevel = true;
+	}
+	session.applied_debug_section = input->debug_section;
+
 	apply_pending_input_locked();
 	SDL_UnlockMutex(session.mutex);
 	return OTYR_OK;

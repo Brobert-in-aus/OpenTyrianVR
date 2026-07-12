@@ -502,6 +502,43 @@ public partial class Main : Node3D
             _snapshotLayer.EditorSetHeight(_editorSelected, band.Z);
     }
 
+    // Editor level select: PageUp/PageDown cycle the episode-1 playable
+    // sections via the v18 debug_section input (native honors it only in
+    // OTYR_INVULN ghost mode).
+    private static readonly (ushort Section, string Name)[] Ep1Levels =
+    {
+        (4, "TYRIAN"), (6, "ASTEROID1"), (7, "ASTEROID2"), (11, "SAVARA"),
+        (14, "MINES"), (17, "BUBBLES"), (20, "DELIANI"), (22, "ASTEROID?"),
+        (24, "MINEMAZE"), (26, "BONUS"), (29, "HOLES"), (30, "SAVARA2"),
+        (32, "SOH JIN"), (34, "WINDY"), (37, "ASSASSIN"), (39, "SAVARA V"),
+        (42, "ALE"),
+    };
+    private int _editorLevelIndex = -1;
+
+    private void EditorJumpLevel(int direction)
+    {
+        if (_editorLevelIndex < 0)
+        {
+            // Seed from OTYR_START_SECTION so the first PageDown continues
+            // from wherever the session booted.
+            string env = System.Environment.GetEnvironmentVariable("OTYR_START_SECTION") ?? "";
+            for (int i = 0; i < Ep1Levels.Length; i++)
+                if (Ep1Levels[i].Section.ToString() == env)
+                    _editorLevelIndex = i;
+        }
+        _editorLevelIndex = ((_editorLevelIndex + direction) % Ep1Levels.Length + Ep1Levels.Length) % Ep1Levels.Length;
+        var (section, name) = Ep1Levels[_editorLevelIndex];
+        GD.Print($"OpenTyrianVR: editor level jump -> section {section} ({name})");
+        var jump = OtyrNative.InputFrame.Create(OtyrNative.Buttons.None);
+        jump.DebugSection = section;
+        OtyrNative.SubmitInput(_session, in jump, jump.StructSize);
+        jump.DebugSection = 0;
+        OtyrNative.SubmitInput(_session, in jump, jump.StructSize);
+        _lastButtons = OtyrNative.Buttons.None;
+        _editorSelected = 0;
+        _editorSelectedLayer = -1;
+    }
+
     private ushort _editorSelected;
     private int _editorSelectedLayer = -1;
     private string _editorSelectedLayerName = "";
@@ -719,6 +756,16 @@ public partial class Main : Node3D
             _editorPitch = -42f;
         }
 
+        // PageUp/PageDown: cycle the playable level sections; B toggles the
+        // red hazard (collider) halos.
+        if (EditorKeyPressed(Key.Pagedown))
+            EditorJumpLevel(1);
+        if (EditorKeyPressed(Key.Pageup))
+            EditorJumpLevel(-1);
+        if (EditorKeyPressed(Key.B))
+            _snapshotLayer.HazardMarkersEnabled = !_snapshotLayer.HazardMarkersEnabled;
+        _snapshotLayer.EditorHazardMarkers();
+
         if (_editorSelected != 0 && _frame.InLevel != 0)
         {
             float current = _snapshotLayer.EditorHeightOf(_editorSelected);
@@ -893,7 +940,7 @@ public partial class Main : Node3D
                 // native side blackens the frozen backdrop fill at menu
                 // entry so nothing magenta shows through.
                 if (Render3DBackground && _frame.InLevel != 0 && _frame.LegacyFallback == 0 &&
-                    _frame.MenuPresent == 0 && index == OtyrNative.BgKeyIndex)
+                    (_frame.MenuPresent == 0 || HeightEditor) && index == OtyrNative.BgKeyIndex)
                 {
                     _rgba[i * 4 + 0] = 0;
                     _rgba[i * 4 + 1] = 0;

@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 17u
+#define OTYR_ABI_VERSION 18u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -136,6 +136,10 @@ typedef struct OtyrInputFrame
 	uint8_t  target_speed;  /* 0 = default (2 px per tick) */
 	int16_t  target_x;
 	int16_t  target_y;
+	uint16_t debug_section; /* nonzero: abort the current level and jump the
+	                           episode script to this section (height-editor
+	                           level select; ignored unless the OTYR_INVULN
+	                           ghost mode is active) (v18) */
 } OtyrInputFrame;
 
 typedef struct OtyrFrame

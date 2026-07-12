@@ -930,6 +930,53 @@ public unsafe partial class SnapshotLayer : Node3D
             _editorMarkers[i].Visible = false;
     }
 
+    // Hazard (collider) markers: red halos under every record whose contact
+    // damages the player (flag bit 64, mirroring JE_playerCollide).
+    private readonly System.Collections.Generic.List<MeshInstance3D> _hazardMarkers = new();
+    private StandardMaterial3D? _hazardMaterial;
+    public bool HazardMarkersEnabled = true;
+
+    public void EditorHazardMarkers()
+    {
+        int used = 0;
+        if (HazardMarkersEnabled)
+        {
+            _hazardMaterial ??= new StandardMaterial3D
+            {
+                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+                Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+                BlendMode = BaseMaterial3D.BlendModeEnum.Add,
+                AlbedoColor = new Color(1f, 0.15f, 0.1f, 0.28f),
+                CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+                RenderPriority = 9,
+            };
+            for (int i = 0; i < _cellCount && used < 64; i++)
+            {
+                ref readonly RenderCell cell = ref _cells[i];
+                if (cell.EntityType == 0 || (cell.Flags & 64) == 0)
+                    continue;
+                if (used == _hazardMarkers.Count)
+                {
+                    var marker = new MeshInstance3D
+                    {
+                        Mesh = new QuadMesh { Size = new Vector2(16f / 320f * LaneWidth, 18f / 200f * LaneHeight) },
+                        MaterialOverride = _hazardMaterial,
+                    };
+                    AddChild(marker);
+                    _hazardMarkers.Add(marker);
+                }
+                var m = _hazardMarkers[used];
+                bool big = (cell.Flags & 8) != 0;
+                m.Scale = big ? new Vector3(2f, 2f, 1f) : Vector3.One;
+                m.Position = CellLanePos(in cell) + new Vector3(0f, 0f, -0.0015f);
+                m.Visible = true;
+                ++used;
+            }
+        }
+        for (int i = used; i < _hazardMarkers.Count; i++)
+            _hazardMarkers[i].Visible = false;
+    }
+
     /// <summary>Editor: pick the topmost background layer under the cursor
     /// (fallback when no enemy is within pick radius).</summary>
     public bool TryPickLayer(Camera3D camera, Vector2 screenPos, out int layer, out float z, out string name)
