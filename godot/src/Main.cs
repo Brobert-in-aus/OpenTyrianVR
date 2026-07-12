@@ -545,7 +545,7 @@ public partial class Main : Node3D
         }
         _editorLastClick = click;
 
-        if (_editorSelected != 0)
+        if (_editorSelected != 0 && _frame.InLevel != 0)
         {
             float step = Input.IsKeyPressed(Key.Shift) ? 0.01f : 0.002f;
             if (EditorKeyPressed(Key.Up))
@@ -650,14 +650,21 @@ public partial class Main : Node3D
 
         if (HeightEditor)
         {
-            // Editor: menu navigation + pause + skip only.  Arrows and the
-            // class keys belong to the editor; the ghost player never moves
-            // or fires.
+            // Editor: menu navigation + pause + skip only.  The ghost player
+            // never moves or fires.  Arrows navigate menus while OUT of a
+            // level; in-level they belong to the editor's height nudge.
             if (Input.IsKeyPressed(Key.Enter)) buttons |= OtyrNative.Buttons.UiConfirm;
             if (Input.IsKeyPressed(Key.Escape)) buttons |= OtyrNative.Buttons.UiCancel;
             if (Input.IsKeyPressed(Key.Space)) buttons |= OtyrNative.Buttons.UiSpace;
             if (Input.IsKeyPressed(Key.P)) buttons |= OtyrNative.Buttons.UiPause;
             if (Input.IsKeyPressed(Key.N)) buttons |= OtyrNative.Buttons.DebugSkip;
+            if (_frame.InLevel == 0)
+            {
+                if (Input.IsKeyPressed(Key.Up)) buttons |= OtyrNative.Buttons.Up;
+                if (Input.IsKeyPressed(Key.Down)) buttons |= OtyrNative.Buttons.Down;
+                if (Input.IsKeyPressed(Key.Left)) buttons |= OtyrNative.Buttons.Left;
+                if (Input.IsKeyPressed(Key.Right)) buttons |= OtyrNative.Buttons.Right;
+            }
 
             if (buttons == _lastButtons)
                 return;
