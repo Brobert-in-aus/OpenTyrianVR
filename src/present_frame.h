@@ -78,6 +78,10 @@ enum
 	PRESENT_FLAG_CLAMP = 16,        /* blit_sprite_hv value clamping (vs the
 	                                   _unsafe wrap-around) */
 	/* Enemy records only: */
+	PRESENT_FLAG_STATIC = 32,       /* never latched as a mover (no movement
+	                                   capabilities, never moved): the host
+	                                   may surface-glue it regardless of the
+	                                   art-opacity terrain test */
 	PRESENT_FLAG_COLLIDER = 64,     /* contact with the player deals damage
 	                                   (JE_playerCollide damage branch: not a
 	                                   scoreitem, evalue <= 20000, explosiontype

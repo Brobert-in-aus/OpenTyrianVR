@@ -1334,8 +1334,14 @@ public unsafe partial class SnapshotLayer : Node3D
             // most worth tuning.)
             band = authored;
         }
-        else if (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2))
+        else if (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2 ||
+                             ((sprite.Flags & 32) != 0 && hasAuthored)))
         {
+            // Flag 32 = sim-truth static (never latched as a mover): a
+            // GROUND-CLASS one surface-glues like any static even when its
+            // sparse art failed the native opaque-cell test (aux 0).
+            // DELIANI decorations split -0.0008 vs +0.004 on that art
+            // coin flip (237/238 etc.).
             // Every static/rider decals the surface actually beneath it:
             // platform art if a platform covers its center, ground
             // otherwise.  Banding non-TOP categories to the ground put
@@ -1404,7 +1410,8 @@ public unsafe partial class SnapshotLayer : Node3D
         // authored heights keep stepping with the tile layers.
         bool authoredFloat = hasAuthored && !float.IsNegativeInfinity(authored);
         if (isExplosion || (isEnemy && sprite.Aux == 1) ||
-            (isEnemy && sprite.Aux == 2 && !authoredFloat))
+            (isEnemy && sprite.Aux == 2 && !authoredFloat) ||
+            (isEnemy && (sprite.Flags & 32) != 0 && hasAuthored && !authoredFloat))
         {
             _cellSource[_cellCount] = OtyrNative.NoSource;
             ++_cellCount;

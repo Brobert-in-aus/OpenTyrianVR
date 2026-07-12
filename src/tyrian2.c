@@ -247,6 +247,11 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 	}
 
 	Uint8 rec_flags = enemy[i].filter != 0 ? PRESENT_FLAG_FILTER : 0;
+	/* Sim-truth static marker: sparse art fails the opaque-cell terrain
+	   test below, which split DELIANI's ground-class decorations across
+	   the static (tile-glued) and mover (offset) height paths. */
+	if (!otyr_enemy_moved[i])
+		rec_flags |= PRESENT_FLAG_STATIC;
 	/* Mirrors JE_playerCollide's damage branch: contact damages the player
 	   unless an earlier branch claims it -- evalue > 20000 (armor/weapon
 	   pickups) or scoreitem (cash/pickups; false for every armored enemy
