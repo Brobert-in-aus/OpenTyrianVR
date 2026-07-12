@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 18;
+    public const uint AbiVersion = 19;
 
     // Palette index of the suppressed background fill (the frame color key);
     // index-0 black in sprite/HUD art stays opaque.
@@ -43,6 +43,8 @@ public static unsafe class OtyrNative
         UiPause = 1 << 11,
         DebugSkip = 1 << 12,  // height editor: force level end (v17;
                               // native ignores it unless OTYR_INVULN)
+        DebugKill = 1 << 13,  // height editor: kill all hostile enemies
+                              // (v19; native ignores it unless OTYR_INVULN)
     }
 
     [Flags]

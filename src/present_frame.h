@@ -79,9 +79,10 @@ enum
 	                                   _unsafe wrap-around) */
 	/* Enemy records only: */
 	PRESENT_FLAG_COLLIDER = 64,     /* contact with the player deals damage
-	                                   (JE_playerCollide: evalue <= 0 and
-	                                   explosiontype bit 0 clear); drives the
-	                                   height editor's hazard markers */
+	                                   (JE_playerCollide damage branch: not a
+	                                   scoreitem, evalue <= 20000, explosiontype
+	                                   bit 0 clear); drives the height editor's
+	                                   hazard markers */
 };
 
 typedef struct PresentSprite

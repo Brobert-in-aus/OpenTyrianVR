@@ -924,6 +924,19 @@ static void apply_pending_input_locked(void)
 		levelEnd = 40;
 	}
 
+	/* DEBUG_KILL (v19): free every hostile enemy slot (avail 0 -- scenery
+	   and pickups are avail 2 and survive).  Kill-gated scroll stops watch
+	   enemyOnScreen, which recounts live slots every tick, so the gate
+	   releases on the next tick without ending the level.  Same arming as
+	   DEBUG_SKIP. */
+	if ((changed & pending & OTYR_BUTTON_DEBUG_KILL) &&
+	    SDL_getenv("OTYR_INVULN") != NULL && otyr_in_level)
+	{
+		for (unsigned int i = 0; i < COUNTOF(enemyAvail); ++i)
+			if (enemyAvail[i] == 0)
+				enemyAvail[i] = 1;
+	}
+
 	session.applied_buttons = pending;
 }
 

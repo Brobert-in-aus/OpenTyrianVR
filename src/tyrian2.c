@@ -247,8 +247,11 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 	}
 
 	Uint8 rec_flags = enemy[i].filter != 0 ? PRESENT_FLAG_FILTER : 0;
-	/* Mirrors JE_playerCollide's damage condition exactly. */
-	if (enemyAvail[i] == 0 && enemy[i].evalue <= 0 &&
+	/* Mirrors JE_playerCollide's damage branch: contact damages the player
+	   unless an earlier branch claims it -- evalue > 20000 (armor/weapon
+	   pickups) or scoreitem (cash/pickups; false for every armored enemy
+	   regardless of its kill-cash evalue). */
+	if (enemyAvail[i] == 0 && !enemy[i].scoreitem && enemy[i].evalue <= 20000 &&
 	    (enemyDat[enemy[i].enemytype].explosiontype & 1) == 0)
 		rec_flags |= PRESENT_FLAG_COLLIDER;
 

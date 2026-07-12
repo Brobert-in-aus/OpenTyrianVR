@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 18u
+#define OTYR_ABI_VERSION 19u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -78,6 +78,12 @@ extern "C" {
                                                   (sim mutation; editor-only,
                                                   ignored unless OTYR_INVULN
                                                   ghost mode is active) (v17) */
+#define OTYR_BUTTON_DEBUG_KILL     (1u << 13)  /* height editor: free every
+                                                  hostile enemy slot (avail 0)
+                                                  so kill-gated scroll stops
+                                                  release without skipping the
+                                                  level (same OTYR_INVULN
+                                                  arming as DEBUG_SKIP) (v19) */
 
 /* OtyrConfig.flags bits. */
 #define OTYR_CONFIG_ENABLE_AUDIO           (1u << 0)

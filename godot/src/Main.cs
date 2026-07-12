@@ -977,6 +977,7 @@ public partial class Main : Node3D
             if (Input.IsKeyPressed(Key.Space)) buttons |= OtyrNative.Buttons.UiSpace;
             if (Input.IsKeyPressed(Key.P)) buttons |= OtyrNative.Buttons.UiPause;
             if (Input.IsKeyPressed(Key.N)) buttons |= OtyrNative.Buttons.DebugSkip;
+            if (Input.IsKeyPressed(Key.K)) buttons |= OtyrNative.Buttons.DebugKill;
             if (_frame.InLevel == 0)
             {
                 if (Input.IsKeyPressed(Key.Up)) buttons |= OtyrNative.Buttons.Up;

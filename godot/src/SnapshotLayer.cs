@@ -53,6 +53,16 @@ public unsafe partial class SnapshotLayer : Node3D
     // reproducing legacy layering without z-fighting.
     private const float OrderBias = 0.00001f;
 
+    // Same-band ENEMIES stack by screen Y instead: lower on screen draws on
+    // top (painter's order).  Record order is slot order, and JE_newEnemy
+    // reuses the lowest freed slot, so a segmented ship's sections draw in
+    // whatever order slots happened to free up -- legacy has no stable rule
+    // (user-hit both directions on the object-30 ship column).  Y spread is
+    // 0.0008 max over 200 px (inside the tightest 0.0015 band gap); the
+    // record tiebreak stays under one Y-pixel step (4e-6).
+    private static float EnemyOrderBias(float screenY, long index)
+        => (screenY * 4f + (index & 255) * 0.002f) * 0.000001f;
+
     // Height-editor sessions render flat/single-view, where the in-shader
     // decal depth bias is reliable and the VR geometric lift only adds
     // oblique-view parallax against the baked art.
@@ -1309,7 +1319,9 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             band = BandHeight[Math.Min(sprite.Category, (byte)(BandHeight.Length - 1))];
         }
-        cell.Z = band + (decalOrder > 0f ? 0f : recordIndex * OrderBias);
+        cell.Z = band + (decalOrder > 0f ? 0f
+            : cell.EntityType != 0 ? EnemyOrderBias(centerY, recordIndex)
+            : recordIndex * OrderBias);
         cell.DecalOrder = decalOrder;
         cell.CurrPx = new Vector2(centerX, centerY);
         cell.PrevPx = cell.CurrPx;
@@ -1407,8 +1419,8 @@ public unsafe partial class SnapshotLayer : Node3D
             // Height-editor live override FIRST (decals included -- statics
             // are the objects most worth tuning); applies to frozen (paused)
             // cells too, so nudges are visible without unpausing.  The
-            // override keeps per-record draw order (i * OrderBias -- a flat
-            // override z-fought overlapping instances of the SAME type) and
+            // override stacks same-type instances by screen Y (any slot-
+            // derived order is unstable -- see EnemyOrderBias) and
             // suppresses the decal lift (an overridden platform-under decal
             // otherwise gained the lift back and hid at the platform plane
             // until unpause re-banded it).
@@ -1417,11 +1429,7 @@ public unsafe partial class SnapshotLayer : Node3D
             bool overridden = cell.EntityType != 0 &&
                 _editorHeights.TryGetValue(cell.EntityType, out editH);
             if (overridden)
-                // Inverted bias (user-verified on the segmented object 30):
-                // its later-entered sections reuse EARLIER slots, so
-                // ascending record order put first-entered on top; descending
-                // makes the last section to enter draw over the rest.
-                z = editH + (_cellCount - i) * OrderBias;
+                z = editH + EnemyOrderBias(cell.CurrPx.Y, i);
             // The lift exists for VR multiview (per-eye depth-precision
             // ghosting); viewed obliquely it parallaxes decals up to ~1 px
             // off their baked underlay.  The editor is flat single-view,
