@@ -265,7 +265,29 @@
   lane (stable composition beats pose mirroring for debriefs).
   First-spawn flyer transparency is expected to be the cloud
   nondeterminism seen from below (flyers band to ground under cloud
-  cover); confirm in-headset with working captures this round.  NEW (confirmed in code): statics
+  cover); confirm in-headset with working captures this round.
+- Round 7 (2026-07-12): clouds deterministic PASS, platform flyers
+  PASS.  Remaining ground-static "offset in the top half of the
+  screen" and see-through carrier wings unified by the working
+  spectator captures (frame 1950: wing segments -- never-moved linked
+  slots, aux-1 ground decals -- showed terrain through them in-headset
+  but NOT in the single-view capture) and the user's decisive
+  observation: the transparency was likely PER-EYE.  Mechanism, now
+  established: exactly-coplanar decal-vs-tile depth comparisons sit at
+  precision noise; VR multiview renders each eye with a slightly
+  different projection, so the comparison resolves DIFFERENTLY per eye
+  -- one eye draws the decal, the other the tile through it, and
+  binocular rivalry reads as shimmer/translucency.  Worst at the
+  lane's far half (coarsest precision, hence "top half of the
+  screen"); invisible in every single-view render (flat captures,
+  spectator, desktop) -- which is why it survived seven rounds.  FIX:
+  every decal now gets a REAL geometric lift above its layer (ground
+  0.0006 =~0.2 mm, elevated 0.0015) with the paint order folded into
+  real height (decalOrder * 0.0004), so both eyes agree everywhere;
+  the in-shader depth bias remains as flat-mode belt-and-braces.
+  LESSON (repeat offender, now policy): NEVER arbitrate same-plane
+  draw order with sub-1e-4 depth-space offsets -- multiview resolves
+  them per-eye; use real geometry or explicit render priority.  NEW (confirmed in code): statics
   riding floating platforms (aux 2, and top-band aux 1 with elevated
   surface) visibly swim/blur against their platform under head motion
   -- BackgroundLayer.OnRender smooth-scrolls the ELEVATED tile layers

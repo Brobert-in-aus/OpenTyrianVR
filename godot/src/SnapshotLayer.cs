@@ -1000,16 +1000,20 @@ public unsafe partial class SnapshotLayer : Node3D
             float laneX = (frameX / 320f - 0.5f) * LaneWidth;
             float laneY = (0.5f - px.Y / 200f) * LaneHeight;
 
-            // Decals on an ELEVATED layer get a real geometric lift above
-            // it (~0.5 mm of parallax, imperceptible): the in-shader depth
-            // bias that arbitrates the coplanar ground decals proved
-            // pipeline-dependent under VR multiview -- the layer's art
-            // blended over its own riders (destroyed-state tiles showing
-            // through intact structures).  Real depth wins in every
-            // pipeline.  Ground decals stay exactly coplanar (proven path).
+            // ALL decals get a real geometric lift above their layer, with
+            // the paint order folded into real height: the in-shader depth
+            // bias (1e-5) sits below the VR multiview depth-precision floor,
+            // so exactly-coplanar decals z-fight their own layer -- worst at
+            // the lane's FAR half where precision is coarsest (the round-7
+            // "offset in the top half of the screen" ground statics and the
+            // see-through carrier wings).  Ground decals ride 0.0006 above
+            // the tiles (~0.2 mm parallax) which also matches legacy paint
+            // order over the structure layers; elevated decals ride 0.0015
+            // above their platform/cloud.  Real depth wins everywhere; the
+            // shader bias stays as flat-mode belt-and-braces.
             float z = cell.Z;
-            if (cell.DecalOrder > 0f && z > 0.001f)
-                z += 0.0015f;
+            if (cell.DecalOrder > 0f)
+                z += (z > 0.001f ? 0.0015f : 0.0006f) + cell.DecalOrder * 0.0004f;
             int instance = _instanceCount[id]++;
             if (instance >= _multiMesh[id].InstanceCount)
             {
