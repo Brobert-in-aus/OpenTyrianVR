@@ -53,6 +53,12 @@ public unsafe partial class SnapshotLayer : Node3D
     // reproducing legacy layering without z-fighting.
     private const float OrderBias = 0.00001f;
 
+    // Height-editor sessions render flat/single-view, where the in-shader
+    // decal depth bias is reliable and the VR geometric lift only adds
+    // oblique-view parallax against the baked art.
+    private static readonly bool FlatEditorMode =
+        System.Environment.GetEnvironmentVariable("OTYR_HEIGHT_EDITOR") == "1";
+
     private OtyrNative.Snapshot _snapshot;
     private OtyrNative.SpriteSheet _sheet;
     private uint _sheetEpoch;
@@ -1316,7 +1322,12 @@ public unsafe partial class SnapshotLayer : Node3D
             if (cell.EntityType != 0 &&
                 _editorHeights.TryGetValue(cell.EntityType, out float editH))
                 z = editH;
-            if (cell.DecalOrder > 0f)
+            // The lift exists for VR multiview (per-eye depth-precision
+            // ghosting); viewed obliquely it parallaxes decals up to ~1 px
+            // off their baked underlay.  The editor is flat single-view,
+            // where the in-shader depth bias alone is reliable -- skip the
+            // lift there so alignment reads pixel-true at any orbit angle.
+            if (cell.DecalOrder > 0f && !FlatEditorMode)
                 z += (z > 0.001f ? 0.0015f : 0.0006f) + cell.DecalOrder * 0.0004f;
             int instance = _instanceCount[id]++;
             if (instance >= _multiMesh[id].InstanceCount)
