@@ -153,10 +153,13 @@ public partial class Main : Node3D
             // height editor wants the OPPOSITE of steep: a low grazing view
             // (the lane is tilted -42, so a steep camera pitch approaches
             // perpendicular and flattens all height separation) from close
-            // in, so hover heights read as clear vertical offsets.
+            // in, so hover heights read as clear vertical offsets.  In
+            // editor mode this is just the orbit's starting pose.
             camera.Position = HeightEditor ? new Vector3(0f, 1.26f, -0.05f) : new Vector3(0f, 1.6f, 0f);
             camera.RotationDegrees = new Vector3(HeightEditor ? -15f : -25f, 0f, 0f);
         }
+        if (HeightEditor)
+            _editorCamera = camera;
         origin.AddChild(camera);
         camera.MakeCurrent();
 
@@ -433,6 +436,14 @@ public partial class Main : Node3D
     private bool _editorLastClick;
     private readonly System.Collections.Generic.HashSet<Key> _editorHeld = new();
 
+    // Editor orbit camera (Ctrl+LMB orbit, Ctrl+RMB pan, Ctrl+wheel zoom;
+    // bare clicks stay selection).  Pivot starts at the lane center.
+    private Camera3D _editorCamera = null!;
+    private Vector3 _editorPivot = new(0f, 1.05f, -0.9f);
+    private float _editorYaw;            // degrees
+    private float _editorPitch = -14f;   // degrees
+    private float _editorDist = 0.88f;
+
     private bool EditorKeyPressed(Key k)
     {
         bool down = Input.IsKeyPressed(k);
@@ -536,9 +547,52 @@ public partial class Main : Node3D
         _lastSkipPressed = skip;
     }
 
+    /// <summary>Editor camera controls: Ctrl+LMB drag orbits, Ctrl+RMB drag
+    /// pans the pivot, Ctrl+wheel zooms.  Godot input events (not polling)
+    /// so drags accumulate per motion event.</summary>
+    public override void _Input(InputEvent ev)
+    {
+        if (!HeightEditor || !Input.IsKeyPressed(Key.Ctrl))
+            return;
+
+        if (ev is InputEventMouseMotion motion)
+        {
+            if (motion.ButtonMask.HasFlag(MouseButtonMask.Left))
+            {
+                _editorYaw -= motion.Relative.X * 0.35f;
+                _editorPitch = Mathf.Clamp(_editorPitch - motion.Relative.Y * 0.35f, -85f, 40f);
+            }
+            else if (motion.ButtonMask.HasFlag(MouseButtonMask.Right))
+            {
+                Basis basis = _editorCamera.GlobalTransform.Basis;
+                float k = _editorDist * 0.0011f;
+                _editorPivot += basis.X * (-motion.Relative.X * k) + basis.Y * (motion.Relative.Y * k);
+            }
+        }
+        else if (ev is InputEventMouseButton { Pressed: true } wheel)
+        {
+            if (wheel.ButtonIndex == MouseButton.WheelUp)
+                _editorDist = Mathf.Max(0.12f, _editorDist * 0.88f);
+            else if (wheel.ButtonIndex == MouseButton.WheelDown)
+                _editorDist = Mathf.Min(3.5f, _editorDist / 0.88f);
+        }
+    }
+
+    private void UpdateEditorCamera()
+    {
+        // Orbit pose from yaw/pitch/distance around the pivot.
+        Basis rot = Basis.FromEuler(new Vector3(
+            Mathf.DegToRad(_editorPitch), Mathf.DegToRad(_editorYaw), 0f));
+        Vector3 back = rot * Vector3.Back;  // camera sits behind the pivot
+        _editorCamera.GlobalTransform = new Transform3D(rot, _editorPivot + back * _editorDist);
+    }
+
     private void UpdateHeightEditor()
     {
-        bool click = Input.IsMouseButtonPressed(MouseButton.Left);
+        UpdateEditorCamera();
+
+        bool click = Input.IsMouseButtonPressed(MouseButton.Left) &&
+                     !Input.IsKeyPressed(Key.Ctrl);  // Ctrl+click = orbit
         if (click && !_editorLastClick)
         {
             var cam = GetViewport().GetCamera3D();
