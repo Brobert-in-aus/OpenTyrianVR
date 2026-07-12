@@ -1037,6 +1037,7 @@ static enum LevelTickResult JE_levelTick(void)
 
 	tempMapXOfs = mapXOfs;
 	tempBackMove = backMove;
+	present_band_parallax[0] = present_band_parallax[1] = (Sint8)(mapXOfs - 11);
 	JE_drawEnemy(50);
 	JE_drawEnemy(100);
 
@@ -1108,6 +1109,7 @@ static enum LevelTickResult JE_levelTick(void)
 
 		tempMapXOfs = mapX2Ofs;
 		tempBackMove = 0;
+		present_band_parallax[2] = (Sint8)(mapX2Ofs - 23);
 		JE_drawEnemy(25);
 
 		if (enemyOnScreen == lastEnemyOnScreen)
@@ -1125,6 +1127,7 @@ static enum LevelTickResult JE_levelTick(void)
 	{
 		tempMapXOfs = (background3x1 == 0) ? oldMapX3Ofs : mapXOfs;
 		tempBackMove = backMove3;
+		present_band_parallax[3] = (Sint8)(tempMapXOfs - (background3x1 == 0 ? 35 : 11));
 		JE_drawEnemy(75);
 	}
 
@@ -1577,6 +1580,7 @@ draw_player_shot_loop_end:
 	{
 		tempMapXOfs = (background3x1 == 0) ? oldMapX3Ofs : oldMapXOfs;
 		tempBackMove = backMove3;
+		present_band_parallax[3] = (Sint8)(tempMapXOfs - (background3x1 == 0 ? 35 : 11));
 		JE_drawEnemy(75);
 	}
 
@@ -1587,6 +1591,7 @@ draw_player_shot_loop_end:
 
 		tempMapXOfs = mapX2Ofs;
 		tempBackMove = 0;
+		present_band_parallax[2] = (Sint8)(mapX2Ofs - 23);
 		JE_drawEnemy(25);
 
 		if (enemyOnScreen == lastEnemyOnScreen)

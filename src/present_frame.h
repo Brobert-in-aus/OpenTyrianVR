@@ -196,6 +196,12 @@ typedef struct PresentBackground
 
 extern PresentBackground present_backgrounds[PRESENT_BACKGROUND_LAYERS];
 
+/* Per-tick parallax deltas (drawn offset minus fixed mid-swing target) for
+ * the host's de-parallax rebasing (v21).  Bands: 0/1 ground A/B, 2 sky,
+ * 3 top.  Filled at the draw sites. */
+extern Sint8 present_band_parallax[4];
+extern Sint8 present_layer_parallax[PRESENT_BACKGROUND_LAYERS];
+
 /* When set (hosted VR mode), the background tile blits are skipped -- scroll
  * state still advances -- and the host renders the layers from the exported
  * maps plus the per-tick scroll records. */

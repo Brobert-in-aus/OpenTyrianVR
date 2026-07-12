@@ -72,7 +72,7 @@ bool otyr_hosted = false;
  * sizes (foundation rule: size asserts on both sides of the boundary). */
 typedef char otyr_assert_sprite_size[sizeof(OtyrSnapshotSprite) == 16 ? 1 : -1];
 typedef char otyr_assert_bg_draw_size[sizeof(OtyrBackgroundDraw) == 16 ? 1 : -1];
-typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 36 + 1024 * 16 + 3 * 16 ? 1 : -1];
+typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 36 + 1024 * 16 + 3 * 16 + 8 ? 1 : -1];  /* +8: v21 parallax deltas */
 typedef char otyr_assert_sheet_size[sizeof(OtyrSpriteSheet) == 12 + 2 * 1024 * 12 * 14 ? 1 : -1];
 typedef char otyr_assert_frame_size[sizeof(OtyrFrame) == 16 + 320 * 200 + 1024 + 4 + 4 ? 1 : -1];
 typedef char otyr_assert_bg_map_size[sizeof(OtyrBackgroundMap) == 16 + 600 * 15 + 72 * 24 * 28 ? 1 : -1];
@@ -1111,6 +1111,13 @@ void otyr_host_present(SDL_Surface *screen)
 		out->reserved = 0;
 		out->hash = in->hash;
 	}
+
+	/* Parallax deltas (v21): the host rebases records to fixed offsets. */
+	memcpy(snapshot->band_parallax, present_band_parallax,
+	       sizeof(snapshot->band_parallax));
+	memcpy(snapshot->layer_parallax, present_layer_parallax,
+	       sizeof(snapshot->layer_parallax));
+	snapshot->parallax_pad = 0;
 
 	SDL_CondBroadcast(session.frame_ready);
 	SDL_UnlockMutex(session.mutex);

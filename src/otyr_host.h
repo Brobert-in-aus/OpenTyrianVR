@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 20u
+#define OTYR_ABI_VERSION 21u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -282,6 +282,17 @@ typedef struct OtyrSnapshot
 	uint8_t  sound_sample[OTYR_SNAPSHOT_SOUND_MAX];
 	OtyrSnapshotSprite sprites[OTYR_SNAPSHOT_SPRITE_MAX];
 	OtyrBackgroundDraw background[OTYR_BG_LAYER_COUNT]; /* (v8) */
+
+	/* Parallax rebasing (v21, E1+E2): per-tick delta between the offset a
+	 * record was drawn with and its fixed mid-swing target.  The host
+	 * subtracts these to pin the diorama at a fixed offset (de-parallax)
+	 * while the SIM keeps legacy parallax (collision untouched).  Bands:
+	 * 0/1 = enemy ground A/B (mapXOfs), 2 = sky (mapX2Ofs), 3 = top
+	 * (mapX3Ofs family, background3x1-aware).  Layers mirror the three
+	 * background draws.  Sign: positive = drawn right of the fixed pose. */
+	int8_t band_parallax[4];
+	int8_t layer_parallax[OTYR_BG_LAYER_COUNT];
+	int8_t parallax_pad;
 } OtyrSnapshot;
 
 /* Sprite sheet export: every cell is a 12x14 indexed-color bitmap (0 =

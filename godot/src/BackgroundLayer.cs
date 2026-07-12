@@ -25,6 +25,13 @@ public unsafe partial class BackgroundLayer : Node3D
     private const int PlayW = 264, PlayH = 184;
     private const int AtlasCols = 8;  // 8x9 grid of 24x28 shapes
 
+    // E1 wide canvas: the quads cover the FULL authored map width (336/360
+    // px vs the 264 legacy window) plus a below-screen apron and an
+    // above-screen strip -- the shader is transparent beyond the map, so
+    // one rect serves all layers.  Play-region coordinates.
+    private const float CanvasX0 = -40f, CanvasY0 = -28f;
+    private const float CanvasW = 376f, CanvasH = 268f;
+
     // Lane-local Z per layer, chosen from the layer's over mode each tick.
     // Coplanar layers hug the lane overlay (sub-pixel offsets: ~0.1 mm of
     // head parallax against 3.1 mm/px); layers that legacy draws over
@@ -127,6 +134,8 @@ public unsafe partial class BackgroundLayer : Node3D
                 uniform sampler2D palette : source_color, filter_nearest;
                 uniform ivec2 map_size;
                 uniform vec2 origin_px;   // map tile (0,0) position, play-region px
+                uniform vec2 quad_px0;    // quad top-left in play-region px (E1 canvas)
+                uniform vec2 quad_size_px = vec2(264.0, 184.0);
                 uniform float alpha_mul;  // 1.0, or 0.55 for the legacy blend variant
                 // 1: darken everything -- the in-place shadow copy of a
                 // lifted water-cloud layer.
@@ -179,7 +188,7 @@ public unsafe partial class BackgroundLayer : Node3D
                 }
 
                 void fragment() {
-                    vec2 frame_px = UV * vec2(264.0, 184.0);
+                    vec2 frame_px = quad_px0 + UV * quad_size_px;
                     vec2 mpf = frame_px - origin_px;
 
                     // Anti-aliased point sampling: snap to texel centers except
@@ -206,14 +215,14 @@ public unsafe partial class BackgroundLayer : Node3D
                 """,
         };
 
-        // The play region (frame px 0..264 x 0..184) in lane-local coordinates
-        // (the lane maps the full 320x200 frame; play area publishes at -24).
+        // The E1 wide canvas in lane-local coordinates (the lane maps the
+        // full 320x200 frame; play area publishes at -24).
         var quadMesh = new QuadMesh
         {
-            Size = new Vector2(PlayW / 320f * LaneWidth, PlayH / 200f * LaneHeight),
+            Size = new Vector2(CanvasW / 320f * LaneWidth, CanvasH / 200f * LaneHeight),
         };
-        float centerX = (PlayW / 2f / 320f - 0.5f) * LaneWidth;
-        float centerY = (0.5f - PlayH / 2f / 200f) * LaneHeight;
+        float centerX = ((CanvasX0 + CanvasW / 2f) / 320f - 0.5f) * LaneWidth;
+        float centerY = (0.5f - (CanvasY0 + CanvasH / 2f) / 200f) * LaneHeight;
 
         for (int l = 0; l < OtyrNative.BgLayerCount; l++)
         {
@@ -228,6 +237,8 @@ public unsafe partial class BackgroundLayer : Node3D
             _materials[l] = new ShaderMaterial { Shader = shader };
             _materials[l].SetShaderParameter("palette", _palette);
             _materials[l].SetShaderParameter("alpha_mul", 1.0f);
+            _materials[l].SetShaderParameter("quad_px0", new Vector2(CanvasX0, CanvasY0));
+            _materials[l].SetShaderParameter("quad_size_px", new Vector2(CanvasW, CanvasH));
 
             _quads[l] = new MeshInstance3D
             {
@@ -248,6 +259,8 @@ public unsafe partial class BackgroundLayer : Node3D
         _cloudMaterial = new ShaderMaterial { Shader = shader };
         _cloudMaterial.SetShaderParameter("palette", _palette);
         _cloudMaterial.SetShaderParameter("alpha_mul", 0.82f);
+        _cloudMaterial.SetShaderParameter("quad_px0", new Vector2(CanvasX0, CanvasY0));
+        _cloudMaterial.SetShaderParameter("quad_size_px", new Vector2(CanvasW, CanvasH));
         _cloudMaterial.RenderPriority = 5;  // cloud look: draw late, translucent
         _cloudQuad = new MeshInstance3D
         {
@@ -286,6 +299,10 @@ public unsafe partial class BackgroundLayer : Node3D
             FetchMaps(session);
         }
         _stormTick = snapshot.LevelTick;
+        // E2 de-parallax: rebase each layer's origin to its fixed offset
+        // (deltas exported per tick; Origin() subtracts).
+        for (int l = 0; l < OtyrNative.BgLayerCount; l++)
+            _layerParallax[l] = snapshot.LayerParallax(l);
 
         for (int l = 0; l < OtyrNative.BgLayerCount; l++)
         {
@@ -571,7 +588,8 @@ public unsafe partial class BackgroundLayer : Node3D
             Vector3 hit = localOrigin + localDir * t;
             var playPx = new Vector2((hit.X / LaneWidth + 0.5f) * 320f,
                                      (0.5f - hit.Y / LaneHeight) * 200f);
-            if (playPx.X < 0f || playPx.X >= PlayW || playPx.Y < 0f || playPx.Y >= PlayH)
+            if (playPx.X < CanvasX0 || playPx.X >= CanvasX0 + CanvasW ||
+                playPx.Y < CanvasY0 || playPx.Y >= CanvasY0 + CanvasH)
                 continue;
             if (lz > best && OpaqueAt(l, playPx))
             {
@@ -632,12 +650,18 @@ public unsafe partial class BackgroundLayer : Node3D
     /// <summary>Play-region position of map tile (0,0) for a draw record: the
     /// record pins map cell (row0, col0) at frame (x, y); draw x is in
     /// pre-composite coordinates (play area publishes shifted -24).</summary>
+    // E2: per-layer parallax delta this tick (drawn minus fixed offset).
+    private readonly int[] _layerParallax = new int[OtyrNative.BgLayerCount];
+
     private Vector2 Origin(int layer, in OtyrNative.BackgroundDraw draw)
     {
         int width = Math.Max((int)_mapSize[layer].X, 1);
         int row0 = (int)Math.Floor(draw.TileOffset / (double)width);
         int col0 = draw.TileOffset - row0 * width;
-        return new Vector2(draw.X - 24 - col0 * 24, draw.Y - row0 * 28);
+        // Subtracting the parallax delta pins the layer at its fixed
+        // mid-swing offset (E2); enemy records rebase by the same deltas,
+        // so terrain-glued art stays glued.
+        return new Vector2(draw.X - 24 - col0 * 24 - _layerParallax[layer], draw.Y - row0 * 28);
     }
 
     private void FetchMaps(ulong session)

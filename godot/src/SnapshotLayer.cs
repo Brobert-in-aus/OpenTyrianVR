@@ -1309,6 +1309,14 @@ public unsafe partial class SnapshotLayer : Node3D
         float centerX = sprite.X + pixelOffsetX + (big ? OtyrNative.SheetCellW : OtyrNative.SheetCellW / 2f);
         float centerY = sprite.Y + pixelOffsetY + (big ? OtyrNative.SheetCellH : OtyrNative.SheetCellH / 2f);
 
+        // E2 de-parallax: enemy-band records rebase to their fixed map
+        // offsets (v21 deltas) -- the SIM keeps legacy parallax, so hitbox
+        // vs visual diverges up to the half-swing (accepted, round 9).
+        // Screen-space categories (player, shots, explosions, shadows of
+        // the player) stay put.
+        if (sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB)
+            centerX -= _snapshot.BandParallax(sprite.Category);
+
         ref RenderCell cell = ref _cells[_cellCount];
         // Darken blits (shadows, iced) go to the multiplicative shadow
         // layer of their sheet instead of the color layer.
@@ -1467,14 +1475,16 @@ public unsafe partial class SnapshotLayer : Node3D
             // Sheet-layer 2x2 sprites render as one 24x28 quad (flag bit 8).
             bool big = !pixelQuad && id != GlowLayer && (cell.Flags & 8) != 0;
 
-            // Cull cells fully outside the visible play region (frame copies
-            // draw columns 24..288, rows 0..184): legacy clips these at the
-            // margins, so they must not float past the lane edges.
+            // Cull cells fully outside the WIDE diorama (E1): the sim keeps
+            // enemies alive to x in [-80, 340] and records them, and the
+            // full-width map margins render beneath -- only cells beyond
+            // the widened canvas drop.  (Legacy clipped to the 264x184
+            // window; the margins are the point of E1.)
             float halfW = id == GlowLayer ? 1f : pixelQuad ? cell.Flags / 2f : big ? OtyrNative.SheetCellW : OtyrNative.SheetCellW / 2f;
             float halfH = id == GlowLayer ? 1f : pixelQuad ? cell.FilterColor / 2f : big ? OtyrNative.SheetCellH : OtyrNative.SheetCellH / 2f;
             float frameX = px.X - 24f;
-            if (frameX + halfW <= 0f || frameX - halfW >= 264f ||
-                px.Y + halfH <= 0f || px.Y - halfH >= 184f)
+            if (frameX + halfW <= -40f || frameX - halfW >= 336f ||
+                px.Y + halfH <= -28f || px.Y - halfH >= 240f)
                 continue;
 
             // Frame pixels (game_screen, composited -24) -> lane local.

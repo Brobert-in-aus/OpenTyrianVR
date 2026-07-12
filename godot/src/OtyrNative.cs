@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 20;
+    public const uint AbiVersion = 21;
 
     // Palette index of the suppressed background fill (the frame color key);
     // index-0 black in sprite/HUD art stays opaque.
@@ -130,12 +130,30 @@ public static unsafe class OtyrNative
         public fixed byte SpritesRaw[SnapshotSpriteMax * 16];  // SnapshotSprite[1024]
         public BackgroundDraw Background0, Background1, Background2;  // (v8)
 
+        // Parallax deltas (v21): drawn offset minus fixed mid-swing target.
+        // Bands 0/1 ground A/B, 2 sky, 3 top; layers mirror the bg draws.
+        public fixed sbyte BandParallaxRaw[4];
+        public fixed sbyte LayerParallaxRaw[BgLayerCount];
+        public sbyte ParallaxPad;
+
         public BackgroundDraw Background(int layer) => layer switch
         {
             0 => Background0,
             1 => Background1,
             _ => Background2,
         };
+
+        // Per-category rebase (Category order: sky, groundA, top, groundB
+        // maps to export order groundA, groundB, sky, top).
+        public int BandParallax(int category) => category switch
+        {
+            0 => BandParallaxRaw[2],
+            1 => BandParallaxRaw[0],
+            2 => BandParallaxRaw[3],
+            3 => BandParallaxRaw[1],
+            _ => 0,
+        };
+        public int LayerParallax(int layer) => LayerParallaxRaw[layer];
     }
 
     // Old variable-size sprite table export (ABI v9): OPTION_SHAPES carries
@@ -350,7 +368,7 @@ public static unsafe class OtyrNative
         // ABI layout guards (mirrors the native static asserts).
         if (sizeof(SnapshotSprite) != 16 ||
             sizeof(BackgroundDraw) != 16 ||
-            sizeof(Snapshot) != 36 + SnapshotSpriteMax * 16 + BgLayerCount * 16 ||
+            sizeof(Snapshot) != 36 + SnapshotSpriteMax * 16 + BgLayerCount * 16 + 8 ||  // +8: v21 parallax
             sizeof(SpriteSheet) != 12 + 2 * SheetCellMax * SheetCellW * SheetCellH ||
             sizeof(BackgroundMap) != 16 + BgMapCellMax + BgShapeMax * BgTileW * BgTileH ||
             sizeof(OldSprite) != 8 + 2 * OldSpriteWMax * OldSpriteHMax ||

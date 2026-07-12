@@ -37,11 +37,19 @@ PresentBackground present_backgrounds[PRESENT_BACKGROUND_LAYERS];
 bool present_suppress_background = false;
 bool present_background_hash = false;
 
+/* Parallax deltas for the host's de-parallax rebasing (v21): the offset
+   each band/layer was drawn with this tick minus its fixed mid-swing
+   target.  Filled at the draw sites; zero when a band/layer never drew. */
+Sint8 present_band_parallax[4];
+Sint8 present_layer_parallax[PRESENT_BACKGROUND_LAYERS];
+
 void present_frame_reset(void)
 {
 	present_sprite_count = 0;
 	present_sound_count = 0;
 	memset(present_backgrounds, 0, sizeof(present_backgrounds));
+	memset(present_band_parallax, 0, sizeof(present_band_parallax));
+	memset(present_layer_parallax, 0, sizeof(present_layer_parallax));
 	present_text_window = true;
 
 	/* Smoothie filters (lava/water/iced blur, the starShowVGA warp) read
