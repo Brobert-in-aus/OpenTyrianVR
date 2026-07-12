@@ -324,6 +324,19 @@
   black pause backdrop.  Queued: virtual-sun shadow projection (the
   light-follows-camera swing), above-cloud shadow pass (cloud
   transparency holes), boss HP bar as selectable pseudo-type.
+  SUPERSEDED 2026-07-12 (user direction after SAVARA water clouds):
+  the shadow endgame is REAL cast shadows -- once the scene is fully
+  stacked (bands authored, cloud layers lifted, deep ground later), a
+  directional light from an effectively infinite height above the
+  diorama casts true shadows from all real geometry: higher clouds
+  shade lower clouds, enemy quads shadow ground units without decal
+  bookkeeping, and the interim darkened-copy water-cloud shadow (looks
+  wrong over land) plus the legacy shadow blits both retire.  Notes:
+  entity/tile quads render unshaded + color-key discard today, so
+  either flip to shaded materials that receive, or keep unshaded and
+  sample the DirectionalLight3D shadow map manually in the shaders;
+  legacy blit shadows must be suppressed natively when this lands;
+  multiview per-eye shadow-map coherence needs its own headset pass.
 - Round 9 (2026-07-12): expansion clarifications ANSWERED.  E1: no
   gameplay change (offscreen enemies behave per legacy; below-screen
   are already sim-dead -- ghosts are visual only).  E2 mechanics
