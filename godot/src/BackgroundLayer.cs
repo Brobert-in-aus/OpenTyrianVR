@@ -197,9 +197,14 @@ public unsafe partial class BackgroundLayer : Node3D
             _prevDraw[l] = _currDraw[l];
             _currDraw[l] = snapshot.Background(l);
             _quads[l].Visible = _currDraw[l].Drawn != 0;
-            _materials[l].SetShaderParameter("alpha_mul", _currDraw[l].Blend != 0 ? 0.55f : 1.0f);
 
             float z = LayerHeight(l, _currDraw[l].OverMode);
+            // Cloud-height layers get an extra transparency nudge on top of
+            // the legacy blend flag (user-tuned, 2026-07-12: the kept
+            // translucent look, a tad lighter).
+            bool cloudHeight = z > 0.001f && Mathf.Abs(z - PlatformZ) > 0.0005f;
+            float alpha = (_currDraw[l].Blend != 0 ? 0.55f : 1.0f) * (cloudHeight ? 0.82f : 1.0f);
+            _materials[l].SetShaderParameter("alpha_mul", alpha);
             Vector3 position = _quads[l].Position;
             if (position.Z != z)
                 _quads[l].Position = new Vector3(position.X, position.Y, z);
@@ -211,8 +216,7 @@ public unsafe partial class BackgroundLayer : Node3D
             // on unspecified distance-sort tie-breaking and flipped between
             // level runs.  Platform-height layers keep default order; their
             // riders sit at a real lift and win by depth either way.
-            _materials[l].RenderPriority =
-                z > 0.001f && Mathf.Abs(z - PlatformZ) > 0.0005f ? 5 : 0;
+            _materials[l].RenderPriority = cloudHeight ? 5 : 0;
 
             // Coplanar layers are pixel-locked to the tick (terrain-paint
             // coplanarity); their origin updates here and only here.
