@@ -122,6 +122,8 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             _background = new BackgroundLayer(_paletteTexture) { Name = "BackgroundLayer" };
             AddChild(_background);
+            if (_classHeights.TryGetValue("water-clouds", out float wc))
+                _background.SetWaterCloudHeight(wc);
         }
 
         var shader = new Shader
@@ -1095,7 +1097,7 @@ public unsafe partial class SnapshotLayer : Node3D
     public int EditorSave()
     {
         const string path = "res://hover_heights.json";
-        if (!FileAccess.FileExists(path) || _editorPending.Count == 0)
+        if (!FileAccess.FileExists(path) || (_editorPending.Count == 0 && !_waterCloudDirty))
             return 0;
         var root = Json.ParseString(FileAccess.GetFileAsString(path)).AsGodotDictionary();
         var types = root["types"].AsGodotDictionary();
@@ -1117,9 +1119,17 @@ public unsafe partial class SnapshotLayer : Node3D
             }
             types[type.ToString()] = entry;
         }
+        int saved = _editorPending.Count;
+        if (_waterCloudDirty && _background != null)
+        {
+            var classes = root["classes"].AsGodotDictionary();
+            classes["water-clouds"] = _background.WaterCloudHeight;
+            root["classes"] = classes;
+            _waterCloudDirty = false;
+            ++saved;
+        }
         using var f = FileAccess.Open(path, FileAccess.ModeFlags.Write);
         f.StoreString(Json.Stringify(root, "  "));
-        int saved = _editorPending.Count;
         _editorPending.Clear();
         return saved;
     }
@@ -1127,6 +1137,22 @@ public unsafe partial class SnapshotLayer : Node3D
     /// <summary>Editor: the pending (unsaved) edit for a type, if any.</summary>
     public string? EditorPendingOf(ushort entityType) =>
         _editorPending.TryGetValue(entityType, out string? v) ? v : null;
+
+    // Water-cloud layer height (editor-adjustable, saved to
+    // classes["water-clouds"]).
+    private bool _waterCloudDirty;
+    public bool WaterCloudsSelectable => _background?.WaterCloudsArmed ?? false;
+    public float EditorWaterCloudHeight =>
+        _background?.WaterCloudHeight ?? BackgroundLayer.WaterCloudZ;
+
+    public void EditorSetWaterCloudHeight(float h)
+    {
+        if (_background == null)
+            return;
+        _background.SetWaterCloudHeight(h);
+        _classHeights["water-clouds"] = _background.WaterCloudHeight;
+        _waterCloudDirty = true;
+    }
 
     // One surface decision per entity per tick: querying per cell split
     // multi-cell structures across heights when they straddled a platform

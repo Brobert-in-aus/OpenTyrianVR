@@ -806,6 +806,22 @@ public partial class Main : Node3D
                     EditorAssignBand(in _editorBands[next]);
             }
         }
+        else if (_editorSelectedLayer == 1 && _snapshotLayer.WaterCloudsSelectable &&
+                 _frame.InLevel != 0)
+        {
+            // The lifted water-cloud layer is height-adjustable like an
+            // object: Up/Down (or numpad +/-) nudge, S persists it as
+            // classes["water-clouds"].
+            float step = Input.IsKeyPressed(Key.Shift) ? 0.01f : 0.002f;
+            int dir = ((EditorKeyPressed(Key.Up) || EditorKeyPressed(Key.KpAdd)) ? 1 : 0) -
+                      ((EditorKeyPressed(Key.Down) || EditorKeyPressed(Key.KpSubtract)) ? 1 : 0);
+            if (dir != 0)
+            {
+                _snapshotLayer.EditorSetWaterCloudHeight(
+                    _snapshotLayer.EditorWaterCloudHeight + dir * step);
+                _editorSelectedLayerZ = _snapshotLayer.EditorWaterCloudHeight;
+            }
+        }
 
         if (EditorKeyPressed(Key.S))
             GD.Print($"OpenTyrianVR: editor saved {_snapshotLayer.EditorSave()} type edit(s)");
@@ -831,11 +847,13 @@ public partial class Main : Node3D
         else if (_editorSelectedLayer >= 0)
         {
             hasSelection = true;
-            selectedHeight = _editorSelectedLayerZ;
+            bool cloudLayer = _editorSelectedLayer == 1 && _snapshotLayer.WaterCloudsSelectable;
+            selectedHeight = cloudLayer ? _snapshotLayer.EditorWaterCloudHeight : _editorSelectedLayerZ;
             _editorLabel.Visible = true;
             _editorLabel.Text =
                 $"selected {_editorSelectedLayerName}  h={selectedHeight:0.####}  " +
-                "(layer heights are structural -- not editable here)";
+                (cloudLayer ? "(Up/Down adjusts, S saves)"
+                            : "(layer heights are structural -- not editable here)");
         }
         else
             _editorLabel.Visible = false;

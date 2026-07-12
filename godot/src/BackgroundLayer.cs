@@ -43,6 +43,20 @@ public unsafe partial class BackgroundLayer : Node3D
     // baked spot becomes the cloud's shadow on the water).  Armed per
     // level only when the ground art reads as water-with-clouds.
     public const float WaterCloudZ = 0.014f;
+
+    // Editor-adjustable, persisted as classes["water-clouds"].
+    public float WaterCloudHeight { get; private set; } = WaterCloudZ;
+    public bool WaterCloudsArmed => _cloudActive;
+
+    public void SetWaterCloudHeight(float h)
+    {
+        WaterCloudHeight = Mathf.Clamp(h, -0.005f, 0.06f);
+        if (_cloudQuad != null)
+        {
+            Vector3 p = _cloudQuad.Position;
+            _cloudQuad.Position = new Vector3(p.X, p.Y, WaterCloudHeight);
+        }
+    }
     private static float LayerHeight(int layer, byte overMode) => layer switch
     {
         0 => GroundZ,
@@ -200,7 +214,7 @@ public unsafe partial class BackgroundLayer : Node3D
             Name = "WaterClouds",
             Mesh = quadMesh,
             MaterialOverride = _cloudMaterial,
-            Position = new Vector3(centerX, centerY, WaterCloudZ),
+            Position = new Vector3(centerX, centerY, WaterCloudHeight),
             Visible = false,
         };
         AddChild(_cloudQuad);
@@ -433,7 +447,7 @@ public unsafe partial class BackgroundLayer : Node3D
     {
         float z = LayerHeight(l, _currDraw[l].OverMode);
         if (l == 1 && _cloudActive && z <= 0.001f)
-            return WaterCloudZ;
+            return WaterCloudHeight;
         return z;
     }
 
@@ -557,7 +571,10 @@ public unsafe partial class BackgroundLayer : Node3D
             };
             AddChild(_layerHighlight);
         }
-        _layerHighlight.Position = _quads[l].Position + new Vector3(0f, 0f, 0.002f);
+        Vector3 basePos = _quads[l].Position;
+        // An armed water-cloud overlay is SELECTED at its lifted plane,
+        // even though its own quad stays coplanar as the shadow copy.
+        _layerHighlight.Position = new Vector3(basePos.X, basePos.Y, PresentedHeight(l) + 0.002f);
         _layerHighlight.Visible = true;
     }
 
