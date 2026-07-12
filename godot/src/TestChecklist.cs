@@ -13,11 +13,10 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Platform statics SOLID (no destroyed art thru)",
-        "Flyers solid over platforms AND ground",
-        "First-spawn enemies solid everywhere",
-        "Clouds translucent again (the kept look)",
-        "Platform statics glued when swaying",
+        "Ground statics aligned + solid again",
+        "Platform statics still solid",
+        "First-spawn flyers solid everywhere",
+        "Clouds translucent EVERY run (restart to check)",
         "Anything else off? quote frame numbers",
     };
 

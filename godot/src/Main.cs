@@ -155,11 +155,13 @@ public partial class Main : Node3D
         }
         origin.AddChild(camera);
         camera.MakeCurrent();
-        _xrCamera = camera;
 
         // XR swapchains are not readable through the main viewport texture
         // (run captures came back black), so captures in XR render a
-        // spectator SubViewport whose camera mirrors the head pose.
+        // spectator SubViewport.  The camera is a FIXED seat view framing
+        // the whole lane: head-pose mirroring proved unreliable (captures
+        // aimed at the void), and a stable framing is better for debriefs
+        // anyway -- every capture shows the same composition.
         if (_xrActive && (CaptureRun || CaptureAt.Length > 0))
         {
             _spectator = new SubViewport
@@ -167,7 +169,12 @@ public partial class Main : Node3D
                 Size = new Vector2I(1280, 720),
                 RenderTargetUpdateMode = SubViewport.UpdateMode.Always,
             };
-            _spectatorCamera = new Camera3D { Fov = 80f };
+            _spectatorCamera = new Camera3D
+            {
+                Fov = 65f,
+                Position = new Vector3(0f, 1.6f, 0.1f),
+                RotationDegrees = new Vector3(-28f, 0f, 0f),
+            };
             _spectator.AddChild(_spectatorCamera);
             AddChild(_spectator);
         }
@@ -386,7 +393,6 @@ public partial class Main : Node3D
     private int _captureRunCount;
     private const int CaptureRunMax = 1800;  // ~60 min runaway guard
 
-    private XRCamera3D _xrCamera = null!;
     private SubViewport? _spectator;
     private Camera3D? _spectatorCamera;
 
@@ -428,8 +434,6 @@ public partial class Main : Node3D
         }
 
         PollFrame();
-        if (_spectatorCamera != null)
-            _spectatorCamera.GlobalTransform = _xrCamera.GlobalTransform;
         while (_captureAtIndex < CaptureAt.Length && _frame.FrameNumber >= CaptureAt[_captureAtIndex])
         {
             CaptureViewport.GetTexture().GetImage().SavePng($"user://cap_at_{CaptureAt[_captureAtIndex]}.png");

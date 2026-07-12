@@ -247,7 +247,25 @@
   translucent again by construction.  (3) XR swapchains are not
   readable via the main viewport (run captures came back black): in
   XR, captures now render a 1280x720 spectator SubViewport (shared
-  World3D) whose camera mirrors the head pose.  NEW (confirmed in code): statics
+  World3D) whose camera mirrors the head pose.
+- Round 6b (2026-07-12, same evening): platform lift CONFIRMED
+  in-headset (user could still spot the height difference when
+  looking for it -- acceptable; halving the lift trades back toward
+  the multiview precision floor if it ever bothers).  Three follow-on
+  defects fixed: (1) tile-granular surface queries hoisted ground
+  statics under sparse (placed-but-transparent-here) elevated tiles
+  to platform height -- misaligned, ghosting; SurfaceZAt now tests
+  the covering tile's PIXEL opacity from a CPU atlas copy.  (2) The
+  translucent-cloud look rode on unspecified transparent-pass
+  tie-breaking and flipped between level runs; cloud-height layers
+  (elevated, not the platform plane) now carry RenderPriority +5 --
+  always drawn last, deterministic, and entities above them still win
+  by real depth.  (3) The spectator head-pose sync aimed at the void;
+  the spectator camera is now a FIXED seat view framing the whole
+  lane (stable composition beats pose mirroring for debriefs).
+  First-spawn flyer transparency is expected to be the cloud
+  nondeterminism seen from below (flyers band to ground under cloud
+  cover); confirm in-headset with working captures this round.  NEW (confirmed in code): statics
   riding floating platforms (aux 2, and top-band aux 1 with elevated
   surface) visibly swim/blur against their platform under head motion
   -- BackgroundLayer.OnRender smooth-scrolls the ELEVATED tile layers

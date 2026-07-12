@@ -52,6 +52,7 @@ public unsafe partial class BackgroundLayer : Node3D
     private readonly ImageTexture[] _atlasTex = new ImageTexture[OtyrNative.BgLayerCount];
     private readonly Vector2I[] _mapSize = new Vector2I[OtyrNative.BgLayerCount];
     private readonly byte[][] _tilesCpu = new byte[OtyrNative.BgLayerCount][];
+    private readonly byte[][] _atlasCpu = new byte[OtyrNative.BgLayerCount][];
 
     private readonly OtyrNative.BackgroundDraw[] _currDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
     private readonly OtyrNative.BackgroundDraw[] _prevDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
@@ -203,6 +204,16 @@ public unsafe partial class BackgroundLayer : Node3D
             if (position.Z != z)
                 _quads[l].Position = new Vector3(position.X, position.Y, z);
 
+            // Cloud-height layers (elevated but not the ridable platform
+            // plane) draw LAST among transparents -- the kept translucent-
+            // cloud look blends them over the scene, and entities above
+            // them survive by real depth.  Explicit: the look used to ride
+            // on unspecified distance-sort tie-breaking and flipped between
+            // level runs.  Platform-height layers keep default order; their
+            // riders sit at a real lift and win by depth either way.
+            _materials[l].RenderPriority =
+                z > 0.001f && Mathf.Abs(z - PlatformZ) > 0.0005f ? 5 : 0;
+
             // Coplanar layers are pixel-locked to the tick (terrain-paint
             // coplanarity); their origin updates here and only here.
             // Elevated layers carry no terrain paint and scroll-interpolate
@@ -277,7 +288,20 @@ public unsafe partial class BackgroundLayer : Node3D
             int ty = (int)Mathf.Floor(mp.Y / OtyrNative.BgTileH);
             if (tx < 0 || ty < 0 || tx >= _mapSize[l].X || ty >= _mapSize[l].Y)
                 continue;
-            if (_tilesCpu[l][ty * _mapSize[l].X + tx] != OtyrNative.BgTileEmpty)
+            byte shape = _tilesCpu[l][ty * _mapSize[l].X + tx];
+            if (shape == OtyrNative.BgTileEmpty)
+                continue;
+            // Pixel-granular: a PLACED tile can still be transparent at this
+            // pixel (sparse decoration art).  Tile-granular banding hoisted
+            // ground statics under such tiles to platform height -- they
+            // floated misaligned above their own baked terrain.
+            if (_atlasCpu[l] == null)
+                return z;
+            int px = (int)mp.X - tx * OtyrNative.BgTileW;
+            int py = (int)mp.Y - ty * OtyrNative.BgTileH;
+            int ax = (shape % AtlasCols) * OtyrNative.BgTileW + px;
+            int ay = (shape / AtlasCols) * OtyrNative.BgTileH + py;
+            if (_atlasCpu[l][ay * AtlasCols * OtyrNative.BgTileW + ax] != 0)
                 return z;
         }
         return 0f;
@@ -334,6 +358,7 @@ public unsafe partial class BackgroundLayer : Node3D
                             atlas[(originY + y) * atlasW + originX + x] = src[y * OtyrNative.BgTileW + x];
                 }
             }
+            _atlasCpu[l] = atlas;  // kept for pixel-granular surface queries
             var atlasImage = Image.CreateFromData(atlasW, atlasH, false, Image.Format.R8, atlas);
             _atlasTex[l] = ImageTexture.CreateFromImage(atlasImage);
             _materials[l].SetShaderParameter("atlas", _atlasTex[l]);
