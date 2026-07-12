@@ -213,6 +213,17 @@ public partial class Main : Node3D
                 Visible = false,
             };
             _playfieldRoot.AddChild(_editorLabel);
+
+            // Height-band legend, height-ordered, to the right of the lane.
+            _editorLegend = new Label3D
+            {
+                Name = "EditorLegend",
+                PixelSize = 0.0008f,
+                Position = new Vector3(0.72f, 0f, 0.02f),
+                Modulate = new Color(0.7f, 0.9f, 1f),
+                HorizontalAlignment = HorizontalAlignment.Left,
+            };
+            _playfieldRoot.AddChild(_editorLegend);
             GD.Print("OpenTyrianVR: HEIGHT EDITOR (ctrl+click select, drag orbit, RMB-drag pan, wheel zoom, Up/Down nudge, Shift coarse, 1-8 class, S save, P pause, N skip)");
         }
 
@@ -434,6 +445,7 @@ public partial class Main : Node3D
     };
     private ushort _editorSelected;
     private Label3D _editorLabel = null!;
+    private Label3D _editorLegend = null!;
     private bool _editorLastClick;
     private readonly System.Collections.Generic.HashSet<Key> _editorHeld = new();
 
@@ -622,18 +634,52 @@ public partial class Main : Node3D
         if (EditorKeyPressed(Key.S))
             GD.Print($"OpenTyrianVR: editor saved {_snapshotLayer.EditorSave()} type edit(s)");
 
+        _snapshotLayer.EditorHighlight(_editorSelected);
+
+        float selectedHeight = 0f;
         if (_editorSelected != 0)
         {
+            selectedHeight = _snapshotLayer.EditorHeightOf(_editorSelected);
             _editorLabel.Visible = true;
-            string? pending = _snapshotLayer.EditorPendingOf(_editorSelected);
             bool onScreen = _snapshotLayer.TryLocateType(_editorSelected, out _);
             _editorLabel.Text =
-                $"selected type {_editorSelected}  h={_snapshotLayer.EditorHeightOf(_editorSelected):0.####}"
-                + (pending != null ? $"  [{pending}] UNSAVED" : "")
-                + (onScreen ? "" : "  (not on screen)");
+                $"selected type {_editorSelected}  h={selectedHeight:0.####}  " +
+                _snapshotLayer.EditorDescribe(_editorSelected) +
+                (onScreen ? "" : "  (not on screen)");
         }
         else
             _editorLabel.Visible = false;
+
+        _editorLegend.Text = BuildEditorLegend(_editorSelected != 0, selectedHeight);
+    }
+
+    private string BuildEditorLegend(bool hasSelection, float selectedHeight)
+    {
+        var rows = new System.Collections.Generic.List<(float z, string name)>
+        {
+            (0.090f, "UI/text"),
+            (0.041f, "shots"),
+            (0.040f, "player"),
+            (0.0315f, "platform objects"),
+            (0.030f, "platforms"),
+            (0.025f, "clouds (hi)"),
+            (0.020f, "clouds (lo)"),
+            (0.0006f, "ground objects"),
+            (0.000f, "ground"),
+        };
+        foreach (var (name, h) in _snapshotLayer.ClassHeights)
+            if (name != "ground" && name != "pickup")  // pickup == player plane
+                rows.Add((h, name));
+        rows.Sort((a, b) => b.z.CompareTo(a.z));
+
+        var sb = new System.Text.StringBuilder("HEIGHT BANDS\n");
+        foreach (var (z, name) in rows)
+        {
+            bool here = hasSelection && Math.Abs(z - selectedHeight) < 0.0008f;
+            sb.Append(here ? "> " : "  ").Append(z.ToString("0.####").PadRight(7)).Append(name).Append('\n');
+        }
+        sb.Append("  +surf  ground class (movers)");
+        return sb.ToString();
     }
 
     private void PollPlayerState()

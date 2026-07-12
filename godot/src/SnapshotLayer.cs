@@ -856,10 +856,69 @@ public unsafe partial class SnapshotLayer : Node3D
 
     private Vector3 CellLanePos(in RenderCell cell)
     {
-        float h = _editorHeights.TryGetValue(cell.EntityType, out float o) && cell.DecalOrder == 0f
-            ? o : cell.Z;
+        float h = _editorHeights.TryGetValue(cell.EntityType, out float o) ? o : cell.Z;
         return new Vector3(((cell.CurrPx.X - 24f) / 320f - 0.5f) * LaneWidth,
                            (0.5f - cell.CurrPx.Y / 200f) * LaneHeight, h);
+    }
+
+    // Selection highlight: translucent additive quads over every live cell
+    // of the selected type, so the pick is unambiguous.
+    private readonly System.Collections.Generic.List<MeshInstance3D> _editorMarkers = new();
+    private StandardMaterial3D? _editorMarkerMaterial;
+
+    public void EditorHighlight(ushort entityType)
+    {
+        int used = 0;
+        if (entityType != 0)
+        {
+            _editorMarkerMaterial ??= new StandardMaterial3D
+            {
+                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+                Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+                BlendMode = BaseMaterial3D.BlendModeEnum.Add,
+                AlbedoColor = new Color(1f, 0.85f, 0.25f, 0.4f),
+                CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+                RenderPriority = 10,
+            };
+            for (int i = 0; i < _cellCount && used < 24; i++)
+            {
+                if (_cells[i].EntityType != entityType)
+                    continue;
+                if (used == _editorMarkers.Count)
+                {
+                    var marker = new MeshInstance3D
+                    {
+                        Mesh = new QuadMesh { Size = new Vector2(30f / 320f * LaneWidth, 34f / 200f * LaneHeight) },
+                        MaterialOverride = _editorMarkerMaterial,
+                    };
+                    AddChild(marker);
+                    _editorMarkers.Add(marker);
+                }
+                _editorMarkers[used].Position = CellLanePos(in _cells[i]) + new Vector3(0f, 0f, 0.004f);
+                _editorMarkers[used].Visible = true;
+                ++used;
+            }
+        }
+        for (int i = used; i < _editorMarkers.Count; i++)
+            _editorMarkers[i].Visible = false;
+    }
+
+    /// <summary>Editor: human-readable band description for a type --
+    /// pending edit, assigned class, explicit height, or the legacy band.</summary>
+    public string EditorDescribe(ushort entityType)
+    {
+        if (_editorPending.TryGetValue(entityType, out string? pending))
+            return $"{pending} (UNSAVED)";
+        if (_typeHeights.TryGetValue(entityType, out float h))
+        {
+            if (float.IsNegativeInfinity(h))
+                return "ground";
+            foreach (var (name, classH) in _classHeights)
+                if (name != "ground" && Mathf.Abs(classH - h) < 0.0004f)
+                    return name;
+            return "explicit height";
+        }
+        return "legacy band";
     }
 
     // Editor overrides: resolved heights applied live (also mid-pause, via
@@ -1081,7 +1140,20 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.EntityType = isEnemy ? sprite.EntityType : (ushort)0;
         float band;
         float decalOrder = 0f;
-        if (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2))
+        float authored = 0f;
+        bool hasAuthored = isEnemy && sprite.EntityType != 0 &&
+            _typeHeights.TryGetValue(sprite.EntityType, out authored);
+        if (hasAuthored && !float.IsNegativeInfinity(authored))
+        {
+            // Authored hover height (Stage B): an explicit table/class
+            // height wins EVEN over decal banding -- the under-platform
+            // spikes are aux-1 rider records that must sit BELOW their
+            // platform, which surface banding can never produce.  (It also
+            // makes editor nudges apply to statics, which are the objects
+            // most worth tuning.)
+            band = authored;
+        }
+        else if (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2))
         {
             // Every static/rider decals the surface actually beneath it:
             // platform art if a platform covers its center, ground
@@ -1089,6 +1161,8 @@ public unsafe partial class SnapshotLayer : Node3D
             // first-spawn/static enemies UNDER the elevated platform layer
             // whenever they crossed one -- the platform drew over them
             // ("transparent over platforms, solid over true ground").
+            // A "ground"-class entry also lands here: surface-riding IS the
+            // ground class for statics.
             float below = SurfaceForSource(sprite.SourceId, centerX, centerY);
             band = sprite.Category == (byte)OtyrNative.Category.EnemyTop
                 ? Math.Max(below, BackgroundLayer.PlatformZ)
@@ -1105,19 +1179,12 @@ public unsafe partial class SnapshotLayer : Node3D
             band = surface > 0f ? surface : BackgroundLayer.GroundZ;
             decalOrder = (recordIndex + 1f) / OtyrNative.SnapshotSpriteMax;
         }
-        else if (isEnemy && sprite.EntityType != 0 &&
-                 _typeHeights.TryGetValue(sprite.EntityType, out float typeHeight))
+        else if (hasAuthored)
         {
-            // Authored hover height (Stage B): "ground" class rides the
-            // surface actually beneath (terrain or platform) plus a small
-            // offset; air classes are absolute lane heights.
-            if (float.IsNegativeInfinity(typeHeight))
-            {
-                float below = SurfaceForSource(sprite.SourceId, centerX, centerY);
-                band = (below > 0f ? below : 0f) + Math.Max(_groundClassOffset, 0.002f);
-            }
-            else
-                band = typeHeight;
+            // "ground" class for MOVERS: the surface actually beneath
+            // (terrain or platform) plus a small offset.
+            float below = SurfaceForSource(sprite.SourceId, centerX, centerY);
+            band = (below > 0f ? below : 0f) + Math.Max(_groundClassOffset, 0.002f);
         }
         else
         {
@@ -1179,6 +1246,11 @@ public unsafe partial class SnapshotLayer : Node3D
             // zero (the ground layer steps too).
             if (cell.DecalOrder > 0f && cell.Z > 0.001f && _background != null)
                 px += _background.SubTickOffsetAt(cell.Z);
+            // Authored-height STATICS (e.g. platform-under spikes) left the
+            // decal path but still step per tick over a smooth-scrolling
+            // elevated layer: glue them to the nearest one.
+            else if (!cell.HasPrev && cell.EntityType != 0 && cell.Z > 0.01f && _background != null)
+                px += _background.SubTickOffsetAt(cell.Z, 0.006f);
 
             int id = cell.SheetId;
 
@@ -1213,14 +1285,16 @@ public unsafe partial class SnapshotLayer : Node3D
             // order over the structure layers; elevated decals ride 0.0015
             // above their platform/cloud.  Real depth wins everywhere; the
             // shader bias stays as flat-mode belt-and-braces.
+            // Height-editor live override FIRST (decals included -- statics
+            // are the objects most worth tuning), then the decal lift on
+            // top; applies to frozen (paused) cells too, so nudges are
+            // visible without unpausing.
             float z = cell.Z;
+            if (cell.EntityType != 0 &&
+                _editorHeights.TryGetValue(cell.EntityType, out float editH))
+                z = editH;
             if (cell.DecalOrder > 0f)
                 z += (z > 0.001f ? 0.0015f : 0.0006f) + cell.DecalOrder * 0.0004f;
-            // Height-editor live override: applies to frozen (paused) cells
-            // too, so nudges are visible without unpausing.
-            else if (cell.EntityType != 0 &&
-                     _editorHeights.TryGetValue(cell.EntityType, out float editH))
-                z = editH;
             int instance = _instanceCount[id]++;
             if (instance >= _multiMesh[id].InstanceCount)
             {

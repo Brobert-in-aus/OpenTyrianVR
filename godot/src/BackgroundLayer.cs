@@ -255,16 +255,18 @@ public unsafe partial class BackgroundLayer : Node3D
         }
     }
 
-    /// <summary>Sub-tick scroll offset of the elevated layer sitting at the
-    /// given lane height, or zero when no layer matches (the ground layer
-    /// steps per tick and contributes none).</summary>
-    public Vector2 SubTickOffsetAt(float z)
+    /// <summary>Sub-tick scroll offset of the elevated layer sitting at (or,
+    /// with a wider tolerance, near) the given lane height; zero when no
+    /// layer matches (the ground layer steps per tick and contributes
+    /// none).  Authored-height statics riding just above/below a platform
+    /// pass a wide tolerance to glue to it.</summary>
+    public Vector2 SubTickOffsetAt(float z, float tolerance = 0.0005f)
     {
         for (int l = 1; l < OtyrNative.BgLayerCount; l++)
         {
             if (_currDraw[l].Drawn == 0)
                 continue;
-            if (Mathf.Abs(LayerHeight(l, _currDraw[l].OverMode) - z) < 0.0005f)
+            if (Mathf.Abs(LayerHeight(l, _currDraw[l].OverMode) - z) < tolerance)
                 return _subTickPx[l];
         }
         return Vector2.Zero;
