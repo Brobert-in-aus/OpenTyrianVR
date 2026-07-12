@@ -67,7 +67,6 @@ public unsafe partial class BackgroundLayer : Node3D
     // Water-cloud split state (see WaterCloudZ).
     private MeshInstance3D _cloudQuad = null!;
     private ShaderMaterial _cloudMaterial = null!;
-    private ImageTexture? _cloudMaskTex;
     private bool _cloudMaskPending;
     private bool _cloudActive;
     private ulong _palSettleHash;
@@ -98,13 +97,11 @@ public unsafe partial class BackgroundLayer : Node3D
                 uniform sampler2D tilemap : filter_nearest;
                 uniform sampler2D atlas : filter_nearest;
                 uniform sampler2D palette : source_color, filter_nearest;
-                uniform sampler2D cloud_mask : filter_nearest;
                 uniform ivec2 map_size;
                 uniform vec2 origin_px;   // map tile (0,0) position, play-region px
                 uniform float alpha_mul;  // 1.0, or 0.55 for the legacy blend variant
-                // 0: plain art.  1: ground pass of a water-cloud split
-                // (cloud-masked pixels darken into the cloud's water
-                // shadow).  2: cloud pass (only cloud-masked pixels).
+                // 1: darken everything -- the in-place shadow copy of a
+                // lifted water-cloud layer.
                 uniform int cloud_mode = 0;
 
                 // Palette RGB at one integer map pixel; a = coverage.
@@ -121,11 +118,8 @@ public unsafe partial class BackgroundLayer : Node3D
                     float pi = floor(texelFetch(atlas, ap, 0).r * 255.0 + 0.5);
                     if (pi < 0.5)  // palette 0 = transparent
                         return vec4(0.0);
-                    float cm = cloud_mode == 0 ? 0.0 : texelFetch(cloud_mask, ap, 0).r;
-                    if (cloud_mode == 2 && cm < 0.5)
-                        return vec4(0.0);
                     vec3 rgb = texture(palette, vec2((pi + 0.5) / 256.0, 0.5)).rgb;
-                    if (cloud_mode == 1 && cm > 0.5)
+                    if (cloud_mode == 1)
                         rgb *= 0.45;
                     return vec4(rgb, 1.0);
                 }
@@ -192,13 +186,14 @@ public unsafe partial class BackgroundLayer : Node3D
             AddChild(_quads[l]);
         }
 
-        // Water-cloud pass: layer 0's cloud-masked pixels re-rendered on
-        // their own plane.  Shares layer 0's tilemap/atlas/palette and
-        // scroll origin; hidden until a level's art arms the split.
+        // Water-cloud pass: when a level's COPLANAR layer 1 is dominantly
+        // cloud art (SAVARA: clouds baked over the water/land, legacy-drawn
+        // under every entity), this quad re-renders that whole layer at
+        // WaterCloudZ while layer 1's own quad darkens into the in-place
+        // shadow.  Hidden until a level's art arms the split.
         _cloudMaterial = new ShaderMaterial { Shader = shader };
         _cloudMaterial.SetShaderParameter("palette", _palette);
         _cloudMaterial.SetShaderParameter("alpha_mul", 0.82f);
-        _cloudMaterial.SetShaderParameter("cloud_mode", 2);
         _cloudMaterial.RenderPriority = 5;  // cloud look: draw late, translucent
         _cloudQuad = new MeshInstance3D
         {
@@ -273,23 +268,32 @@ public unsafe partial class BackgroundLayer : Node3D
 
         // Water-cloud split: classify once the level palette has settled
         // (fetch can land mid fade-in, which blinds a brightness test),
-        // then mirror layer 0's tick-locked origin onto the cloud pass.
+        // then mirror layer 1's tick-locked origin onto the lifted pass.
         if (_cloudMaskPending)
             TryClassifyWaterClouds();
-        _cloudQuad.Visible = _cloudActive && _currDraw[0].Drawn != 0;
+        _cloudQuad.Visible = _cloudActive && _currDraw[1].Drawn != 0;
         if (_cloudQuad.Visible)
-            _cloudMaterial.SetShaderParameter("origin_px", Origin(0, _currDraw[0]));
+            _cloudMaterial.SetShaderParameter("origin_px", Origin(1, _currDraw[1]));
     }
 
     // Classify layer 0's atlas pixels: cloud art is bright and desaturated,
-    // water is saturated blue.  The split only arms when the ground art is
-    // dominated by water with a meaningful-but-minor cloud fraction, so
-    // bright rock/snow terrain on other levels never levitates.
+    // water is saturated blue.  SAVARA bakes its clouds into COPLANAR
+    // layer 1 (legacy draws it over the water but under every entity), so
+    // the split lifts that WHOLE layer when its art is dominantly cloud
+    // and layer 0 is water-dominant -- no per-pixel masking.
     private void TryClassifyWaterClouds()
     {
         byte[]? atlas = _atlasCpu[0];
-        if (atlas == null)
+        byte[]? overlay = _atlasCpu[1];
+        if (atlas == null || overlay == null || _currDraw[1].Drawn == 0)
             return;
+        // Only a coplanar overlay can be a baked-cloud layer; an elevated
+        // layer 1 (TYRIAN over-mode clouds) already floats.
+        if (LayerHeight(1, _currDraw[1].OverMode) > 0.001f)
+        {
+            _cloudMaskPending = false;
+            return;
+        }
         Image pal = _palette.GetImage();
         // Wait for the fade-in to FINISH, not just clear a brightness bar:
         // a 70%-faded palette kept enough cloud brightness to half-detect
@@ -333,42 +337,42 @@ public unsafe partial class BackgroundLayer : Node3D
             isWater[i] = c.B > mx - 0.02f && c.B > c.R + 0.08f && mx > 0.15f;
         }
 
-        var mask = new byte[atlas.Length];
-        long opaque = 0, cloud = 0, water = 0;
-        for (int i = 0; i < atlas.Length; i++)
+        long waterOpaque = 0, water = 0;
+        foreach (byte pi in atlas)
         {
-            byte pi = atlas[i];
             if (pi == 0)
                 continue;
-            ++opaque;
-            if (isCloud[pi]) { mask[i] = 255; ++cloud; }
-            else if (isWater[pi]) ++water;
+            ++waterOpaque;
+            if (isWater[pi]) ++water;
         }
-        float cloudFrac = opaque > 0 ? cloud / (float)opaque : 0f;
-        float waterFrac = opaque > 0 ? water / (float)opaque : 0f;
-        // The water gate keys on the whole atlas, so a level that OPENS on
-        // water and transitions to land (SAVARA) arms once and lifts its
-        // land-baked clouds too.  Cloud floor 0.5%: SAVARA's baked clouds
-        // are sparse across the full tile set (read 0.9% in-session); the
-        // water gate carries the false-positive load.
-        _cloudActive = cloudFrac > 0.005f && cloudFrac < 0.45f && waterFrac > 0.15f;
+        long overlayOpaque = 0, cloud = 0;
+        foreach (byte pi in overlay)
+        {
+            if (pi == 0)
+                continue;
+            ++overlayOpaque;
+            if (isCloud[pi]) ++cloud;
+        }
+        float cloudFrac = overlayOpaque > 0 ? cloud / (float)overlayOpaque : 0f;
+        float waterFrac = waterOpaque > 0 ? water / (float)waterOpaque : 0f;
+        // Whole-layer lift wants the overlay to be MOSTLY cloud; the
+        // layer-0 water gate keeps terrain-detail overlays (structure
+        // paint on other levels) grounded.
+        _cloudActive = cloudFrac > 0.5f && waterFrac > 0.15f;
         GD.Print($"OpenTyrianVR: water-cloud split {(_cloudActive ? "ARMED" : "off")} " +
-                 $"(cloud {cloudFrac:P1}, water {waterFrac:P1} of ground art, epoch {_mapEpoch})");
+                 $"(overlay cloud {cloudFrac:P1}, ground water {waterFrac:P1}, epoch {_mapEpoch})");
         if (!_cloudActive)
         {
-            _materials[0].SetShaderParameter("cloud_mode", 0);
+            _materials[1].SetShaderParameter("cloud_mode", 0);
             return;
         }
 
-        int atlasW = AtlasCols * OtyrNative.BgTileW;
-        var maskImage = Image.CreateFromData(atlasW, mask.Length / atlasW, false, Image.Format.R8, mask);
-        _cloudMaskTex = ImageTexture.CreateFromImage(maskImage);
-        _materials[0].SetShaderParameter("cloud_mask", _cloudMaskTex);
-        _materials[0].SetShaderParameter("cloud_mode", 1);
-        _cloudMaterial.SetShaderParameter("cloud_mask", _cloudMaskTex);
-        _cloudMaterial.SetShaderParameter("tilemap", _tilemapTex[0]);
-        _cloudMaterial.SetShaderParameter("atlas", _atlasTex[0]);
-        _cloudMaterial.SetShaderParameter("map_size", _mapSize[0]);
+        // Layer 1's own quad becomes the in-place shadow; the cloud quad
+        // re-renders the same layer lifted.
+        _materials[1].SetShaderParameter("cloud_mode", 1);
+        _cloudMaterial.SetShaderParameter("tilemap", _tilemapTex[1]);
+        _cloudMaterial.SetShaderParameter("atlas", _atlasTex[1]);
+        _cloudMaterial.SetShaderParameter("map_size", _mapSize[1]);
     }
 
     // Sub-tick scroll offset per layer (interpolated origin minus this
@@ -422,13 +426,24 @@ public unsafe partial class BackgroundLayer : Node3D
     /// raised roads) counts: statics RIDE platforms, but a static under a
     /// cloud stays on the ground beneath it, covered -- exactly the legacy
     /// draw order.  Shadows pass true: they fall on clouds too.</summary>
+    // A layer's height as PRESENTED: an armed water-cloud overlay reads at
+    // its lifted plane for picking, naming, and shadow-landing, while its
+    // own quad stays coplanar as the shadow copy.
+    private float PresentedHeight(int l)
+    {
+        float z = LayerHeight(l, _currDraw[l].OverMode);
+        if (l == 1 && _cloudActive && z <= 0.001f)
+            return WaterCloudZ;
+        return z;
+    }
+
     public float SurfaceZAt(Vector2 framePx, bool includeClouds = false)
     {
         for (int l = OtyrNative.BgLayerCount - 1; l >= 1; l--)
         {
             if (_currDraw[l].Drawn == 0)
                 continue;
-            float z = LayerHeight(l, _currDraw[l].OverMode);
+            float z = PresentedHeight(l);
             if (z <= 0.001f)
                 continue;  // coplanar layers are not ridable surfaces
             // Ridability is the layer's ROLE, not its index: on SAVARA the
@@ -484,7 +499,7 @@ public unsafe partial class BackgroundLayer : Node3D
         {
             if (_currDraw[l].Drawn == 0)
                 continue;
-            float lz = LayerHeight(l, _currDraw[l].OverMode);
+            float lz = PresentedHeight(l);
             float t = (lz - localOrigin.Z) / localDir.Z;
             if (t <= 0f)
                 continue;
@@ -506,8 +521,9 @@ public unsafe partial class BackgroundLayer : Node3D
     /// <summary>Editor: name a layer by its current role.</summary>
     public string LayerName(int l)
     {
-        float z = LayerHeight(l, _currDraw[l].OverMode);
+        float z = PresentedHeight(l);
         if (l == 0) return "ground layer";
+        if (l == 1 && _cloudActive) return "water clouds (layer 1)";
         if (z <= 0.001f) return $"layer {l} (coplanar/terrain)";
         return Mathf.Abs(z - PlatformZ) <= 0.0005f ? $"platforms (layer {l})" : $"clouds (layer {l})";
     }
@@ -607,7 +623,7 @@ public unsafe partial class BackgroundLayer : Node3D
         _palSettleHash = 0;
         _palSettleTicks = 0;
         _palSettleWaited = 0;
-        _materials[0].SetShaderParameter("cloud_mode", 0);
+        _materials[1].SetShaderParameter("cloud_mode", 0);
         GD.Print($"OpenTyrianVR: background maps refreshed (epoch {_mapEpoch})");
     }
 }
