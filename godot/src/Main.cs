@@ -474,6 +474,7 @@ public partial class Main : Node3D
         float H(string name, float fallback) => c.TryGetValue(name, out float v) ? v : fallback;
         return new[]
         {
+            new EditorBand { Z = -0.005f, Label = "below ground (probe)", Key = '\0' },
             new EditorBand { Z = float.NaN, Cls = "ground", Label = "ground (+surf)", Key = '1' },
             new EditorBand { Z = 0.0006f, Label = "ground objects", Key = '2' },
             new EditorBand { Z = H("mid-under", 0.012f), Cls = "mid-under", Label = "mid-under", Key = '3' },
@@ -799,12 +800,16 @@ public partial class Main : Node3D
     /// ground class at index 0); used for legend marking and stepping.</summary>
     private int EditorBandIndex(float height)
     {
-        if (float.IsNaN(height))
-            return 0;
-        int best = 1;
+        int best = 0;
         float bestDelta = float.MaxValue;
-        for (int i = 1; i < _editorBands!.Length; i++)
+        for (int i = 0; i < _editorBands!.Length; i++)
         {
+            if (float.IsNaN(_editorBands[i].Z))
+            {
+                if (float.IsNaN(height))
+                    return i;  // ground class matches the ground band
+                continue;
+            }
             float d = Math.Abs(_editorBands[i].Z - height);
             if (d < bestDelta)
             {
@@ -820,7 +825,8 @@ public partial class Main : Node3D
         _editorBands ??= BuildEditorBands();
         int marked = hasSelection ? EditorBandIndex(selectedHeight) : -1;
         // Only mark when actually AT the band (not merely nearest).
-        if (marked > 0 && Math.Abs(_editorBands[marked].Z - selectedHeight) > 0.0008f)
+        if (marked >= 0 && !float.IsNaN(_editorBands[marked].Z) &&
+            Math.Abs(_editorBands[marked].Z - selectedHeight) > 0.0008f)
             marked = -1;
 
         var sb = new System.Text.StringBuilder("HEIGHT BANDS   key\n");
