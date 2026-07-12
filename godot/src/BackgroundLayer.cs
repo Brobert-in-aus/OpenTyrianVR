@@ -70,6 +70,9 @@ public unsafe partial class BackgroundLayer : Node3D
     private ImageTexture? _cloudMaskTex;
     private bool _cloudMaskPending;
     private bool _cloudActive;
+    private ulong _palSettleHash;
+    private int _palSettleTicks;
+    private int _palSettleWaited;
 
     // A scroll step larger than this between ticks is a map jump (wrap
     // event); snap instead of interpolating across it.
@@ -288,11 +291,30 @@ public unsafe partial class BackgroundLayer : Node3D
         if (atlas == null)
             return;
         Image pal = _palette.GetImage();
-        // Palette still black/fading?  Try again next tick.
+        // Wait for the fade-in to FINISH, not just clear a brightness bar:
+        // a 70%-faded palette kept enough cloud brightness to half-detect
+        // clouds while crushing the water's blue-over-red margin to zero
+        // (SAVARA read water 0.1% and disarmed).  Settled = the palette
+        // hash holds still for 3 ticks; a bounded wait falls back to the
+        // brightness test alone in case some level animates its palette.
         float peak = 0f;
+        ulong hash = 14695981039346656037UL;
         for (int i = 16; i < 256; i += 8)
-            peak = Mathf.Max(peak, pal.GetPixel(i, 0).Luminance);
+        {
+            Color c = pal.GetPixel(i, 0);
+            peak = Mathf.Max(peak, c.Luminance);
+            hash = (hash ^ (ulong)c.ToRgba32()) * 1099511628211UL;
+        }
         if (peak < 0.55f)
+            return;
+        if (hash != _palSettleHash)
+        {
+            _palSettleHash = hash;
+            _palSettleTicks = 0;
+            ++_palSettleWaited;
+            return;
+        }
+        if (++_palSettleTicks < 3 && ++_palSettleWaited < 400)
             return;
         _cloudMaskPending = false;
 
@@ -575,6 +597,9 @@ public unsafe partial class BackgroundLayer : Node3D
         // New level art: re-decide the water-cloud split against it.
         _cloudMaskPending = true;
         _cloudActive = false;
+        _palSettleHash = 0;
+        _palSettleTicks = 0;
+        _palSettleWaited = 0;
         _materials[0].SetShaderParameter("cloud_mode", 0);
         GD.Print($"OpenTyrianVR: background maps refreshed (epoch {_mapEpoch})");
     }
