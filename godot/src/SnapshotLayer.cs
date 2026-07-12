@@ -1,4 +1,4 @@
-﻿using Godot;
+using Godot;
 using System;
 
 namespace OpenTyrianVR;
@@ -202,7 +202,10 @@ public unsafe partial class SnapshotLayer : Node3D
                 false, Image.Format.Rg8);  // r = palette index, g = opacity
             _atlas[id] = ImageTexture.CreateFromImage(atlasImage);
 
-            var material = new ShaderMaterial { Shader = shader };
+            // Explicit transparent-pass ordering (the distance-sort roulette
+            // has bitten repeatedly): tile layers 0/+5 (BackgroundLayer),
+            // shadows 1, color sprites 2, in-play text 4.
+            var material = new ShaderMaterial { Shader = shader, RenderPriority = 2 };
             material.SetShaderParameter("atlas", _atlas[id]);
             material.SetShaderParameter("palette", _paletteTexture);
 
@@ -243,7 +246,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 }
                 """,
         };
-        var glowMaterial = new ShaderMaterial { Shader = glowShader };
+        var glowMaterial = new ShaderMaterial { Shader = glowShader, RenderPriority = 2 };
         glowMaterial.SetShaderParameter("palette", _paletteTexture);
 
         _multiMesh[GlowLayer] = new MultiMesh
@@ -294,7 +297,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 }
                 """,
         };
-        var oldMaterial = new ShaderMaterial { Shader = oldShader };
+        var oldMaterial = new ShaderMaterial { Shader = oldShader, RenderPriority = 2 };
         _oldAtlas = ImageTexture.CreateFromImage(Image.CreateEmpty(
             OldAtlasSlotsPerRow * OtyrNative.OldSpriteWMax,
             OldAtlasRows * OtyrNative.OldSpriteHMax, false, Image.Format.Rg8));
@@ -323,7 +326,12 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             Code = """
                 shader_type spatial;
-                render_mode unshaded, cull_disabled, blend_mul, depth_draw_always;
+                // No depth WRITE (depth_draw_never): shadows draw before the
+                // color sprites and multiply only what is beneath them; a
+                // written shadow depth blocked the caster's own repaint at
+                // grazing angles (the shadow floor point is genuinely nearer
+                // than the elevated ship there).
+                render_mode unshaded, cull_disabled, blend_mul, depth_draw_never;
 
                 uniform sampler2D atlas : filter_nearest;
 
@@ -339,10 +347,9 @@ public unsafe partial class SnapshotLayer : Node3D
                 }
 
                 void fragment() {
-                    // Same decal depth bias as the sprite layer: shadows
-                    // interleave with the statics on their plane by record
-                    // order (self-shadows under owners, late shadows over).
-                    DEPTH = FRAGCOORD.z + (v_decal > 0.0 ? 0.00001 + v_decal * 0.00002 : 0.0);
+                    // No DEPTH write (see render_mode note); paint order vs
+                    // the statics on the same plane is real geometry now
+                    // (the decal lift folds decalOrder into z).
                     float cid = floor(cell + 0.5);
                     vec2 uv0 = UV;
                     if (mod(floor(v_flags / 8.0), 2.0) >= 1.0) {  // 2x2 quad
@@ -363,7 +370,7 @@ public unsafe partial class SnapshotLayer : Node3D
         };
         for (int id = 0; id < OtyrNative.SheetCount; id++)
         {
-            var shadowMaterial = new ShaderMaterial { Shader = shadowShader };
+            var shadowMaterial = new ShaderMaterial { Shader = shadowShader, RenderPriority = 1 };
             shadowMaterial.SetShaderParameter("atlas", _atlas[id]);
 
             _multiMesh[ShadowLayerBase + id] = new MultiMesh
@@ -438,7 +445,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 }
                 """,
         };
-        var textMaterial = new ShaderMaterial { Shader = textShader };
+        var textMaterial = new ShaderMaterial { Shader = textShader, RenderPriority = 4 };
         textMaterial.SetShaderParameter("atlas", _oldAtlas);
         textMaterial.SetShaderParameter("palette", _paletteTexture);
 
@@ -484,7 +491,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 }
                 """,
         };
-        var textShadowMaterial = new ShaderMaterial { Shader = textShadowShader };
+        var textShadowMaterial = new ShaderMaterial { Shader = textShadowShader, RenderPriority = 4 };
         textShadowMaterial.SetShaderParameter("atlas", _oldAtlas);
 
         _multiMesh[TextShadowLayer] = new MultiMesh
