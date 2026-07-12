@@ -20,6 +20,7 @@
 
 #include "config.h"
 #include "file.h"
+#include "helptext.h"
 #include "lvllib.h"
 #include "lvlmast.h"
 #include "opentyr.h"
@@ -254,19 +255,51 @@ void JE_loadItemDat(void)
 	}
 }
 
+/* OTYR_DUMP_SECTIONS=1: list the episode script's sections with their
+   playable levels ("]L" lines), so the height editor's OTYR_START_SECTION
+   has addressable targets (secret levels included).  Sections count from 1
+   like the interpreter's seek. */
+static void otyr_dump_sections(void)
+{
+	if (getenv("OTYR_DUMP_SECTIONS") == NULL)
+		return;
+	FILE *f = dir_fopen_die(data_dir(), episode_file, "rb");
+	int section = 1;
+	printf("=== episode %d sections (OTYR_START_SECTION targets) ===\n", episodeNum);
+	for (;;)
+	{
+		Uint8 len;
+		char buffer[257];
+		if (fread(&len, 1, 1, f) != 1)
+			break;
+		if (len > 0 && fread(buffer, 1, len, f) != len)
+			break;
+		decrypt_string(buffer, len);
+		buffer[len] = '\0';
+		if (buffer[0] == '*')
+			++section;
+		else if (buffer[0] == ']' && buffer[1] == 'L' && len > 13)
+			printf("  section %3d: level '%.9s' (lvl file %d)\n",
+			       section, buffer + 13, atoi(buffer + 25));
+	}
+	fclose(f);
+	fflush(stdout);
+}
+
 void JE_initEpisode(JE_byte newEpisode)
 {
 	if (newEpisode == episodeNum)
 		return;
-	
+
 	episodeNum = newEpisode;
-	
+
 	snprintf(levelFile,    sizeof(levelFile),    "tyrian%d.lvl",  episodeNum);
 	snprintf(cube_file,    sizeof(cube_file),    "cubetxt%d.dat", episodeNum);
 	snprintf(episode_file, sizeof(episode_file), "levels%d.dat",  episodeNum);
-	
+
 	JE_analyzeLevel();
 	JE_loadItemDat();
+	otyr_dump_sections();
 }
 
 void JE_scanForEpisodes(void)

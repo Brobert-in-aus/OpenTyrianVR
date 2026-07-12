@@ -7,10 +7,24 @@ band, so partial edits are always safe.
 
 ## The height editor (preferred workflow)
 
-Launch flat with:
+Launch via the wrapper (level select included):
+
+```
+tools\editor.ps1                  # title screen
+tools\editor.ps1 -Section 6       # boot straight into ASTEROID1
+tools\editor.ps1 -Section 42      # secret levels have sections too
+tools\editor.ps1 -ListSections    # print the section table
+```
+
+Episode 1: 4 TYRIAN, 6 ASTEROID1, 7 ASTEROID2, 11 SAVARA, 14 MINES,
+17 BUBBLES, 20 DELIANI, 22 ASTEROID?, 24 MINEMAZE, 26 BONUS, 29 HOLES,
+30 SAVARA, 32 SOH JIN, 34 WINDY, 37 ASSASSIN, 39 SAVARA V, 42 ** ALE **.
+
+Raw envs, if launching manually:
 
 ```
 OTYR_FLAT=1 OTYR_HEIGHT_EDITOR=1 OTYR_INVULN=1
+[OTYR_START_SECTION=<n> OTYR_START_EPISODE=<e>]
 Godot_..._console.exe --path <repo>\godot --xr-mode off
 ```
 

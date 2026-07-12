@@ -71,7 +71,7 @@ char destructModeName[DESTRUCT_MODES][13];                               /* [1..
 char shipInfo[HELPTEXT_SHIPINFO_COUNT][2][256];                          /* [1..13, 1..2] of string */
 char menuInt[MENU_MAX+1][11][18];                                        /* [0..14, 1..11] of string [17] */
 
-static void decrypt_string(char *s, size_t len)
+void decrypt_string(char *s, size_t len)
 {
 	static const unsigned char crypt_key[] = { 204, 129, 63, 255, 71, 19, 25, 62, 1, 99 };
 

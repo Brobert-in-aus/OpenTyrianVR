@@ -849,6 +849,14 @@ int opentyrian_main(int argc, char *argv[])
 		intro_logos();
 #endif
 
+	/* OTYR_START_SECTION=<n> (+OTYR_START_EPISODE=<e>, default 1): boot
+	   straight into episode script section n, bypassing the title screen
+	   once -- the height editor's level select (secret levels have their
+	   own sections; OTYR_DUMP_SECTIONS lists them).  Debug env, hosted
+	   tooling only. */
+	bool otyr_start_jump = SDL_getenv("OTYR_START_SECTION") != NULL &&
+	                       atoi(SDL_getenv("OTYR_START_SECTION")) > 0;
+
 	for (; ; )
 	{
 		JE_initPlayerData();
@@ -860,13 +868,23 @@ int opentyrian_main(int argc, char *argv[])
 		gameLoaded = false;
 		jumpSection = false;
 
+		if (otyr_start_jump)
+		{
+			otyr_start_jump = false;  // one shot; quitting returns to title
+			const char *ep = SDL_getenv("OTYR_START_EPISODE");
+			JE_initEpisode(ep != NULL && atoi(ep) > 0 ? (JE_byte)atoi(ep) : 1);
+			difficultyLevel = initialDifficulty = DIFFICULTY_NORMAL;
+			player[0].cash = 0;
+			mainLevel = saveLevel = (JE_word)atoi(SDL_getenv("OTYR_START_SECTION"));
+			gameLoaded = true;
+		}
 #ifdef WITH_NETWORK
-		if (isNetworkGame)
+		else if (isNetworkGame)
 		{
 			networkStartScreen();
 		}
-		else
 #endif
+		else
 		{
 			if (!titleScreen())
 			{
