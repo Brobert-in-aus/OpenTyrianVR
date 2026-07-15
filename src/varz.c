@@ -1073,6 +1073,8 @@ void JE_wipeShieldArmorBars(void)
    through the normal damage path at its end -- so with an unchanged sim
    the organic death always preempts the force and a scripted run is
    bit-identical to the baseline (the mechanism's self-test). */
+bool otyr_sim_deparallax = false;  /* E2-full sim mode (see varz.h) */
+
 static Uint32 otyr_demo_tick_count = 0;
 static Uint32 otyr_death_script[64];
 static unsigned int otyr_death_script_len = 0;

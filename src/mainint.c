@@ -4014,14 +4014,19 @@ redo:
 
 	if (!endLevel)
 	{
-		if (this_player->x > 256)
+		/* E2-full: the fixed window frees the parallax swing, so travel
+		   widens by 24 px each side -- the full playable width (edge-
+		   hugging waves become reachable). */
+		const JE_integer travel_max = otyr_sim_deparallax ? 280 : 256;
+		const JE_integer travel_min = otyr_sim_deparallax ? 16 : 40;
+		if (this_player->x > travel_max)
 		{
-			this_player->x = 256;
+			this_player->x = travel_max;
 			constantLastX = -constantLastX;
 		}
-		if (this_player->x < 40)
+		if (this_player->x < travel_min)
 		{
-			this_player->x = 40;
+			this_player->x = travel_min;
 			constantLastX = -constantLastX;
 		}
 
@@ -4617,7 +4622,13 @@ void JE_mainGamePlayerFunctions(void)
 	else
 		tempX = player[0].x;
 
-	tempW = floorf((float)(260 - (tempX - 36)) / (260 - 36) * (24 * 3) - 1);
+	if (otyr_sim_deparallax)
+		/* E2-full: pin at mid-swing (the host's fixed rebase targets --
+		   ground 11, sky 23, top 35); the exported parallax deltas
+		   become zero and hitboxes align with the pinned visuals. */
+		tempW = 35;
+	else
+		tempW = floorf((float)(260 - (tempX - 36)) / (260 - 36) * (24 * 3) - 1);
 	mapX3Ofs   = tempW;
 	mapX3Pos   = mapX3Ofs % 24;
 	mapX3bpPos = 1 - (mapX3Ofs / 24);

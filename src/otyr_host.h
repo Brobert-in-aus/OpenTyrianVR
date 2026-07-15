@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 21u
+#define OTYR_ABI_VERSION 22u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -108,6 +108,15 @@ extern "C" {
                                                         standalone raster
                                                         hashes for export
                                                         verification (v8) */
+#define OTYR_CONFIG_SIM_DEPARALLAX         (1u << 5) /* E2-full sim mode (v22):
+                                                        parallax offsets pinned
+                                                        to the fixed rebase
+                                                        targets, player travel +
+                                                        enemy/shot/pickup
+                                                        windows widened to the
+                                                        wide diorama.  BREAKS
+                                                        legacy demo determinism:
+                                                        Gate B baselines only */
 #define OTYR_CONFIG_SUPPRESS_TEXT          (1u << 4) /* skip in-play overlay
                                                         text/HUD-icon blits in
                                                         the frame; the host

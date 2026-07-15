@@ -441,7 +441,10 @@ public partial class Main : Node3D
 
         string dataDir = Path.GetFullPath(Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "tyrian21"));
         string userDir = ProjectSettings.GlobalizePath("user://");
-        var flags = OtyrNative.ConfigFlags.EnableAudio | OtyrNative.ConfigFlags.SuppressEntityDraw;
+        // E2-full is the VR product's sim: pinned offsets (hitbox truth),
+        // full-width travel, wide active windows.
+        var flags = OtyrNative.ConfigFlags.EnableAudio | OtyrNative.ConfigFlags.SuppressEntityDraw |
+                    OtyrNative.ConfigFlags.SimDeparallax;
         // OTYR_MUTE=1: no game audio (solo test runs; the attract demo is
         // loud and the tester may be doing something else entirely).
         if (System.Environment.GetEnvironmentVariable("OTYR_MUTE") == "1")

@@ -441,15 +441,23 @@ enemy_still_exists:
 			/* Evalue != 0 - score item at boundary */
 			if (enemy[i].scoreitem)
 			{
+				/* E2-full: herd pickups within the WIDENED reach (right
+				   bound follows the travel clamp; the left already sits
+				   inside the new reach). */
 				if (enemy[i].ex < -5)
 					enemy[i].ex++;
-				if (enemy[i].ex > 245)
+				if (enemy[i].ex > (otyr_sim_deparallax ? 269 : 245))
 					enemy[i].ex--;
 			}
 
 			enemy[i].ey += tempBackMove;
 
-			if (enemy[i].ex <= -24 || enemy[i].ex >= 296)
+			/* E2-full: the active window (shooting + the on-screen count)
+			   widens with the visible diorama, so margin enemies behave
+			   instead of sitting visibly inert. */
+			if (otyr_sim_deparallax
+			        ? (enemy[i].ex <= -64 || enemy[i].ex >= 336)
+			        : (enemy[i].ex <= -24 || enemy[i].ex >= 296))
 				goto draw_enemy_end;
 
 			JE_integer tempX = enemy[i].ex;
@@ -1512,7 +1520,14 @@ draw_player_shot_loop_end:
 					}
 				}
 
-				if (enemyShot[z].duration-- == 0 || enemyShot[z].sy > 190 || enemyShot[z].sy <= -14 || enemyShot[z].sx > 275 || enemyShot[z].sx <= 0)
+				/* E2-full: enemy shots live to the wide canvas edges instead
+				   of teleporting away at the old window bounds. */
+				if (enemyShot[z].duration-- == 0 ||
+				    (otyr_sim_deparallax
+				         ? (enemyShot[z].sy > 246 || enemyShot[z].sy <= -42 ||
+				            enemyShot[z].sx > 315 || enemyShot[z].sx <= -40)
+				         : (enemyShot[z].sy > 190 || enemyShot[z].sy <= -14 ||
+				            enemyShot[z].sx > 275 || enemyShot[z].sx <= 0)))
 				{
 					enemyShotAvail[z] = true;
 				}

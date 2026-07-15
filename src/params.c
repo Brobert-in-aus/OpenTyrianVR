@@ -58,6 +58,7 @@ void JE_paramCheck(int argc, char *argv[])
 		{ 258, 0,   "hash-log",          true },
 		{ 259, 0,   "turbo",             false },
 		{ 260, 0,   "play-demo",         false },
+		{ 261, 0,   "sim-deparallax",    false },
 		
 		{ 'n', 'n', "net",               true },
 		{ 256, 0,   "net-player-name",   true }, // TODO: no short codes because there should
@@ -145,6 +146,13 @@ void JE_paramCheck(int argc, char *argv[])
 		// skip logos/title and play demos immediately
 		case 260:
 			start_with_demo = true;
+			break;
+
+		// E2-full sim mode: pinned parallax offsets, widened travel and
+		// active windows (Gate B baselines; the host enables via the
+		// OTYR_CONFIG_SIM_DEPARALLAX handshake flag)
+		case 261:
+			otyr_sim_deparallax = true;
 			break;
 			
 		case 'n':

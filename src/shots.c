@@ -220,8 +220,12 @@ bool player_shot_move_and_draw(
 		*out_shotx = shot->shotX;
 		*out_shoty = shot->shotY;
 
-		if (shot->shotX < -34 || shot->shotX > 290 ||
-			shot->shotY < -15 || shot->shotY > 190)
+		/* E2-full: player shots live to the wide canvas edges. */
+		if (otyr_sim_deparallax
+		        ? (shot->shotX < -74 || shot->shotX > 330 ||
+		           shot->shotY < -43 || shot->shotY > 246)
+		        : (shot->shotX < -34 || shot->shotX > 290 ||
+		           shot->shotY < -15 || shot->shotY > 190))
 		{
 			shotAvail[shot_id] = 0;
 			return false;

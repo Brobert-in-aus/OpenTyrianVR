@@ -349,6 +349,13 @@ void otyr_demo_death_tick(void);
 bool otyr_gate_release_blocked(void);
 bool otyr_level_end_blocked(void);
 
+/* E2-full sim mode (docs/VR_CONVERSION_PLAN.md batch scope): parallax
+   offsets pinned to the host's fixed rebase targets, player travel and
+   the enemy/shot/pickup windows widened to the wide diorama.  BREAKS
+   legacy demo determinism -- Gate B baselines only; the legacy sim
+   (flag off) stays bit-identical forever (Gate A). */
+extern bool otyr_sim_deparallax;
+
 void JE_setupExplosion(JE_integer x, JE_integer y, JE_integer deltaY, JE_integer type, bool fixedPosition, bool followPlayer);
 void JE_setupExplosionLarge(JE_boolean enemyground, JE_byte explonum, JE_integer x, JE_integer y);
 

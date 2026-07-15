@@ -594,6 +594,7 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 	windowHasFocus = true;  /* no window: the host always "has focus" */
 	/* Configured wishes; the effective flags are recomputed each gameplay
 	   tick (present_frame_reset) so smoothie levels can fall back. */
+	otyr_sim_deparallax = (config->flags & OTYR_CONFIG_SIM_DEPARALLAX) != 0;
 	present_config_suppress_entity = (config->flags & OTYR_CONFIG_SUPPRESS_ENTITY_DRAW) != 0;
 	present_config_suppress_background = (config->flags & OTYR_CONFIG_SUPPRESS_BACKGROUND) != 0;
 	present_config_suppress_text = (config->flags & OTYR_CONFIG_SUPPRESS_TEXT) != 0;

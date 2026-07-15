@@ -309,6 +309,24 @@
   visual divergence for interactive ground units needs an in-headset
   verdict); E3 deep ground for planetary levels (scale-preserving
   push; per-level presentation config; comfort toggle).
+- E2-FULL LANDED (2026-07-12, ABI v22): OTYR_CONFIG_SIM_DEPARALLAX /
+  --sim-deparallax implements the settled batch -- tempW pinned at 35
+  (offsets 11/23/35 = the host's rebase targets, so exported deltas
+  are zero and the host rebase is a no-op), travel 40..256 ->
+  16..280, enemy active window -24..296 -> -64..336, player shot cull
+  to the canvas (-74..330 x, -43..246 y), enemy shot cull likewise,
+  pickup right-herd 245 -> 269.  The HOST enables the flag (VR
+  product default); editor sessions inherit it.  VERIFIED: Gate A
+  (flag off) bit-identical over 94791 lines -- the legacy sim is
+  untouched; Gate B baseline cut (--sim-deparallax + all three
+  schedules): two runs identical over 97240 lines, 31 level markers
+  vs legacy's 26 (schedules held coverage); harness PASS on v22.
+  GATE B PROCEDURE: compare future flag-on runs (with the three
+  schedule envs) against the rolling captures/hash-gateB-base*.log;
+  re-baseline in a dedicated commit when sim changes are intentional.
+  NEXT: record fresh demos under the flag; user headset pass for
+  hitbox feel, edge-hugger reachability, and beam/steerable weapons
+  in the pinned world.
 - E2-FULL BATCH SCOPE (settled 2026-07-12 with user): (1) pin the sim
   parallax offsets to the host's fixed values, (2) widen player travel
   to the full fixed window, (4) widen the enemy active window (the

@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 21;
+    public const uint AbiVersion = 22;
 
     // Palette index of the suppressed background fill (the frame color key);
     // index-0 black in sprite/HUD art stays opaque.
@@ -62,6 +62,9 @@ public static unsafe class OtyrNative
         // Skip in-play overlay text/HUD-icon blits in the frame; the host
         // renders the Category.Text records proud of the playfield (v13).
         SuppressText = 1 << 4,
+        // E2-full sim mode (v22): pinned parallax offsets, widened travel
+        // and enemy/shot/pickup windows.  Gate B determinism only.
+        SimDeparallax = 1 << 5,
     }
 
     // Presentation snapshot (ABI v6).
