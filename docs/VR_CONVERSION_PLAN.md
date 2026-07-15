@@ -406,6 +406,29 @@
   stopBackgroundNum=0 directly) are scroll-position-locked and
   correctly bypass the blocks; only kill-driven releases can drift
   and only they are guarded.
+- Round 12b (2026-07-15): BIRTH-FADE (user catch: cells pop into
+  existence instead of scrolling in from the void).  Root fact: event
+  spawns sit at EXACTLY ey -28 -- the canvas top edge -- and 190/180
+  (mid bottom-apron); vanilla hid the pop behind the screen bezel, the
+  wide diorama shows it.  Sim-side margin extension is off the table:
+  movers spawned further out arrive late (their scripts run from
+  spawn), glued structures would need spawn events to fire earlier
+  (event-queue reordering), and both change gameplay.  Host-side
+  instead, position-honest: cells whose LINEAGE BEGINS outside the old
+  play region start at alpha 0 and materialize over their own first
+  28px of travel (one legacy tile = the vanilla hidden margin, so a
+  structure turns solid exactly as it finishes crossing the old
+  edge, at its true velocity -- glued art never slides against its
+  terrain).  Statics keep their real source id for fade-ONLY lineage
+  (position pairing stays off; side effect: aux-flip handoffs now
+  interpolate one step).  Explosions (unpairable, recycled slots)
+  position-ramp instead.  Plus a 12px rim fade at all canvas edges:
+  exits dissolve into the void instead of being guillotined
+  (complements the 12a drift/glide).  Mechanism: MultiMesh instance
+  colors (UseColors) on sheet/shadow/old layers; sprite+old shaders
+  multiply ALPHA, the multiplicative shadow shader mixes toward white.
+  Text/HUD and glow debris exempt.  x birth test shrinks 14px per side
+  (record x carries the per-band pinned offset 11/23/35).
 - Round 12 (2026-07-15): APRON INTEGRITY (user catch: ships freeze and
   stack at the bottom of the screen).  Root causes: (1) the sky bank
   never scrolls (tempBackMove 0) and the bottom cull (ey > 190) only

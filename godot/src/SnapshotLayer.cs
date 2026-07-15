@@ -146,12 +146,14 @@ public unsafe partial class SnapshotLayer : Node3D
                 varying flat float v_flags;
                 varying flat float v_filter;
                 varying flat float v_decal;
+                varying flat float v_fade;  // instance color alpha: birth/rim fade
 
                 void vertex() {
                     cell = INSTANCE_CUSTOM.x;
                     v_flags = INSTANCE_CUSTOM.y;
                     v_filter = INSTANCE_CUSTOM.z;
                     v_decal = INSTANCE_CUSTOM.w;
+                    v_fade = COLOR.a;
                 }
 
                 void fragment() {
@@ -197,7 +199,7 @@ public unsafe partial class SnapshotLayer : Node3D
                     ALBEDO = texture(palette, vec2((idx + 0.5) / 256.0, 0.5)).rgb;
                     // Legacy blend variants (transparent explosions,
                     // invulnerable ship) approximate as 55% alpha.
-                    ALPHA = mod(floor(v_flags / 2.0), 2.0) >= 1.0 ? 0.55 : 1.0;
+                    ALPHA = (mod(floor(v_flags / 2.0), 2.0) >= 1.0 ? 0.55 : 1.0) * v_fade;
                 }
                 """,
         };
@@ -225,6 +227,7 @@ public unsafe partial class SnapshotLayer : Node3D
             {
                 TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
                 UseCustomData = true,
+                UseColors = true,  // per-instance alpha: birth/rim fade
                 Mesh = quad,
                 InstanceCount = OtyrNative.SnapshotSpriteMax,
                 VisibleInstanceCount = 0,
@@ -289,9 +292,11 @@ public unsafe partial class SnapshotLayer : Node3D
                 uniform sampler2D palette : source_color, filter_nearest;
 
                 varying flat vec3 slot_wh;  // flat: see the sprite shader
+                varying flat float v_fade;  // birth/rim fade
 
                 void vertex() {
                     slot_wh = INSTANCE_CUSTOM.xyz;
+                    v_fade = COLOR.a;
                 }
 
                 void fragment() {
@@ -305,7 +310,7 @@ public unsafe partial class SnapshotLayer : Node3D
                         discard;
                     float idx = floor(s.r * 255.0 + 0.5);
                     ALBEDO = texture(palette, vec2((idx + 0.5) / 256.0, 0.5)).rgb;
-                    ALPHA = 0.55;
+                    ALPHA = 0.55 * v_fade;
                 }
                 """,
         };
@@ -320,6 +325,7 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
             UseCustomData = true,
+            UseColors = true,  // per-instance fade
             Mesh = new QuadMesh { Size = new Vector2(PxToMeters, PxToMeters) },
             InstanceCount = 128,
             VisibleInstanceCount = 0,
@@ -351,11 +357,13 @@ public unsafe partial class SnapshotLayer : Node3D
                 varying flat float cell;
                 varying flat float v_flags;
                 varying flat float v_decal;
+                varying flat float v_fade;  // birth/rim fade
 
                 void vertex() {
                     cell = INSTANCE_CUSTOM.x;
                     v_flags = INSTANCE_CUSTOM.y;
                     v_decal = INSTANCE_CUSTOM.w;
+                    v_fade = COLOR.a;
                 }
 
                 void fragment() {
@@ -376,7 +384,9 @@ public unsafe partial class SnapshotLayer : Node3D
                     vec2 cell_px = clamp(uv0 * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));
                     if (texture(atlas, (cell_origin_px + cell_px) / vec2(384.0, 448.0)).g < 0.5)
                         discard;
-                    ALBEDO = vec3(0.5);  // halve brightness, keep hue
+                    // Multiplicative fade: white = no darkening, so a fading
+                    // shadow lightens toward absent alongside its caster.
+                    ALBEDO = vec3(mix(1.0, 0.5, v_fade));
                 }
                 """,
         };
@@ -389,6 +399,7 @@ public unsafe partial class SnapshotLayer : Node3D
             {
                 TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
                 UseCustomData = true,
+                UseColors = true,  // per-instance fade
                 Mesh = quad,
                 InstanceCount = 256,
                 VisibleInstanceCount = 0,
@@ -683,7 +694,20 @@ public unsafe partial class SnapshotLayer : Node3D
         public Vector2 PrevPx;     // previous-tick center (== CurrPx if new)
         public bool HasPrev;
         public ushort EntityType;  // enemies: eDat index (height editor)
+        public float EnterFade;    // 0..1 birth-fade: cells born outside the
+                                   // old play region (the vanilla off-screen
+                                   // margins) materialize over their own first
+                                   // EnterRampPx of travel instead of popping
+                                   // into the visible apron
     }
+
+    // One legacy tile of hidden travel: event spawns sit exactly 28px above
+    // the old screen (ey = -28), so a full ramp reproduces the vanilla
+    // emergence -- solid just as the cell finishes crossing the old edge.
+    private const float EnterRampPx = 28f;
+    // Outer rim: everything dissolves into the void over the canvas' last
+    // few pixels (exits stop being guillotined at the diorama edge).
+    private const float RimFadePx = 12f;
 
     private RenderCell[] _cells = new RenderCell[OtyrNative.SnapshotSpriteMax * 4];
     private int _cellCount;
@@ -863,6 +887,7 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.CurrPx = new Vector2(sprite.X, sprite.Y);
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
+        cell.EnterFade = 1f;  // debris: 2px sparks, not worth fading
 
         PairWithPrevious(ref cell, sprite.SourceId);
         ++_cellCount;
@@ -1282,7 +1307,7 @@ public unsafe partial class SnapshotLayer : Node3D
     private ushort _pairRunSource = OtyrNative.NoSource;
     private int _pairRunOrdinal;
 
-    private void PairWithPrevious(ref RenderCell cell, ushort sourceId)
+    private void PairWithPrevious(ref RenderCell cell, ushort sourceId, bool fadeOnly = false)
     {
         _cellSource[_cellCount] = sourceId;
         _pairRunOrdinal = sourceId == _pairRunSource ? _pairRunOrdinal + 1 : 0;
@@ -1301,8 +1326,7 @@ public unsafe partial class SnapshotLayer : Node3D
         if (_pairRunOrdinal < run.Count && _prevCells[ordinalIdx].SheetId == cell.SheetId &&
             _prevCells[ordinalIdx].CurrPx.DistanceTo(cell.CurrPx) < PairRadiusPx)
         {
-            cell.PrevPx = _prevCells[ordinalIdx].CurrPx;
-            cell.HasPrev = true;
+            InheritFromPrevious(ref cell, ordinalIdx, fadeOnly);
             return;
         }
 
@@ -1320,10 +1344,22 @@ public unsafe partial class SnapshotLayer : Node3D
             }
         }
         if (bestIdx >= 0)
-        {
-            cell.PrevPx = _prevCells[bestIdx].CurrPx;
-            cell.HasPrev = true;
-        }
+            InheritFromPrevious(ref cell, bestIdx, fadeOnly);
+    }
+
+    private void InheritFromPrevious(ref RenderCell cell, int prevIdx, bool fadeOnly)
+    {
+        // Birth-fade lineage: advance by the cell's OWN travel this tick, so
+        // an entering cell materializes at exactly its sim velocity (a glued
+        // structure over 28px of scroll, a fast mover in a few ticks).
+        cell.EnterFade = Math.Min(1f, _prevCells[prevIdx].EnterFade +
+            _prevCells[prevIdx].CurrPx.DistanceTo(cell.CurrPx) / EnterRampPx);
+        if (fadeOnly)
+            return;  // statics step with the tile grid: fade lineage only,
+                     // never position interpolation (art would swim against
+                     // its own baked underlay)
+        cell.PrevPx = _prevCells[prevIdx].CurrPx;
+        cell.HasPrev = true;
     }
 
     private void AddOldCell(in OtyrNative.SnapshotSprite sprite, uint recordIndex)
@@ -1346,6 +1382,7 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.CurrPx = new Vector2(sprite.X + size.X / 2f, sprite.Y + size.Y / 2f);
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
+        cell.EnterFade = 1f;  // special shots spawn at the ship, in play
 
         PairWithPrevious(ref cell, sprite.SourceId);
         ++_cellCount;
@@ -1393,6 +1430,7 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.CurrPx = new Vector2(sprite.X + size.X / 2f, sprite.Y + size.Y / 2f);
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
+        cell.EnterFade = 1f;  // HUD text never fades
 
         // Text is stationary; render at the recorded position every tick.
         _cellSource[_cellCount] = OtyrNative.NoSource;
@@ -1500,6 +1538,17 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
 
+        // Birth-fade default for UNPAIRED cells: a lineage that begins
+        // outside the old play region began off the vanilla screen -- event
+        // spawns sit exactly at ey -28 (the canvas top edge!) and 190/180
+        // (mid bottom-apron), so on the wide diorama they popped into view
+        // fully formed.  Start those at alpha 0; pairing then ramps them in
+        // over their own travel.  The x test shrinks 14px per side: the
+        // record x includes the per-band pinned map offset (11/23/35), so
+        // play-region bounds are band-blurred by up to +-13px.
+        float gx = centerX - 24f, gy = centerY;
+        cell.EnterFade = gx < 14f || gx > 250f || gy < 0f || gy > 184f ? 0f : 1f;
+
         // Baked structures (and statics stacked on them) are locked to the
         // map tiles beneath; the tile layers step per tick, so interpolating
         // the art over them would swim against its own baked underlay.
@@ -1523,7 +1572,28 @@ public unsafe partial class SnapshotLayer : Node3D
             (isEnemy && sprite.Aux == 2 && !authoredFloat) ||
             (isEnemy && (sprite.Flags & 32) != 0 && hasAuthored && !authoredFloat))
         {
-            _cellSource[_cellCount] = OtyrNative.NoSource;
+            if (isExplosion)
+            {
+                // Bursts must never pair (recycled slots smeared new bursts
+                // across dead ones -- the speckle).  No lineage means no
+                // travel ramp; position-ramp the fade instead so an apron
+                // kill still flashes, dimmer toward the rim.
+                float apron = Math.Max(Math.Max(14f - gx, gx - 250f),
+                                       Math.Max(-gy, gy - 184f));
+                cell.EnterFade = apron <= 0f ? 1f
+                    : Math.Max(0f, 1f - apron / EnterRampPx);
+                _cellSource[_cellCount] = OtyrNative.NoSource;
+            }
+            else
+            {
+                // Statics step with the tile grid (no position pairing), but
+                // their birth-fade must still advance with the scroll: keep
+                // the real source and inherit the fade only.  Side effect: a
+                // mover cell of the same source can now pair against a prior
+                // STATIC cell (aux-flip handoff interpolates one step
+                // instead of jumping) -- continuity, not a regression.
+                PairWithPrevious(ref cell, sprite.SourceId, fadeOnly: true);
+            }
             ++_cellCount;
             return;
         }
@@ -1649,6 +1719,20 @@ public unsafe partial class SnapshotLayer : Node3D
                 id == TextLayer || id == TextShadowLayer
                     ? new Color(cell.CellIndex, cell.Flags + cell.FilterColor * 65f, cell.Aux0, cell.Aux1)
                     : new Color(cell.CellIndex, cell.Flags, cell.FilterColor, cell.DecalOrder));
+
+            // Birth/rim fade (sheet, shadow, old layers -- their MultiMeshes
+            // carry instance colors): entering cells materialize over their
+            // own travel from the vanilla spawn line, and EVERYTHING
+            // dissolves over the canvas' outermost RimFadePx instead of
+            // being guillotined at the diorama edge.
+            if (id != GlowLayer && id != TextLayer && id != TextShadowLayer)
+            {
+                float rim = Math.Min(
+                    Math.Min((frameX + 40f) / RimFadePx, (336f - frameX) / RimFadePx),
+                    Math.Min((px.Y + 28f) / RimFadePx, (240f - px.Y) / RimFadePx));
+                float fade = Math.Clamp(Math.Min(cell.EnterFade, rim), 0f, 1f);
+                _multiMesh[id].SetInstanceColor(instance, new Color(1f, 1f, 1f, fade));
+            }
         }
 
         for (int id = 0; id < LayerCount; id++)
