@@ -309,6 +309,24 @@
   visual divergence for interactive ground units needs an in-headset
   verdict); E3 deep ground for planetary levels (scale-preserving
   push; per-level presentation config; comfort toggle).
+- E2-FULL BATCH SCOPE (settled 2026-07-12 with user): (1) pin the sim
+  parallax offsets to the host's fixed values, (2) widen player travel
+  to the full fixed window, (4) widen the enemy active window (the
+  -24..296 shoot/count guard) to the wide world, (5) widen shot cull
+  bounds, (6) widen pickup herding bounds.  SHOT-FOLLOW CODES STAY:
+  user-corrected -- sx 101 + short del + max cadence IS the beam
+  implementation (Laser sweeps rigidly with the ship), and long-del
+  120s are steerable projectiles; both are authentic weapon design,
+  not parallax compensation (docs/SHOT_FOLLOW.md updated thinking).
+  HELD: (7) +/-1 spawn quantization (authentic data; revisit),
+  (9) folding target-steering into the native velocity model (stretch).
+  CLOSED: (8) "screen shake" -- does not exist; superWild is a legacy
+  DETAIL tier (frame-only value dither, already key-guarded under
+  suppression, no RNG, no sim state; user runs processorType 4 where
+  it is off anyway), and wild=on is what enables the kept translucent
+  layer-2 cloud blend.  One config flag for the whole batch; record
+  fresh demos under the new sim afterward for first-class Gate B
+  coverage.
 - GATE STRATEGY for sim-breaking changes (E2-full, decided 2026-07-12):
   TWO-BASELINE GATING behind a config flag.  (1) The sim de-parallax
   (pinned mapX*Ofs, widened player travel, naturally-neutralized
