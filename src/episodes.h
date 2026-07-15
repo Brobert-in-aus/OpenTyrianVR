@@ -165,6 +165,10 @@ extern JE_boolean jumpBackToEpisode1;
 
 void JE_loadItemDat(void);
 void JE_initEpisode(JE_byte newEpisode);
+
+/* OTYR_LINEAR: next ]L-bearing script section after `current` (interpreter
+   seek coordinates); 0 when the episode has no more levels. */
+int otyr_linear_next_section(int current);
 unsigned int JE_findNextEpisode(void);
 void JE_scanForEpisodes(void);
 

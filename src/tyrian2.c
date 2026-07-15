@@ -2194,6 +2194,21 @@ start_level:
 	{
 		if ((!all_players_dead() || normalBonusLevelCurrent || bonusLevelCurrent) && !playerEndLevel)
 		{
+			/* OTYR_LINEAR=1 (editor ghost runs): advance strictly to the
+			   next ]L-bearing section instead of the authentic route, so a
+			   full pass hits EVERY level -- bonuses and secrets included --
+			   without pickups or difficulty branches.  Sim mutation: debug
+			   env only, never in demo/gate runs. */
+			static int otyr_linear = -1;
+			if (otyr_linear < 0)
+				otyr_linear = SDL_getenv("OTYR_LINEAR") != NULL ? 1 : 0;
+			if (otyr_linear)
+			{
+				int linear_next = otyr_linear_next_section(mainLevel);
+				if (linear_next > 0)
+					nextLevel = linear_next;
+			}
+
 			mainLevel = nextLevel;
 			JE_endLevelAni();
 

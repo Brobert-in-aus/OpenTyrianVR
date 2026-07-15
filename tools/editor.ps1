@@ -32,6 +32,9 @@ if ($ListSections) {
 $env:OTYR_FLAT = '1'
 $env:OTYR_HEIGHT_EDITOR = '1'
 $env:OTYR_INVULN = '1'
+$env:OTYR_LINEAR = '1'   # completing a level advances to the NEXT level in
+                         # script order (bonuses/secrets included), no
+                         # pickups or difficulty branches needed
 if ($Section -gt 0) {
     $env:OTYR_START_SECTION = "$Section"
     $env:OTYR_START_EPISODE = "$Episode"

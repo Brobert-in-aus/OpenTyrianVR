@@ -316,6 +316,42 @@ static void otyr_dump_level_events(int section, int lvlnum)
 	fclose(f);
 }
 
+/* OTYR_LINEAR support: the next script section AFTER current that contains
+   a playable level ("]L"), counted exactly like the interpreter's seek so
+   the result feeds mainLevel directly.  Returns 0 when none remain (episode
+   end -- the caller keeps the authentic route).  Editor ghost runs use this
+   to advance strictly level-by-level, covering bonuses and secrets that are
+   normally pickup- or difficulty-gated. */
+int otyr_linear_next_section(int current)
+{
+	FILE *f = dir_fopen_die(data_dir(), episode_file, "rb");
+	/* Count from 1, exactly like otyr_dump_sections: those labels are the
+	   empirically validated OTYR_START_SECTION / debug-jump coordinates
+	   (verified across eight editor sessions), and mainLevel speaks them. */
+	int section = 1;
+	int found = 0;
+	for (;;)
+	{
+		Uint8 len;
+		char buffer[257];
+		if (fread(&len, 1, 1, f) != 1)
+			break;
+		if (len > 0 && fread(buffer, 1, len, f) != len)
+			break;
+		decrypt_string(buffer, len);
+		buffer[len] = '\0';
+		if (buffer[0] == '*')
+			++section;
+		else if (buffer[0] == ']' && buffer[1] == 'L' && section > current)
+		{
+			found = section;
+			break;
+		}
+	}
+	fclose(f);
+	return found;
+}
+
 /* OTYR_DUMP_SECTIONS=1: list the episode script's sections with their
    playable levels ("]L" lines), so the height editor's OTYR_START_SECTION
    has addressable targets (secret levels included).  Sections count from 1
@@ -352,6 +388,12 @@ static void otyr_dump_sections(void)
 			printf("    [%3d] %s\n", section, buffer);
 	}
 	fclose(f);
+
+	/* Validate/visualize the OTYR_LINEAR chain against the same file. */
+	printf("  linear chain:");
+	for (int c = otyr_linear_next_section(0); c > 0; c = otyr_linear_next_section(c))
+		printf(" %d", c);
+	printf("\n");
 	fflush(stdout);
 }
 
