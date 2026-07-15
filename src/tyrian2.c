@@ -328,7 +328,13 @@ static void JE_updateEnemies(int enemyOffset)
 				}
 			}
 
- 			if (enemy[i].ex + tempMapXOfs > -29 && enemy[i].ex + tempMapXOfs < 300)
+ 			/* E2-full: art/animation follows the wide canvas (x -40..336),
+			   not the legacy screen -- otherwise right-apron enemies keep
+			   acting (the widened window below reaches 336) while their
+			   sprites stop being recorded at the old edge. */
+ 			if (otyr_sim_deparallax
+			        ? (enemy[i].ex + tempMapXOfs > -53 && enemy[i].ex + tempMapXOfs < 337)
+			        : (enemy[i].ex + tempMapXOfs > -29 && enemy[i].ex + tempMapXOfs < 300))
 			{
 				if (enemy[i].aniactive == 1)
 				{
@@ -343,14 +349,24 @@ static void JE_updateEnemies(int enemyOffset)
 				if (enemy[i].egr[enemy[i].enemycycle - 1] == 999)
 					goto enemy_gone;
 
+				/* Cell record windows: the legacy bounds clip inside the
+				   visible apron -- a departing 2x2 loses its bottom row at
+				   ey 182 (the rows below were the bottom HUD strip) and
+				   entries pop in at -13.  When the host renders decals the
+				   records never touch the flat frame (perform is skipped
+				   under present_suppress_entity_draw), so record to the
+				   wide canvas instead; legacy/fallback keeps the old
+				   bounds so sprites never paint over the HUD rows. */
+				const int wide_cells = otyr_sim_deparallax && present_suppress_entity_draw;
 				if (enemy[i].size == 1) // 2x2 enemy
 				{
-					if (enemy[i].ey > -13)
+					if (enemy[i].ey > (wide_cells ? -48 : -13))
 					{
 						record_enemy_blit(i, -6, -7, 0);
 						record_enemy_blit(i,  6, -7, 1);
 					}
-					if (enemy[i].ey > -26 && enemy[i].ey < 182)
+					if (enemy[i].ey > (wide_cells ? -62 : -26) &&
+					    (wide_cells || enemy[i].ey < 182))
 					{
 						record_enemy_blit(i, -6,  7, 19);
 						record_enemy_blit(i,  6,  7, 20);
@@ -358,7 +374,7 @@ static void JE_updateEnemies(int enemyOffset)
 				}
 				else
 				{
-					if (enemy[i].ey > -13)
+					if (enemy[i].ey > (wide_cells ? -48 : -13))
 						record_enemy_blit(i, 0, 0, 0);
 				}
 
@@ -420,8 +436,26 @@ static void JE_updateEnemies(int enemyOffset)
 				goto enemy_gone;
 
 			enemy[i].ey += enemy[i].eyc;
-			if (enemy[i].ey < -112 || enemy[i].ey > 190)
+			/* E2-full: live to the bottom of the visible apron (canvas
+			   y1 240 + a 2x2 half-height + margin) so departing ships
+			   glide off the diorama instead of vanishing 6px past the
+			   old screen edge.  Below the legacy line they are inert
+			   (y clause on the behave window further down). */
+			if (enemy[i].ey < -112 || enemy[i].ey > (otyr_sim_deparallax ? 266 : 190))
 				goto enemy_gone;
+
+			/* A ship whose scripted path parks it below the legacy play
+			   region froze there forever: the original never drew past
+			   y 182, so paths could legally end just off the bottom, and
+			   with the sky bank unscrolled (tempBackMove 0) the
+			   motion-only >190 cull never fires on a parked ship.  The
+			   wide diorama shows that band, and every respawn of a type
+			   piled onto the same per-type parking spot.  Drift them
+			   off; scrolled banks are excluded (their decals must stay
+			   glued to the terrain). */
+			if (otyr_sim_deparallax && enemy[i].ey > 184 && enemy[i].eyc == 0 &&
+			    enemy[i].fixedmovey == 0 && tempBackMove == 0)
+				enemy[i].ey += 2;
 
 			goto enemy_still_exists;
 
@@ -456,9 +490,12 @@ enemy_still_exists:
 
 			/* E2-full: the active window (shooting + the on-screen count)
 			   widens with the visible diorama, so margin enemies behave
-			   instead of sitting visibly inert. */
+			   instead of sitting visibly inert.  The y clause keeps
+			   vanilla parity for the widened bottom cull: an enemy at
+			   ey >= 190 would already be GONE in the original sim, so it
+			   must not shoot, launch, or count while gliding off. */
 			if (otyr_sim_deparallax
-			        ? (enemy[i].ex <= -64 || enemy[i].ex >= 336)
+			        ? (enemy[i].ex <= -64 || enemy[i].ex >= 336 || enemy[i].ey >= 190)
 			        : (enemy[i].ex <= -24 || enemy[i].ex >= 296))
 				goto draw_enemy_end;
 

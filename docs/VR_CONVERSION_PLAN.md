@@ -406,6 +406,37 @@
   stopBackgroundNum=0 directly) are scroll-position-locked and
   correctly bypass the blocks; only kill-driven releases can drift
   and only they are guarded.
+- Round 12 (2026-07-15): APRON INTEGRITY (user catch: ships freeze and
+  stack at the bottom of the screen).  Root causes: (1) the sky bank
+  never scrolls (tempBackMove 0) and the bottom cull (ey > 190) only
+  fires on eyc motion, so a ship whose velocity cycle decays to zero
+  below the play line parks FOREVER -- and spawn paths are per-type
+  constants, so every respawn piles onto the same spot (invisible in
+  the original, which never drew past y 182; the wide diorama shows
+  the band); (2) a departing 2x2 loses its bottom row at ey 182 (the
+  legacy bottom-HUD guard) while its top row draws on -- the cell
+  "stacking"; (3) departing ships vanished 6px into the 56px apron
+  (cull 190 vs canvas 240).  Fixes, sim parts under the Gate B flag:
+  parked flyers (ey > 184, eyc 0, no fixedmovey, unscrolled bank)
+  drift +2/tick until the cull; bottom cull widens 190 -> 266 so
+  departures glide off-canvas; the behave window gains a y clause
+  (ey >= 190 = would-be-gone in vanilla: no shooting, launching, or
+  on-screen counting while gliding); the art/animation x window
+  follows the wide canvas (-53..337, was -29..300 -- right-apron
+  enemies were active-but-unrecorded); cell record windows widen to
+  the canvas ONLY under present_suppress_entity_draw (records never
+  hit the flat frame there; legacy/fallback keeps the old bounds so
+  sprites never paint the HUD rows).  ALSO FIXED (latent, surfaced by
+  the fresh schedules): the death-schedule clamp treated an
+  armor-EQUALLING hit as lethal (death is strictly armor < temp), so
+  it rewrote a survivable hit and wobbled the hash for the 26 ticks
+  between that hit and the scheduled death -- clamp now caps at
+  exactly shield+armor (the maximum non-lethal damage), so organic
+  sub-lethal hits pass through untouched.  Verified: Gate A
+  bit-identical (95,950 + 88,891 lines); Gate B schedules regenerated
+  (15 deaths / 5 gates / 11 ends) and the LOG-vs-SCRIPT self-test is
+  bit-identical over 97,472 lines (baseline hash-gateB-base3.log);
+  harness PASS.
 - Round 11 (2026-07-12, evening): height authoring COMPLETE through
   DELIANI (TYRIAN, ASTEROID1/2, SAVARA, MINES, BUBBLES?, DELIANI --
   user-driven editor passes).  Fix cascade this round: collider flag

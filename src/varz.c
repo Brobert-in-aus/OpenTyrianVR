@@ -1261,9 +1261,17 @@ JE_byte JE_playerDamage(JE_byte temp,
 	    otyr_death_script_pos < otyr_death_script_len &&
 	    otyr_demo_tick_count + 1 < otyr_death_script[otyr_death_script_pos])
 	{
+		/* Death fires only on STRICTLY greater damage (armor < temp after
+		   shields): an armor-EQUALLING hit organically leaves the pilot
+		   alive at 0 armor.  Clamp to exactly lethal -- the maximum
+		   non-lethal damage -- so organic sub-lethal hits (including the
+		   armor-equalling kind) pass through untouched and the self-test
+		   stays bit-identical.  (The old lethal-1 clamp rewrote an
+		   armor-equalling hit and wobbled the hash for the ticks between
+		   that hit and the scheduled death.) */
 		int lethal = this_player->shield + this_player->armor;
-		if (temp >= lethal && lethal > 1)
-			temp = (JE_byte)(lethal - 1);
+		if (temp > lethal)
+			temp = (JE_byte)lethal;
 	}
 
 	int playerDamage = 0;
