@@ -1,2671 +1,2672 @@
 {
-    "_comment":  "Stage B hover heights, first pass (episode 1). class: ground (rides the surface beneath, +offset), pickup, air-low, air-mid, air-high, or an explicit {height: \u003clane Z\u003e}. Unlisted types keep the legacy category band. Edit freely; the host reloads at level start.",
-    "classes":  {
-                    "air-high":  0.038,
-                    "air-low":  0.033,
-                    "air-mid":  0.0355,
-                    "ground":  0.004,
-                    "mid-under":  0.012,
-                    "over-top":  0.075,
-                    "pickup":  0.04,
-                    "platform-under":  0.0285
-                },
-    "types":  {
-                  "0":  {
-                            "class":  "air-mid"
-                        },
-                  "1":  {
-                            "class":  "air-mid"
-                        },
-                  "10":  {
-                             "class":  "air-mid"
-                         },
-                  "100":  {
-                              "class":  "air-mid"
-                          },
-                  "101":  {
-                              "class":  "air-mid"
-                          },
-                  "102":  {
-                              "class":  "air-mid"
-                          },
-                  "103":  {
-                              "class":  "air-mid"
-                          },
-                  "104":  {
-                              "class":  "air-mid"
-                          },
-                  "105":  {
-                              "class":  "air-mid"
-                          },
-                  "106":  {
-                              "class":  "air-mid"
-                          },
-                  "107":  {
-                              "class":  "air-mid"
-                          },
-                  "108":  {
-                              "class":  "air-mid"
-                          },
-                  "109":  {
-                              "class":  "air-mid"
-                          },
-                  "11":  {
-                             "class":  "air-mid"
-                         },
-                  "110":  {
-                              "class":  "air-mid"
-                          },
-                  "111":  {
-                              "class":  "air-mid"
-                          },
-                  "112":  {
-                              "class":  "air-mid"
-                          },
-                  "113":  {
-                              "class":  "air-mid"
-                          },
-                  "114":  {
-                              "class":  "air-mid"
-                          },
-                  "115":  {
-                              "class":  "air-mid"
-                          },
-                  "116":  {
-                              "class":  "air-mid"
-                          },
-                  "117":  {
-                              "class":  "air-mid"
-                          },
-                  "118":  {
-                              "class":  "air-mid"
-                          },
-                  "119":  {
-                              "class":  "air-mid"
-                          },
-                  "12":  {
-                             "class":  "air-mid"
-                         },
-                  "120":  {
-                              "class":  "air-mid"
-                          },
-                  "121":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=5 index=115 ticks=30"
-                          },
-                  "122":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=5 index=117 ticks=30"
-                          },
-                  "123":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=5 index=77 ticks=58"
-                          },
-                  "124":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=5 index=79 ticks=58"
-                          },
-                  "125":  {
-                              "class":  "ground"
-                          },
-                  "126":  {
-                              "class":  "ground"
-                          },
-                  "127":  {
-                              "class":  "ground"
-                          },
-                  "128":  {
-                              "class":  "ground"
-                          },
-                  "129":  {
-                              "class":  "air-mid"
-                          },
-                  "13":  {
-                             "class":  "air-mid"
-                         },
-                  "130":  {
-                              "class":  "air-mid"
-                          },
-                  "131":  {
-                              "class":  "air-mid"
-                          },
-                  "132":  {
-                              "class":  "air-mid"
-                          },
-                  "133":  {
-                              "class":  "air-mid"
-                          },
-                  "134":  {
-                              "class":  "air-mid"
-                          },
-                  "135":  {
-                              "class":  "air-mid"
-                          },
-                  "136":  {
-                              "class":  "air-mid"
-                          },
-                  "137":  {
-                              "class":  "air-mid"
-                          },
-                  "138":  {
-                              "class":  "air-mid"
-                          },
-                  "139":  {
-                              "class":  "air-mid"
-                          },
-                  "14":  {
-                             "class":  "air-mid"
-                         },
-                  "140":  {
-                              "class":  "air-mid"
-                          },
-                  "141":  {
-                              "class":  "air-mid"
-                          },
-                  "142":  {
-                              "class":  "ground"
-                          },
-                  "143":  {
-                              "class":  "ground"
-                          },
-                  "144":  {
-                              "class":  "air-mid"
-                          },
-                  "145":  {
-                              "class":  "ground"
-                          },
-                  "146":  {
-                              "class":  "ground"
-                          },
-                  "147":  {
-                              "class":  "air-mid"
-                          },
-                  "148":  {
-                              "class":  "air-mid"
-                          },
-                  "149":  {
-                              "class":  "air-mid"
-                          },
-                  "15":  {
-                             "height":  0.033500000834465,
-                             "seen":  "demo sheet=5 index=58 ticks=1037"
-                         },
-                  "150":  {
-                              "class":  "air-mid"
-                          },
-                  "151":  {
-                              "class":  "air-mid"
-                          },
-                  "152":  {
-                              "class":  "air-mid"
-                          },
-                  "153":  {
-                              "class":  "ground"
-                          },
-                  "154":  {
-                              "class":  "ground"
-                          },
-                  "155":  {
-                              "class":  "ground"
-                          },
-                  "156":  {
-                              "class":  "ground"
-                          },
-                  "157":  {
-                              "class":  "ground"
-                          },
-                  "158":  {
-                              "class":  "ground"
-                          },
-                  "159":  {
-                              "class":  "ground"
-                          },
-                  "16":  {
-                             "class":  "air-mid"
-                         },
-                  "160":  {
-                              "class":  "ground"
-                          },
-                  "161":  {
-                              "class":  "ground"
-                          },
-                  "162":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=5 index=58 ticks=1729"
-                          },
-                  "163":  {
-                              "class":  "air-mid",
-                              "seen":  "demo sheet=5 index=144 ticks=159"
-                          },
-                  "164":  {
-                              "class":  "pickup",
-                              "seen":  "demo sheet=5 index=30 ticks=959"
-                          },
-                  "165":  {
-                              "class":  "air-mid"
-                          },
-                  "166":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=5 index=106 ticks=441"
-                          },
-                  "167":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=5 index=22 ticks=705"
-                          },
-                  "168":  {
-                              "class":  "air-mid"
-                          },
-                  "169":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=5 index=98 ticks=125"
-                          },
-                  "17":  {
-                             "class":  "air-mid",
-                             "seen":  "demo sheet=5 index=286 ticks=531"
-                         },
-                  "170":  {
-                              "class":  "air-mid"
-                          },
-                  "171":  {
-                              "class":  "ground"
-                          },
-                  "172":  {
-                              "class":  "ground"
-                          },
-                  "173":  {
-                              "class":  "ground"
-                          },
-                  "174":  {
-                              "class":  "air-mid"
-                          },
-                  "175":  {
-                              "class":  "air-mid"
-                          },
-                  "176":  {
-                              "class":  "air-mid"
-                          },
-                  "177":  {
-                              "class":  "air-mid"
-                          },
-                  "178":  {
-                              "class":  "air-mid"
-                          },
-                  "179":  {
-                              "class":  "air-mid"
-                          },
-                  "18":  {
-                             "class":  "pickup",
-                             "seen":  "demo sheet=5 index=26 ticks=155"
-                         },
-                  "180":  {
-                              "class":  "air-mid"
-                          },
-                  "181":  {
-                              "class":  "air-mid"
-                          },
-                  "182":  {
-                              "class":  "air-mid"
-                          },
-                  "183":  {
-                              "class":  "air-mid"
-                          },
-                  "184":  {
-                              "class":  "air-mid"
-                          },
-                  "185":  {
-                              "class":  "air-mid"
-                          },
-                  "186":  {
-                              "class":  "air-mid"
-                          },
-                  "187":  {
-                              "class":  "air-mid"
-                          },
-                  "188":  {
-                              "class":  "air-mid"
-                          },
-                  "189":  {
-                              "class":  "air-mid"
-                          },
-                  "19":  {
-                             "class":  "pickup",
-                             "seen":  "demo sheet=5 index=28 ticks=630"
-                         },
-                  "190":  {
-                              "class":  "air-mid"
-                          },
-                  "191":  {
-                              "class":  "air-mid"
-                          },
-                  "192":  {
-                              "class":  "air-mid"
-                          },
-                  "193":  {
-                              "class":  "air-mid"
-                          },
-                  "194":  {
-                              "height":  0.0031999999191612
-                          },
-                  "195":  {
-                              "class":  "air-mid"
-                          },
-                  "196":  {
-                              "class":  "air-mid"
-                          },
-                  "197":  {
-                              "class":  "ground"
-                          },
-                  "198":  {
-                              "class":  "ground"
-                          },
-                  "199":  {
-                              "class":  "air-mid"
-                          },
-                  "2":  {
-                            "class":  "air-mid"
-                        },
-                  "20":  {
-                             "class":  "ground",
-                             "seen":  "demo sheet=5 index=30 ticks=52"
-                         },
-                  "200":  {
-                              "class":  "air-mid"
-                          },
-                  "201":  {
-                              "class":  "air-mid"
-                          },
-                  "202":  {
-                              "class":  "air-mid"
-                          },
-                  "203":  {
-                              "class":  "air-mid"
-                          },
-                  "204":  {
-                              "class":  "air-mid"
-                          },
-                  "205":  {
-                              "class":  "air-mid"
-                          },
-                  "206":  {
-                              "class":  "air-mid"
-                          },
-                  "207":  {
-                              "class":  "air-mid"
-                          },
-                  "208":  {
-                              "class":  "air-mid"
-                          },
-                  "209":  {
-                              "class":  "air-mid"
-                          },
-                  "21":  {
-                             "class":  "pickup",
-                             "seen":  "demo sheet=5 index=24 ticks=161"
-                         },
-                  "210":  {
-                              "class":  "air-mid"
-                          },
-                  "211":  {
-                              "class":  "air-mid"
-                          },
-                  "212":  {
-                              "class":  "air-mid"
-                          },
-                  "213":  {
-                              "class":  "air-mid"
-                          },
-                  "214":  {
-                              "class":  "air-mid"
-                          },
-                  "215":  {
-                              "class":  "air-mid"
-                          },
-                  "216":  {
-                              "class":  "air-mid"
-                          },
-                  "217":  {
-                              "class":  "air-mid"
-                          },
-                  "218":  {
-                              "class":  "air-mid"
-                          },
-                  "219":  {
-                              "class":  "air-mid"
-                          },
-                  "22":  {
-                             "class":  "pickup",
-                             "seen":  "demo sheet=5 index=22 ticks=950"
-                         },
-                  "220":  {
-                              "class":  "air-mid"
-                          },
-                  "221":  {
-                              "class":  "air-mid"
-                          },
-                  "222":  {
-                              "class":  "air-mid"
-                          },
-                  "223":  {
-                              "class":  "air-mid"
-                          },
-                  "224":  {
-                              "class":  "air-mid"
-                          },
-                  "225":  {
-                              "class":  "air-mid"
-                          },
-                  "226":  {
-                              "class":  "air-mid"
-                          },
-                  "227":  {
-                              "class":  "air-mid"
-                          },
-                  "228":  {
-                              "class":  "ground"
-                          },
-                  "229":  {
-                              "class":  "ground"
-                          },
-                  "23":  {
-                             "class":  "ground",
-                             "seen":  "demo sheet=5 index=20 ticks=75"
-                         },
-                  "230":  {
-                              "class":  "ground"
-                          },
-                  "231":  {
-                              "class":  "air-mid"
-                          },
-                  "232":  {
-                              "class":  "air-mid"
-                          },
-                  "233":  {
-                              "class":  "ground"
-                          },
-                  "234":  {
-                              "class":  "ground"
-                          },
-                  "235":  {
-                              "class":  "ground"
-                          },
-                  "236":  {
-                              "class":  "air-mid"
-                          },
-                  "237":  {
-                              "class":  "ground"
-                          },
-                  "238":  {
-                              "class":  "ground"
-                          },
-                  "239":  {
-                              "class":  "ground"
-                          },
-                  "24":  {
-                             "class":  "air-mid",
-                             "seen":  "demo sheet=5 index=288 ticks=154"
-                         },
-                  "240":  {
-                              "class":  "ground"
-                          },
-                  "241":  {
-                              "class":  "ground"
-                          },
-                  "242":  {
-                              "class":  "ground"
-                          },
-                  "243":  {
-                              "class":  "ground"
-                          },
-                  "244":  {
-                              "class":  "ground"
-                          },
-                  "245":  {
-                              "class":  "ground"
-                          },
-                  "246":  {
-                              "class":  "ground"
-                          },
-                  "247":  {
-                              "class":  "ground"
-                          },
-                  "248":  {
-                              "class":  "ground"
-                          },
-                  "249":  {
-                              "class":  "ground"
-                          },
-                  "25":  {
-                             "class":  "air-mid",
-                             "seen":  "demo sheet=5 index=290 ticks=145"
-                         },
-                  "250":  {
-                              "class":  "ground"
-                          },
-                  "251":  {
-                              "class":  "ground"
-                          },
-                  "252":  {
-                              "class":  "air-mid"
-                          },
-                  "253":  {
-                              "class":  "ground"
-                          },
-                  "254":  {
-                              "class":  "ground"
-                          },
-                  "255":  {
-                              "class":  "air-mid"
-                          },
-                  "256":  {
-                              "class":  "ground"
-                          },
-                  "257":  {
-                              "class":  "ground"
-                          },
-                  "258":  {
-                              "class":  "ground"
-                          },
-                  "259":  {
-                              "class":  "air-mid"
-                          },
-                  "26":  {
-                             "class":  "air-high",
-                             "seen":  "demo sheet=5 index=68 ticks=192"
-                         },
-                  "260":  {
-                              "class":  "air-mid"
-                          },
-                  "261":  {
-                              "class":  "air-mid"
-                          },
-                  "262":  {
-                              "class":  "air-mid"
-                          },
-                  "263":  {
-                              "class":  "air-mid"
-                          },
-                  "264":  {
-                              "class":  "air-mid"
-                          },
-                  "265":  {
-                              "class":  "air-mid"
-                          },
-                  "266":  {
-                              "class":  "air-mid"
-                          },
-                  "267":  {
-                              "class":  "air-mid"
-                          },
-                  "268":  {
-                              "class":  "air-mid"
-                          },
-                  "269":  {
-                              "class":  "ground"
-                          },
-                  "27":  {
-                             "class":  "air-high",
-                             "seen":  "demo sheet=5 index=70 ticks=155"
-                         },
-                  "270":  {
-                              "class":  "ground"
-                          },
-                  "271":  {
-                              "height":  0.00600000005215406
-                          },
-                  "272":  {
-                              "class":  "ground"
-                          },
-                  "273":  {
-                              "class":  "ground"
-                          },
-                  "274":  {
-                              "class":  "ground"
-                          },
-                  "275":  {
-                              "class":  "ground"
-                          },
-                  "276":  {
-                              "class":  "ground"
-                          },
-                  "277":  {
-                              "class":  "ground"
-                          },
-                  "278":  {
-                              "class":  "ground"
-                          },
-                  "279":  {
-                              "class":  "ground"
-                          },
-                  "28":  {
-                             "height":  0.0375000014901161,
-                             "seen":  "demo sheet=5 index=68 ticks=830"
-                         },
-                  "280":  {
-                              "class":  "ground"
-                          },
-                  "281":  {
-                              "class":  "ground"
-                          },
-                  "282":  {
-                              "class":  "air-mid"
-                          },
-                  "283":  {
-                              "class":  "air-mid"
-                          },
-                  "284":  {
-                              "class":  "air-mid"
-                          },
-                  "285":  {
-                              "class":  "air-mid"
-                          },
-                  "286":  {
-                              "class":  "air-mid"
-                          },
-                  "287":  {
-                              "class":  "ground"
-                          },
-                  "288":  {
-                              "class":  "ground"
-                          },
-                  "289":  {
-                              "class":  "ground"
-                          },
-                  "29":  {
-                             "height":  0.0375000014901161,
-                             "seen":  "demo sheet=5 index=70 ticks=438"
-                         },
-                  "290":  {
-                              "class":  "ground"
-                          },
-                  "291":  {
-                              "class":  "ground"
-                          },
-                  "292":  {
-                              "class":  "ground"
-                          },
-                  "293":  {
-                              "class":  "ground"
-                          },
-                  "294":  {
-                              "class":  "ground"
-                          },
-                  "295":  {
-                              "class":  "ground"
-                          },
-                  "296":  {
-                              "class":  "ground"
-                          },
-                  "297":  {
-                              "class":  "ground"
-                          },
-                  "298":  {
-                              "class":  "ground"
-                          },
-                  "299":  {
-                              "class":  "ground"
-                          },
-                  "3":  {
-                            "class":  "air-mid",
-                            "seen":  "demo sheet=5 index=228 ticks=939"
-                        },
-                  "30":  {
-                             "height":  0.033500000834465,
-                             "seen":  "demo sheet=5 index=108 ticks=851"
-                         },
-                  "300":  {
-                              "class":  "ground"
-                          },
-                  "301":  {
-                              "class":  "ground"
-                          },
-                  "302":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=220 ticks=256"
-                          },
-                  "303":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=222 ticks=247"
-                          },
-                  "304":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=256 ticks=301"
-                          },
-                  "305":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=258 ticks=297"
-                          },
-                  "306":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=260 ticks=288"
-                          },
-                  "307":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=262 ticks=261"
-                          },
-                  "308":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=297 ticks=327"
-                          },
-                  "309":  {
-                              "height":  0.00600000005215406
-                          },
-                  "31":  {
-                             "height":  0.0355000011622906,
-                             "seen":  "demo sheet=5 index=146 ticks=493"
-                         },
-                  "310":  {
-                              "height":  0.00600000005215406
-                          },
-                  "311":  {
-                              "height":  0.00600000005215406
-                          },
-                  "312":  {
-                              "height":  0.00600000005215406
-                          },
-                  "313":  {
-                              "height":  0.0031999999191612
-                          },
-                  "314":  {
-                              "height":  0.0031999999191612
-                          },
-                  "315":  {
-                              "height":  0.0031999999191612
-                          },
-                  "316":  {
-                              "height":  0.0031999999191612
-                          },
-                  "317":  {
-                              "class":  "air-mid"
-                          },
-                  "318":  {
-                              "class":  "air-mid"
-                          },
-                  "319":  {
-                              "class":  "air-mid"
-                          },
-                  "32":  {
-                             "height":  0.0315000005066395,
-                             "seen":  "demo sheet=5 index=292 ticks=1395"
-                         },
-                  "320":  {
-                              "class":  "air-mid"
-                          },
-                  "321":  {
-                              "class":  "air-mid"
-                          },
-                  "322":  {
-                              "class":  "air-mid"
-                          },
-                  "323":  {
-                              "class":  "air-mid"
-                          },
-                  "324":  {
-                              "class":  "air-mid"
-                          },
-                  "325":  {
-                              "height":  0.0031999999191612
-                          },
-                  "326":  {
-                              "height":  0.0052000000141561
-                          },
-                  "327":  {
-                              "height":  0.0052000000141561
-                          },
-                  "328":  {
-                              "height":  0.0052000000141561
-                          },
-                  "329":  {
-                              "height":  0.0052000000141561
-                          },
-                  "33":  {
-                             "height":  0.0315000005066395,
-                             "seen":  "demo sheet=5 index=294 ticks=735"
-                         },
-                  "330":  {
-                              "height":  0.0052000000141561
-                          },
-                  "331":  {
-                              "height":  0.0052000000141561
-                          },
-                  "332":  {
-                              "class":  "ground"
-                          },
-                  "333":  {
-                              "class":  "ground"
-                          },
-                  "334":  {
-                              "class":  "ground"
-                          },
-                  "335":  {
-                              "class":  "ground"
-                          },
-                  "336":  {
-                              "class":  "ground"
-                          },
-                  "337":  {
-                              "class":  "ground"
-                          },
-                  "338":  {
-                              "height":  0.0031999999191612
-                          },
-                  "339":  {
-                              "height":  0.0031999999191612
-                          },
-                  "34":  {
-                             "height":  0.0315000005066395,
-                             "seen":  "demo sheet=5 index=296 ticks=1300"
-                         },
-                  "340":  {
-                              "height":  0.0031999999191612
-                          },
-                  "341":  {
-                              "height":  0.0031999999191612
-                          },
-                  "342":  {
-                              "height":  0.0031999999191612
-                          },
-                  "343":  {
-                              "height":  0.0052000000141561
-                          },
-                  "344":  {
-                              "height":  0.0052000000141561
-                          },
-                  "345":  {
-                              "height":  0.0052000000141561
-                          },
-                  "346":  {
-                              "height":  0.0052000000141561
-                          },
-                  "347":  {
-                              "height":  0.0052000000141561
-                          },
-                  "348":  {
-                              "height":  0.0052000000141561
-                          },
-                  "349":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=30 ticks=83"
-                          },
-                  "35":  {
-                             "height":  0.0315000005066395,
-                             "seen":  "demo sheet=5 index=298 ticks=1524"
-                         },
-                  "350":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=32 ticks=83"
-                          },
-                  "351":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=58 ticks=116"
-                          },
-                  "352":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=60 ticks=116"
-                          },
-                  "353":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=62 ticks=116"
-                          },
-                  "354":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=64 ticks=116"
-                          },
-                  "355":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=96 ticks=162"
-                          },
-                  "356":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=98 ticks=162"
-                          },
-                  "357":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=100 ticks=162"
-                          },
-                  "358":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=102 ticks=162"
-                          },
-                  "359":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=134 ticks=208"
-                          },
-                  "36":  {
-                             "height":  0.0315000005066395,
-                             "seen":  "demo sheet=5 index=300 ticks=895"
-                         },
-                  "360":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=136 ticks=208"
-                          },
-                  "361":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=138 ticks=208"
-                          },
-                  "362":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=140 ticks=208"
-                          },
-                  "363":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=173 ticks=255"
-                          },
-                  "364":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=175 ticks=255"
-                          },
-                  "365":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=177 ticks=255"
-                          },
-                  "366":  {
-                              "class":  "air-mid"
-                          },
-                  "367":  {
-                              "class":  "air-mid"
-                          },
-                  "368":  {
-                              "class":  "air-mid"
-                          },
-                  "369":  {
-                              "class":  "air-mid"
-                          },
-                  "37":  {
-                             "height":  0.0315000005066395,
-                             "seen":  "demo sheet=5 index=302 ticks=1328"
-                         },
-                  "370":  {
-                              "class":  "air-mid"
-                          },
-                  "371":  {
-                              "class":  "air-mid"
-                          },
-                  "372":  {
-                              "class":  "air-mid"
-                          },
-                  "373":  {
-                              "class":  "air-mid"
-                          },
-                  "374":  {
-                              "class":  "air-mid"
-                          },
-                  "375":  {
-                              "class":  "air-mid"
-                          },
-                  "376":  {
-                              "class":  "air-mid"
-                          },
-                  "377":  {
-                              "class":  "air-mid"
-                          },
-                  "378":  {
-                              "class":  "air-mid"
-                          },
-                  "379":  {
-                              "class":  "air-mid"
-                          },
-                  "38":  {
-                             "height":  0.0315000005066395,
-                             "seen":  "demo sheet=5 index=264 ticks=368"
-                         },
-                  "380":  {
-                              "class":  "air-mid"
-                          },
-                  "381":  {
-                              "class":  "air-mid"
-                          },
-                  "382":  {
-                              "class":  "air-mid"
-                          },
-                  "383":  {
-                              "class":  "air-mid"
-                          },
-                  "384":  {
-                              "class":  "air-mid"
-                          },
-                  "385":  {
-                              "class":  "air-mid"
-                          },
-                  "386":  {
-                              "class":  "air-mid"
-                          },
-                  "387":  {
-                              "class":  "air-mid"
-                          },
-                  "388":  {
-                              "class":  "air-mid"
-                          },
-                  "389":  {
-                              "class":  "air-mid"
-                          },
-                  "39":  {
-                             "height":  0.0315000005066395,
-                             "seen":  "demo sheet=5 index=226 ticks=217"
-                         },
-                  "390":  {
-                              "class":  "pickup"
-                          },
-                  "391":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=255 index=7 ticks=2046"
-                          },
-                  "392":  {
-                              "class":  "pickup",
-                              "seen":  "demo sheet=255 index=31 ticks=151"
-                          },
-                  "393":  {
-                              "class":  "air-mid"
-                          },
-                  "394":  {
-                              "class":  "pickup",
-                              "seen":  "demo sheet=255 index=32 ticks=1245"
-                          },
-                  "395":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=255 index=14 ticks=28"
-                          },
-                  "396":  {
-                              "class":  "pickup"
-                          },
-                  "397":  {
-                              "class":  "air-mid"
-                          },
-                  "398":  {
-                              "class":  "pickup"
-                          },
-                  "399":  {
-                              "class":  "air-mid"
-                          },
-                  "4":  {
-                            "class":  "air-mid",
-                            "seen":  "demo sheet=5 index=180 ticks=2611"
-                        },
-                  "40":  {
-                             "height":  0.0315000005066395,
-                             "seen":  "demo sheet=5 index=172 ticks=1993"
-                         },
-                  "400":  {
-                              "class":  "ground"
-                          },
-                  "401":  {
-                              "class":  "ground"
-                          },
-                  "402":  {
-                              "class":  "ground"
-                          },
-                  "403":  {
-                              "class":  "ground"
-                          },
-                  "404":  {
-                              "class":  "ground"
-                          },
-                  "405":  {
-                              "class":  "ground"
-                          },
-                  "406":  {
-                              "class":  "ground"
-                          },
-                  "407":  {
-                              "class":  "ground"
-                          },
-                  "408":  {
-                              "class":  "ground"
-                          },
-                  "409":  {
-                              "class":  "ground"
-                          },
-                  "41":  {
-                             "height":  0.0315000005066395,
-                             "seen":  "demo sheet=5 index=188 ticks=415"
-                         },
-                  "410":  {
-                              "class":  "ground"
-                          },
-                  "411":  {
-                              "class":  "ground"
-                          },
-                  "412":  {
-                              "class":  "ground"
-                          },
-                  "413":  {
-                              "class":  "ground"
-                          },
-                  "414":  {
-                              "class":  "ground"
-                          },
-                  "415":  {
-                              "class":  "ground"
-                          },
-                  "416":  {
-                              "class":  "ground"
-                          },
-                  "417":  {
-                              "class":  "air-mid"
-                          },
-                  "418":  {
-                              "class":  "air-mid"
-                          },
-                  "419":  {
-                              "class":  "air-mid"
-                          },
-                  "42":  {
-                             "class":  "ground"
-                         },
-                  "420":  {
-                              "class":  "air-mid"
-                          },
-                  "421":  {
-                              "class":  "air-mid"
-                          },
-                  "422":  {
-                              "class":  "air-mid"
-                          },
-                  "423":  {
-                              "class":  "air-mid"
-                          },
-                  "424":  {
-                              "class":  "air-mid"
-                          },
-                  "425":  {
-                              "class":  "air-mid"
-                          },
-                  "426":  {
-                              "class":  "air-mid"
-                          },
-                  "427":  {
-                              "class":  "air-mid"
-                          },
-                  "428":  {
-                              "class":  "air-mid"
-                          },
-                  "429":  {
-                              "class":  "air-mid"
-                          },
-                  "43":  {
-                             "class":  "ground"
-                         },
-                  "430":  {
-                              "class":  "air-mid"
-                          },
-                  "431":  {
-                              "class":  "air-mid"
-                          },
-                  "432":  {
-                              "class":  "air-mid"
-                          },
-                  "433":  {
-                              "class":  "air-mid"
-                          },
-                  "434":  {
-                              "class":  "air-mid"
-                          },
-                  "435":  {
-                              "class":  "air-mid"
-                          },
-                  "436":  {
-                              "class":  "air-mid"
-                          },
-                  "437":  {
-                              "class":  "air-mid"
-                          },
-                  "438":  {
-                              "class":  "air-mid"
-                          },
-                  "439":  {
-                              "class":  "air-mid"
-                          },
-                  "44":  {
-                             "class":  "ground"
-                         },
-                  "440":  {
-                              "class":  "air-mid"
-                          },
-                  "441":  {
-                              "class":  "air-mid"
-                          },
-                  "442":  {
-                              "class":  "air-mid"
-                          },
-                  "443":  {
-                              "class":  "air-mid"
-                          },
-                  "444":  {
-                              "class":  "air-mid"
-                          },
-                  "445":  {
-                              "class":  "air-mid"
-                          },
-                  "446":  {
-                              "class":  "air-mid"
-                          },
-                  "447":  {
-                              "class":  "air-mid"
-                          },
-                  "448":  {
-                              "class":  "air-mid"
-                          },
-                  "449":  {
-                              "class":  "air-mid"
-                          },
-                  "45":  {
-                             "class":  "ground"
-                         },
-                  "450":  {
-                              "class":  "air-mid"
-                          },
-                  "451":  {
-                              "class":  "air-mid"
-                          },
-                  "452":  {
-                              "class":  "air-mid"
-                          },
-                  "453":  {
-                              "class":  "air-mid"
-                          },
-                  "454":  {
-                              "class":  "air-mid"
-                          },
-                  "455":  {
-                              "class":  "air-mid"
-                          },
-                  "456":  {
-                              "class":  "ground"
-                          },
-                  "457":  {
-                              "class":  "ground"
-                          },
-                  "458":  {
-                              "class":  "air-mid"
-                          },
-                  "459":  {
-                              "class":  "air-mid"
-                          },
-                  "46":  {
-                             "class":  "air-low"
-                         },
-                  "460":  {
-                              "class":  "air-mid"
-                          },
-                  "461":  {
-                              "class":  "air-mid"
-                          },
-                  "462":  {
-                              "class":  "air-mid"
-                          },
-                  "463":  {
-                              "class":  "air-mid"
-                          },
-                  "464":  {
-                              "class":  "air-mid"
-                          },
-                  "465":  {
-                              "class":  "air-mid"
-                          },
-                  "466":  {
-                              "class":  "air-mid"
-                          },
-                  "467":  {
-                              "class":  "air-mid"
-                          },
-                  "468":  {
-                              "class":  "mid-under",
-                              "seen":  "demo sheet=6 index=81 ticks=59"
-                          },
-                  "469":  {
-                              "class":  "mid-under",
-                              "seen":  "demo sheet=6 index=83 ticks=59"
-                          },
-                  "47":  {
-                             "class":  "air-low"
-                         },
-                  "470":  {
-                              "class":  "mid-under",
-                              "seen":  "demo sheet=6 index=85 ticks=59"
-                          },
-                  "471":  {
-                              "class":  "mid-under",
-                              "seen":  "demo sheet=6 index=119 ticks=62"
-                          },
-                  "472":  {
-                              "class":  "mid-under",
-                              "seen":  "demo sheet=6 index=121 ticks=62"
-                          },
-                  "473":  {
-                              "class":  "mid-under",
-                              "seen":  "demo sheet=6 index=123 ticks=62"
-                          },
-                  "474":  {
-                              "class":  "pickup"
-                          },
-                  "475":  {
-                              "class":  "pickup"
-                          },
-                  "476":  {
-                              "class":  "air-mid"
-                          },
-                  "477":  {
-                              "class":  "air-mid"
-                          },
-                  "478":  {
-                              "class":  "air-mid"
-                          },
-                  "479":  {
-                              "class":  "air-mid"
-                          },
-                  "48":  {
-                             "class":  "air-low"
-                         },
-                  "480":  {
-                              "class":  "air-mid"
-                          },
-                  "481":  {
-                              "class":  "air-mid"
-                          },
-                  "482":  {
-                              "class":  "air-mid"
-                          },
-                  "483":  {
-                              "class":  "air-mid"
-                          },
-                  "484":  {
-                              "class":  "air-mid"
-                          },
-                  "485":  {
-                              "class":  "air-mid"
-                          },
-                  "486":  {
-                              "class":  "air-mid"
-                          },
-                  "487":  {
-                              "class":  "air-mid"
-                          },
-                  "488":  {
-                              "class":  "air-mid"
-                          },
-                  "489":  {
-                              "class":  "air-mid"
-                          },
-                  "49":  {
-                             "class":  "air-low"
-                         },
-                  "490":  {
-                              "class":  "air-mid"
-                          },
-                  "491":  {
-                              "class":  "air-mid"
-                          },
-                  "492":  {
-                              "class":  "air-mid"
-                          },
-                  "493":  {
-                              "class":  "air-mid"
-                          },
-                  "494":  {
-                              "class":  "air-mid"
-                          },
-                  "495":  {
-                              "class":  "air-mid"
-                          },
-                  "496":  {
-                              "class":  "air-mid"
-                          },
-                  "497":  {
-                              "class":  "air-mid"
-                          },
-                  "498":  {
-                              "class":  "air-mid"
-                          },
-                  "499":  {
-                              "class":  "air-mid"
-                          },
-                  "5":  {
-                            "class":  "air-mid",
-                            "seen":  "demo sheet=5 index=241 ticks=2048"
-                        },
-                  "50":  {
-                             "class":  "air-low"
-                         },
-                  "500":  {
-                              "class":  "air-mid",
-                              "seen":  "demo sheet=5 index=188 ticks=879"
-                          },
-                  "501":  {
-                              "class":  "air-mid"
-                          },
-                  "502":  {
-                              "class":  "pickup"
-                          },
-                  "503":  {
-                              "class":  "air-mid"
-                          },
-                  "504":  {
-                              "class":  "pickup"
-                          },
-                  "505":  {
-                              "class":  "air-mid"
-                          },
-                  "506":  {
-                              "class":  "air-mid"
-                          },
-                  "507":  {
-                              "class":  "pickup"
-                          },
-                  "508":  {
-                              "class":  "pickup"
-                          },
-                  "509":  {
-                              "class":  "pickup"
-                          },
-                  "51":  {
-                             "class":  "air-low"
-                         },
-                  "510":  {
-                              "class":  "pickup"
-                          },
-                  "511":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=6 index=19 ticks=890"
-                          },
-                  "512":  {
-                              "class":  "air-mid"
-                          },
-                  "513":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=255 index=159 ticks=385"
-                          },
-                  "514":  {
-                              "class":  "air-mid"
-                          },
-                  "515":  {
-                              "class":  "air-mid"
-                          },
-                  "516":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=7 index=20 ticks=86"
-                          },
-                  "517":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=7 index=22 ticks=86"
-                          },
-                  "518":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=7 index=24 ticks=86"
-                          },
-                  "519":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=7 index=58 ticks=114"
-                          },
-                  "52":  {
-                             "class":  "air-low"
-                         },
-                  "520":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=7 index=60 ticks=114"
-                          },
-                  "521":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=7 index=62 ticks=114"
-                          },
-                  "522":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=7 index=20 ticks=217"
-                          },
-                  "523":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=7 index=22 ticks=217"
-                          },
-                  "524":  {
-                              "class":  "ground"
-                          },
-                  "525":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=7 index=58 ticks=217"
-                          },
-                  "526":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=7 index=60 ticks=217"
-                          },
-                  "527":  {
-                              "class":  "ground"
-                          },
-                  "528":  {
-                              "class":  "ground"
-                          },
-                  "529":  {
-                              "class":  "air-mid"
-                          },
-                  "53":  {
-                             "class":  "air-low"
-                         },
-                  "530":  {
-                              "class":  "air-mid"
-                          },
-                  "531":  {
-                              "class":  "air-mid"
-                          },
-                  "532":  {
-                              "class":  "air-mid"
-                          },
-                  "533":  {
-                              "class":  "air-mid"
-                          },
-                  "534":  {
-                              "class":  "air-mid"
-                          },
-                  "535":  {
-                              "class":  "air-mid"
-                          },
-                  "536":  {
-                              "class":  "ground"
-                          },
-                  "537":  {
-                              "class":  "ground"
-                          },
-                  "538":  {
-                              "class":  "ground"
-                          },
-                  "539":  {
-                              "class":  "ground"
-                          },
-                  "54":  {
-                             "class":  "air-low"
-                         },
-                  "540":  {
-                              "class":  "ground"
-                          },
-                  "541":  {
-                              "class":  "ground"
-                          },
-                  "542":  {
-                              "class":  "ground"
-                          },
-                  "543":  {
-                              "class":  "air-mid"
-                          },
-                  "544":  {
-                              "class":  "air-mid"
-                          },
-                  "545":  {
-                              "class":  "ground"
-                          },
-                  "546":  {
-                              "height":  0.0052000000141561
-                          },
-                  "547":  {
-                              "height":  0.0052000000141561
-                          },
-                  "548":  {
-                              "height":  0.0052000000141561
-                          },
-                  "549":  {
-                              "height":  0.0052000000141561
-                          },
-                  "55":  {
-                             "class":  "air-low"
-                         },
-                  "550":  {
-                              "height":  0.00999999977648258
-                          },
-                  "551":  {
-                              "class":  "air-mid"
-                          },
-                  "552":  {
-                              "class":  "ground"
-                          },
-                  "553":  {
-                              "class":  "ground"
-                          },
-                  "554":  {
-                              "class":  "air-mid"
-                          },
-                  "555":  {
-                              "class":  "air-mid"
-                          },
-                  "556":  {
-                              "class":  "air-mid"
-                          },
-                  "557":  {
-                              "class":  "air-mid"
-                          },
-                  "558":  {
-                              "class":  "air-mid"
-                          },
-                  "559":  {
-                              "class":  "ground"
-                          },
-                  "56":  {
-                             "class":  "air-low"
-                         },
-                  "560":  {
-                              "class":  "ground"
-                          },
-                  "561":  {
-                              "class":  "air-mid"
-                          },
-                  "562":  {
-                              "class":  "air-mid"
-                          },
-                  "563":  {
-                              "class":  "air-mid"
-                          },
-                  "564":  {
-                              "class":  "air-mid"
-                          },
-                  "565":  {
-                              "class":  "air-mid"
-                          },
-                  "566":  {
-                              "class":  "air-mid"
-                          },
-                  "567":  {
-                              "class":  "air-mid"
-                          },
-                  "568":  {
-                              "class":  "ground"
-                          },
-                  "569":  {
-                              "class":  "ground"
-                          },
-                  "57":  {
-                             "class":  "air-low"
-                         },
-                  "570":  {
-                              "class":  "ground"
-                          },
-                  "571":  {
-                              "class":  "ground"
-                          },
-                  "572":  {
-                              "class":  "ground"
-                          },
-                  "573":  {
-                              "height":  0.0031999999191612
-                          },
-                  "574":  {
-                              "height":  0.0031999999191612
-                          },
-                  "575":  {
-                              "height":  0.0031999999191612
-                          },
-                  "576":  {
-                              "height":  0.0031999999191612
-                          },
-                  "577":  {
-                              "class":  "air-mid"
-                          },
-                  "578":  {
-                              "class":  "air-mid"
-                          },
-                  "579":  {
-                              "class":  "air-mid"
-                          },
-                  "58":  {
-                             "class":  "air-low"
-                         },
-                  "580":  {
-                              "class":  "air-mid"
-                          },
-                  "581":  {
-                              "class":  "air-mid"
-                          },
-                  "582":  {
-                              "class":  "air-mid"
-                          },
-                  "583":  {
-                              "class":  "air-mid"
-                          },
-                  "584":  {
-                              "class":  "air-mid"
-                          },
-                  "585":  {
-                              "class":  "air-mid"
-                          },
-                  "586":  {
-                              "class":  "air-mid"
-                          },
-                  "587":  {
-                              "class":  "air-mid"
-                          },
-                  "588":  {
-                              "class":  "air-mid"
-                          },
-                  "589":  {
-                              "class":  "air-mid"
-                          },
-                  "59":  {
-                             "class":  "air-low"
-                         },
-                  "590":  {
-                              "class":  "air-mid"
-                          },
-                  "591":  {
-                              "class":  "air-mid"
-                          },
-                  "592":  {
-                              "class":  "air-mid"
-                          },
-                  "593":  {
-                              "class":  "air-mid"
-                          },
-                  "594":  {
-                              "class":  "air-mid"
-                          },
-                  "595":  {
-                              "class":  "air-mid"
-                          },
-                  "596":  {
-                              "class":  "air-mid"
-                          },
-                  "597":  {
-                              "class":  "ground"
-                          },
-                  "598":  {
-                              "class":  "air-mid"
-                          },
-                  "599":  {
-                              "class":  "air-mid"
-                          },
-                  "6":  {
-                            "class":  "air-mid"
-                        },
-                  "60":  {
-                             "class":  "air-low"
-                         },
-                  "600":  {
-                              "class":  "air-mid"
-                          },
-                  "601":  {
-                              "class":  "air-mid"
-                          },
-                  "602":  {
-                              "class":  "air-mid"
-                          },
-                  "603":  {
-                              "class":  "air-mid"
-                          },
-                  "604":  {
-                              "class":  "air-mid"
-                          },
-                  "605":  {
-                              "class":  "air-mid"
-                          },
-                  "606":  {
-                              "class":  "air-mid"
-                          },
-                  "607":  {
-                              "class":  "air-mid"
-                          },
-                  "608":  {
-                              "class":  "air-mid"
-                          },
-                  "609":  {
-                              "class":  "air-mid"
-                          },
-                  "61":  {
-                             "class":  "air-low"
-                         },
-                  "610":  {
-                              "class":  "air-mid"
-                          },
-                  "611":  {
-                              "class":  "air-mid"
-                          },
-                  "612":  {
-                              "class":  "air-mid"
-                          },
-                  "613":  {
-                              "class":  "air-mid"
-                          },
-                  "614":  {
-                              "class":  "air-mid"
-                          },
-                  "615":  {
-                              "class":  "air-mid"
-                          },
-                  "616":  {
-                              "class":  "air-mid"
-                          },
-                  "617":  {
-                              "class":  "air-mid"
-                          },
-                  "618":  {
-                              "class":  "air-mid"
-                          },
-                  "619":  {
-                              "class":  "air-mid"
-                          },
-                  "62":  {
-                             "class":  "air-low"
-                         },
-                  "620":  {
-                              "class":  "air-mid"
-                          },
-                  "621":  {
-                              "class":  "air-mid"
-                          },
-                  "622":  {
-                              "class":  "air-mid"
-                          },
-                  "623":  {
-                              "class":  "air-mid"
-                          },
-                  "624":  {
-                              "class":  "air-mid"
-                          },
-                  "625":  {
-                              "class":  "air-mid"
-                          },
-                  "626":  {
-                              "class":  "air-mid"
-                          },
-                  "627":  {
-                              "class":  "air-mid"
-                          },
-                  "628":  {
-                              "class":  "air-mid"
-                          },
-                  "629":  {
-                              "class":  "air-mid"
-                          },
-                  "63":  {
-                             "class":  "air-low"
-                         },
-                  "630":  {
-                              "class":  "air-mid"
-                          },
-                  "631":  {
-                              "class":  "air-mid"
-                          },
-                  "632":  {
-                              "class":  "air-mid"
-                          },
-                  "633":  {
-                              "class":  "air-mid"
-                          },
-                  "634":  {
-                              "class":  "air-mid"
-                          },
-                  "635":  {
-                              "class":  "air-mid"
-                          },
-                  "636":  {
-                              "class":  "air-mid"
-                          },
-                  "637":  {
-                              "class":  "air-mid"
-                          },
-                  "638":  {
-                              "class":  "air-mid"
-                          },
-                  "639":  {
-                              "class":  "air-mid"
-                          },
-                  "64":  {
-                             "class":  "air-low"
-                         },
-                  "640":  {
-                              "class":  "air-mid"
-                          },
-                  "641":  {
-                              "class":  "air-mid"
-                          },
-                  "642":  {
-                              "class":  "air-mid"
-                          },
-                  "643":  {
-                              "class":  "air-mid"
-                          },
-                  "644":  {
-                              "class":  "air-mid"
-                          },
-                  "645":  {
-                              "class":  "air-mid"
-                          },
-                  "646":  {
-                              "class":  "air-mid"
-                          },
-                  "647":  {
-                              "class":  "air-mid"
-                          },
-                  "648":  {
-                              "class":  "air-mid"
-                          },
-                  "649":  {
-                              "class":  "air-mid"
-                          },
-                  "65":  {
-                             "class":  "air-low"
-                         },
-                  "650":  {
-                              "class":  "air-mid"
-                          },
-                  "651":  {
-                              "class":  "air-mid"
-                          },
-                  "652":  {
-                              "class":  "air-mid"
-                          },
-                  "653":  {
-                              "class":  "air-mid"
-                          },
-                  "654":  {
-                              "class":  "air-mid"
-                          },
-                  "655":  {
-                              "class":  "air-mid"
-                          },
-                  "656":  {
-                              "class":  "air-mid"
-                          },
-                  "657":  {
-                              "class":  "air-mid"
-                          },
-                  "658":  {
-                              "class":  "air-mid"
-                          },
-                  "659":  {
-                              "class":  "air-mid"
-                          },
-                  "66":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=172 ticks=122"
-                         },
-                  "660":  {
-                              "class":  "air-mid"
-                          },
-                  "661":  {
-                              "class":  "air-mid"
-                          },
-                  "662":  {
-                              "class":  "air-mid"
-                          },
-                  "663":  {
-                              "class":  "air-mid"
-                          },
-                  "664":  {
-                              "class":  "air-mid"
-                          },
-                  "665":  {
-                              "class":  "air-mid"
-                          },
-                  "666":  {
-                              "class":  "air-mid"
-                          },
-                  "667":  {
-                              "class":  "air-mid"
-                          },
-                  "668":  {
-                              "class":  "air-mid"
-                          },
-                  "669":  {
-                              "class":  "air-mid"
-                          },
-                  "67":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=174 ticks=129"
-                         },
-                  "670":  {
-                              "class":  "air-mid"
-                          },
-                  "671":  {
-                              "class":  "air-mid"
-                          },
-                  "672":  {
-                              "class":  "air-mid"
-                          },
-                  "673":  {
-                              "class":  "air-mid"
-                          },
-                  "674":  {
-                              "class":  "air-mid"
-                          },
-                  "675":  {
-                              "class":  "air-mid"
-                          },
-                  "676":  {
-                              "class":  "air-mid"
-                          },
-                  "677":  {
-                              "class":  "air-mid"
-                          },
-                  "678":  {
-                              "class":  "air-mid"
-                          },
-                  "679":  {
-                              "class":  "air-mid"
-                          },
-                  "68":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=176 ticks=136"
-                         },
-                  "680":  {
-                              "class":  "air-mid"
-                          },
-                  "681":  {
-                              "class":  "air-mid"
-                          },
-                  "682":  {
-                              "class":  "air-mid"
-                          },
-                  "683":  {
-                              "class":  "air-mid"
-                          },
-                  "684":  {
-                              "class":  "air-mid"
-                          },
-                  "685":  {
-                              "class":  "air-mid"
-                          },
-                  "686":  {
-                              "class":  "air-mid"
-                          },
-                  "687":  {
-                              "class":  "air-mid"
-                          },
-                  "688":  {
-                              "class":  "air-mid"
-                          },
-                  "689":  {
-                              "class":  "air-mid"
-                          },
-                  "69":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=178 ticks=141"
-                         },
-                  "690":  {
-                              "class":  "air-mid"
-                          },
-                  "691":  {
-                              "class":  "air-mid"
-                          },
-                  "692":  {
-                              "class":  "air-mid"
-                          },
-                  "693":  {
-                              "class":  "air-mid"
-                          },
-                  "694":  {
-                              "class":  "air-mid"
-                          },
-                  "695":  {
-                              "class":  "air-mid"
-                          },
-                  "696":  {
-                              "class":  "air-mid"
-                          },
-                  "697":  {
-                              "class":  "air-mid"
-                          },
-                  "698":  {
-                              "class":  "air-mid"
-                          },
-                  "699":  {
-                              "class":  "air-mid"
-                          },
-                  "7":  {
-                            "class":  "air-mid"
-                        },
-                  "70":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=210 ticks=145"
-                         },
-                  "700":  {
-                              "class":  "air-mid"
-                          },
-                  "701":  {
-                              "class":  "air-mid"
-                          },
-                  "702":  {
-                              "class":  "air-mid"
-                          },
-                  "703":  {
-                              "class":  "air-mid"
-                          },
-                  "704":  {
-                              "class":  "air-mid"
-                          },
-                  "705":  {
-                              "class":  "air-mid"
-                          },
-                  "706":  {
-                              "class":  "air-mid"
-                          },
-                  "707":  {
-                              "class":  "air-mid"
-                          },
-                  "708":  {
-                              "class":  "air-mid"
-                          },
-                  "709":  {
-                              "class":  "air-mid"
-                          },
-                  "71":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=212 ticks=149"
-                         },
-                  "710":  {
-                              "class":  "air-mid"
-                          },
-                  "711":  {
-                              "class":  "air-mid"
-                          },
-                  "712":  {
-                              "class":  "air-mid"
-                          },
-                  "713":  {
-                              "class":  "air-mid"
-                          },
-                  "714":  {
-                              "class":  "air-mid"
-                          },
-                  "715":  {
-                              "class":  "air-mid"
-                          },
-                  "716":  {
-                              "class":  "air-mid"
-                          },
-                  "717":  {
-                              "class":  "air-mid"
-                          },
-                  "718":  {
-                              "class":  "air-mid"
-                          },
-                  "719":  {
-                              "class":  "air-mid"
-                          },
-                  "72":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=214 ticks=152"
-                         },
-                  "720":  {
-                              "class":  "air-mid"
-                          },
-                  "721":  {
-                              "class":  "air-mid"
-                          },
-                  "722":  {
-                              "class":  "air-mid"
-                          },
-                  "723":  {
-                              "class":  "air-mid"
-                          },
-                  "724":  {
-                              "class":  "air-mid"
-                          },
-                  "725":  {
-                              "class":  "air-mid"
-                          },
-                  "726":  {
-                              "class":  "air-mid"
-                          },
-                  "727":  {
-                              "class":  "air-mid"
-                          },
-                  "728":  {
-                              "class":  "air-mid"
-                          },
-                  "729":  {
-                              "class":  "air-mid"
-                          },
-                  "73":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=250 ticks=168"
-                         },
-                  "730":  {
-                              "class":  "air-mid"
-                          },
-                  "731":  {
-                              "class":  "air-mid"
-                          },
-                  "732":  {
-                              "class":  "air-mid"
-                          },
-                  "733":  {
-                              "class":  "air-mid"
-                          },
-                  "734":  {
-                              "class":  "air-mid"
-                          },
-                  "735":  {
-                              "class":  "air-mid"
-                          },
-                  "736":  {
-                              "class":  "air-mid"
-                          },
-                  "737":  {
-                              "class":  "air-mid"
-                          },
-                  "738":  {
-                              "class":  "air-mid"
-                          },
-                  "739":  {
-                              "class":  "ground"
-                          },
-                  "74":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=252 ticks=162"
-                         },
-                  "740":  {
-                              "class":  "ground"
-                          },
-                  "741":  {
-                              "class":  "ground"
-                          },
-                  "742":  {
-                              "class":  "ground"
-                          },
-                  "743":  {
-                              "class":  "ground"
-                          },
-                  "744":  {
-                              "class":  "ground"
-                          },
-                  "745":  {
-                              "class":  "ground"
-                          },
-                  "746":  {
-                              "class":  "ground"
-                          },
-                  "747":  {
-                              "class":  "ground"
-                          },
-                  "748":  {
-                              "class":  "ground"
-                          },
-                  "749":  {
-                              "class":  "ground"
-                          },
-                  "75":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=254 ticks=158"
-                         },
-                  "750":  {
-                              "class":  "ground"
-                          },
-                  "751":  {
-                              "class":  "ground"
-                          },
-                  "752":  {
-                              "class":  "air-mid"
-                          },
-                  "753":  {
-                              "class":  "ground"
-                          },
-                  "754":  {
-                              "class":  "ground"
-                          },
-                  "755":  {
-                              "class":  "air-mid"
-                          },
-                  "756":  {
-                              "class":  "ground"
-                          },
-                  "757":  {
-                              "class":  "ground"
-                          },
-                  "758":  {
-                              "class":  "ground"
-                          },
-                  "759":  {
-                              "class":  "ground"
-                          },
-                  "76":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=286 ticks=152"
-                         },
-                  "760":  {
-                              "class":  "air-mid"
-                          },
-                  "761":  {
-                              "class":  "air-mid"
-                          },
-                  "762":  {
-                              "class":  "air-mid"
-                          },
-                  "763":  {
-                              "class":  "ground"
-                          },
-                  "764":  {
-                              "class":  "ground"
-                          },
-                  "765":  {
-                              "class":  "ground"
-                          },
-                  "766":  {
-                              "class":  "ground"
-                          },
-                  "767":  {
-                              "class":  "air-mid"
-                          },
-                  "768":  {
-                              "class":  "ground"
-                          },
-                  "769":  {
-                              "class":  "ground"
-                          },
-                  "77":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=288 ticks=147"
-                         },
-                  "770":  {
-                              "class":  "ground"
-                          },
-                  "771":  {
-                              "class":  "ground"
-                          },
-                  "772":  {
-                              "class":  "air-mid"
-                          },
-                  "773":  {
-                              "class":  "air-mid"
-                          },
-                  "774":  {
-                              "class":  "air-mid"
-                          },
-                  "775":  {
-                              "class":  "air-mid"
-                          },
-                  "776":  {
-                              "class":  "air-mid"
-                          },
-                  "777":  {
-                              "class":  "air-mid"
-                          },
-                  "778":  {
-                              "class":  "air-mid"
-                          },
-                  "779":  {
-                              "class":  "air-mid"
-                          },
-                  "78":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=290 ticks=142"
-                         },
-                  "780":  {
-                              "class":  "air-mid"
-                          },
-                  "781":  {
-                              "class":  "air-mid"
-                          },
-                  "782":  {
-                              "class":  "air-mid"
-                          },
-                  "783":  {
-                              "class":  "air-mid"
-                          },
-                  "784":  {
-                              "class":  "air-mid"
-                          },
-                  "785":  {
-                              "class":  "air-mid"
-                          },
-                  "786":  {
-                              "class":  "air-mid"
-                          },
-                  "787":  {
-                              "class":  "air-mid"
-                          },
-                  "788":  {
-                              "class":  "air-mid"
-                          },
-                  "789":  {
-                              "class":  "air-mid"
-                          },
-                  "79":  {
-                             "class":  "platform-under",
-                             "seen":  "demo sheet=6 index=292 ticks=135"
-                         },
-                  "790":  {
-                              "class":  "air-mid"
-                          },
-                  "791":  {
-                              "class":  "air-mid"
-                          },
-                  "792":  {
-                              "class":  "air-mid"
-                          },
-                  "793":  {
-                              "class":  "air-mid"
-                          },
-                  "794":  {
-                              "class":  "air-mid"
-                          },
-                  "795":  {
-                              "class":  "air-mid"
-                          },
-                  "796":  {
-                              "class":  "air-mid"
-                          },
-                  "797":  {
-                              "class":  "air-mid"
-                          },
-                  "798":  {
-                              "class":  "air-mid"
-                          },
-                  "799":  {
-                              "class":  "air-mid"
-                          },
-                  "8":  {
-                            "class":  "air-mid"
-                        },
-                  "80":  {
-                             "class":  "ground"
-                         },
-                  "800":  {
-                              "class":  "air-mid"
-                          },
-                  "801":  {
-                              "class":  "air-mid"
-                          },
-                  "802":  {
-                              "class":  "air-mid"
-                          },
-                  "803":  {
-                              "class":  "air-mid"
-                          },
-                  "804":  {
-                              "class":  "air-mid"
-                          },
-                  "805":  {
-                              "class":  "air-mid"
-                          },
-                  "806":  {
-                              "class":  "air-mid"
-                          },
-                  "807":  {
-                              "class":  "air-mid"
-                          },
-                  "808":  {
-                              "class":  "air-mid"
-                          },
-                  "809":  {
-                              "class":  "air-mid"
-                          },
-                  "81":  {
-                             "class":  "ground"
-                         },
-                  "810":  {
-                              "class":  "air-mid"
-                          },
-                  "811":  {
-                              "class":  "air-mid"
-                          },
-                  "812":  {
-                              "class":  "air-mid"
-                          },
-                  "813":  {
-                              "class":  "air-mid"
-                          },
-                  "814":  {
-                              "class":  "air-mid"
-                          },
-                  "815":  {
-                              "class":  "air-mid"
-                          },
-                  "816":  {
-                              "class":  "air-mid"
-                          },
-                  "817":  {
-                              "class":  "air-mid"
-                          },
-                  "818":  {
-                              "class":  "air-mid"
-                          },
-                  "819":  {
-                              "class":  "ground"
-                          },
-                  "82":  {
-                             "class":  "ground"
-                         },
-                  "820":  {
-                              "class":  "ground"
-                          },
-                  "821":  {
-                              "class":  "ground"
-                          },
-                  "822":  {
-                              "class":  "air-mid"
-                          },
-                  "823":  {
-                              "class":  "air-mid"
-                          },
-                  "824":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=5 index=22 ticks=570"
-                          },
-                  "825":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=5 index=3 ticks=50"
-                          },
-                  "826":  {
-                              "class":  "air-mid"
-                          },
-                  "827":  {
-                              "class":  "air-mid"
-                          },
-                  "828":  {
-                              "class":  "air-mid"
-                          },
-                  "829":  {
-                              "class":  "air-mid"
-                          },
-                  "83":  {
-                             "class":  "ground"
-                         },
-                  "830":  {
-                              "class":  "air-mid"
-                          },
-                  "831":  {
-                              "class":  "air-mid"
-                          },
-                  "832":  {
-                              "class":  "air-mid"
-                          },
-                  "833":  {
-                              "class":  "air-mid"
-                          },
-                  "834":  {
-                              "class":  "air-mid"
-                          },
-                  "835":  {
-                              "class":  "air-mid"
-                          },
-                  "836":  {
-                              "class":  "air-mid"
-                          },
-                  "837":  {
-                              "class":  "air-mid"
-                          },
-                  "838":  {
-                              "class":  "ground"
-                          },
-                  "839":  {
-                              "class":  "air-mid"
-                          },
-                  "84":  {
-                             "class":  "ground"
-                         },
-                  "840":  {
-                              "class":  "ground"
-                          },
-                  "841":  {
-                              "class":  "air-mid"
-                          },
-                  "842":  {
-                              "class":  "ground"
-                          },
-                  "843":  {
-                              "class":  "ground",
-                              "seen":  "demo sheet=8 index=85 ticks=15"
-                          },
-                  "844":  {
-                              "class":  "air-mid"
-                          },
-                  "845":  {
-                              "class":  "air-mid"
-                          },
-                  "846":  {
-                              "class":  "air-mid"
-                          },
-                  "847":  {
-                              "class":  "air-mid"
-                          },
-                  "848":  {
-                              "class":  "air-mid"
-                          },
-                  "849":  {
-                              "class":  "air-mid"
-                          },
-                  "85":  {
-                             "class":  "ground"
-                         },
-                  "850":  {
-                              "class":  "air-mid"
-                          },
-                  "86":  {
-                             "class":  "ground"
-                         },
-                  "87":  {
-                             "class":  "ground"
-                         },
-                  "88":  {
-                             "class":  "ground"
-                         },
-                  "89":  {
-                             "class":  "ground"
-                         },
-                  "9":  {
-                            "class":  "air-mid"
-                        },
-                  "90":  {
-                             "class":  "ground"
-                         },
-                  "91":  {
-                             "class":  "air-mid"
-                         },
-                  "92":  {
-                             "class":  "air-mid"
-                         },
-                  "93":  {
-                             "class":  "air-mid"
-                         },
-                  "94":  {
-                             "class":  "air-mid"
-                         },
-                  "95":  {
-                             "class":  "air-mid"
-                         },
-                  "96":  {
-                             "class":  "air-mid"
-                         },
-                  "97":  {
-                             "class":  "air-mid"
-                         },
-                  "98":  {
-                             "class":  "air-mid"
-                         },
-                  "99":  {
-                             "class":  "air-mid"
-                         }
-              }
+  "_comment": "Stage B hover heights, first pass (episode 1). class: ground (rides the surface beneath, +offset), pickup, air-low, air-mid, air-high, or an explicit {height: <lane Z>}. Unlisted types keep the legacy category band. Edit freely; the host reloads at level start.",
+  "classes": {
+    "air-high": 0.038,
+    "air-low": 0.033,
+    "air-mid": 0.0355,
+    "ground": 0.004,
+    "mid-under": 0.012,
+    "over-top": 0.075,
+    "pickup": 0.04,
+    "platform-under": 0.0285,
+    "water-clouds": 0.0120000001043081
+  },
+  "types": {
+    "0": {
+      "class": "air-mid"
+    },
+    "1": {
+      "class": "air-mid"
+    },
+    "10": {
+      "class": "air-mid"
+    },
+    "100": {
+      "class": "air-mid"
+    },
+    "101": {
+      "class": "air-mid"
+    },
+    "102": {
+      "class": "air-mid"
+    },
+    "103": {
+      "class": "air-mid"
+    },
+    "104": {
+      "class": "air-mid"
+    },
+    "105": {
+      "class": "air-mid"
+    },
+    "106": {
+      "class": "air-mid"
+    },
+    "107": {
+      "class": "air-mid"
+    },
+    "108": {
+      "class": "air-mid"
+    },
+    "109": {
+      "class": "air-mid"
+    },
+    "11": {
+      "class": "air-mid"
+    },
+    "110": {
+      "class": "air-mid"
+    },
+    "111": {
+      "class": "air-mid"
+    },
+    "112": {
+      "class": "air-mid"
+    },
+    "113": {
+      "class": "air-mid"
+    },
+    "114": {
+      "class": "air-mid"
+    },
+    "115": {
+      "class": "air-mid"
+    },
+    "116": {
+      "class": "air-mid"
+    },
+    "117": {
+      "class": "air-mid"
+    },
+    "118": {
+      "class": "air-mid"
+    },
+    "119": {
+      "class": "air-mid"
+    },
+    "12": {
+      "class": "air-mid"
+    },
+    "120": {
+      "class": "air-mid"
+    },
+    "121": {
+      "class": "ground",
+      "seen": "demo sheet=5 index=115 ticks=30"
+    },
+    "122": {
+      "class": "ground",
+      "seen": "demo sheet=5 index=117 ticks=30"
+    },
+    "123": {
+      "class": "ground",
+      "seen": "demo sheet=5 index=77 ticks=58"
+    },
+    "124": {
+      "class": "ground",
+      "seen": "demo sheet=5 index=79 ticks=58"
+    },
+    "125": {
+      "class": "ground"
+    },
+    "126": {
+      "class": "ground"
+    },
+    "127": {
+      "class": "ground"
+    },
+    "128": {
+      "class": "ground"
+    },
+    "129": {
+      "class": "air-mid"
+    },
+    "13": {
+      "class": "air-mid"
+    },
+    "130": {
+      "class": "air-mid"
+    },
+    "131": {
+      "class": "air-mid"
+    },
+    "132": {
+      "class": "air-mid"
+    },
+    "133": {
+      "class": "air-mid"
+    },
+    "134": {
+      "class": "air-mid"
+    },
+    "135": {
+      "class": "air-mid"
+    },
+    "136": {
+      "class": "air-mid"
+    },
+    "137": {
+      "class": "air-mid"
+    },
+    "138": {
+      "class": "air-mid"
+    },
+    "139": {
+      "class": "air-mid"
+    },
+    "14": {
+      "class": "air-mid"
+    },
+    "140": {
+      "class": "air-mid"
+    },
+    "141": {
+      "class": "air-mid"
+    },
+    "142": {
+      "class": "ground"
+    },
+    "143": {
+      "class": "ground"
+    },
+    "144": {
+      "class": "air-mid"
+    },
+    "145": {
+      "class": "ground"
+    },
+    "146": {
+      "class": "ground"
+    },
+    "147": {
+      "class": "air-mid"
+    },
+    "148": {
+      "class": "air-mid"
+    },
+    "149": {
+      "class": "air-mid"
+    },
+    "15": {
+      "height": 0.033500000834465,
+      "seen": "demo sheet=5 index=58 ticks=1037"
+    },
+    "150": {
+      "class": "air-mid"
+    },
+    "151": {
+      "class": "air-mid"
+    },
+    "152": {
+      "class": "air-mid"
+    },
+    "153": {
+      "class": "ground"
+    },
+    "154": {
+      "class": "ground"
+    },
+    "155": {
+      "class": "ground"
+    },
+    "156": {
+      "class": "ground"
+    },
+    "157": {
+      "class": "ground"
+    },
+    "158": {
+      "class": "ground"
+    },
+    "159": {
+      "class": "ground"
+    },
+    "16": {
+      "class": "air-mid"
+    },
+    "160": {
+      "class": "ground"
+    },
+    "161": {
+      "class": "ground"
+    },
+    "162": {
+      "class": "ground",
+      "seen": "demo sheet=5 index=58 ticks=1729"
+    },
+    "163": {
+      "class": "air-mid",
+      "seen": "demo sheet=5 index=144 ticks=159"
+    },
+    "164": {
+      "class": "pickup",
+      "seen": "demo sheet=5 index=30 ticks=959"
+    },
+    "165": {
+      "class": "air-mid"
+    },
+    "166": {
+      "class": "ground",
+      "seen": "demo sheet=5 index=106 ticks=441"
+    },
+    "167": {
+      "class": "ground",
+      "seen": "demo sheet=5 index=22 ticks=705"
+    },
+    "168": {
+      "class": "air-mid"
+    },
+    "169": {
+      "class": "ground",
+      "seen": "demo sheet=5 index=98 ticks=125"
+    },
+    "17": {
+      "class": "air-mid",
+      "seen": "demo sheet=5 index=286 ticks=531"
+    },
+    "170": {
+      "class": "air-mid"
+    },
+    "171": {
+      "class": "ground"
+    },
+    "172": {
+      "class": "ground"
+    },
+    "173": {
+      "class": "ground"
+    },
+    "174": {
+      "class": "air-mid"
+    },
+    "175": {
+      "class": "air-mid"
+    },
+    "176": {
+      "class": "air-mid"
+    },
+    "177": {
+      "class": "air-mid"
+    },
+    "178": {
+      "class": "air-mid"
+    },
+    "179": {
+      "class": "air-mid"
+    },
+    "18": {
+      "class": "pickup",
+      "seen": "demo sheet=5 index=26 ticks=155"
+    },
+    "180": {
+      "class": "air-mid"
+    },
+    "181": {
+      "class": "air-mid"
+    },
+    "182": {
+      "class": "air-mid"
+    },
+    "183": {
+      "class": "air-mid"
+    },
+    "184": {
+      "class": "air-mid"
+    },
+    "185": {
+      "class": "air-mid"
+    },
+    "186": {
+      "class": "air-mid"
+    },
+    "187": {
+      "class": "air-mid"
+    },
+    "188": {
+      "class": "air-mid"
+    },
+    "189": {
+      "class": "air-mid"
+    },
+    "19": {
+      "class": "pickup",
+      "seen": "demo sheet=5 index=28 ticks=630"
+    },
+    "190": {
+      "class": "air-mid"
+    },
+    "191": {
+      "class": "air-mid"
+    },
+    "192": {
+      "class": "air-mid"
+    },
+    "193": {
+      "class": "air-mid"
+    },
+    "194": {
+      "height": 0.0031999999191612
+    },
+    "195": {
+      "class": "air-mid"
+    },
+    "196": {
+      "class": "air-mid"
+    },
+    "197": {
+      "height": 0.00060000002849847
+    },
+    "198": {
+      "class": "ground"
+    },
+    "199": {
+      "class": "air-mid"
+    },
+    "2": {
+      "class": "air-mid"
+    },
+    "20": {
+      "class": "ground",
+      "seen": "demo sheet=5 index=30 ticks=52"
+    },
+    "200": {
+      "class": "air-mid"
+    },
+    "201": {
+      "class": "air-mid"
+    },
+    "202": {
+      "class": "air-mid"
+    },
+    "203": {
+      "class": "air-mid"
+    },
+    "204": {
+      "class": "air-mid"
+    },
+    "205": {
+      "class": "air-mid"
+    },
+    "206": {
+      "class": "air-mid"
+    },
+    "207": {
+      "class": "air-mid"
+    },
+    "208": {
+      "class": "air-mid"
+    },
+    "209": {
+      "class": "air-mid"
+    },
+    "21": {
+      "class": "pickup",
+      "seen": "demo sheet=5 index=24 ticks=161"
+    },
+    "210": {
+      "class": "air-mid"
+    },
+    "211": {
+      "class": "air-mid"
+    },
+    "212": {
+      "class": "air-mid"
+    },
+    "213": {
+      "class": "air-mid"
+    },
+    "214": {
+      "class": "air-mid"
+    },
+    "215": {
+      "class": "air-mid"
+    },
+    "216": {
+      "class": "air-mid"
+    },
+    "217": {
+      "class": "air-mid"
+    },
+    "218": {
+      "class": "air-mid"
+    },
+    "219": {
+      "class": "air-mid"
+    },
+    "22": {
+      "class": "pickup",
+      "seen": "demo sheet=5 index=22 ticks=950"
+    },
+    "220": {
+      "class": "air-mid"
+    },
+    "221": {
+      "class": "air-mid"
+    },
+    "222": {
+      "class": "air-mid"
+    },
+    "223": {
+      "class": "air-mid"
+    },
+    "224": {
+      "class": "air-mid"
+    },
+    "225": {
+      "class": "air-mid"
+    },
+    "226": {
+      "class": "air-mid"
+    },
+    "227": {
+      "class": "air-mid"
+    },
+    "228": {
+      "height": 0.0315000005066395
+    },
+    "229": {
+      "height": 0.0315000005066395
+    },
+    "23": {
+      "class": "ground",
+      "seen": "demo sheet=5 index=20 ticks=75"
+    },
+    "230": {
+      "height": 0.0315000005066395
+    },
+    "231": {
+      "class": "air-mid"
+    },
+    "232": {
+      "class": "air-mid"
+    },
+    "233": {
+      "height": 0.0315000005066395
+    },
+    "234": {
+      "height": 0.0315000005066395
+    },
+    "235": {
+      "height": 0.0315000005066395
+    },
+    "236": {
+      "class": "air-mid"
+    },
+    "237": {
+      "class": "ground"
+    },
+    "238": {
+      "class": "ground"
+    },
+    "239": {
+      "class": "ground"
+    },
+    "24": {
+      "class": "air-mid",
+      "seen": "demo sheet=5 index=288 ticks=154"
+    },
+    "240": {
+      "class": "ground"
+    },
+    "241": {
+      "height": 0.033500000834465
+    },
+    "242": {
+      "height": 0.033500000834465
+    },
+    "243": {
+      "height": 0.033500000834465
+    },
+    "244": {
+      "height": 0.033500000834465
+    },
+    "245": {
+      "class": "ground"
+    },
+    "246": {
+      "class": "ground"
+    },
+    "247": {
+      "class": "ground"
+    },
+    "248": {
+      "class": "ground"
+    },
+    "249": {
+      "class": "ground"
+    },
+    "25": {
+      "class": "air-mid",
+      "seen": "demo sheet=5 index=290 ticks=145"
+    },
+    "250": {
+      "class": "ground"
+    },
+    "251": {
+      "class": "ground"
+    },
+    "252": {
+      "class": "ground"
+    },
+    "253": {
+      "class": "ground"
+    },
+    "254": {
+      "class": "ground"
+    },
+    "255": {
+      "class": "ground"
+    },
+    "256": {
+      "class": "ground"
+    },
+    "257": {
+      "class": "ground"
+    },
+    "258": {
+      "class": "ground"
+    },
+    "259": {
+      "height": 0.0355000011622906
+    },
+    "26": {
+      "class": "air-high",
+      "seen": "demo sheet=5 index=68 ticks=192"
+    },
+    "260": {
+      "class": "air-mid"
+    },
+    "261": {
+      "class": "air-mid"
+    },
+    "262": {
+      "class": "air-mid"
+    },
+    "263": {
+      "class": "air-mid"
+    },
+    "264": {
+      "class": "air-mid"
+    },
+    "265": {
+      "class": "air-mid"
+    },
+    "266": {
+      "class": "air-mid"
+    },
+    "267": {
+      "class": "air-mid"
+    },
+    "268": {
+      "class": "air-mid"
+    },
+    "269": {
+      "class": "ground"
+    },
+    "27": {
+      "class": "air-high",
+      "seen": "demo sheet=5 index=70 ticks=155"
+    },
+    "270": {
+      "height": 0.00060000002849847
+    },
+    "271": {
+      "height": 0.00600000005215406
+    },
+    "272": {
+      "class": "ground"
+    },
+    "273": {
+      "class": "ground"
+    },
+    "274": {
+      "class": "ground"
+    },
+    "275": {
+      "class": "ground"
+    },
+    "276": {
+      "class": "ground"
+    },
+    "277": {
+      "class": "ground"
+    },
+    "278": {
+      "class": "ground"
+    },
+    "279": {
+      "class": "ground"
+    },
+    "28": {
+      "height": 0.0375000014901161,
+      "seen": "demo sheet=5 index=68 ticks=830"
+    },
+    "280": {
+      "class": "ground"
+    },
+    "281": {
+      "class": "ground"
+    },
+    "282": {
+      "class": "air-mid"
+    },
+    "283": {
+      "class": "air-mid"
+    },
+    "284": {
+      "class": "air-mid"
+    },
+    "285": {
+      "class": "air-mid"
+    },
+    "286": {
+      "class": "air-mid"
+    },
+    "287": {
+      "class": "ground"
+    },
+    "288": {
+      "class": "ground"
+    },
+    "289": {
+      "class": "ground"
+    },
+    "29": {
+      "height": 0.0375000014901161,
+      "seen": "demo sheet=5 index=70 ticks=438"
+    },
+    "290": {
+      "class": "ground"
+    },
+    "291": {
+      "class": "ground"
+    },
+    "292": {
+      "class": "ground"
+    },
+    "293": {
+      "class": "ground"
+    },
+    "294": {
+      "class": "ground"
+    },
+    "295": {
+      "class": "ground"
+    },
+    "296": {
+      "class": "ground"
+    },
+    "297": {
+      "class": "ground"
+    },
+    "298": {
+      "class": "ground"
+    },
+    "299": {
+      "class": "ground"
+    },
+    "3": {
+      "class": "air-mid",
+      "seen": "demo sheet=5 index=228 ticks=939"
+    },
+    "30": {
+      "height": 0.033500000834465,
+      "seen": "demo sheet=5 index=108 ticks=851"
+    },
+    "300": {
+      "class": "ground"
+    },
+    "301": {
+      "class": "ground"
+    },
+    "302": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=220 ticks=256"
+    },
+    "303": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=222 ticks=247"
+    },
+    "304": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=256 ticks=301"
+    },
+    "305": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=258 ticks=297"
+    },
+    "306": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=260 ticks=288"
+    },
+    "307": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=262 ticks=261"
+    },
+    "308": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=297 ticks=327"
+    },
+    "309": {
+      "height": 0.00600000005215406
+    },
+    "31": {
+      "height": 0.0355000011622906,
+      "seen": "demo sheet=5 index=146 ticks=493"
+    },
+    "310": {
+      "height": 0.00600000005215406
+    },
+    "311": {
+      "height": 0.00600000005215406
+    },
+    "312": {
+      "height": 0.00600000005215406
+    },
+    "313": {
+      "height": 0.0031999999191612
+    },
+    "314": {
+      "height": 0.0031999999191612
+    },
+    "315": {
+      "height": 0.0031999999191612
+    },
+    "316": {
+      "height": 0.0031999999191612
+    },
+    "317": {
+      "class": "air-mid"
+    },
+    "318": {
+      "class": "air-mid"
+    },
+    "319": {
+      "class": "air-mid"
+    },
+    "32": {
+      "height": 0.0315000005066395,
+      "seen": "demo sheet=5 index=292 ticks=1395"
+    },
+    "320": {
+      "class": "air-mid"
+    },
+    "321": {
+      "class": "air-mid"
+    },
+    "322": {
+      "class": "air-mid"
+    },
+    "323": {
+      "class": "air-mid"
+    },
+    "324": {
+      "class": "air-mid"
+    },
+    "325": {
+      "height": 0.0031999999191612
+    },
+    "326": {
+      "height": 0.0052000000141561
+    },
+    "327": {
+      "height": 0.0052000000141561
+    },
+    "328": {
+      "height": 0.0052000000141561
+    },
+    "329": {
+      "height": 0.0052000000141561
+    },
+    "33": {
+      "height": 0.0315000005066395,
+      "seen": "demo sheet=5 index=294 ticks=735"
+    },
+    "330": {
+      "height": 0.0052000000141561
+    },
+    "331": {
+      "height": 0.0052000000141561
+    },
+    "332": {
+      "class": "ground"
+    },
+    "333": {
+      "class": "ground"
+    },
+    "334": {
+      "class": "ground"
+    },
+    "335": {
+      "class": "ground"
+    },
+    "336": {
+      "class": "ground"
+    },
+    "337": {
+      "class": "ground"
+    },
+    "338": {
+      "height": 0.0031999999191612
+    },
+    "339": {
+      "height": 0.0031999999191612
+    },
+    "34": {
+      "height": 0.0315000005066395,
+      "seen": "demo sheet=5 index=296 ticks=1300"
+    },
+    "340": {
+      "height": 0.0031999999191612
+    },
+    "341": {
+      "height": 0.0031999999191612
+    },
+    "342": {
+      "height": 0.0031999999191612
+    },
+    "343": {
+      "height": 0.0052000000141561
+    },
+    "344": {
+      "height": 0.0052000000141561
+    },
+    "345": {
+      "height": 0.0052000000141561
+    },
+    "346": {
+      "height": 0.0052000000141561
+    },
+    "347": {
+      "height": 0.0052000000141561
+    },
+    "348": {
+      "height": 0.0052000000141561
+    },
+    "349": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=30 ticks=83"
+    },
+    "35": {
+      "height": 0.0315000005066395,
+      "seen": "demo sheet=5 index=298 ticks=1524"
+    },
+    "350": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=32 ticks=83"
+    },
+    "351": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=58 ticks=116"
+    },
+    "352": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=60 ticks=116"
+    },
+    "353": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=62 ticks=116"
+    },
+    "354": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=64 ticks=116"
+    },
+    "355": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=96 ticks=162"
+    },
+    "356": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=98 ticks=162"
+    },
+    "357": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=100 ticks=162"
+    },
+    "358": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=102 ticks=162"
+    },
+    "359": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=134 ticks=208"
+    },
+    "36": {
+      "height": 0.0315000005066395,
+      "seen": "demo sheet=5 index=300 ticks=895"
+    },
+    "360": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=136 ticks=208"
+    },
+    "361": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=138 ticks=208"
+    },
+    "362": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=140 ticks=208"
+    },
+    "363": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=173 ticks=255"
+    },
+    "364": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=175 ticks=255"
+    },
+    "365": {
+      "class": "air-mid",
+      "seen": "demo sheet=6 index=177 ticks=255"
+    },
+    "366": {
+      "class": "air-mid"
+    },
+    "367": {
+      "class": "air-mid"
+    },
+    "368": {
+      "class": "air-mid"
+    },
+    "369": {
+      "class": "air-mid"
+    },
+    "37": {
+      "height": 0.0315000005066395,
+      "seen": "demo sheet=5 index=302 ticks=1328"
+    },
+    "370": {
+      "class": "air-mid"
+    },
+    "371": {
+      "class": "air-mid"
+    },
+    "372": {
+      "class": "air-mid"
+    },
+    "373": {
+      "class": "air-mid"
+    },
+    "374": {
+      "class": "air-mid"
+    },
+    "375": {
+      "class": "air-mid"
+    },
+    "376": {
+      "class": "air-mid"
+    },
+    "377": {
+      "class": "air-mid"
+    },
+    "378": {
+      "class": "air-mid"
+    },
+    "379": {
+      "class": "air-mid"
+    },
+    "38": {
+      "height": 0.0315000005066395,
+      "seen": "demo sheet=5 index=264 ticks=368"
+    },
+    "380": {
+      "class": "air-mid"
+    },
+    "381": {
+      "class": "air-mid"
+    },
+    "382": {
+      "class": "air-mid"
+    },
+    "383": {
+      "class": "air-mid"
+    },
+    "384": {
+      "class": "air-mid"
+    },
+    "385": {
+      "class": "air-mid"
+    },
+    "386": {
+      "class": "air-mid"
+    },
+    "387": {
+      "class": "air-mid"
+    },
+    "388": {
+      "class": "air-mid"
+    },
+    "389": {
+      "class": "air-mid"
+    },
+    "39": {
+      "height": 0.0315000005066395,
+      "seen": "demo sheet=5 index=226 ticks=217"
+    },
+    "390": {
+      "class": "pickup"
+    },
+    "391": {
+      "class": "ground",
+      "seen": "demo sheet=255 index=7 ticks=2046"
+    },
+    "392": {
+      "class": "pickup",
+      "seen": "demo sheet=255 index=31 ticks=151"
+    },
+    "393": {
+      "class": "air-mid"
+    },
+    "394": {
+      "class": "pickup",
+      "seen": "demo sheet=255 index=32 ticks=1245"
+    },
+    "395": {
+      "class": "ground",
+      "seen": "demo sheet=255 index=14 ticks=28"
+    },
+    "396": {
+      "class": "pickup"
+    },
+    "397": {
+      "class": "air-mid"
+    },
+    "398": {
+      "class": "pickup"
+    },
+    "399": {
+      "class": "air-mid"
+    },
+    "4": {
+      "class": "air-mid",
+      "seen": "demo sheet=5 index=180 ticks=2611"
+    },
+    "40": {
+      "height": 0.0315000005066395,
+      "seen": "demo sheet=5 index=172 ticks=1993"
+    },
+    "400": {
+      "class": "air-mid"
+    },
+    "401": {
+      "class": "air-mid"
+    },
+    "402": {
+      "class": "air-mid"
+    },
+    "403": {
+      "class": "air-mid"
+    },
+    "404": {
+      "class": "air-mid"
+    },
+    "405": {
+      "class": "air-mid"
+    },
+    "406": {
+      "class": "air-mid"
+    },
+    "407": {
+      "class": "air-mid"
+    },
+    "408": {
+      "class": "air-mid"
+    },
+    "409": {
+      "class": "air-mid"
+    },
+    "41": {
+      "height": 0.0315000005066395,
+      "seen": "demo sheet=5 index=188 ticks=415"
+    },
+    "410": {
+      "class": "air-mid"
+    },
+    "411": {
+      "class": "air-mid"
+    },
+    "412": {
+      "class": "ground"
+    },
+    "413": {
+      "class": "ground"
+    },
+    "414": {
+      "class": "ground"
+    },
+    "415": {
+      "class": "ground"
+    },
+    "416": {
+      "class": "ground"
+    },
+    "417": {
+      "class": "air-mid"
+    },
+    "418": {
+      "class": "air-mid"
+    },
+    "419": {
+      "class": "air-mid"
+    },
+    "42": {
+      "class": "ground"
+    },
+    "420": {
+      "class": "air-mid"
+    },
+    "421": {
+      "class": "air-mid"
+    },
+    "422": {
+      "class": "air-mid"
+    },
+    "423": {
+      "class": "air-mid"
+    },
+    "424": {
+      "class": "air-mid"
+    },
+    "425": {
+      "class": "air-mid"
+    },
+    "426": {
+      "class": "air-mid"
+    },
+    "427": {
+      "class": "air-mid"
+    },
+    "428": {
+      "class": "air-mid"
+    },
+    "429": {
+      "class": "air-mid"
+    },
+    "43": {
+      "class": "ground"
+    },
+    "430": {
+      "class": "air-mid"
+    },
+    "431": {
+      "class": "air-mid"
+    },
+    "432": {
+      "class": "air-mid"
+    },
+    "433": {
+      "class": "air-mid"
+    },
+    "434": {
+      "class": "air-mid"
+    },
+    "435": {
+      "class": "air-mid"
+    },
+    "436": {
+      "class": "air-mid"
+    },
+    "437": {
+      "class": "air-mid"
+    },
+    "438": {
+      "class": "air-mid"
+    },
+    "439": {
+      "class": "air-mid"
+    },
+    "44": {
+      "class": "ground"
+    },
+    "440": {
+      "class": "air-mid"
+    },
+    "441": {
+      "class": "air-mid"
+    },
+    "442": {
+      "class": "air-mid"
+    },
+    "443": {
+      "class": "air-mid"
+    },
+    "444": {
+      "class": "air-mid"
+    },
+    "445": {
+      "class": "air-mid"
+    },
+    "446": {
+      "class": "air-mid"
+    },
+    "447": {
+      "class": "air-mid"
+    },
+    "448": {
+      "class": "air-mid"
+    },
+    "449": {
+      "class": "air-mid"
+    },
+    "45": {
+      "class": "ground"
+    },
+    "450": {
+      "class": "air-mid"
+    },
+    "451": {
+      "class": "air-mid"
+    },
+    "452": {
+      "class": "air-mid"
+    },
+    "453": {
+      "class": "air-mid"
+    },
+    "454": {
+      "class": "air-mid"
+    },
+    "455": {
+      "class": "air-mid"
+    },
+    "456": {
+      "height": 0.00060000002849847
+    },
+    "457": {
+      "class": "ground"
+    },
+    "458": {
+      "class": "air-mid"
+    },
+    "459": {
+      "class": "air-mid"
+    },
+    "46": {
+      "class": "air-low"
+    },
+    "460": {
+      "class": "air-mid"
+    },
+    "461": {
+      "class": "air-mid"
+    },
+    "462": {
+      "class": "air-mid"
+    },
+    "463": {
+      "class": "air-mid"
+    },
+    "464": {
+      "class": "air-mid"
+    },
+    "465": {
+      "class": "air-mid"
+    },
+    "466": {
+      "class": "air-mid"
+    },
+    "467": {
+      "class": "air-mid"
+    },
+    "468": {
+      "class": "mid-under",
+      "seen": "demo sheet=6 index=81 ticks=59"
+    },
+    "469": {
+      "class": "mid-under",
+      "seen": "demo sheet=6 index=83 ticks=59"
+    },
+    "47": {
+      "class": "air-low"
+    },
+    "470": {
+      "class": "mid-under",
+      "seen": "demo sheet=6 index=85 ticks=59"
+    },
+    "471": {
+      "class": "mid-under",
+      "seen": "demo sheet=6 index=119 ticks=62"
+    },
+    "472": {
+      "class": "mid-under",
+      "seen": "demo sheet=6 index=121 ticks=62"
+    },
+    "473": {
+      "class": "mid-under",
+      "seen": "demo sheet=6 index=123 ticks=62"
+    },
+    "474": {
+      "class": "pickup"
+    },
+    "475": {
+      "class": "pickup"
+    },
+    "476": {
+      "class": "air-mid"
+    },
+    "477": {
+      "class": "air-mid"
+    },
+    "478": {
+      "class": "air-mid"
+    },
+    "479": {
+      "class": "air-mid"
+    },
+    "48": {
+      "class": "air-low"
+    },
+    "480": {
+      "class": "air-mid"
+    },
+    "481": {
+      "class": "air-mid"
+    },
+    "482": {
+      "class": "air-mid"
+    },
+    "483": {
+      "class": "air-mid"
+    },
+    "484": {
+      "class": "air-mid"
+    },
+    "485": {
+      "class": "air-mid"
+    },
+    "486": {
+      "class": "air-mid"
+    },
+    "487": {
+      "class": "air-mid"
+    },
+    "488": {
+      "class": "air-mid"
+    },
+    "489": {
+      "class": "air-mid"
+    },
+    "49": {
+      "class": "air-low"
+    },
+    "490": {
+      "class": "air-mid"
+    },
+    "491": {
+      "class": "air-mid"
+    },
+    "492": {
+      "class": "air-mid"
+    },
+    "493": {
+      "class": "air-mid"
+    },
+    "494": {
+      "class": "air-mid"
+    },
+    "495": {
+      "class": "air-mid"
+    },
+    "496": {
+      "class": "air-mid"
+    },
+    "497": {
+      "class": "air-mid"
+    },
+    "498": {
+      "class": "air-mid"
+    },
+    "499": {
+      "class": "air-mid"
+    },
+    "5": {
+      "class": "air-mid",
+      "seen": "demo sheet=5 index=241 ticks=2048"
+    },
+    "50": {
+      "class": "air-low"
+    },
+    "500": {
+      "class": "air-mid",
+      "seen": "demo sheet=5 index=188 ticks=879"
+    },
+    "501": {
+      "class": "air-mid"
+    },
+    "502": {
+      "class": "pickup"
+    },
+    "503": {
+      "class": "air-mid"
+    },
+    "504": {
+      "class": "pickup"
+    },
+    "505": {
+      "class": "air-mid"
+    },
+    "506": {
+      "class": "air-mid"
+    },
+    "507": {
+      "class": "pickup"
+    },
+    "508": {
+      "class": "pickup"
+    },
+    "509": {
+      "class": "pickup"
+    },
+    "51": {
+      "class": "air-low"
+    },
+    "510": {
+      "class": "pickup"
+    },
+    "511": {
+      "height": 0.0375000014901161,
+      "seen": "demo sheet=6 index=19 ticks=890"
+    },
+    "512": {
+      "class": "air-mid"
+    },
+    "513": {
+      "class": "ground",
+      "seen": "demo sheet=255 index=159 ticks=385"
+    },
+    "514": {
+      "class": "air-mid"
+    },
+    "515": {
+      "class": "air-mid"
+    },
+    "516": {
+      "class": "ground",
+      "seen": "demo sheet=7 index=20 ticks=86"
+    },
+    "517": {
+      "class": "ground",
+      "seen": "demo sheet=7 index=22 ticks=86"
+    },
+    "518": {
+      "class": "ground",
+      "seen": "demo sheet=7 index=24 ticks=86"
+    },
+    "519": {
+      "class": "ground",
+      "seen": "demo sheet=7 index=58 ticks=114"
+    },
+    "52": {
+      "class": "air-low"
+    },
+    "520": {
+      "class": "ground",
+      "seen": "demo sheet=7 index=60 ticks=114"
+    },
+    "521": {
+      "class": "ground",
+      "seen": "demo sheet=7 index=62 ticks=114"
+    },
+    "522": {
+      "class": "ground",
+      "seen": "demo sheet=7 index=20 ticks=217"
+    },
+    "523": {
+      "class": "ground",
+      "seen": "demo sheet=7 index=22 ticks=217"
+    },
+    "524": {
+      "class": "ground"
+    },
+    "525": {
+      "class": "ground",
+      "seen": "demo sheet=7 index=58 ticks=217"
+    },
+    "526": {
+      "class": "ground",
+      "seen": "demo sheet=7 index=60 ticks=217"
+    },
+    "527": {
+      "class": "ground"
+    },
+    "528": {
+      "class": "ground"
+    },
+    "529": {
+      "class": "air-mid"
+    },
+    "53": {
+      "class": "air-low"
+    },
+    "530": {
+      "class": "air-mid"
+    },
+    "531": {
+      "class": "air-mid"
+    },
+    "532": {
+      "class": "air-mid"
+    },
+    "533": {
+      "class": "air-mid"
+    },
+    "534": {
+      "class": "air-mid"
+    },
+    "535": {
+      "class": "air-mid"
+    },
+    "536": {
+      "class": "ground"
+    },
+    "537": {
+      "class": "ground"
+    },
+    "538": {
+      "class": "ground"
+    },
+    "539": {
+      "class": "ground"
+    },
+    "54": {
+      "class": "air-low"
+    },
+    "540": {
+      "class": "ground"
+    },
+    "541": {
+      "class": "ground"
+    },
+    "542": {
+      "class": "ground"
+    },
+    "543": {
+      "class": "air-mid"
+    },
+    "544": {
+      "class": "air-mid"
+    },
+    "545": {
+      "class": "ground"
+    },
+    "546": {
+      "height": 0.0052000000141561
+    },
+    "547": {
+      "height": 0.0052000000141561
+    },
+    "548": {
+      "height": 0.0052000000141561
+    },
+    "549": {
+      "height": 0.0052000000141561
+    },
+    "55": {
+      "class": "air-low"
+    },
+    "550": {
+      "height": 0.00800000037997961
+    },
+    "551": {
+      "class": "air-mid"
+    },
+    "552": {
+      "height": 0.0299999993294477
+    },
+    "553": {
+      "height": 0.0299999993294477
+    },
+    "554": {
+      "class": "air-mid"
+    },
+    "555": {
+      "class": "air-mid"
+    },
+    "556": {
+      "class": "air-mid"
+    },
+    "557": {
+      "class": "air-mid"
+    },
+    "558": {
+      "class": "air-mid"
+    },
+    "559": {
+      "class": "platform-under"
+    },
+    "56": {
+      "class": "air-low"
+    },
+    "560": {
+      "class": "ground"
+    },
+    "561": {
+      "class": "air-mid"
+    },
+    "562": {
+      "class": "air-mid"
+    },
+    "563": {
+      "class": "air-mid"
+    },
+    "564": {
+      "class": "air-mid"
+    },
+    "565": {
+      "class": "air-mid"
+    },
+    "566": {
+      "class": "air-mid"
+    },
+    "567": {
+      "class": "air-mid"
+    },
+    "568": {
+      "class": "air-mid"
+    },
+    "569": {
+      "class": "air-mid"
+    },
+    "57": {
+      "class": "air-low"
+    },
+    "570": {
+      "class": "air-mid"
+    },
+    "571": {
+      "class": "air-mid"
+    },
+    "572": {
+      "class": "air-mid"
+    },
+    "573": {
+      "height": 0.0031999999191612
+    },
+    "574": {
+      "height": 0.0031999999191612
+    },
+    "575": {
+      "height": 0.0031999999191612
+    },
+    "576": {
+      "height": 0.0031999999191612
+    },
+    "577": {
+      "class": "air-mid"
+    },
+    "578": {
+      "class": "air-mid"
+    },
+    "579": {
+      "class": "air-mid"
+    },
+    "58": {
+      "class": "air-low"
+    },
+    "580": {
+      "class": "air-mid"
+    },
+    "581": {
+      "class": "air-mid"
+    },
+    "582": {
+      "class": "air-mid"
+    },
+    "583": {
+      "class": "air-mid"
+    },
+    "584": {
+      "class": "air-mid"
+    },
+    "585": {
+      "class": "air-mid"
+    },
+    "586": {
+      "class": "air-mid"
+    },
+    "587": {
+      "class": "air-mid"
+    },
+    "588": {
+      "class": "air-mid"
+    },
+    "589": {
+      "class": "air-mid"
+    },
+    "59": {
+      "class": "air-low"
+    },
+    "590": {
+      "class": "air-mid"
+    },
+    "591": {
+      "class": "air-mid"
+    },
+    "592": {
+      "class": "air-mid"
+    },
+    "593": {
+      "class": "ground"
+    },
+    "594": {
+      "class": "air-mid"
+    },
+    "595": {
+      "class": "air-mid"
+    },
+    "596": {
+      "class": "air-mid"
+    },
+    "597": {
+      "class": "ground"
+    },
+    "598": {
+      "class": "air-mid"
+    },
+    "599": {
+      "class": "air-mid"
+    },
+    "6": {
+      "class": "air-mid"
+    },
+    "60": {
+      "class": "air-low"
+    },
+    "600": {
+      "class": "air-mid"
+    },
+    "601": {
+      "class": "air-mid"
+    },
+    "602": {
+      "class": "air-mid"
+    },
+    "603": {
+      "class": "air-mid"
+    },
+    "604": {
+      "class": "air-mid"
+    },
+    "605": {
+      "class": "air-mid"
+    },
+    "606": {
+      "class": "air-mid"
+    },
+    "607": {
+      "class": "air-mid"
+    },
+    "608": {
+      "class": "air-mid"
+    },
+    "609": {
+      "class": "air-mid"
+    },
+    "61": {
+      "class": "air-low"
+    },
+    "610": {
+      "class": "air-mid"
+    },
+    "611": {
+      "class": "air-mid"
+    },
+    "612": {
+      "class": "air-mid"
+    },
+    "613": {
+      "class": "air-mid"
+    },
+    "614": {
+      "class": "air-mid"
+    },
+    "615": {
+      "class": "air-mid"
+    },
+    "616": {
+      "class": "air-mid"
+    },
+    "617": {
+      "class": "air-mid"
+    },
+    "618": {
+      "class": "air-mid"
+    },
+    "619": {
+      "class": "air-mid"
+    },
+    "62": {
+      "class": "air-low"
+    },
+    "620": {
+      "class": "air-mid"
+    },
+    "621": {
+      "class": "air-mid"
+    },
+    "622": {
+      "class": "air-mid"
+    },
+    "623": {
+      "class": "air-mid"
+    },
+    "624": {
+      "class": "air-mid"
+    },
+    "625": {
+      "class": "air-mid"
+    },
+    "626": {
+      "class": "air-mid"
+    },
+    "627": {
+      "class": "air-mid"
+    },
+    "628": {
+      "class": "air-mid"
+    },
+    "629": {
+      "class": "air-mid"
+    },
+    "63": {
+      "class": "air-low"
+    },
+    "630": {
+      "class": "air-mid"
+    },
+    "631": {
+      "class": "air-mid"
+    },
+    "632": {
+      "class": "air-mid"
+    },
+    "633": {
+      "class": "air-mid"
+    },
+    "634": {
+      "class": "air-mid"
+    },
+    "635": {
+      "class": "air-mid"
+    },
+    "636": {
+      "class": "air-mid"
+    },
+    "637": {
+      "class": "air-mid"
+    },
+    "638": {
+      "class": "air-mid"
+    },
+    "639": {
+      "class": "air-mid"
+    },
+    "64": {
+      "class": "air-low"
+    },
+    "640": {
+      "class": "air-mid"
+    },
+    "641": {
+      "class": "air-mid"
+    },
+    "642": {
+      "class": "air-mid"
+    },
+    "643": {
+      "class": "air-mid"
+    },
+    "644": {
+      "class": "air-mid"
+    },
+    "645": {
+      "class": "air-mid"
+    },
+    "646": {
+      "class": "air-mid"
+    },
+    "647": {
+      "class": "air-mid"
+    },
+    "648": {
+      "class": "air-mid"
+    },
+    "649": {
+      "class": "air-mid"
+    },
+    "65": {
+      "class": "air-low"
+    },
+    "650": {
+      "class": "air-mid"
+    },
+    "651": {
+      "class": "air-mid"
+    },
+    "652": {
+      "class": "air-mid"
+    },
+    "653": {
+      "class": "air-mid"
+    },
+    "654": {
+      "class": "air-mid"
+    },
+    "655": {
+      "class": "air-mid"
+    },
+    "656": {
+      "class": "air-mid"
+    },
+    "657": {
+      "class": "air-mid"
+    },
+    "658": {
+      "class": "air-mid"
+    },
+    "659": {
+      "class": "air-mid"
+    },
+    "66": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=172 ticks=122"
+    },
+    "660": {
+      "class": "air-mid"
+    },
+    "661": {
+      "class": "air-mid"
+    },
+    "662": {
+      "class": "air-mid"
+    },
+    "663": {
+      "class": "air-mid"
+    },
+    "664": {
+      "class": "air-mid"
+    },
+    "665": {
+      "class": "air-mid"
+    },
+    "666": {
+      "class": "air-mid"
+    },
+    "667": {
+      "class": "air-mid"
+    },
+    "668": {
+      "class": "air-mid"
+    },
+    "669": {
+      "class": "air-mid"
+    },
+    "67": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=174 ticks=129"
+    },
+    "670": {
+      "class": "air-mid"
+    },
+    "671": {
+      "class": "air-mid"
+    },
+    "672": {
+      "class": "air-mid"
+    },
+    "673": {
+      "class": "air-mid"
+    },
+    "674": {
+      "class": "air-mid"
+    },
+    "675": {
+      "class": "air-mid"
+    },
+    "676": {
+      "class": "air-mid"
+    },
+    "677": {
+      "class": "air-mid"
+    },
+    "678": {
+      "class": "air-mid"
+    },
+    "679": {
+      "class": "air-mid"
+    },
+    "68": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=176 ticks=136"
+    },
+    "680": {
+      "class": "air-mid"
+    },
+    "681": {
+      "class": "air-mid"
+    },
+    "682": {
+      "class": "air-mid"
+    },
+    "683": {
+      "class": "air-mid"
+    },
+    "684": {
+      "class": "air-mid"
+    },
+    "685": {
+      "class": "air-mid"
+    },
+    "686": {
+      "class": "air-mid"
+    },
+    "687": {
+      "class": "air-mid"
+    },
+    "688": {
+      "class": "air-mid"
+    },
+    "689": {
+      "class": "air-mid"
+    },
+    "69": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=178 ticks=141"
+    },
+    "690": {
+      "class": "air-mid"
+    },
+    "691": {
+      "class": "air-mid"
+    },
+    "692": {
+      "class": "air-mid"
+    },
+    "693": {
+      "class": "air-mid"
+    },
+    "694": {
+      "class": "air-mid"
+    },
+    "695": {
+      "class": "air-mid"
+    },
+    "696": {
+      "class": "air-mid"
+    },
+    "697": {
+      "class": "air-mid"
+    },
+    "698": {
+      "class": "air-mid"
+    },
+    "699": {
+      "class": "air-mid"
+    },
+    "7": {
+      "class": "air-mid"
+    },
+    "70": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=210 ticks=145"
+    },
+    "700": {
+      "class": "air-mid"
+    },
+    "701": {
+      "class": "air-mid"
+    },
+    "702": {
+      "class": "air-mid"
+    },
+    "703": {
+      "class": "air-mid"
+    },
+    "704": {
+      "class": "air-mid"
+    },
+    "705": {
+      "class": "air-mid"
+    },
+    "706": {
+      "class": "air-mid"
+    },
+    "707": {
+      "class": "air-mid"
+    },
+    "708": {
+      "class": "air-mid"
+    },
+    "709": {
+      "class": "air-mid"
+    },
+    "71": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=212 ticks=149"
+    },
+    "710": {
+      "class": "air-mid"
+    },
+    "711": {
+      "class": "air-mid"
+    },
+    "712": {
+      "class": "air-mid"
+    },
+    "713": {
+      "class": "air-mid"
+    },
+    "714": {
+      "class": "air-mid"
+    },
+    "715": {
+      "class": "air-mid"
+    },
+    "716": {
+      "class": "air-mid"
+    },
+    "717": {
+      "class": "air-mid"
+    },
+    "718": {
+      "class": "air-mid"
+    },
+    "719": {
+      "class": "air-mid"
+    },
+    "72": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=214 ticks=152"
+    },
+    "720": {
+      "class": "air-mid"
+    },
+    "721": {
+      "class": "air-mid"
+    },
+    "722": {
+      "class": "air-mid"
+    },
+    "723": {
+      "class": "air-mid"
+    },
+    "724": {
+      "class": "air-mid"
+    },
+    "725": {
+      "class": "air-mid"
+    },
+    "726": {
+      "class": "air-mid"
+    },
+    "727": {
+      "class": "air-mid"
+    },
+    "728": {
+      "class": "air-mid"
+    },
+    "729": {
+      "class": "air-mid"
+    },
+    "73": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=250 ticks=168"
+    },
+    "730": {
+      "class": "air-mid"
+    },
+    "731": {
+      "class": "air-mid"
+    },
+    "732": {
+      "class": "air-mid"
+    },
+    "733": {
+      "class": "air-mid"
+    },
+    "734": {
+      "class": "air-mid"
+    },
+    "735": {
+      "class": "air-mid"
+    },
+    "736": {
+      "class": "air-mid"
+    },
+    "737": {
+      "class": "air-mid"
+    },
+    "738": {
+      "class": "air-mid"
+    },
+    "739": {
+      "class": "ground"
+    },
+    "74": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=252 ticks=162"
+    },
+    "740": {
+      "class": "ground"
+    },
+    "741": {
+      "class": "ground"
+    },
+    "742": {
+      "class": "ground"
+    },
+    "743": {
+      "class": "ground"
+    },
+    "744": {
+      "class": "ground"
+    },
+    "745": {
+      "class": "ground"
+    },
+    "746": {
+      "class": "ground"
+    },
+    "747": {
+      "class": "ground"
+    },
+    "748": {
+      "class": "ground"
+    },
+    "749": {
+      "class": "ground"
+    },
+    "75": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=254 ticks=158"
+    },
+    "750": {
+      "class": "ground"
+    },
+    "751": {
+      "class": "ground"
+    },
+    "752": {
+      "class": "air-mid"
+    },
+    "753": {
+      "class": "ground"
+    },
+    "754": {
+      "class": "ground"
+    },
+    "755": {
+      "class": "air-mid"
+    },
+    "756": {
+      "class": "ground"
+    },
+    "757": {
+      "class": "ground"
+    },
+    "758": {
+      "class": "ground"
+    },
+    "759": {
+      "class": "ground"
+    },
+    "76": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=286 ticks=152"
+    },
+    "760": {
+      "class": "air-mid"
+    },
+    "761": {
+      "class": "air-mid"
+    },
+    "762": {
+      "class": "air-mid"
+    },
+    "763": {
+      "class": "ground"
+    },
+    "764": {
+      "class": "ground"
+    },
+    "765": {
+      "class": "ground"
+    },
+    "766": {
+      "class": "ground"
+    },
+    "767": {
+      "class": "air-mid"
+    },
+    "768": {
+      "class": "ground"
+    },
+    "769": {
+      "class": "ground"
+    },
+    "77": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=288 ticks=147"
+    },
+    "770": {
+      "class": "ground"
+    },
+    "771": {
+      "class": "ground"
+    },
+    "772": {
+      "class": "air-mid"
+    },
+    "773": {
+      "class": "air-mid"
+    },
+    "774": {
+      "class": "air-mid"
+    },
+    "775": {
+      "class": "air-mid"
+    },
+    "776": {
+      "class": "air-mid"
+    },
+    "777": {
+      "class": "air-mid"
+    },
+    "778": {
+      "class": "air-mid"
+    },
+    "779": {
+      "class": "air-mid"
+    },
+    "78": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=290 ticks=142"
+    },
+    "780": {
+      "class": "air-mid"
+    },
+    "781": {
+      "class": "air-mid"
+    },
+    "782": {
+      "class": "air-mid"
+    },
+    "783": {
+      "class": "air-mid"
+    },
+    "784": {
+      "class": "air-mid"
+    },
+    "785": {
+      "class": "air-mid"
+    },
+    "786": {
+      "class": "air-mid"
+    },
+    "787": {
+      "class": "air-mid"
+    },
+    "788": {
+      "class": "air-mid"
+    },
+    "789": {
+      "class": "air-mid"
+    },
+    "79": {
+      "class": "platform-under",
+      "seen": "demo sheet=6 index=292 ticks=135"
+    },
+    "790": {
+      "class": "air-mid"
+    },
+    "791": {
+      "class": "air-mid"
+    },
+    "792": {
+      "class": "air-mid"
+    },
+    "793": {
+      "class": "air-mid"
+    },
+    "794": {
+      "class": "air-mid"
+    },
+    "795": {
+      "class": "air-mid"
+    },
+    "796": {
+      "class": "air-mid"
+    },
+    "797": {
+      "class": "air-mid"
+    },
+    "798": {
+      "class": "air-mid"
+    },
+    "799": {
+      "class": "air-mid"
+    },
+    "8": {
+      "class": "air-mid"
+    },
+    "80": {
+      "class": "ground"
+    },
+    "800": {
+      "class": "air-mid"
+    },
+    "801": {
+      "class": "air-mid"
+    },
+    "802": {
+      "class": "air-mid"
+    },
+    "803": {
+      "class": "air-mid"
+    },
+    "804": {
+      "class": "air-mid"
+    },
+    "805": {
+      "class": "air-mid"
+    },
+    "806": {
+      "class": "air-mid"
+    },
+    "807": {
+      "class": "air-mid"
+    },
+    "808": {
+      "class": "air-mid"
+    },
+    "809": {
+      "class": "air-mid"
+    },
+    "81": {
+      "class": "ground"
+    },
+    "810": {
+      "class": "air-mid"
+    },
+    "811": {
+      "class": "air-mid"
+    },
+    "812": {
+      "class": "air-mid"
+    },
+    "813": {
+      "class": "air-mid"
+    },
+    "814": {
+      "class": "air-mid"
+    },
+    "815": {
+      "class": "air-mid"
+    },
+    "816": {
+      "class": "air-mid"
+    },
+    "817": {
+      "class": "air-mid"
+    },
+    "818": {
+      "class": "air-mid"
+    },
+    "819": {
+      "class": "ground"
+    },
+    "82": {
+      "class": "ground"
+    },
+    "820": {
+      "class": "ground"
+    },
+    "821": {
+      "class": "ground"
+    },
+    "822": {
+      "class": "air-mid"
+    },
+    "823": {
+      "class": "air-mid"
+    },
+    "824": {
+      "class": "ground",
+      "seen": "demo sheet=5 index=22 ticks=570"
+    },
+    "825": {
+      "class": "ground",
+      "seen": "demo sheet=5 index=3 ticks=50"
+    },
+    "826": {
+      "class": "air-mid"
+    },
+    "827": {
+      "class": "air-mid"
+    },
+    "828": {
+      "class": "air-mid"
+    },
+    "829": {
+      "class": "air-mid"
+    },
+    "83": {
+      "class": "ground"
+    },
+    "830": {
+      "class": "air-mid"
+    },
+    "831": {
+      "class": "air-mid"
+    },
+    "832": {
+      "class": "air-mid"
+    },
+    "833": {
+      "class": "air-mid"
+    },
+    "834": {
+      "class": "air-mid"
+    },
+    "835": {
+      "class": "air-mid"
+    },
+    "836": {
+      "class": "air-mid"
+    },
+    "837": {
+      "class": "air-mid"
+    },
+    "838": {
+      "class": "ground"
+    },
+    "839": {
+      "class": "air-mid"
+    },
+    "84": {
+      "class": "ground"
+    },
+    "840": {
+      "class": "ground"
+    },
+    "841": {
+      "class": "air-mid"
+    },
+    "842": {
+      "class": "ground"
+    },
+    "843": {
+      "class": "ground",
+      "seen": "demo sheet=8 index=85 ticks=15"
+    },
+    "844": {
+      "class": "air-mid"
+    },
+    "845": {
+      "class": "air-mid"
+    },
+    "846": {
+      "class": "air-mid"
+    },
+    "847": {
+      "class": "air-mid"
+    },
+    "848": {
+      "class": "air-mid"
+    },
+    "849": {
+      "class": "air-mid"
+    },
+    "85": {
+      "class": "ground"
+    },
+    "850": {
+      "class": "air-mid"
+    },
+    "86": {
+      "class": "ground"
+    },
+    "87": {
+      "class": "ground"
+    },
+    "88": {
+      "class": "ground"
+    },
+    "89": {
+      "class": "ground"
+    },
+    "9": {
+      "class": "air-mid"
+    },
+    "90": {
+      "class": "ground"
+    },
+    "91": {
+      "class": "air-mid"
+    },
+    "92": {
+      "class": "air-mid"
+    },
+    "93": {
+      "class": "air-mid"
+    },
+    "94": {
+      "class": "air-mid"
+    },
+    "95": {
+      "class": "air-mid"
+    },
+    "96": {
+      "class": "air-mid"
+    },
+    "97": {
+      "class": "air-mid"
+    },
+    "98": {
+      "class": "air-mid"
+    },
+    "99": {
+      "class": "air-mid"
+    }
+  }
 }
