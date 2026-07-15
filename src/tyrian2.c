@@ -97,7 +97,9 @@ void JE_starShowVGA(void)
 			setFrameCount(frameCountMax);
 		}
 
-		if (starShowVGASpecialCode == 1)
+		/* Suppressed frame = key fill; the host mirrors the 3D content
+		   instead (frame.flip_code, v23), so keep the copy unflipped. */
+		if (starShowVGASpecialCode == 1 && !present_suppress_background)
 		{
 			src += game_screen->pitch * 183;
 			for (y = 0; y < 184; y++)
@@ -781,6 +783,14 @@ static enum LevelTickResult JE_levelTick(void)
 			smoothies[2-1] = true;
 			smoothie_data[2-1] = 3;  /* SAVARA V's real hue row (blue) */
 		}
+		/* OTYR_FORCE_FLIP: force the vertical-mirror special code so the
+		   host card-flip can be exercised on any level (no ep1 level uses
+		   it).  Same never-in-gates rule. */
+		static int force_flip = -1;
+		if (force_flip < 0)
+			force_flip = SDL_getenv("OTYR_FORCE_FLIP") != NULL;
+		if (force_flip)
+			smoothies[9-1] = true;
 	}
 
 	present_frame_reset();

@@ -3679,7 +3679,10 @@ redo:
 				link_gun_analog = input.link_gun_analog;
 				link_gun_angle = input.link_gun_angle;
 
-				if (smoothies[9-1])
+				/* The mirror level's input compensation belongs to the
+				   MOUSE model; target mode maps the hand box host-side
+				   (flipped with the view), so this would double-invert. */
+				if (smoothies[9-1] && !input.has_target)
 				{
 					*mouseY_ = this_player->y - (*mouseY_ - this_player->y);
 					mouseYC = -mouseYC;

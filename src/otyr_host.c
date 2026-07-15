@@ -74,7 +74,7 @@ typedef char otyr_assert_sprite_size[sizeof(OtyrSnapshotSprite) == 16 ? 1 : -1];
 typedef char otyr_assert_bg_draw_size[sizeof(OtyrBackgroundDraw) == 16 ? 1 : -1];
 typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 36 + 1024 * 16 + 3 * 16 + 8 ? 1 : -1];  /* +8: v21 parallax deltas */
 typedef char otyr_assert_sheet_size[sizeof(OtyrSpriteSheet) == 12 + 2 * 1024 * 12 * 14 ? 1 : -1];
-typedef char otyr_assert_frame_size[sizeof(OtyrFrame) == 16 + 320 * 200 + 1024 + 4 + 4 ? 1 : -1];
+typedef char otyr_assert_frame_size[sizeof(OtyrFrame) == 16 + 320 * 200 + 1024 + 4 + 8 ? 1 : -1];  /* +4: v23 flip */
 typedef char otyr_assert_bg_map_size[sizeof(OtyrBackgroundMap) == 16 + 600 * 15 + 72 * 24 * 28 ? 1 : -1];
 typedef char otyr_assert_old_sprite_size[sizeof(OtyrOldSprite) == 8 + 2 * 64 * 64 ? 1 : -1];
 
@@ -112,6 +112,7 @@ static struct
 	uint8_t frame_legacy_fallback;
 	uint8_t frame_menu_present;
 	uint8_t frame_storm_water;       /* v20: host-rendered water smoothie */
+	uint8_t frame_flip_code;         /* v23: host-rendered vertical mirror */
 	uint16_t applied_debug_section;  /* edge detect for the v18 level jump */
 	uint8_t pixels[OTYR_FRAME_WIDTH * OTYR_FRAME_HEIGHT];
 	uint32_t palette_argb[256];
@@ -741,6 +742,8 @@ int32_t otyr_session_acquire_frame(uint64_t handle, OtyrFrame *frame,
 			frame->legacy_fallback = session.frame_legacy_fallback;
 			frame->menu_present = session.frame_menu_present;
 			frame->storm_water = session.frame_storm_water;
+			frame->flip_code = session.frame_flip_code;
+			memset(frame->reserved, 0, sizeof(frame->reserved));
 			result = OTYR_OK;
 			break;
 		}
@@ -1001,6 +1004,10 @@ void otyr_host_present(SDL_Surface *screen)
 	session.frame_storm_water =
 		(otyr_in_level && smoothies[2-1] && !present_legacy_fallback)
 			? (uint8_t)(0x10 | ((uint8_t)smoothie_data[2-1] & 0x0f)) : 0;
+	/* Vertical mirror (v23): the host plays the card-flip. */
+	session.frame_flip_code =
+		(otyr_in_level && starShowVGASpecialCode == 1 && !present_legacy_fallback)
+			? 1 : 0;
 
 	OtyrSnapshot *snapshot = &session.snapshot;
 

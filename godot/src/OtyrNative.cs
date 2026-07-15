@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 22;
+    public const uint AbiVersion = 23;
 
     // Palette index of the suppressed background fill (the frame color key);
     // index-0 black in sprite/HUD art stays opaque.
@@ -300,6 +300,9 @@ public static unsafe class OtyrNative
                                   // loop: hide the 3D layers immediately (v15)
         public byte StormWater;   // water smoothie active, host-rendered:
                                   // 0 off, else 0x10 | hue row (v20)
+        public byte FlipCode;     // vertical mirror active, host-rendered:
+                                  // the card-flip (v23)
+        public byte R1, R2, R3;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -375,7 +378,7 @@ public static unsafe class OtyrNative
             sizeof(SpriteSheet) != 12 + 2 * SheetCellMax * SheetCellW * SheetCellH ||
             sizeof(BackgroundMap) != 16 + BgMapCellMax + BgShapeMax * BgTileW * BgTileH ||
             sizeof(OldSprite) != 8 + 2 * OldSpriteWMax * OldSpriteHMax ||
-            sizeof(Frame) != 16 + FrameWidth * FrameHeight + 1024 + 4 + 4)
+            sizeof(Frame) != 16 + FrameWidth * FrameHeight + 1024 + 4 + 8)  // +4: v23 flip
             throw new InvalidOperationException("ABI struct layout mismatch");
 
         NativeLibrary.SetDllImportResolver(typeof(OtyrNative).Assembly, (name, assembly, searchPath) =>

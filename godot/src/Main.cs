@@ -26,6 +26,8 @@ public partial class Main : Node3D
     private ShaderMaterial _laneMaterial = null!;
     private MeshInstance3D _hudSidebar = null!;
     private MeshInstance3D _hudBottomBar = null!;
+    private Node3D _flipRoot = null!;
+    private float _flipScale = 1f;  // animated +1 (normal) .. -1 (mirrored)
     private OtyrNative.Frame _frame;
     private readonly byte[] _rgba = new byte[OtyrNative.FrameWidth * OtyrNative.FrameHeight * 4];
     private readonly uint[] _palette = new uint[256];
@@ -295,13 +297,21 @@ public partial class Main : Node3D
         material.SetShaderParameter("frame", _texture);
         _laneMaterial = material;
 
+        // Flip root (v23 card-flip): the play CONTENT -- lane overlay, 3D
+        // layers, target reticle -- mirrors vertically on levels running
+        // the legacy vflip (special code 1).  Scale.Y animates +1 -> -1
+        // through 0 (the squash-flip: heights never invert, nothing is
+        // ever seen from behind); HUD quads and the room stay upright.
+        _flipRoot = new Node3D { Name = "FlipRoot" };
+        _playfieldRoot.AddChild(_flipRoot);
+
         var lane = new MeshInstance3D
         {
             Name = "Lane",
             Mesh = new QuadMesh { Size = new Vector2(LaneWidth, LaneHeight) },  // 320:200
             MaterialOverride = material,
         };
-        _playfieldRoot.AddChild(lane);
+        _flipRoot.AddChild(lane);
 
         // E1 HUD split: the sidebar (frame x 264..320) and bottom bar
         // (y 184..200 under the play area) render on their own quads,
@@ -319,7 +329,7 @@ public partial class Main : Node3D
         BuildHandSteering();
 
         _snapshotLayer = new SnapshotLayer { Name = "SnapshotLayer", EnableBackground = Render3DBackground };
-        _playfieldRoot.AddChild(_snapshotLayer);
+        _flipRoot.AddChild(_snapshotLayer);
 
         MeshInstance3D BuildHudQuad(Shader laneShader, string name, Vector2 uv0, Vector2 uv1,
                                     float widthPx, float heightPx,
@@ -427,7 +437,7 @@ public partial class Main : Node3D
                 ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
             },
         };
-        _playfieldRoot.AddChild(_targetReticle);
+        _flipRoot.AddChild(_targetReticle);  // mirrors with the play content
 
         _controlRect.Visible = false;
         _targetReticle.Visible = false;
@@ -711,6 +721,12 @@ public partial class Main : Node3D
         _laneMaterial.SetShaderParameter("hud_split", hudSplit ? 1 : 0);
         _hudSidebar.Visible = hudSplit;
         _hudBottomBar.Visible = hudSplit;
+
+        // Card-flip (v23): squash-flip the play content toward the level's
+        // mirror state -- Scale.Y through zero, ~0.5 s, heights unaffected.
+        float flipTarget = _frame.FlipCode == 1 && _frame.InLevel != 0 ? -1f : 1f;
+        _flipScale = Mathf.MoveToward(_flipScale, flipTarget, 4f * (float)GetProcessDeltaTime());
+        _flipRoot.Scale = new Vector3(1f, Mathf.Abs(_flipScale) < 0.02f ? 0.02f : _flipScale, 1f);
         if (HeightEditor)
             UpdateHeightEditor();
         else if (InvulnSession)
@@ -1184,9 +1200,15 @@ public partial class Main : Node3D
             return;
 
         // 1:1 map to the gameplay rectangle.  Rectangle-up = screen-up = smaller
-        // Tyrian y (sim y grows downward).
+        // Tyrian y (sim y grows downward).  On a MIRRORED level (card-flip),
+        // screen-up is sim-down: the hand box flips with the view so hand-up
+        // stays visually up (the sim's own mouse compensation is bypassed in
+        // target mode -- no double inversion).
+        bool mirrored = _flipScale < 0f;
         float targetX = Mathf.Remap(lx, -ControlRectWidth / 2f, ControlRectWidth / 2f, GameMinX, GameMaxX);
-        float targetY = Mathf.Remap(ly, -ControlRectHeight / 2f, ControlRectHeight / 2f, GameMaxY, GameMinY);
+        float targetY = mirrored
+            ? Mathf.Remap(ly, -ControlRectHeight / 2f, ControlRectHeight / 2f, GameMinY, GameMaxY)
+            : Mathf.Remap(ly, -ControlRectHeight / 2f, ControlRectHeight / 2f, GameMaxY, GameMinY);
 
         // Reticle on the lane, placed where the ship's VISUAL CENTER will sit
         // when it reaches the target: the two 24x28 sprite blocks are drawn at

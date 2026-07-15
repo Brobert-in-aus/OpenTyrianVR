@@ -65,7 +65,9 @@ void present_frame_reset(void)
 	bool unhandled_smoothies =
 		(processorType > 2 && smoothies[1-1]) ||
 		(processorType > 1 && (smoothies[3-1] || smoothies[4-1] || smoothies[5-1]));
-	present_legacy_fallback = unhandled_smoothies || starShowVGASpecialCode != 0;
+	/* Special code 1 (vertical mirror) is HOST-rendered too (frame.flip_code,
+	   v23: the card-flip); code 2 (darkness searchlight) still falls back. */
+	present_legacy_fallback = unhandled_smoothies || starShowVGASpecialCode > 1;
 	present_suppress_entity_draw = present_config_suppress_entity && !present_legacy_fallback;
 	present_suppress_background = present_config_suppress_background && !present_legacy_fallback;
 	present_suppress_text = present_config_suppress_text && !present_legacy_fallback;

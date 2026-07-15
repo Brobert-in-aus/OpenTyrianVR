@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 22u
+#define OTYR_ABI_VERSION 23u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -184,6 +184,13 @@ typedef struct OtyrFrame
 	                           legacy water_filter recolor row).  The native
 	                           filter and the legacy fallback are both
 	                           skipped for it under suppression (v20) */
+	uint8_t  flip_code;     /* starShowVGASpecialCode 1 (vertical mirror) is
+	                           active and HOST-rendered: the host plays the
+	                           card-flip and mirrors the play content; the
+	                           native flip blit and the fallback are skipped
+	                           under suppression.  Code 2 (darkness) still
+	                           falls back (v23) */
+	uint8_t  reserved[3];
 } OtyrFrame;
 
 typedef struct OtyrPlayerState
