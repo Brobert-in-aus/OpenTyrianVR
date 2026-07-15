@@ -346,6 +346,10 @@ static void otyr_dump_sections(void)
 			if (getenv("OTYR_DUMP_EVENTS") != NULL)
 				otyr_dump_level_events(section, atoi(buffer + 25));
 		}
+		/* OTYR_DUMP_SCRIPT=1: every decrypted script line, section-tagged
+		   (which conditions gate multi-level sections, jump targets...). */
+		if (getenv("OTYR_DUMP_SCRIPT") != NULL)
+			printf("    [%3d] %s\n", section, buffer);
 	}
 	fclose(f);
 	fflush(stdout);
