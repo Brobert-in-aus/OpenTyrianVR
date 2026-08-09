@@ -842,11 +842,6 @@ int opentyrian_main(int argc, char *argv[])
 #endif
 	}
 
-#ifdef NDEBUG
-	if (!isNetworkGame && !start_with_demo)
-		intro_logos();
-#endif
-
 	/* OTYR_START_SECTION=<n> (+OTYR_START_EPISODE=<e>, default 1): boot
 	   straight into episode script section n, bypassing the title screen
 	   once -- the height editor's level select (secret levels have their
@@ -854,6 +849,11 @@ int opentyrian_main(int argc, char *argv[])
 	   tooling only. */
 	bool otyr_start_jump = SDL_getenv("OTYR_START_SECTION") != NULL &&
 	                       atoi(SDL_getenv("OTYR_START_SECTION")) > 0;
+
+#ifdef NDEBUG
+	if (!isNetworkGame && !start_with_demo && !otyr_start_jump)
+		intro_logos();
+#endif
 
 	for (; ; )
 	{

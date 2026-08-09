@@ -17,6 +17,7 @@ public partial class TestChecklist : Node3D
         "EDGE CROP: enemies scroll cleanly across hard playfield edges; no fade",
         "GROUND SCROLL: terrain below floating platforms glides without judder",
         "COMPOSITES: fast stacks and the small level-1 boss stay welded",
+        "CLOUDS: stay translucent through draw-order and height changes",
         "90 HZ: motion stays smooth without recurring judder",
     };
 

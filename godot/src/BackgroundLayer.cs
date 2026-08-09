@@ -12,7 +12,7 @@ namespace OpenTyrianVR;
 /// enemy records receive the identical sub-tick offset as their underlying
 /// layer, preserving pixel lock while removing the 35 Hz ground judder.
 ///
-/// Each layer is a single quad over the 264x184 playable surface; the fragment
+/// Each layer is a single quad over the 312x184 playable surface; the fragment
 /// shader resolves frame pixel -> map tile -> shape pixel -> palette, with a
 /// seam-aware bilinear blend in post-palette RGB for anti-aliasing.
 /// </summary>
@@ -22,11 +22,11 @@ public unsafe partial class BackgroundLayer : Node3D
     private const int PlayW = 264, PlayH = 184;
     private const int AtlasCols = 8;  // 8x9 grid of 24x28 shapes
 
-    // Visible play boundary. De-parallax widens the player's reachable range
-    // inside this fixed surface; the authored side and vertical aprons are
-    // presentation margins, not playable terrain.
-    private const float CanvasX0 = 0f, CanvasY0 = 0f;
-    private const float CanvasW = 264f, CanvasH = 184f;
+    // Visible play boundary. De-parallax exposes 24 px of additional travel
+    // on each side of the legacy surface; retain that horizontal expansion
+    // while cropping the authored vertical spawn/departure aprons.
+    private const float CanvasX0 = PlayfieldGeometry.MinX, CanvasY0 = PlayfieldGeometry.MinY;
+    private const float CanvasW = PlayfieldGeometry.Width, CanvasH = PlayfieldGeometry.Height;
 
     // Lane-local Z per layer, chosen from the layer's over mode each tick.
     // Coplanar layers hug the lane overlay (sub-pixel offsets: ~0.1 mm of
@@ -80,6 +80,12 @@ public unsafe partial class BackgroundLayer : Node3D
 
     private readonly OtyrNative.BackgroundDraw[] _currDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
     private readonly OtyrNative.BackgroundDraw[] _prevDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
+    // Cloud identity belongs to the map art, not its current legacy draw
+    // order. Events can change OverMode while retaining the same map epoch;
+    // once a layer is observed in a cloud role, keep its translucent treatment
+    // until FetchMaps installs different art.
+    private readonly bool[] _cloudLayer = new bool[OtyrNative.BgLayerCount];
+    private readonly bool[] _cloudOrderChangeLogged = new bool[OtyrNative.BgLayerCount];
 
     // Storm (host-rendered water smoothie): palette hue row, -1 off.
     private int _stormHue = -1;
@@ -326,7 +332,19 @@ public unsafe partial class BackgroundLayer : Node3D
             // the legacy blend flag (user-tuned, 2026-07-12: the kept
             // translucent look, a tad lighter).
             bool cloudHeight = z > 0.001f && Mathf.Abs(z - PlatformZ) > 0.0005f;
-            float alpha = (_currDraw[l].Blend != 0 ? 0.55f : 1.0f) * (cloudHeight ? 0.82f : 1.0f);
+            if (!_cloudLayer[l] && cloudHeight)
+            {
+                _cloudLayer[l] = true;
+                GD.Print($"OpenTyrianVR: background layer {l} cloud identity latched " +
+                         $"(epoch {_mapEpoch}, over {_currDraw[l].OverMode})");
+            }
+            else if (_cloudLayer[l] && !cloudHeight && !_cloudOrderChangeLogged[l])
+            {
+                _cloudOrderChangeLogged[l] = true;
+                GD.Print($"OpenTyrianVR: background layer {l} retaining cloud alpha across " +
+                         $"draw-order change (epoch {_mapEpoch}, over {_currDraw[l].OverMode})");
+            }
+            float alpha = (_currDraw[l].Blend != 0 ? 0.55f : 1.0f) * (_cloudLayer[l] ? 0.82f : 1.0f);
             _materials[l].SetShaderParameter("alpha_mul", alpha);
             Vector3 position = _quads[l].Position;
             if (position.Z != z)
@@ -371,13 +389,13 @@ public unsafe partial class BackgroundLayer : Node3D
         byte[]? overlay = _atlasCpu[1];
         if (atlas == null || overlay == null || _currDraw[1].Drawn == 0)
             return;
-        // Only a coplanar overlay can be a baked-cloud layer; an elevated
-        // layer 1 (TYRIAN over-mode clouds) already floats.
+        // Only a coplanar overlay needs the baked-water-cloud split. An
+        // elevated layer 1 already floats, but its OverMode may change later
+        // in the same map epoch. Keep classification pending so that later
+        // coplanar state is still examined instead of permanently falling
+        // back to opaque rendering.
         if (LayerHeight(1, _currDraw[1].OverMode) > 0.001f)
-        {
-            _cloudMaskPending = false;
             return;
-        }
         Image pal = _palette.GetImage();
         // Wait for the fade-in to FINISH, not just clear a brightness bar:
         // a 70%-faded palette kept enough cloud brightness to half-detect
@@ -680,6 +698,8 @@ public unsafe partial class BackgroundLayer : Node3D
 
     private void FetchMaps(ulong session)
     {
+        Array.Clear(_cloudLayer, 0, _cloudLayer.Length);
+        Array.Clear(_cloudOrderChangeLogged, 0, _cloudOrderChangeLogged.Length);
         for (uint l = 0; l < OtyrNative.BgLayerCount; l++)
         {
             int rc;

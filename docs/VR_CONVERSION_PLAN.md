@@ -631,6 +631,14 @@
   supporting layer. Aligned sections with one nonzero link id may bridge up to
   a 32 px transparent authored gap before rigid-motion stabilization, covering
   the small level-1 boss without merging diagonal/unrelated wave members.
+- Width/cloud correction (0.1.13): the simulation still intentionally clamps
+  de-parallax player travel to 16..280, so presentation returns to -24..288 on
+  X while retaining the 0..184 vertical crop. One shared geometry definition
+  now drives terrain, entity clipping/culling, picking, and detached-sidebar
+  placement. Cloud identity is latched for each map epoch: later legacy
+  draw-order changes retain alpha 0.82 instead of making the same art opaque,
+  and baked-water-cloud classification remains pending while layer 1 is
+  temporarily elevated.
 
 ## 1. Product direction
 

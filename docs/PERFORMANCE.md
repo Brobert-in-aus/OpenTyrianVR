@@ -100,8 +100,16 @@ draws, meshes, or per-cell searches. Linked boss sections may bridge a maximum
 32 px transparent authored gap when aligned, then reuse the existing median
 component motion pass.
 
-The 0.1.12 APK is installed for the next manual headset pass but has deliberately
-not been launched by automation. That pass must validate the hard crop, smooth
-ground motion below floating platforms, linked-boss integrity, and sustained
-90 Hz motion. Unchecked in-headset checklist items are failures, not skipped
-tests.
+The 0.1.12 APK was installed but deliberately not launched by automation.
+Review of its simulation clamp prompted the 0.1.13 horizontal-width correction.
+The next headset pass must validate the revised boundary, smooth ground motion
+below floating platforms, linked-boss integrity, cloud transparency, and
+sustained 90 Hz motion. Unchecked in-headset checklist items are failures, not
+skipped tests.
+
+Version 0.1.13 restores the -24..288 horizontal presentation required by the
+simulation's de-parallax 16..280 player clamp while retaining the 0..184
+vertical crop. The bounds are now defined once and shared by terrain, entity
+clipping/culling, picking, and HUD placement. Cloud identity is latched per map
+epoch, so draw-order events cannot switch known cloud art from alpha 0.82 back
+to opaque alpha 1.0. This adds no draw calls or per-frame searches.

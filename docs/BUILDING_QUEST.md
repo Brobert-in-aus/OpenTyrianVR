@@ -28,6 +28,10 @@ The script builds SDL and the OpenTyrian core for `arm64-v8a`, exports the
 Godot C# project, applies 16 KiB ELF/APK alignment, signs with the debug
 keystore, and verifies the required managed, native, OpenXR, and data payloads.
 It sets `OTYR_MUTE=1` for Godot tooling and never launches or installs the game.
+The exporter runs with redirected logs and a five-minute bound. Godot 4.7 can
+remain alive after Gradle has closed a complete APK; the helper verifies the
+ZIP central directory and managed payload before stopping only that idle export
+process and continuing with alignment and signing.
 
 Output: `artifacts/OpenTyrianVR.quest.apk`
 
@@ -56,15 +60,18 @@ head-motion distortion. A sustained 0.1.5 pass validated pause/resume,
 in-game-menu transitions, platform-rider stability, 4x MSAA, and ample
 performance headroom; review-marker halos are editor-only.
 
-Version 0.1.12 (code 13) is the current installed validation build. It requests
-90 Hz, crops presentation to the actual 264x184 playfield, render-interpolates
-all terrain layers, and stabilizes linked composite enemies across authored
-transparent gaps. The in-headset checklist is the authoritative pass/fail gate:
+Version 0.1.13 (code 14) is the current validation build. It requests 90 Hz,
+restores the de-parallax-expanded -24..288 horizontal playfield, keeps the
+vertical crop at 0..184, render-interpolates all terrain layers, stabilizes
+linked composite enemies across authored transparent gaps, and keeps known
+cloud layers translucent when level events change their draw order. The
+in-headset checklist is the authoritative pass/fail gate:
 
 - the ship reaches both cropped horizontal edges;
-- enemies cross the hard playfield edges cleanly, with no fade or side strips;
+- enemies cross the hard vertical playfield edges cleanly, with no fade;
 - terrain below floating platforms scrolls without judder;
 - fast stacks and the small level-1 boss remain welded;
+- clouds remain translucent through draw-order and height changes;
 - motion remains smooth at the selected 90 Hz refresh rate.
 
 Unchecked checklist entries count as failures. Quest automation remains

@@ -56,14 +56,58 @@ $final = if ([IO.Path]::IsPathRooted($Output)) { $Output } else { Join-Path $rep
 $artifactStem = [IO.Path]::GetFileNameWithoutExtension($final)
 $raw = Join-Path $artifactDir "$artifactStem.raw.apk"
 $aligned = Join-Path $artifactDir "$artifactStem.aligned.apk"
+$exportStdout = Join-Path $artifactDir "$artifactStem.export.stdout.log"
+$exportStderr = Join-Path $artifactDir "$artifactStem.export.stderr.log"
+
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+function Test-CompleteGodotApk([string]$Path) {
+    if (!(Test-Path -LiteralPath $Path)) { return $false }
+    $zip = $null
+    try {
+        $zip = [IO.Compression.ZipFile]::OpenRead($Path)
+        return @($zip.Entries | ForEach-Object FullName) -contains `
+            'assets/.godot/mono/publish/arm64/OpenTyrianVR.dll'
+    } catch {
+        return $false
+    } finally {
+        if ($null -ne $zip) { $zip.Dispose() }
+    }
+}
 
 # Godot can initialize audio even during command-line tooling. Keep all build/export
 # invocations muted; this script never launches or installs the game.
 $previousMute = $env:OTYR_MUTE
 $env:OTYR_MUTE = '1'
 try {
-    & $Godot --headless --verbose --path $godotProject --export-debug Android $raw
-    if ($LASTEXITCODE -ne 0) { throw "Godot Android export failed ($LASTEXITCODE)" }
+    Remove-Item -LiteralPath $raw -Force -ErrorAction SilentlyContinue
+    Remove-Item -LiteralPath $exportStdout, $exportStderr -Force -ErrorAction SilentlyContinue
+    $export = Start-Process -FilePath $Godot -WindowStyle Hidden -PassThru `
+        -ArgumentList @('--headless', '--path', $godotProject, '--export-debug', 'Android', $raw) `
+        -RedirectStandardOutput $exportStdout -RedirectStandardError $exportStderr
+    $deadline = (Get-Date).AddMinutes(5)
+    $archiveReady = $false
+    while (!$export.HasExited -and (Get-Date) -lt $deadline) {
+        if (Test-CompleteGodotApk $raw) {
+            # Godot 4.7 can remain alive after Gradle has returned and closed a
+            # complete APK. Once the ZIP central directory and managed payload
+            # are readable, only exporter shutdown remains; do not let that
+            # wedge unattended Quest builds indefinitely.
+            $archiveReady = $true
+            Stop-Process -Id $export.Id -Force
+            $export.WaitForExit()
+            Write-Host 'Godot exporter remained alive after completing the APK; stopped its idle process.'
+            break
+        }
+        Start-Sleep -Milliseconds 500
+        $export.Refresh()
+    }
+    if (!$export.HasExited) {
+        Stop-Process -Id $export.Id -Force -ErrorAction SilentlyContinue
+        throw "Godot Android export timed out; see $exportStdout and $exportStderr"
+    }
+    if (!$archiveReady -and $export.ExitCode -ne 0) {
+        throw "Godot Android export failed ($($export.ExitCode)); see $exportStdout and $exportStderr"
+    }
 } finally {
     $env:OTYR_MUTE = $previousMute
 }
@@ -85,7 +129,6 @@ if ($LASTEXITCODE -ne 0) { throw "APK alignment verification failed ($LASTEXITCO
 & (Join-Path $buildTools 'apksigner.bat') verify --verbose $final
 if ($LASTEXITCODE -ne 0) { throw "APK signature verification failed ($LASTEXITCODE)" }
 
-Add-Type -AssemblyName System.IO.Compression.FileSystem
 $archive = [IO.Compression.ZipFile]::OpenRead($final)
 try {
     $entries = @($archive.Entries | ForEach-Object FullName)

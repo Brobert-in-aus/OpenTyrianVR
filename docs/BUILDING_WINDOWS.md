@@ -47,6 +47,10 @@ Fork-specific additions used by the Phase 0 replay/determinism gates:
   independent, so results are bit-identical, roughly 50x faster.
 - `--play-demo` — skips logos/title and plays demos immediately (cycling
   demo.1-5).
+- `OTYR_START_SECTION=<n>` with optional `OTYR_START_EPISODE=<e>` boots the
+  height-editor/test path at a script section. Release builds skip intro logos
+  when this hook is active, so targeted unattended checks do not spend their
+  timeout outside gameplay.
 
 Determinism gate: run `--turbo --play-demo --hash-log=FILE` and diff against
 the checked baseline; identical over the common prefix. A full demo verifies

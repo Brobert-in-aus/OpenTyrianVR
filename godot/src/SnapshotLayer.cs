@@ -17,9 +17,10 @@ public unsafe partial class SnapshotLayer : Node3D
     private const float LaneWidth = 1.0f, LaneHeight = 0.625f;
     private const float PxToMeters = LaneWidth / 320f;
     private const int AtlasCellsPerRow = 32;  // 32x32 grid of 12x14 cells
-    // Visible playfield. The wider de-parallax travel range lives inside the
-    // legacy 264x184 surface; authored side/spawn aprons are clipped away.
-    private const float CropX0 = 0f, CropY0 = 0f, CropX1 = 264f, CropY1 = 184f;
+    // Visible playfield after removing parallax: the legacy 264x184 window
+    // widened by 24 px on each side, with no hidden vertical spawn aprons.
+    private const float CropX0 = PlayfieldGeometry.MinX, CropY0 = PlayfieldGeometry.MinY;
+    private const float CropX1 = PlayfieldGeometry.MaxX, CropY1 = PlayfieldGeometry.MaxY;
 
     // Lane-local Z (out of the board) per category -- the diorama height bands.
     // Every hazard band sits ABOVE the elevated map layers (clouds 0.02,
