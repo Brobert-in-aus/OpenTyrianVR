@@ -48,3 +48,19 @@ reduction is warranted. If host CPU remains low but long frames recur, test 2x
 MSAA next; it halves the dominant multisample fill/storage cost while preserving
 edge antialiasing. Avoid reducing resolution again: the runtime-recommended 1.0
 scale is required for correct stereo presentation on the current mobile path.
+
+## Quest result (0.1.5)
+
+The sustained headset pass held 72 Hz while gameplay presented at 34.5 Hz.
+Representative five-second windows measured about 4.77 ms engine CPU time and
+1.12 ms average / 2.91 ms maximum OpenTyrian host work, with a 13.89 ms maximum
+frame interval and no long frames. The scene submitted 5 draws, 5 objects and
+about 6,916 primitives, using 289.8 MiB reported video memory and 26.4 MiB
+managed memory. Approximately 85 of 90 snapshot cells were visible.
+
+There were two skipped simulation snapshots around startup/menu transitions,
+not recurring gameplay misses. One menu/checklist transition produced two long
+frames (63.89 ms maximum); it did not repeat during play. The device pass is a
+performance pass: keep 4x MSAA and runtime-recommended resolution. Version
+0.1.7 adds per-window player, raw-hand and target X ranges to `PERF` lines so
+edge-travel reports can be confirmed from headset logs.

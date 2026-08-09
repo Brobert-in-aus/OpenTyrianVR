@@ -574,10 +574,11 @@
   correct stereo multiview presentation in-headset.  Runtime diagnostics show
   two 1680x1760 views, mirrored asymmetric projections, and a 62.8 mm IPD;
   restoring the runtime-recommended 1.0 viewport scale fixed the shifted eye
-  boundary and head-motion distortion.  Remaining gate: headset confirmation
-  of pause/menu transitions, elevated platform-rider stability, and review
-  markers.  Quest deployment is install-and-report only; automated launches
-  are prohibited.
+  boundary and head-motion distortion.  The 0.1.5 checklist passed pause,
+  resume, game-menu transitions, elevated platform-rider stability, and
+  sustained performance. Review-marker halos remain height-editor-only.
+  Quest deployment is install-and-report only; automated launches are
+  prohibited.
 - Quest regression/performance follow-up (0.1.5): hand targets now use the
   E2-full 16..280 travel range instead of the stale legacy 40..256 range.
   Multi-cell ordinal pairing allows 32 px per elapsed sim tick, scales across
@@ -586,7 +587,13 @@
   slot-reuse pairing. Five-second `PERF` telemetry records host/engine CPU,
   frame jitter, draws, memory, visible cells, and snapshot gaps; desktop flat
   gameplay measured 0.16 ms average host work, 18 draws, and 98 visible cells.
-  Quest GPU fill remains the open measurement (see PERFORMANCE.md).
+  The headset pass held 72 Hz at 4x MSAA with no recurring gameplay long
+  frames (about 4.77 ms engine CPU and 1.12 ms average host work), so no
+  resolution or MSAA reduction is warranted. Version 0.1.7 shortens the enemy
+  entrance-opacity ramp from 28 to 14 px, preserves exact 1:1 hand-rectangle
+  endpoint mapping, emits every 2x2 enemy as one host quad to eliminate tile
+  seams geometrically, and logs player/hand/target X ranges for the follow-up
+  device pass (see PERFORMANCE.md).
 
 ## 1. Product direction
 

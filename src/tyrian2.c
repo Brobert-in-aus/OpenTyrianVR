@@ -57,7 +57,9 @@
 #include <string.h>
 #include <stdint.h>
 
-inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed int y_offset, signed int sprite_offset);
+inline static void record_enemy_blit(unsigned int i, signed int x_offset,
+                                     signed int y_offset, signed int sprite_offset,
+                                     bool two_by_two);
 
 boss_bar_t boss_bar[2];
 
@@ -175,7 +177,9 @@ static PresentCategory enemy_band_category;
  * host's publish-time reclassification pass reads it too. */
 Uint8 otyr_enemy_moved[100];
 
-inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed int y_offset, signed int sprite_offset)
+inline static void record_enemy_blit(unsigned int i, signed int x_offset,
+                                     signed int y_offset, signed int sprite_offset,
+                                     bool two_by_two)
 {
 	if (enemy[i].sprite2s == NULL)
 	{
@@ -268,7 +272,8 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset, signed
 		if (enemy[i].tur[t] >= 252 && enemy[i].tur[t] <= 255)
 			rec_flags |= PRESENT_FLAG_MAGNET;
 
-	unsigned int rec = present_record_id(enemy_band_category, PRESENT_BLIT_SPRITE2,
+	unsigned int rec = present_record_id(enemy_band_category,
+	                  two_by_two ? PRESENT_BLIT_SPRITE2X2 : PRESENT_BLIT_SPRITE2,
 	                  rec_flags, enemy[i].filter,
 	                  terrain_art,
 	                  (Uint16)(0x1000 | i),
@@ -360,22 +365,33 @@ static void JE_updateEnemies(int enemyOffset)
 				const int wide_cells = otyr_sim_deparallax && present_suppress_entity_draw;
 				if (enemy[i].size == 1) // 2x2 enemy
 				{
-					if (enemy[i].ey > (wide_cells ? -48 : -13))
+					/* The host must receive the four tiles as one 24x28 quad.
+					   Four independent quads expose sub-pixel seams under XR
+					   projection even when their interpolation is identical.
+					   Legacy/fallback keeps its historical row gates exactly. */
+					if (wide_cells)
 					{
-						record_enemy_blit(i, -6, -7, 0);
-						record_enemy_blit(i,  6, -7, 1);
+						if (enemy[i].ey > -62)
+							record_enemy_blit(i, -6, -7, 0, true);
 					}
-					if (enemy[i].ey > (wide_cells ? -62 : -26) &&
-					    (wide_cells || enemy[i].ey < 182))
+					else
 					{
-						record_enemy_blit(i, -6,  7, 19);
-						record_enemy_blit(i,  6,  7, 20);
+						if (enemy[i].ey > -13)
+						{
+							record_enemy_blit(i, -6, -7, 0, false);
+							record_enemy_blit(i,  6, -7, 1, false);
+						}
+						if (enemy[i].ey > -26 && enemy[i].ey < 182)
+						{
+							record_enemy_blit(i, -6,  7, 19, false);
+							record_enemy_blit(i,  6,  7, 20, false);
+						}
 					}
 				}
 				else
 				{
 					if (enemy[i].ey > (wide_cells ? -48 : -13))
-						record_enemy_blit(i, 0, 0, 0);
+						record_enemy_blit(i, 0, 0, 0, false);
 				}
 
 				enemy[i].filter = 0;

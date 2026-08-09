@@ -709,10 +709,10 @@ public unsafe partial class SnapshotLayer : Node3D
                                    // into the visible apron
     }
 
-    // One legacy tile of hidden travel: event spawns sit exactly 28px above
-    // the old screen (ey = -28), so a full ramp reproduces the vanilla
-    // emergence -- solid just as the cell finishes crossing the old edge.
-    private const float EnterRampPx = 28f;
+    // Fade over half a legacy tile.  Event spawns still emerge from transparent
+    // at the old edge, but become solid aggressively instead of remaining
+    // ghosted for their entire first 28 px tile of travel.
+    private const float EnterRampPx = 14f;
     // Outer rim: everything dissolves into the void over the canvas' last
     // few pixels (exits stop being guillotined at the diorama edge).
     private const float RimFadePx = 12f;

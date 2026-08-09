@@ -51,6 +51,12 @@ public partial class Main : Node3D
     private int _perfHostSamples;
     private double _perfFrameMaxMs;
     private int _perfLongFrames;
+    private float _perfPlayerMinX = float.PositiveInfinity;
+    private float _perfPlayerMaxX = float.NegativeInfinity;
+    private float _perfHandMinX = float.PositiveInfinity;
+    private float _perfHandMaxX = float.NegativeInfinity;
+    private float _perfTargetMinX = float.PositiveInfinity;
+    private float _perfTargetMaxX = float.NegativeInfinity;
 
     // Hand-rectangle steering: the left hand's position within a floating
     // control rectangle maps 1:1 onto the gameplay rectangle; the ship is
@@ -89,10 +95,6 @@ public partial class Main : Node3D
     // timer, game over, insert coin) proud of the playfield instead of flat
     // in the frame (v13).
     private const bool RenderProudText = true;
-    // Temporary Quest device gate: ambiguous height types pulse green so the
-    // in-headset checklist can verify that review markers are stereo-stable.
-    // Disable after the ABI v24 device pass.
-    private const bool QuestReviewMarkerGate = true;
     private bool _handTargetActive;
     private short _handTargetX, _handTargetY;
     private bool _lastTargetActive;
@@ -793,8 +795,6 @@ public partial class Main : Node3D
         PollFrame();
         PollPlayerState();
         _snapshotLayer.Poll(_session, _palette);
-        if (_xrActive && QuestReviewMarkerGate)
-            _snapshotLayer.EditorReviewMarkers();
         // Menus, pause, and quit-to-title stop gameplay ticks; the 3D scene
         // (sprites AND background layers) must not linger over them.  A
         // legacy-fallback level (smoothie warp) draws its complete frame
@@ -848,6 +848,12 @@ public partial class Main : Node3D
         if (frameMs > 16.67)  // misses the 72 Hz budget with useful margin
             _perfLongFrames++;
 
+        if (_inGameplay)
+        {
+            _perfPlayerMinX = Math.Min(_perfPlayerMinX, _playerState.X);
+            _perfPlayerMaxX = Math.Max(_perfPlayerMaxX, _playerState.X);
+        }
+
         if (_perfWindowStartUsec == 0)
         {
             _perfWindowStartUsec = now;
@@ -864,6 +870,9 @@ public partial class Main : Node3D
         double primitives = Performance.GetMonitor(Performance.Monitor.RenderTotalPrimitivesInFrame);
         double videoMiB = Performance.GetMonitor(Performance.Monitor.RenderVideoMemUsed) / (1024.0 * 1024.0);
         double managedMiB = GC.GetTotalMemory(false) / (1024.0 * 1024.0);
+        string rangeProbe = float.IsFinite(_perfPlayerMinX)
+            ? $" x=player[{_perfPlayerMinX:0},{_perfPlayerMaxX:0}] hand[{_perfHandMinX:0.000},{_perfHandMaxX:0.000}] target[{_perfTargetMinX:0},{_perfTargetMaxX:0}]"
+            : "";
 
         GD.Print($"OpenTyrianVR: PERF render={Engine.GetFramesPerSecond()}Hz game={_gameFps:0.0}Hz " +
                  $"engine_cpu={engineProcessMs:0.00}ms host_cpu={hostAverageMs:0.00}/{_perfHostMaxMs:0.00}ms(avg/max) " +
@@ -872,7 +881,7 @@ public partial class Main : Node3D
                  $"video={videoMiB:0.0}MiB managed={managedMiB:0.0}MiB " +
                  $"cells={_snapshotLayer.CellCount} visible={_snapshotLayer.VisibleInstanceCount} " +
                  $"snapshot_gap={_snapshotLayer.LastTickGap}/{_snapshotLayer.MaxTickGap}(last/max) " +
-                 $"missed={_snapshotLayer.SkippedTicksTotal}");
+                 $"missed={_snapshotLayer.SkippedTicksTotal}{rangeProbe}");
 
         _perfWindowStartUsec = now;
         _perfHostTotalMs = 0.0;
@@ -880,6 +889,12 @@ public partial class Main : Node3D
         _perfHostSamples = 0;
         _perfFrameMaxMs = 0.0;
         _perfLongFrames = 0;
+        _perfPlayerMinX = float.PositiveInfinity;
+        _perfPlayerMaxX = float.NegativeInfinity;
+        _perfHandMinX = float.PositiveInfinity;
+        _perfHandMaxX = float.NegativeInfinity;
+        _perfTargetMinX = float.PositiveInfinity;
+        _perfTargetMaxX = float.NegativeInfinity;
     }
 
     private void UpdateChecklistInput()
@@ -1382,16 +1397,25 @@ public partial class Main : Node3D
         if (!_inGameplay)
             return;
 
-        // 1:1 map to the gameplay rectangle.  Rectangle-up = screen-up = smaller
+        // Exact endpoint-to-endpoint map: the hand rectangle and playable
+        // simulation area are the same normalized coordinate space.  Do not
+        // add comfort saturation/deadzones here; those break the 1:1 contract.
+        // Rectangle-up = screen-up = smaller
         // Tyrian y (sim y grows downward).  On a MIRRORED level (card-flip),
         // screen-up is sim-down: the hand box flips with the view so hand-up
         // stays visually up (the sim's own mouse compensation is bypassed in
         // target mode -- no double inversion).
         bool mirrored = _flipScale < 0f;
-        float targetX = Mathf.Remap(lx, -ControlRectWidth / 2f, ControlRectWidth / 2f, GameMinX, GameMaxX);
+        float targetX = Mathf.Remap(lx, -ControlRectWidth / 2f,
+            ControlRectWidth / 2f, GameMinX, GameMaxX);
         float targetY = mirrored
             ? Mathf.Remap(ly, -ControlRectHeight / 2f, ControlRectHeight / 2f, GameMinY, GameMaxY)
             : Mathf.Remap(ly, -ControlRectHeight / 2f, ControlRectHeight / 2f, GameMaxY, GameMinY);
+
+        _perfHandMinX = Math.Min(_perfHandMinX, local.X);
+        _perfHandMaxX = Math.Max(_perfHandMaxX, local.X);
+        _perfTargetMinX = Math.Min(_perfTargetMinX, targetX);
+        _perfTargetMaxX = Math.Max(_perfTargetMaxX, targetX);
 
         // Reticle on the lane, placed where the ship's VISUAL CENTER will sit
         // when it reaches the target: the two 24x28 sprite blocks are drawn at

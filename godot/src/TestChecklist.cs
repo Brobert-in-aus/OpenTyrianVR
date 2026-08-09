@@ -13,14 +13,9 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "FULL WIDTH: hand reaches left/right edges (status x about 16/280)",
+        "FULL WIDTH: marker edge maps 1:1; ship reaches x about 16/280",
+        "EDGE FADE: spawning enemies become solid within about half a tile",
         "FAST STACKS: rapidly falling multi-cell objects stay welded",
-        "PERF: play 2+ min; render stays near 72 Hz without recurring judder",
-        "PAUSE: left Menu -> clean flat pause; 3D vanishes immediately",
-        "RESUME: A/trigger -> 3D returns once, aligned; play continues",
-        "GAME MENU: B open/close -> no frozen HUD/text or 3D overlay",
-        "PLATFORM RIDERS: head-sweep; statics/shadows stay tile-locked",
-        "GREEN REVIEW HALOS: pulse on flagged enemies, remain eye-stable",
         "FAILURE? report level + frame number from the green status line",
     };
 
@@ -82,7 +77,7 @@ public partial class TestChecklist : Node3D
             if (!done)
                 remaining++;
 
-        text.Append($"ABI v24 QUEST GATE  ({Items.Length - remaining}/{Items.Length})\n");
+        text.Append($"QUEST REGRESSION GATE  ({Items.Length - remaining}/{Items.Length})\n");
         text.Append("R-stick click: check   L-stick click: skip\n\n");
         for (int i = 0; i < Items.Length; i++)
         {
