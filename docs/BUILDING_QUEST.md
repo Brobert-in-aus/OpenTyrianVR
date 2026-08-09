@@ -45,16 +45,28 @@ powershell -ExecutionPolicy Bypass -File tools\install_quest.ps1 `
 An alternate APK can be selected with `-Apk`. If `-Device` is omitted, the
 helper proceeds only when exactly one ADB device is connected.
 
-## Device status and remaining gate
+## Device status and current validation gate
 
 Quest packaging, startup, data extraction, OpenXR session creation, controller
 input, automatic centering, and stereo multiview presentation are confirmed on
-device as of version 0.1.3. Per-eye diagnostics reported two 1680x1760 views,
-mirrored asymmetric projections, and a 62.8 mm IPD. Keeping the Quest viewport
-at the runtime-recommended 1.0 render scale fixed the shifted eye boundary and
-head-motion distortion.
+device. Per-eye diagnostics reported two 1680x1760 views, mirrored asymmetric
+projections, and a 62.8 mm IPD. Keeping the Quest viewport at the
+runtime-recommended 1.0 render scale fixed the shifted eye boundary and
+head-motion distortion. A sustained 0.1.5 pass validated pause/resume,
+in-game-menu transitions, platform-rider stability, 4x MSAA, and ample
+performance headroom; review-marker halos are editor-only.
 
-The next installed development build exposes the remaining checks on the
-in-headset panel to the player's left: pause/resume and in-game-menu transitions,
-elevated platform-rider stability, and the pulsing green review markers used for
-ambiguous hover-height types.
+Version 0.1.12 (code 13) is the current installed validation build. It requests
+90 Hz, crops presentation to the actual 264x184 playfield, render-interpolates
+all terrain layers, and stabilizes linked composite enemies across authored
+transparent gaps. The in-headset checklist is the authoritative pass/fail gate:
+
+- the ship reaches both cropped horizontal edges;
+- enemies cross the hard playfield edges cleanly, with no fade or side strips;
+- terrain below floating platforms scrolls without judder;
+- fast stacks and the small level-1 boss remain welded;
+- motion remains smooth at the selected 90 Hz refresh rate.
+
+Unchecked checklist entries count as failures. Quest automation remains
+install-and-report only: do not launch the application from build or deployment
+scripts.

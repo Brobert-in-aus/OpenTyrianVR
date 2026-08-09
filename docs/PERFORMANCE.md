@@ -99,3 +99,9 @@ records reuse the layer's already-computed sub-tick offset; there are no new
 draws, meshes, or per-cell searches. Linked boss sections may bridge a maximum
 32 px transparent authored gap when aligned, then reuse the existing median
 component motion pass.
+
+The 0.1.12 APK is installed for the next manual headset pass but has deliberately
+not been launched by automation. That pass must validate the hard crop, smooth
+ground motion below floating platforms, linked-boss integrity, and sustained
+90 Hz motion. Unchecked in-headset checklist items are failures, not skipped
+tests.
