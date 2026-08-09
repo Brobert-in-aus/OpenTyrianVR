@@ -26,7 +26,7 @@ layers (18 total draw calls in the flat sample), but MSAA and alpha/depth passes
 are the first GPU suspects if Quest misses the requested 90 Hz.
 
 Per-frame snapshot presentation updates each visible cell's MultiMesh transform
-and custom data (plus fade color where applicable). At the observed cell count
+and custom data. At the observed cell count
 this was inexpensive. The legacy frame conversion/upload touches 320x200 pixels
 at the game's presentation rate and is likewise too small to explain sustained
 Quest load.
@@ -87,3 +87,8 @@ does not imply acceptance on every runtime or power/thermal state.
 At 90 Hz the frame interval is 11.11 ms. XR telemetry therefore counts intervals
 over 12 ms as long frames. The next headset pass should confirm an actual 90 Hz
 selection, near-90 render rate, and no recurring judder or long-frame clusters.
+
+Version 0.1.11 removes per-instance birth/rim opacity and crops terrain and
+entities to the 312x184 playable presentation window. Fragment clipping adds a
+few comparisons to the existing sprite shaders but removes instance-color
+updates; it does not add draw calls or geometry.

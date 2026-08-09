@@ -15,7 +15,8 @@ namespace OpenTyrianVR;
 /// scroll interpolation.  Layer 2 (clouds/top) carries no terrain paint and
 /// floats at real diorama height with per-render-frame scroll interpolation.
 ///
-/// Each layer is a single quad over the 264x184 play region; the fragment
+/// Each layer is a single quad over the de-parallax-expanded 312x184 play
+/// region; the fragment
 /// shader resolves frame pixel -> map tile -> shape pixel -> palette, with a
 /// seam-aware bilinear blend in post-palette RGB for anti-aliasing.
 /// </summary>
@@ -25,14 +26,12 @@ public unsafe partial class BackgroundLayer : Node3D
     private const int PlayW = 264, PlayH = 184;
     private const int AtlasCols = 8;  // 8x9 grid of 24x28 shapes
 
-    // E1 wide canvas: the quads cover the FULL authored map width (336/360
-    // px vs the 264 legacy window) plus an above strip and a below-screen
-    // apron -- the shader is transparent beyond (and in unauthored holes
-    // of) the map, and the backing only backs the play region, so holes
-    // fade into the void.  Play-region coordinates.  (User call: full
-    // width beats clamping to the legacy-reachable window.)
-    private const float CanvasX0 = -40f, CanvasY0 = -28f;
-    private const float CanvasW = 376f, CanvasH = 268f;
+    // The de-parallax player range grows by 24 px on each side, so retain
+    // that genuinely playable horizontal expansion but crop the old hidden
+    // spawn/departure aprons vertically. This is the visible play boundary:
+    // 312x184 versus the legacy 264x184 and the former 376x268 review canvas.
+    private const float CanvasX0 = -24f, CanvasY0 = 0f;
+    private const float CanvasW = 312f, CanvasH = 184f;
 
     // Lane-local Z per layer, chosen from the layer's over mode each tick.
     // Coplanar layers hug the lane overlay (sub-pixel offsets: ~0.1 mm of
@@ -217,8 +216,8 @@ public unsafe partial class BackgroundLayer : Node3D
                 """,
         };
 
-        // The E1 wide canvas in lane-local coordinates (the lane maps the
-        // full 320x200 frame; play area publishes at -24).
+        // The cropped de-parallax playfield in lane-local coordinates (the
+        // lane maps the full 320x200 frame; play area publishes at -24).
         QuadMesh LayerMesh(int l) => new QuadMesh
         {
             Size = new Vector2(CanvasW / 320f * LaneWidth, CanvasH / 200f * LaneHeight),
@@ -274,19 +273,16 @@ public unsafe partial class BackgroundLayer : Node3D
         };
         AddChild(_cloudQuad);
 
-        // Opaque backing behind the PLAY REGION only: where the suppressed
+        // Opaque backing behind the cropped play region: where the suppressed
         // legacy frame and the tile layers are all transparent there, the
         // board reads as black (erased HUD rects, astral events) instead of
-        // see-through.  The E1 margins deliberately have no backing -- rows
-        // whose outer map columns are unauthored fade into the void instead
-        // of showing a hard black slab.  (Menus draw the frame opaque, so
-        // they never needed the backing.)
+        // see-through. Menus draw the frame opaque, so they never need it.
         AddChild(new MeshInstance3D
         {
             Name = "Backing",
-            Mesh = new QuadMesh { Size = new Vector2(264f / 320f * LaneWidth, 184f / 200f * LaneHeight) },
-            Position = new Vector3((132f / 320f - 0.5f) * LaneWidth,
-                                   (0.5f - 92f / 200f) * LaneHeight, -0.0012f),
+            Mesh = new QuadMesh { Size = new Vector2(CanvasW / 320f * LaneWidth, CanvasH / 200f * LaneHeight) },
+            Position = new Vector3(((CanvasX0 + CanvasW / 2f) / 320f - 0.5f) * LaneWidth,
+                                   (0.5f - (CanvasY0 + CanvasH / 2f) / 200f) * LaneHeight, -0.0012f),
             MaterialOverride = new StandardMaterial3D
             {
                 AlbedoColor = new Color(0f, 0f, 0f),

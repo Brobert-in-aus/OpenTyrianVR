@@ -614,6 +614,14 @@
   the 3 px sensor-jitter hysteresis, so the commanded endpoints cannot remain
   at x=19/277 instead of x=16/280. Checklist entries are exclusively pass/fail;
   skipped or otherwise unchecked entries are recorded as failures.
+- Playfield crop (0.1.11): presentation now keeps only the genuinely playable
+  de-parallax expansion: 312x184 (the legacy 264x184 surface widened by 24 px
+  per side), replacing the 376x268 review canvas. Terrain, backing, picking,
+  entity culling, and fragment-precise sprite clipping share that boundary;
+  the detached HUD is snugged to x=288/y=184. The host birth/rim opacity ramp
+  is removed. Event enemies born in the old hidden y apron are instead
+  revealed geometrically as their already-interpolated quads cross y=0,
+  preserving spawn timing, collision truth, and deterministic simulation.
 
 ## 1. Product direction
 

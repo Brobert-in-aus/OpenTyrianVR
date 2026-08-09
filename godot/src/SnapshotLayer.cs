@@ -17,6 +17,9 @@ public unsafe partial class SnapshotLayer : Node3D
     private const float LaneWidth = 1.0f, LaneHeight = 0.625f;
     private const float PxToMeters = LaneWidth / 320f;
     private const int AtlasCellsPerRow = 32;  // 32x32 grid of 12x14 cells
+    // Visible playfield after removing parallax: the legacy 264x184 window
+    // widened by 24 px on each side, with no hidden vertical spawn aprons.
+    private const float CropX0 = -24f, CropY0 = 0f, CropX1 = 288f, CropY1 = 184f;
 
     // Lane-local Z (out of the board) per category -- the diorama height bands.
     // Every hazard band sits ABOVE the elevated map layers (clouds 0.02,
@@ -113,6 +116,20 @@ public unsafe partial class SnapshotLayer : Node3D
     private Image _paletteImage = null!;
     private readonly byte[] _paletteRgba = new byte[256 * 4];
     private readonly int[] _instanceCount = new int[LayerCount];
+    private readonly System.Collections.Generic.List<ShaderMaterial> _clipMaterials = new();
+
+    private void RegisterClipMaterial(ShaderMaterial material)
+    {
+        material.SetShaderParameter("clip_rect_px", new Vector4(CropX0, CropY0, CropX1, CropY1));
+        _clipMaterials.Add(material);
+    }
+
+    private void UpdateClipTransforms()
+    {
+        Transform3D worldToPlayfield = GlobalTransform.AffineInverse();
+        foreach (ShaderMaterial material in _clipMaterials)
+            material.SetShaderParameter("world_to_playfield", worldToPlayfield);
+    }
 
     /// <summary>Set before adding to the tree: render the background map
     /// layers in 3D (pair with ConfigFlags.SuppressBackground).</summary>
@@ -144,6 +161,8 @@ public unsafe partial class SnapshotLayer : Node3D
 
                 uniform sampler2D atlas : filter_nearest;
                 uniform sampler2D palette : source_color, filter_nearest;
+                uniform mat4 world_to_playfield;
+                uniform vec4 clip_rect_px; // left, top, right, bottom
 
                 // FLAT: per-instance integers must arrive bit-exact.
                 // Smooth varyings interpolate (a*w0+b*w1+c*w2) even when all
@@ -156,14 +175,13 @@ public unsafe partial class SnapshotLayer : Node3D
                 varying flat float v_flags;
                 varying flat float v_filter;
                 varying flat float v_decal;
-                varying flat float v_fade;  // instance color alpha: birth/rim fade
+                varying vec2 v_play_px;
 
                 void vertex() {
                     cell = INSTANCE_CUSTOM.x;
                     v_flags = INSTANCE_CUSTOM.y;
                     v_filter = INSTANCE_CUSTOM.z;
                     v_decal = INSTANCE_CUSTOM.w;
-                    v_fade = COLOR.a;
                     // Host-only flag 256 marks a joined composite. Expand
                     // half a pixel total for conservative stereo coverage.
                     bool seam = floor(v_flags / 256.0) >= 1.0;
@@ -172,9 +190,14 @@ public unsafe partial class SnapshotLayer : Node3D
                         vec2 size_px = big ? vec2(24.0, 28.0) : vec2(12.0, 14.0);
                         VERTEX.xy *= (size_px + vec2(0.5)) / size_px;
                     }
+                    vec3 p = (world_to_playfield * MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+                    v_play_px = vec2((p.x + 0.5) * 320.0, (0.5 - p.y / 0.625) * 200.0);
                 }
 
                 void fragment() {
+                    if (v_play_px.x < clip_rect_px.x || v_play_px.x >= clip_rect_px.z ||
+                        v_play_px.y < clip_rect_px.y || v_play_px.y >= clip_rect_px.w)
+                        discard;
                     // Terrain decals sit at EXACTLY the tile plane (zero
                     // head parallax, so transparent art pixels composite
                     // the baked tiles beneath); a depth-only bias encodes
@@ -224,7 +247,7 @@ public unsafe partial class SnapshotLayer : Node3D
                     ALBEDO = texture(palette, vec2((idx + 0.5) / 256.0, 0.5)).rgb;
                     // Legacy blend variants (transparent explosions,
                     // invulnerable ship) approximate as 55% alpha.
-                    ALPHA = (mod(floor(v_flags / 2.0), 2.0) >= 1.0 ? 0.55 : 1.0) * v_fade;
+                    ALPHA = mod(floor(v_flags / 2.0), 2.0) >= 1.0 ? 0.55 : 1.0;
                 }
                 """,
         };
@@ -247,12 +270,12 @@ public unsafe partial class SnapshotLayer : Node3D
             var material = new ShaderMaterial { Shader = shader, RenderPriority = 2 };
             material.SetShaderParameter("atlas", _atlas[id]);
             material.SetShaderParameter("palette", _paletteTexture);
+            RegisterClipMaterial(material);
 
             _multiMesh[id] = new MultiMesh
             {
                 TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
                 UseCustomData = true,
-                UseColors = true,  // per-instance alpha: birth/rim fade
                 Mesh = quad,
                 InstanceCount = OtyrNative.SnapshotSpriteMax,
                 VisibleInstanceCount = 0,
@@ -274,20 +297,29 @@ public unsafe partial class SnapshotLayer : Node3D
                 render_mode unshaded, cull_disabled;
 
                 uniform sampler2D palette : source_color, filter_nearest;
+                uniform mat4 world_to_playfield;
+                uniform vec4 clip_rect_px;
 
                 varying flat float pal_index;  // flat: see the sprite shader
+                varying vec2 v_play_px;
 
                 void vertex() {
                     pal_index = INSTANCE_CUSTOM.x;
+                    vec3 p = (world_to_playfield * MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+                    v_play_px = vec2((p.x + 0.5) * 320.0, (0.5 - p.y / 0.625) * 200.0);
                 }
 
                 void fragment() {
+                    if (v_play_px.x < clip_rect_px.x || v_play_px.x >= clip_rect_px.z ||
+                        v_play_px.y < clip_rect_px.y || v_play_px.y >= clip_rect_px.w)
+                        discard;
                     ALBEDO = texture(palette, vec2((pal_index + 0.5) / 256.0, 0.5)).rgb;
                 }
                 """,
         };
         var glowMaterial = new ShaderMaterial { Shader = glowShader, RenderPriority = 2 };
         glowMaterial.SetShaderParameter("palette", _paletteTexture);
+        RegisterClipMaterial(glowMaterial);
 
         _multiMesh[GlowLayer] = new MultiMesh
         {
@@ -315,16 +347,22 @@ public unsafe partial class SnapshotLayer : Node3D
 
                 uniform sampler2D atlas : filter_nearest;
                 uniform sampler2D palette : source_color, filter_nearest;
+                uniform mat4 world_to_playfield;
+                uniform vec4 clip_rect_px;
 
                 varying flat vec3 slot_wh;  // flat: see the sprite shader
-                varying flat float v_fade;  // birth/rim fade
+                varying vec2 v_play_px;
 
                 void vertex() {
                     slot_wh = INSTANCE_CUSTOM.xyz;
-                    v_fade = COLOR.a;
+                    vec3 p = (world_to_playfield * MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+                    v_play_px = vec2((p.x + 0.5) * 320.0, (0.5 - p.y / 0.625) * 200.0);
                 }
 
                 void fragment() {
+                    if (v_play_px.x < clip_rect_px.x || v_play_px.x >= clip_rect_px.z ||
+                        v_play_px.y < clip_rect_px.y || v_play_px.y >= clip_rect_px.w)
+                        discard;
                     // Rounded slot decode: see the text shader.
                     float slot = floor(slot_wh.x + 0.5);
                     vec2 wh = slot_wh.yz;
@@ -335,7 +373,7 @@ public unsafe partial class SnapshotLayer : Node3D
                         discard;
                     float idx = floor(s.r * 255.0 + 0.5);
                     ALBEDO = texture(palette, vec2((idx + 0.5) / 256.0, 0.5)).rgb;
-                    ALPHA = 0.55 * v_fade;
+                    ALPHA = 0.55;
                 }
                 """,
         };
@@ -345,12 +383,12 @@ public unsafe partial class SnapshotLayer : Node3D
             OldAtlasRows * OtyrNative.OldSpriteHMax, false, Image.Format.Rg8));
         oldMaterial.SetShaderParameter("atlas", _oldAtlas);
         oldMaterial.SetShaderParameter("palette", _paletteTexture);
+        RegisterClipMaterial(oldMaterial);
 
         _multiMesh[OldLayer] = new MultiMesh
         {
             TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
             UseCustomData = true,
-            UseColors = true,  // per-instance fade
             Mesh = new QuadMesh { Size = new Vector2(PxToMeters, PxToMeters) },
             InstanceCount = 128,
             VisibleInstanceCount = 0,
@@ -377,27 +415,33 @@ public unsafe partial class SnapshotLayer : Node3D
                 render_mode unshaded, cull_disabled, blend_mul, depth_draw_never;
 
                 uniform sampler2D atlas : filter_nearest;
+                uniform mat4 world_to_playfield;
+                uniform vec4 clip_rect_px;
 
                 // FLAT: see the sprite shader.
                 varying flat float cell;
                 varying flat float v_flags;
                 varying flat float v_decal;
-                varying flat float v_fade;  // birth/rim fade
+                varying vec2 v_play_px;
 
                 void vertex() {
                     cell = INSTANCE_CUSTOM.x;
                     v_flags = INSTANCE_CUSTOM.y;
                     v_decal = INSTANCE_CUSTOM.w;
-                    v_fade = COLOR.a;
                     bool seam = floor(v_flags / 256.0) >= 1.0;
                     bool big = mod(floor(v_flags / 8.0), 2.0) >= 1.0;
                     if (seam) {
                         vec2 size_px = big ? vec2(24.0, 28.0) : vec2(12.0, 14.0);
                         VERTEX.xy *= (size_px + vec2(0.5)) / size_px;
                     }
+                    vec3 p = (world_to_playfield * MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+                    v_play_px = vec2((p.x + 0.5) * 320.0, (0.5 - p.y / 0.625) * 200.0);
                 }
 
                 void fragment() {
+                    if (v_play_px.x < clip_rect_px.x || v_play_px.x >= clip_rect_px.z ||
+                        v_play_px.y < clip_rect_px.y || v_play_px.y >= clip_rect_px.w)
+                        discard;
                     // No DEPTH write (see render_mode note); paint order vs
                     // the statics on the same plane is real geometry now
                     // (the decal lift folds decalOrder into z).
@@ -421,9 +465,7 @@ public unsafe partial class SnapshotLayer : Node3D
                     vec2 cell_px = clamp(uv0 * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));
                     if (texture(atlas, (cell_origin_px + cell_px) / vec2(384.0, 448.0)).g < 0.5)
                         discard;
-                    // Multiplicative fade: white = no darkening, so a fading
-                    // shadow lightens toward absent alongside its caster.
-                    ALBEDO = vec3(mix(1.0, 0.5, v_fade));
+                    ALBEDO = vec3(0.5);
                 }
                 """,
         };
@@ -431,12 +473,12 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             var shadowMaterial = new ShaderMaterial { Shader = shadowShader, RenderPriority = 1 };
             shadowMaterial.SetShaderParameter("atlas", _atlas[id]);
+            RegisterClipMaterial(shadowMaterial);
 
             _multiMesh[ShadowLayerBase + id] = new MultiMesh
             {
                 TransformFormat = MultiMesh.TransformFormatEnum.Transform3D,
                 UseCustomData = true,
-                UseColors = true,  // per-instance fade
                 Mesh = quad,
                 InstanceCount = 256,
                 VisibleInstanceCount = 0,
@@ -461,14 +503,22 @@ public unsafe partial class SnapshotLayer : Node3D
 
                 uniform sampler2D atlas : filter_nearest;
                 uniform sampler2D palette : source_color, filter_nearest;
+                uniform mat4 world_to_playfield;
+                uniform vec4 clip_rect_px;
 
                 varying flat vec4 v_data;  // slot, w + h*65, mode + hue*4, value byte
+                varying vec2 v_play_px;
 
                 void vertex() {
                     v_data = INSTANCE_CUSTOM;
+                    vec3 p = (world_to_playfield * MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+                    v_play_px = vec2((p.x + 0.5) * 320.0, (0.5 - p.y / 0.625) * 200.0);
                 }
 
                 void fragment() {
+                    if (v_play_px.x < clip_rect_px.x || v_play_px.x >= clip_rect_px.z ||
+                        v_play_px.y < clip_rect_px.y || v_play_px.y >= clip_rect_px.w)
+                        discard;
                     // Round before decode: instance custom data can arrive a
                     // hair under the integer, and at exact multiples of the
                     // row width the mod/floor pair wraps to the wrong slot
@@ -508,6 +558,7 @@ public unsafe partial class SnapshotLayer : Node3D
         var textMaterial = new ShaderMaterial { Shader = textShader, RenderPriority = 4 };
         textMaterial.SetShaderParameter("atlas", _oldAtlas);
         textMaterial.SetShaderParameter("palette", _paletteTexture);
+        RegisterClipMaterial(textMaterial);
 
         _multiMesh[TextLayer] = new MultiMesh
         {
@@ -531,14 +582,22 @@ public unsafe partial class SnapshotLayer : Node3D
                 render_mode unshaded, cull_disabled, blend_mul, depth_draw_always;
 
                 uniform sampler2D atlas : filter_nearest;
+                uniform mat4 world_to_playfield;
+                uniform vec4 clip_rect_px;
 
                 varying flat vec4 v_data;  // flat: see the sprite shader
+                varying vec2 v_play_px;
 
                 void vertex() {
                     v_data = INSTANCE_CUSTOM;
+                    vec3 p = (world_to_playfield * MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
+                    v_play_px = vec2((p.x + 0.5) * 320.0, (0.5 - p.y / 0.625) * 200.0);
                 }
 
                 void fragment() {
+                    if (v_play_px.x < clip_rect_px.x || v_play_px.x >= clip_rect_px.z ||
+                        v_play_px.y < clip_rect_px.y || v_play_px.y >= clip_rect_px.w)
+                        discard;
                     // Same rounded decode as the text color layer.
                     float slot = floor(v_data.x + 0.5);
                     float whp = floor(v_data.y + 0.5);
@@ -553,6 +612,7 @@ public unsafe partial class SnapshotLayer : Node3D
         };
         var textShadowMaterial = new ShaderMaterial { Shader = textShadowShader, RenderPriority = 4 };
         textShadowMaterial.SetShaderParameter("atlas", _oldAtlas);
+        RegisterClipMaterial(textShadowMaterial);
 
         _multiMesh[TextShadowLayer] = new MultiMesh
         {
@@ -732,21 +792,8 @@ public unsafe partial class SnapshotLayer : Node3D
         public bool HasPrev;
         public ushort EntityType;  // enemies: eDat index (height editor)
         public byte AssemblyId;    // enemies: native linknum; 0 = standalone
-        public float EnterFade;    // 0..1 birth-fade: cells born outside the
-                                   // old play region (the vanilla off-screen
-                                   // margins) materialize over their own first
-                                   // EnterRampPx of travel instead of popping
-                                   // into the visible apron
         public bool SeamGuard;     // connected composite: conservative shared edge
     }
-
-    // Fade over half a legacy tile.  Event spawns still emerge from transparent
-    // at the old edge, but become solid aggressively instead of remaining
-    // ghosted for their entire first 28 px tile of travel.
-    private const float EnterRampPx = 14f;
-    // Outer rim: everything dissolves into the void over the canvas' last
-    // few pixels (exits stop being guillotined at the diorama edge).
-    private const float RimFadePx = 12f;
 
     private RenderCell[] _cells = new RenderCell[OtyrNative.SnapshotSpriteMax * 4];
     private int _cellCount;
@@ -1065,8 +1112,6 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.CurrPx = new Vector2(sprite.X, sprite.Y);
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
-        cell.EnterFade = 1f;  // debris: 2px sparks, not worth fading
-
         PairWithPrevious(ref cell, sprite.SourceId);
         ++_cellCount;
     }
@@ -1594,7 +1639,7 @@ public unsafe partial class SnapshotLayer : Node3D
     private ushort _pairRunSource = OtyrNative.NoSource;
     private int _pairRunOrdinal;
 
-    private void PairWithPrevious(ref RenderCell cell, ushort sourceId, bool fadeOnly = false)
+    private void PairWithPrevious(ref RenderCell cell, ushort sourceId, bool interpolatePosition = true)
     {
         _cellSource[_cellCount] = sourceId;
         _pairRunOrdinal = sourceId == _pairRunSource ? _pairRunOrdinal + 1 : 0;
@@ -1623,7 +1668,7 @@ public unsafe partial class SnapshotLayer : Node3D
             _prevCells[ordinalIdx].EntityType == cell.EntityType &&
             _prevCells[ordinalIdx].CurrPx.DistanceTo(cell.CurrPx) < pairRadius)
         {
-            InheritFromPrevious(ref cell, ordinalIdx, fadeOnly);
+            InheritFromPrevious(ref cell, ordinalIdx, interpolatePosition);
             return;
         }
 
@@ -1643,20 +1688,14 @@ public unsafe partial class SnapshotLayer : Node3D
             }
         }
         if (bestIdx >= 0)
-            InheritFromPrevious(ref cell, bestIdx, fadeOnly);
+            InheritFromPrevious(ref cell, bestIdx, interpolatePosition);
     }
 
-    private void InheritFromPrevious(ref RenderCell cell, int prevIdx, bool fadeOnly)
+    private void InheritFromPrevious(ref RenderCell cell, int prevIdx, bool interpolatePosition)
     {
-        // Birth-fade lineage: advance by the cell's OWN travel this tick, so
-        // an entering cell materializes at exactly its sim velocity (a glued
-        // structure over 28px of scroll, a fast mover in a few ticks).
-        cell.EnterFade = Math.Min(1f, _prevCells[prevIdx].EnterFade +
-            _prevCells[prevIdx].CurrPx.DistanceTo(cell.CurrPx) / EnterRampPx);
-        if (fadeOnly)
-            return;  // statics step with the tile grid: fade lineage only,
-                     // never position interpolation (art would swim against
-                     // its own baked underlay)
+        if (!interpolatePosition)
+            return;  // statics step with the tile grid; position interpolation
+                     // would make art swim against its baked underlay
         cell.PrevPx = _prevCells[prevIdx].CurrPx;
         cell.HasPrev = true;
     }
@@ -1681,8 +1720,6 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.CurrPx = new Vector2(sprite.X + size.X / 2f, sprite.Y + size.Y / 2f);
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
-        cell.EnterFade = 1f;  // special shots spawn at the ship, in play
-
         PairWithPrevious(ref cell, sprite.SourceId);
         ++_cellCount;
     }
@@ -1729,8 +1766,6 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.CurrPx = new Vector2(sprite.X + size.X / 2f, sprite.Y + size.Y / 2f);
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
-        cell.EnterFade = 1f;  // HUD text never fades
-
         // Text is stationary; render at the recorded position every tick.
         _cellSource[_cellCount] = OtyrNative.NoSource;
         ++_cellCount;
@@ -1838,17 +1873,6 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.PrevPx = cell.CurrPx;
         cell.HasPrev = false;
 
-        // Birth-fade default for UNPAIRED cells: a lineage that begins
-        // outside the old play region began off the vanilla screen -- event
-        // spawns sit exactly at ey -28 (the canvas top edge!) and 190/180
-        // (mid bottom-apron), so on the wide diorama they popped into view
-        // fully formed.  Start those at alpha 0; pairing then ramps them in
-        // over their own travel.  The x test shrinks 14px per side: the
-        // record x includes the per-band pinned map offset (11/23/35), so
-        // play-region bounds are band-blurred by up to +-13px.
-        float gx = centerX - 24f, gy = centerY;
-        cell.EnterFade = gx < 14f || gx > 250f || gy < 0f || gy > 184f ? 0f : 1f;
-
         // Baked structures (and statics stacked on them) are locked to the
         // map tiles beneath; the tile layers step per tick, so interpolating
         // the art over them would swim against its own baked underlay.
@@ -1874,25 +1898,15 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             if (isExplosion)
             {
-                // Bursts must never pair (recycled slots smeared new bursts
-                // across dead ones -- the speckle).  No lineage means no
-                // travel ramp; position-ramp the fade instead so an apron
-                // kill still flashes, dimmer toward the rim.
-                float apron = Math.Max(Math.Max(14f - gx, gx - 250f),
-                                       Math.Max(-gy, gy - 184f));
-                cell.EnterFade = apron <= 0f ? 1f
-                    : Math.Max(0f, 1f - apron / EnterRampPx);
+                // Bursts must never pair: recycled slots smeared new bursts
+                // across dead ones. The playfield shader crops them cleanly.
                 _cellSource[_cellCount] = OtyrNative.NoSource;
             }
             else
             {
-                // Statics step with the tile grid (no position pairing), but
-                // their birth-fade must still advance with the scroll: keep
-                // the real source and inherit the fade only.  Side effect: a
-                // mover cell of the same source can now pair against a prior
-                // STATIC cell (aux-flip handoff interpolates one step
-                // instead of jumping) -- continuity, not a regression.
-                PairWithPrevious(ref cell, sprite.SourceId, fadeOnly: true);
+                // Keep static source lineage for aux-flip handoffs, but never
+                // position-interpolate art away from its baked underlay.
+                PairWithPrevious(ref cell, sprite.SourceId, interpolatePosition: false);
             }
             ++_cellCount;
             return;
@@ -1913,6 +1927,7 @@ public unsafe partial class SnapshotLayer : Node3D
         }
 
         _background?.OnRender(t);
+        UpdateClipTransforms();
 
         Array.Clear(_instanceCount);
 
@@ -1944,16 +1959,14 @@ public unsafe partial class SnapshotLayer : Node3D
             // Sheet-layer 2x2 sprites render as one 24x28 quad (flag bit 8).
             bool big = !pixelQuad && id != GlowLayer && (cell.Flags & 8) != 0;
 
-            // Cull cells fully outside the WIDE diorama (E1): the sim keeps
-            // enemies alive to x in [-80, 340] and records them, and the
-            // full-width map margins render beneath -- only cells beyond
-            // the widened canvas drop.  (Legacy clipped to the 264x184
-            // window; the margins are the point of E1.)
+            // Cull cells fully outside the cropped de-parallax playfield.
+            // The shader clips partially crossing quads precisely at the
+            // boundary, reproducing the original bezel reveal without alpha.
             float halfW = id == GlowLayer ? 1f : pixelQuad ? cell.Flags / 2f : big ? OtyrNative.SheetCellW : OtyrNative.SheetCellW / 2f;
             float halfH = id == GlowLayer ? 1f : pixelQuad ? cell.FilterColor / 2f : big ? OtyrNative.SheetCellH : OtyrNative.SheetCellH / 2f;
             float frameX = px.X - 24f;
-            if (frameX + halfW <= -40f || frameX - halfW >= 336f ||
-                px.Y + halfH <= -28f || px.Y - halfH >= 240f)
+            if (frameX + halfW <= CropX0 || frameX - halfW >= CropX1 ||
+                px.Y + halfH <= CropY0 || px.Y - halfH >= CropY1)
                 continue;
 
             // Frame pixels (game_screen, composited -24) -> lane local.
@@ -2021,19 +2034,6 @@ public unsafe partial class SnapshotLayer : Node3D
                     : new Color(cell.CellIndex, cell.Flags + (cell.SeamGuard ? 256f : 0f),
                                 cell.FilterColor, cell.DecalOrder));
 
-            // Birth/rim fade (sheet, shadow, old layers -- their MultiMeshes
-            // carry instance colors): entering cells materialize over their
-            // own travel from the vanilla spawn line, and EVERYTHING
-            // dissolves over the canvas' outermost RimFadePx instead of
-            // being guillotined at the diorama edge.
-            if (id != GlowLayer && id != TextLayer && id != TextShadowLayer)
-            {
-                float rim = Math.Min(
-                    Math.Min((frameX + 40f) / RimFadePx, (336f - frameX) / RimFadePx),
-                    Math.Min((px.Y + 28f) / RimFadePx, (240f - px.Y) / RimFadePx));
-                float fade = Math.Clamp(Math.Min(cell.EnterFade, rim), 0f, 1f);
-                _multiMesh[id].SetInstanceColor(instance, new Color(1f, 1f, 1f, fade));
-            }
         }
 
         for (int id = 0; id < LayerCount; id++)
