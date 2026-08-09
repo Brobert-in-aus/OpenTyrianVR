@@ -16,6 +16,7 @@ public partial class TestChecklist : Node3D
         "FULL WIDTH: marker edge maps 1:1; ship reaches x about 16/280",
         "EDGE FADE: spawning enemies become solid within about half a tile",
         "COMPOSITES: fast stacks, linked bosses and multi-quad ships stay welded",
+        "90 HZ: motion stays smooth without recurring judder",
         "FAILURE? report level + frame number from the green status line",
     };
 

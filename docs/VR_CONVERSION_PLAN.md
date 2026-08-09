@@ -602,6 +602,12 @@
   edge-sample extension on each side of joined quads. This covers intrinsic
   2x2s, linked multi-slot bosses/stacks, and same-source multi-quad ships
   without merging unrelated wave members that merely share a link number.
+- Quest refresh follow-up (0.1.9): Android OpenXR requests 90 Hz at startup,
+  reapplies the request after the first tracked frames, and logs available,
+  requested, and actual refresh rates. XR performance telemetry now treats
+  intervals over 12 ms as misses of the 90 Hz budget. The in-headset gate must
+  confirm that the runtime selected 90 Hz and that motion remains free of
+  recurring judder before this replaces the validated 72 Hz baseline.
 
 ## 1. Product direction
 

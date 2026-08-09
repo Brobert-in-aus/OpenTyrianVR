@@ -16,6 +16,8 @@ public partial class Main : Node3D
     private bool _xrStartupCentered;
     private int _xrStartupFrames;
     private int _xrStereoLogCountdown;
+    private int _xrRefreshLogCountdown;
+    private XRInterface? _openXr;
     private XROrigin3D _xrOrigin = null!;
     private XRCamera3D _xrCamera = null!;
     private ulong _session;
@@ -81,6 +83,7 @@ public partial class Main : Node3D
     private const float GameMinX = 16f, GameMaxX = 280f;
     private const float GameMinY = 10f, GameMaxY = 160f;
     private const float LaneWidth = 1.0f, LaneHeight = 0.625f;
+    private const double QuestTargetRefreshRate = 90.0;
     // 0 = the sim's default max (5 px/tick, the original sustained keyboard
     // speed); the sim applies its own distance-based ease profile.
     private const byte HandTargetSpeed = 0;
@@ -154,9 +157,17 @@ public partial class Main : Node3D
 
         if (_xrActive)
         {
+            _openXr = xr;
             GetViewport().UseXR = true;
             DisplayServer.WindowSetVsyncMode(DisplayServer.VSyncMode.Disabled);
             GD.Print("OpenTyrianVR: OpenXR active");
+            if (OS.GetName() == "Android")
+            {
+                ConfigureQuestRefresh("startup");
+                // Re-apply once the mobile session has rendered a few frames;
+                // the settled log proves the runtime's actual selected rate.
+                _xrRefreshLogCountdown = 3;
+            }
         }
         else
         {
@@ -517,6 +528,31 @@ public partial class Main : Node3D
         }
     }
 
+    private void ConfigureQuestRefresh(string phase)
+    {
+        if (_openXr == null || !_openXr.HasMethod("set_display_refresh_rate"))
+        {
+            GD.Print($"OpenTyrianVR: XR refresh {phase}: runtime extension unavailable; target=90Hz");
+            return;
+        }
+
+        try
+        {
+            string available = _openXr.HasMethod("get_available_display_refresh_rates")
+                ? _openXr.Call("get_available_display_refresh_rates").ToString()
+                : "unknown";
+            _openXr.Call("set_display_refresh_rate", QuestTargetRefreshRate);
+            string actual = _openXr.HasMethod("get_display_refresh_rate")
+                ? $"{_openXr.Call("get_display_refresh_rate").AsDouble():0.##}Hz"
+                : "unknown";
+            GD.Print($"OpenTyrianVR: XR refresh {phase}: available={available} requested=90Hz actual={actual}");
+        }
+        catch (Exception exception)
+        {
+            GD.PrintErr($"OpenTyrianVR: XR refresh {phase} failed: {exception.Message}");
+        }
+    }
+
     // The C core reads Tyrian assets with stdio, while Android res:// files
     // live inside Godot's PCK. Materialize the flat freeware data directory in
     // user:// on first launch (and refresh files whose packaged size changes).
@@ -736,6 +772,9 @@ public partial class Main : Node3D
 
     public override void _Process(double delta)
     {
+        if (_xrRefreshLogCountdown > 0 && --_xrRefreshLogCountdown == 0)
+            ConfigureQuestRefresh("settled");
+
         // Quest preserves the runtime/Guardian heading across launches.  The
         // scene is authored around a seated head at the origin facing -Z, so
         // center that authored space on the live HMD once tracking has had a
@@ -845,7 +884,10 @@ public partial class Main : Node3D
         _perfHostSamples++;
         double frameMs = delta * 1000.0;
         _perfFrameMaxMs = Math.Max(_perfFrameMaxMs, frameMs);
-        if (frameMs > 16.67)  // misses the 72 Hz budget with useful margin
+        // Quest targets 90 Hz (11.11 ms); allow a small scheduler tolerance.
+        // Flat diagnostics retain their traditional 60 Hz-oriented threshold.
+        double longFrameThresholdMs = _xrActive ? 12.0 : 16.67;
+        if (frameMs > longFrameThresholdMs)
             _perfLongFrames++;
 
         if (_inGameplay)

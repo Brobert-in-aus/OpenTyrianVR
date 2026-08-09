@@ -23,7 +23,7 @@ before depth and transparent/depth-prepass overdraw. The scene has up to 22
 batched MultiMesh layers plus background, lane, HUD, controls, diagnostics, and
 temporary review markers. Typical gameplay activates substantially fewer
 layers (18 total draw calls in the flat sample), but MSAA and alpha/depth passes
-are the first GPU suspects if Quest misses 72 Hz.
+are the first GPU suspects if Quest misses the requested 90 Hz.
 
 Per-frame snapshot presentation updates each visible cell's MultiMesh transform
 and custom data (plus fade color where applicable). At the observed cell count
@@ -37,14 +37,15 @@ Version 0.1.5 logs a `PERF` line every five seconds containing:
 
 - render and game presentation rate;
 - engine CPU and OpenTyrian host CPU average/maximum time;
-- maximum frame interval and count over 16.67 ms;
+- maximum frame interval and count over the active budget (12 ms in XR,
+  allowing a small margin over the 90 Hz 11.11 ms interval);
 - draw calls, visible objects/primitives, video and managed memory;
 - snapshot cell/visible-instance counts;
 - detected rigid-assembly group/seam-guard cell counts;
 - last/maximum simulation-tick gap and cumulative skipped ticks.
 
 The decisive test is two or more minutes of representative Quest gameplay. If
-render rate holds 72 Hz with low long-frame and snapshot-gap counts, no quality
+render rate holds 90 Hz with low long-frame and snapshot-gap counts, no quality
 reduction is warranted. If host CPU remains low but long frames recur, test 2x
 MSAA next; it halves the dominant multisample fill/storage cost while preserving
 edge antialiasing. Avoid reducing resolution again: the runtime-recommended 1.0
@@ -73,3 +74,16 @@ connected records that share an exact source or nonzero assembly id; members use
 median interpolation delta and a half-pixel conservative join guard. The pass
 is O(n squared) in snapshot records (typically about 90 cells on Quest), does
 not add draw calls, and logs group/cell counts for device confirmation.
+
+## Quest 90 Hz target (0.1.9)
+
+The validated 72 Hz pass left enough measured CPU and submission headroom to
+request 90 Hz while retaining 4x MSAA and runtime-recommended resolution. On
+Android, the OpenXR host now logs the runtime's available refresh rates, requests
+90 Hz at initialization, then reapplies and logs the actual selected rate after
+the first few rendered frames. The headset log is authoritative: a 90 Hz request
+does not imply acceptance on every runtime or power/thermal state.
+
+At 90 Hz the frame interval is 11.11 ms. XR telemetry therefore counts intervals
+over 12 ms as long frames. The next headset pass should confirm an actual 90 Hz
+selection, near-90 render rate, and no recurring judder or long-frame clusters.
