@@ -578,6 +578,15 @@
   of pause/menu transitions, elevated platform-rider stability, and review
   markers.  Quest deployment is install-and-report only; automated launches
   are prohibited.
+- Quest regression/performance follow-up (0.1.5): hand targets now use the
+  E2-full 16..280 travel range instead of the stale legacy 40..256 range.
+  Multi-cell ordinal pairing allows 32 px per elapsed sim tick, scales across
+  up to four skipped publications, and snaps the complete assembly after a
+  larger stall, preventing the fast-fall seam without widening single-cell
+  slot-reuse pairing. Five-second `PERF` telemetry records host/engine CPU,
+  frame jitter, draws, memory, visible cells, and snapshot gaps; desktop flat
+  gameplay measured 0.16 ms average host work, 18 draws, and 98 visible cells.
+  Quest GPU fill remains the open measurement (see PERFORMANCE.md).
 
 ## 1. Product direction
 

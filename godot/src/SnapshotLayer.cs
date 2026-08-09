@@ -75,6 +75,14 @@ public unsafe partial class SnapshotLayer : Node3D
     private uint _lastRenderedSnapshot;
     private ulong _snapshotArrivalUsec;
     private double _snapshotPeriod = 0.02875;  // nominal 35 Hz tick
+    private uint _cellLevelTick;
+    private uint _pairTickGap = 1;
+
+    public int CellCount => _cellCount;
+    public int VisibleInstanceCount { get; private set; }
+    public uint LastTickGap { get; private set; } = 1;
+    public uint MaxTickGap { get; private set; } = 1;
+    public ulong SkippedTicksTotal { get; private set; }
 
     // Layers 0..SheetCount-1 are sprite sheets; then the glow layer
     // (superpixel debris as small palette-colored quads), the old-table
@@ -724,9 +732,25 @@ public unsafe partial class SnapshotLayer : Node3D
     private readonly System.Collections.Generic.Dictionary<ushort, (int Start, int Count)> _prevRuns = new();
 
     private const float PairRadiusPx = 16f;
+    private const float RigidPairRadiusPerTickPx = 32f;
+    private const uint MaxInterpolatedTickGap = 4;
 
     private void BuildSprites()
     {
+        // The host exposes the newest snapshot rather than a queue.  A slow
+        // render frame can therefore skip one or more 35 Hz publications.
+        // Scale rigid multi-cell pairing by the actual tick gap; after a very
+        // large stall, snap the complete object instead of risking a recycled
+        // source id stretching across the scene.
+        uint nextTick = _snapshot.LevelTick;
+        _pairTickGap = _cellLevelTick != 0 && nextTick > _cellLevelTick
+            ? nextTick - _cellLevelTick : 1;
+        LastTickGap = _pairTickGap;
+        MaxTickGap = Math.Max(MaxTickGap, _pairTickGap);
+        if (_pairTickGap > 1)
+            SkippedTicksTotal += _pairTickGap - 1;
+        _cellLevelTick = nextTick;
+
         // Rotate current -> previous.
         (_prevCells, _cells) = (_cells, _prevCells);
         (_prevCellSource, _cellSource) = (_cellSource, _prevCellSource);
@@ -1424,6 +1448,15 @@ public unsafe partial class SnapshotLayer : Node3D
         if (sourceId == OtyrNative.NoSource || !_prevRuns.TryGetValue(sourceId, out var run))
             return;
 
+        // Single-cell sources keep the conservative legacy radius.  Rigid
+        // multi-cell assemblies get enough radius for skipped publications;
+        // beyond the bounded gap they all snap together (no partial pairing,
+        // hence no seam) rather than guessing across recycled entity slots.
+        bool rigidRun = run.Count > 1;
+        if (rigidRun && _pairTickGap > MaxInterpolatedTickGap)
+            return;
+        float pairRadius = rigidRun ? RigidPairRadiusPerTickPx * _pairTickGap : PairRadiusPx;
+
         // Ordinal-first: same-source cells emit in a stable record order,
         // so cell N pairs with last tick's cell N.  Nearest-match alone let
         // a fast-falling stacked enemy's TOP cell pair with last tick's
@@ -1433,17 +1466,20 @@ public unsafe partial class SnapshotLayer : Node3D
         // screen row gating).
         int ordinalIdx = run.Start + _pairRunOrdinal;
         if (_pairRunOrdinal < run.Count && _prevCells[ordinalIdx].SheetId == cell.SheetId &&
-            _prevCells[ordinalIdx].CurrPx.DistanceTo(cell.CurrPx) < PairRadiusPx)
+            _prevCells[ordinalIdx].EntityType == cell.EntityType &&
+            _prevCells[ordinalIdx].CurrPx.DistanceTo(cell.CurrPx) < pairRadius)
         {
             InheritFromPrevious(ref cell, ordinalIdx, fadeOnly);
             return;
         }
 
-        float bestDist = PairRadiusPx;
+        float bestDist = pairRadius;
         int bestIdx = -1;
         for (int i = run.Start; i < run.Start + run.Count; i++)
         {
             if (_prevCells[i].SheetId != cell.SheetId)
+                continue;
+            if (_prevCells[i].EntityType != cell.EntityType)
                 continue;
             float dist = _prevCells[i].CurrPx.DistanceTo(cell.CurrPx);
             if (dist < bestDist)
@@ -1846,5 +1882,8 @@ public unsafe partial class SnapshotLayer : Node3D
 
         for (int id = 0; id < LayerCount; id++)
             _multiMesh[id].VisibleInstanceCount = _instanceCount[id];
+        VisibleInstanceCount = 0;
+        for (int id = 0; id < LayerCount; id++)
+            VisibleInstanceCount += _instanceCount[id];
     }
 }

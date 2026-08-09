@@ -45,6 +45,12 @@ public partial class Main : Node3D
     private double _fpsWindowTime;
     private double _gameFps;
     private double _fpsLogAccumulator;
+    private ulong _perfWindowStartUsec;
+    private double _perfHostTotalMs;
+    private double _perfHostMaxMs;
+    private int _perfHostSamples;
+    private double _perfFrameMaxMs;
+    private int _perfLongFrames;
 
     // Hand-rectangle steering: the left hand's position within a floating
     // control rectangle maps 1:1 onto the gameplay rectangle; the ship is
@@ -62,8 +68,11 @@ public partial class Main : Node3D
 
     private const float ControlRectWidth = 0.36f;
     private const float ControlRectHeight = 0.25f;
-    // Player movement clamp in Tyrian sim coordinates (ENTITY_TAXONOMY.md).
-    private const float GameMinX = 40f, GameMaxX = 256f;
+    // E2-full player travel in Tyrian sim coordinates.  Keep this host-side
+    // absolute target range identical to mainint.c's de-parallax clamp;
+    // keyboard input reaches these bounds directly, so a stale 40..256 here
+    // made Quest hand steering narrower than the flat editor.
+    private const float GameMinX = 16f, GameMaxX = 280f;
     private const float GameMinY = 10f, GameMaxY = 160f;
     private const float LaneWidth = 1.0f, LaneHeight = 0.625f;
     // 0 = the sim's default max (5 px/tick, the original sustained keyboard
@@ -743,6 +752,8 @@ public partial class Main : Node3D
         if (!_sessionLive)
             return;
 
+        ulong hostWorkStartUsec = Time.GetTicksUsec();
+
         if (CaptureCount > 0)
         {
             _captureAccumulator += delta;
@@ -822,6 +833,53 @@ public partial class Main : Node3D
         UpdateChecklistInput();
         SubmitInput();
         UpdateDiagnostics(delta);
+        RecordPerformance(hostWorkStartUsec, delta);
+    }
+
+    private void RecordPerformance(ulong hostWorkStartUsec, double delta)
+    {
+        ulong now = Time.GetTicksUsec();
+        double hostMs = (now - hostWorkStartUsec) / 1000.0;
+        _perfHostTotalMs += hostMs;
+        _perfHostMaxMs = Math.Max(_perfHostMaxMs, hostMs);
+        _perfHostSamples++;
+        double frameMs = delta * 1000.0;
+        _perfFrameMaxMs = Math.Max(_perfFrameMaxMs, frameMs);
+        if (frameMs > 16.67)  // misses the 72 Hz budget with useful margin
+            _perfLongFrames++;
+
+        if (_perfWindowStartUsec == 0)
+        {
+            _perfWindowStartUsec = now;
+            return;
+        }
+        double windowSeconds = (now - _perfWindowStartUsec) / 1_000_000.0;
+        if (windowSeconds < 5.0)
+            return;
+
+        double hostAverageMs = _perfHostSamples > 0 ? _perfHostTotalMs / _perfHostSamples : 0.0;
+        double engineProcessMs = Performance.GetMonitor(Performance.Monitor.TimeProcess) * 1000.0;
+        double drawCalls = Performance.GetMonitor(Performance.Monitor.RenderTotalDrawCallsInFrame);
+        double objects = Performance.GetMonitor(Performance.Monitor.RenderTotalObjectsInFrame);
+        double primitives = Performance.GetMonitor(Performance.Monitor.RenderTotalPrimitivesInFrame);
+        double videoMiB = Performance.GetMonitor(Performance.Monitor.RenderVideoMemUsed) / (1024.0 * 1024.0);
+        double managedMiB = GC.GetTotalMemory(false) / (1024.0 * 1024.0);
+
+        GD.Print($"OpenTyrianVR: PERF render={Engine.GetFramesPerSecond()}Hz game={_gameFps:0.0}Hz " +
+                 $"engine_cpu={engineProcessMs:0.00}ms host_cpu={hostAverageMs:0.00}/{_perfHostMaxMs:0.00}ms(avg/max) " +
+                 $"frame_max={_perfFrameMaxMs:0.00}ms long_frames={_perfLongFrames} " +
+                 $"draws={drawCalls:0} objects={objects:0} prims={primitives:0} " +
+                 $"video={videoMiB:0.0}MiB managed={managedMiB:0.0}MiB " +
+                 $"cells={_snapshotLayer.CellCount} visible={_snapshotLayer.VisibleInstanceCount} " +
+                 $"snapshot_gap={_snapshotLayer.LastTickGap}/{_snapshotLayer.MaxTickGap}(last/max) " +
+                 $"missed={_snapshotLayer.SkippedTicksTotal}");
+
+        _perfWindowStartUsec = now;
+        _perfHostTotalMs = 0.0;
+        _perfHostMaxMs = 0.0;
+        _perfHostSamples = 0;
+        _perfFrameMaxMs = 0.0;
+        _perfLongFrames = 0;
     }
 
     private void UpdateChecklistInput()

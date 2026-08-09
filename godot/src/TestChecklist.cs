@@ -13,6 +13,9 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
+        "FULL WIDTH: hand reaches left/right edges (status x about 16/280)",
+        "FAST STACKS: rapidly falling multi-cell objects stay welded",
+        "PERF: play 2+ min; render stays near 72 Hz without recurring judder",
         "PAUSE: left Menu -> clean flat pause; 3D vanishes immediately",
         "RESUME: A/trigger -> 3D returns once, aligned; play continues",
         "GAME MENU: B open/close -> no frozen HUD/text or 3D overlay",
