@@ -83,6 +83,8 @@ public unsafe partial class SnapshotLayer : Node3D
     public uint LastTickGap { get; private set; } = 1;
     public uint MaxTickGap { get; private set; } = 1;
     public ulong SkippedTicksTotal { get; private set; }
+    public int RigidAssemblyCount { get; private set; }
+    public int SeamGuardCellCount { get; private set; }
 
     // Layers 0..SheetCount-1 are sprite sheets; then the glow layer
     // (superpixel debris as small palette-colored quads), the old-table
@@ -162,6 +164,14 @@ public unsafe partial class SnapshotLayer : Node3D
                     v_filter = INSTANCE_CUSTOM.z;
                     v_decal = INSTANCE_CUSTOM.w;
                     v_fade = COLOR.a;
+                    // Host-only flag 256 marks a joined composite. Expand
+                    // half a pixel total for conservative stereo coverage.
+                    bool seam = floor(v_flags / 256.0) >= 1.0;
+                    bool big = mod(floor(v_flags / 8.0), 2.0) >= 1.0;
+                    if (seam) {
+                        vec2 size_px = big ? vec2(24.0, 28.0) : vec2(12.0, 14.0);
+                        VERTEX.xy *= (size_px + vec2(0.5)) / size_px;
+                    }
                 }
 
                 void fragment() {
@@ -174,10 +184,17 @@ public unsafe partial class SnapshotLayer : Node3D
                     // arrive a hair under the integer and wrap the atlas
                     // origin at column boundaries.
                     float cid = floor(cell + 0.5);
-                    vec2 uv0 = UV;
+                    bool seam = floor(v_flags / 256.0) >= 1.0;
+                    bool dbg_big = mod(floor(v_flags / 8.0), 2.0) >= 1.0;
+                    vec2 size_px = dbg_big ? vec2(24.0, 28.0) : vec2(12.0, 14.0);
+                    // Preserve the original pixel scale. Only the expanded
+                    // quarter-pixel rim repeats the sprite's edge sample.
+                    vec2 uv0 = seam
+                        ? clamp((UV * (size_px + vec2(0.5)) - vec2(0.25)) / size_px,
+                                vec2(0.0), vec2(1.0))
+                        : UV;
                     // 2x2 sprites (flag bit 8): one quad; pick the legacy
                     // cell (+0/+1/+19/+20) by UV quadrant.
-                    bool dbg_big = mod(floor(v_flags / 8.0), 2.0) >= 1.0;
                     vec2 dbg_q = vec2(0.0);
                     if (dbg_big) {
                         // MSAA edge fragments get UVs extrapolated a hair
@@ -372,6 +389,12 @@ public unsafe partial class SnapshotLayer : Node3D
                     v_flags = INSTANCE_CUSTOM.y;
                     v_decal = INSTANCE_CUSTOM.w;
                     v_fade = COLOR.a;
+                    bool seam = floor(v_flags / 256.0) >= 1.0;
+                    bool big = mod(floor(v_flags / 8.0), 2.0) >= 1.0;
+                    if (seam) {
+                        vec2 size_px = big ? vec2(24.0, 28.0) : vec2(12.0, 14.0);
+                        VERTEX.xy *= (size_px + vec2(0.5)) / size_px;
+                    }
                 }
 
                 void fragment() {
@@ -379,8 +402,14 @@ public unsafe partial class SnapshotLayer : Node3D
                     // the statics on the same plane is real geometry now
                     // (the decal lift folds decalOrder into z).
                     float cid = floor(cell + 0.5);
-                    vec2 uv0 = UV;
-                    if (mod(floor(v_flags / 8.0), 2.0) >= 1.0) {  // 2x2 quad
+                    bool seam = floor(v_flags / 256.0) >= 1.0;
+                    bool big = mod(floor(v_flags / 8.0), 2.0) >= 1.0;
+                    vec2 size_px = big ? vec2(24.0, 28.0) : vec2(12.0, 14.0);
+                    vec2 uv0 = seam
+                        ? clamp((UV * (size_px + vec2(0.5)) - vec2(0.25)) / size_px,
+                                vec2(0.0), vec2(1.0))
+                        : UV;
+                    if (big) {  // 2x2 quad
                         // Clamp, not fract: see the sprite shader (MSAA edge
                         // extrapolation must not wrap to the far sub-cell edge).
                         vec2 h = uv0 * 2.0;
@@ -702,11 +731,13 @@ public unsafe partial class SnapshotLayer : Node3D
         public Vector2 PrevPx;     // previous-tick center (== CurrPx if new)
         public bool HasPrev;
         public ushort EntityType;  // enemies: eDat index (height editor)
+        public byte AssemblyId;    // enemies: native linknum; 0 = standalone
         public float EnterFade;    // 0..1 birth-fade: cells born outside the
                                    // old play region (the vanilla off-screen
                                    // margins) materialize over their own first
                                    // EnterRampPx of travel instead of popping
                                    // into the visible apron
+        public bool SeamGuard;     // connected composite: conservative shared edge
     }
 
     // Fade over half a legacy tile.  Event spawns still emerge from transparent
@@ -729,6 +760,9 @@ public unsafe partial class SnapshotLayer : Node3D
     // sprite, and entities visibly dissolved.)
     private ushort[] _cellSource = new ushort[OtyrNative.SnapshotSpriteMax * 4];
     private ushort[] _prevCellSource = new ushort[OtyrNative.SnapshotSpriteMax * 4];
+    private readonly int[] _assemblyComponent = new int[OtyrNative.SnapshotSpriteMax * 4];
+    private readonly float[] _assemblyMotionX = new float[OtyrNative.SnapshotSpriteMax * 4];
+    private readonly float[] _assemblyMotionY = new float[OtyrNative.SnapshotSpriteMax * 4];
     private readonly System.Collections.Generic.Dictionary<ushort, (int Start, int Count)> _prevRuns = new();
 
     private const float PairRadiusPx = 16f;
@@ -814,7 +848,127 @@ public unsafe partial class SnapshotLayer : Node3D
             }
         }
 
+        StabilizeRigidAssemblies();
         UpdateApronGhosts();
+    }
+
+    private static Vector2 CellSizePx(in RenderCell cell) =>
+        (cell.Flags & 8) != 0
+            ? new Vector2(OtyrNative.SheetCellW * 2f, OtyrNative.SheetCellH * 2f)
+            : new Vector2(OtyrNative.SheetCellW, OtyrNative.SheetCellH);
+
+    /// <summary>
+    /// General composite pass: connected same-source art and connected enemy
+    /// slots with the same nonzero linknum become a rigid component. A single
+    /// median interpolation delta prevents partial pairing from opening a
+    /// moving gap, while SeamGuard closes sub-pixel stereo raster cracks.
+    /// </summary>
+    private void StabilizeRigidAssemblies()
+    {
+        const float joinTolerancePx = 0.75f;
+        for (int i = 0; i < _cellCount; i++)
+        {
+            _assemblyComponent[i] = i;
+            _cells[i].SeamGuard = false;
+        }
+
+        bool Related(int a, int b)
+        {
+            ushort sa = _cellSource[a], sb = _cellSource[b];
+            if (sa == OtyrNative.NoSource || sb == OtyrNative.NoSource)
+                return false;
+            if (sa == sb)
+                return true;
+            int assembly = _cells[a].AssemblyId;
+            return assembly != 0 && assembly == _cells[b].AssemblyId &&
+                   _cells[a].EntityType != 0 && _cells[b].EntityType != 0;
+        }
+
+        bool Joined(int a, int b)
+        {
+            Vector2 half = (CellSizePx(in _cells[a]) + CellSizePx(in _cells[b])) * 0.5f;
+            float dx = Mathf.Abs(_cells[a].CurrPx.X - _cells[b].CurrPx.X);
+            float dy = Mathf.Abs(_cells[a].CurrPx.Y - _cells[b].CurrPx.Y);
+            if (dx > half.X + joinTolerancePx || dy > half.Y + joinTolerancePx)
+                return false;
+            // Exclude corner-only contact: a real join overlaps along at
+            // least one axis and touches/overlaps along the other.
+            return (dx < half.X - joinTolerancePx && dy <= half.Y + joinTolerancePx) ||
+                   (dy < half.Y - joinTolerancePx && dx <= half.X + joinTolerancePx);
+        }
+
+        int Find(int item)
+        {
+            int root = item;
+            while (_assemblyComponent[root] != root)
+                root = _assemblyComponent[root];
+            while (_assemblyComponent[item] != item)
+            {
+                int next = _assemblyComponent[item];
+                _assemblyComponent[item] = root;
+                item = next;
+            }
+            return root;
+        }
+
+        for (int a = 0; a < _cellCount; a++)
+            for (int b = a + 1; b < _cellCount; b++)
+                if (Related(a, b) && Joined(a, b))
+                {
+                    int rootA = Find(a), rootB = Find(b);
+                    if (rootA != rootB)
+                        _assemblyComponent[rootB] = rootA;
+                }
+
+        for (int i = 0; i < _cellCount; i++)
+            _assemblyComponent[i] = Find(i);
+
+        RigidAssemblyCount = 0;
+        SeamGuardCellCount = 0;
+        for (int root = 0; root < _cellCount; root++)
+        {
+            if (_assemblyComponent[root] != root)
+                continue;
+            int members = 0, motionCount = 0;
+            bool dynamic = true;
+            for (int i = 0; i < _cellCount; i++)
+            {
+                if (_assemblyComponent[i] != root)
+                    continue;
+                members++;
+                dynamic &= _cells[i].DecalOrder <= 0f;
+                if (_cells[i].HasPrev)
+                {
+                    Vector2 motion = _cells[i].CurrPx - _cells[i].PrevPx;
+                    _assemblyMotionX[motionCount] = motion.X;
+                    _assemblyMotionY[motionCount] = motion.Y;
+                    motionCount++;
+                }
+            }
+            if (members < 2)
+                continue;
+
+            RigidAssemblyCount++;
+            SeamGuardCellCount += members;
+            for (int i = 0; i < _cellCount; i++)
+                if (_assemblyComponent[i] == root)
+                    _cells[i].SeamGuard = true;
+
+            if (!dynamic || motionCount == 0)
+                continue;
+            Array.Sort(_assemblyMotionX, 0, motionCount);
+            Array.Sort(_assemblyMotionY, 0, motionCount);
+            Vector2 componentMotion = new(
+                _assemblyMotionX[motionCount / 2],
+                _assemblyMotionY[motionCount / 2]);
+            for (int i = 0; i < _cellCount; i++)
+            {
+                if (_assemblyComponent[i] != root)
+                    continue;
+                _cells[i].PrevPx = _cells[i].CurrPx - componentMotion;
+                _cells[i].HasPrev = true;
+            }
+        }
     }
 
     // E1 apron ghosts: the sim frees enemies just past the legacy bottom
@@ -1612,6 +1766,7 @@ public unsafe partial class SnapshotLayer : Node3D
         bool isEnemy = sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB;
         bool isShadow = sprite.Category == (byte)OtyrNative.Category.Shadow;
         cell.EntityType = isEnemy ? sprite.EntityType : (ushort)0;
+        cell.AssemblyId = isEnemy ? sprite.AssemblyId : (byte)0;
         float band;
         float decalOrder = 0f;
         float authored = 0f;
@@ -1863,7 +2018,8 @@ public unsafe partial class SnapshotLayer : Node3D
             _multiMesh[id].SetInstanceCustomData(instance,
                 id == TextLayer || id == TextShadowLayer
                     ? new Color(cell.CellIndex, cell.Flags + cell.FilterColor * 65f, cell.Aux0, cell.Aux1)
-                    : new Color(cell.CellIndex, cell.Flags, cell.FilterColor, cell.DecalOrder));
+                    : new Color(cell.CellIndex, cell.Flags + (cell.SeamGuard ? 256f : 0f),
+                                cell.FilterColor, cell.DecalOrder));
 
             // Birth/rim fade (sheet, shadow, old layers -- their MultiMeshes
             // carry instance colors): entering cells materialize over their

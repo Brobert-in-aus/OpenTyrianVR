@@ -40,6 +40,7 @@ Version 0.1.5 logs a `PERF` line every five seconds containing:
 - maximum frame interval and count over 16.67 ms;
 - draw calls, visible objects/primitives, video and managed memory;
 - snapshot cell/visible-instance counts;
+- detected rigid-assembly group/seam-guard cell counts;
 - last/maximum simulation-tick gap and cumulative skipped ticks.
 
 The decisive test is two or more minutes of representative Quest gameplay. If
@@ -64,3 +65,11 @@ frames (63.89 ms maximum); it did not repeat during play. The device pass is a
 performance pass: keep 4x MSAA and runtime-recommended resolution. Version
 0.1.7 adds per-window player, raw-hand and target X ranges to `PERF` lines so
 edge-travel reports can be confirmed from headset logs.
+
+Version 0.1.8 (ABI v25) generalizes composite stabilization beyond intrinsic
+2x2 enemies. Snapshot records carry the full native `linknum` separately from
+their stable source identity. A host-side union-find groups only spatially
+connected records that share an exact source or nonzero assembly id; members use one
+median interpolation delta and a half-pixel conservative join guard. The pass
+is O(n squared) in snapshot records (typically about 90 cells on Quest), does
+not add draw calls, and logs group/cell counts for device confirmation.

@@ -74,9 +74,9 @@ bool otyr_hosted = false;
 
 /* ABI layout guards: a host reading these structs assumes exactly these
  * sizes (foundation rule: size asserts on both sides of the boundary). */
-typedef char otyr_assert_sprite_size[sizeof(OtyrSnapshotSprite) == 16 ? 1 : -1];
+typedef char otyr_assert_sprite_size[sizeof(OtyrSnapshotSprite) == 18 ? 1 : -1];
 typedef char otyr_assert_bg_draw_size[sizeof(OtyrBackgroundDraw) == 16 ? 1 : -1];
-typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 40 + 1024 * 16 + 3 * 16 + 8 ? 1 : -1];  /* +4: v24 publication cursor */
+typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 40 + 1024 * 18 + 3 * 16 + 8 ? 1 : -1];  /* +4: v24 publication cursor */
 typedef char otyr_assert_sheet_size[sizeof(OtyrSpriteSheet) == 12 + 2 * 1024 * 12 * 14 ? 1 : -1];
 typedef char otyr_assert_frame_size[sizeof(OtyrFrame) == 16 + 320 * 200 + 1024 + 4 + 8 ? 1 : -1];  /* +4: v23 flip */
 typedef char otyr_assert_bg_map_size[sizeof(OtyrBackgroundMap) == 16 + 600 * 15 + 72 * 24 * 28 ? 1 : -1];
@@ -1119,6 +1119,8 @@ void otyr_host_present(SDL_Surface *screen)
 		out->aux = in->aux;
 		out->source_id = in->source_id;
 		out->entity_type = in->entity_type;
+		out->assembly_id = in->assembly_id;
+		out->reserved = 0;
 	}
 
 	/* Stacked statics recorded BEFORE their base (e.g. a dome crown whose

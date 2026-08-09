@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 24;
+    public const uint AbiVersion = 25;
 
     // Palette index of the suppressed background fill (the frame color key);
     // index-0 black in sprite/HUD art stays opaque.
@@ -94,6 +94,8 @@ public static unsafe class OtyrNative
         public ushort SourceId;  // stable entity id across ticks; 0xffff none
         public ushort EntityType;  // enemies: eDat index, keys hover-height
                                    // metadata; 0 otherwise (v16)
+        public byte AssemblyId;    // enemies: full linknum; 0 standalone (v25)
+        public byte Reserved;
     }
 
     public const ushort NoSource = 0xffff;
@@ -131,7 +133,7 @@ public static unsafe class OtyrNative
         public uint SoundCount;
         public fixed byte SoundChannel[SnapshotSoundMax];
         public fixed byte SoundSample[SnapshotSoundMax];
-        public fixed byte SpritesRaw[SnapshotSpriteMax * 16];  // SnapshotSprite[1024]
+        public fixed byte SpritesRaw[SnapshotSpriteMax * 18];  // SnapshotSprite[1024]
         public BackgroundDraw Background0, Background1, Background2;  // (v8)
 
         // Parallax deltas (v21): drawn offset minus fixed mid-swing target.
@@ -373,9 +375,9 @@ public static unsafe class OtyrNative
     public static void RegisterResolver()
     {
         // ABI layout guards (mirrors the native static asserts).
-        if (sizeof(SnapshotSprite) != 16 ||
+        if (sizeof(SnapshotSprite) != 18 ||
             sizeof(BackgroundDraw) != 16 ||
-            sizeof(Snapshot) != 40 + SnapshotSpriteMax * 16 + BgLayerCount * 16 + 8 ||  // +4: v24 cursor
+            sizeof(Snapshot) != 40 + SnapshotSpriteMax * 18 + BgLayerCount * 16 + 8 ||  // +4: v24 cursor
             sizeof(SpriteSheet) != 12 + 2 * SheetCellMax * SheetCellW * SheetCellH ||
             sizeof(BackgroundMap) != 16 + BgMapCellMax + BgShapeMax * BgTileW * BgTileH ||
             sizeof(OldSprite) != 8 + 2 * OldSpriteWMax * OldSpriteHMax ||

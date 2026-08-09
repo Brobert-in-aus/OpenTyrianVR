@@ -594,6 +594,14 @@
   endpoint mapping, emits every 2x2 enemy as one host quad to eliminate tile
   seams geometrically, and logs player/hand/target X ranges for the follow-up
   device pass (see PERFORMANCE.md).
+- Composite generalization (0.1.8, ABI v25): enemy snapshots retain stable
+  source identity and carry the full `linknum` separately as assembly metadata.
+  A shape-independent host pass finds connected
+  same-source art and connected linked enemy/boss sections, assigns each
+  dynamic component one median interpolation delta, and adds a quarter-pixel
+  edge-sample extension on each side of joined quads. This covers intrinsic
+  2x2s, linked multi-slot bosses/stacks, and same-source multi-quad ships
+  without merging unrelated wave members that merely share a link number.
 
 ## 1. Product direction
 

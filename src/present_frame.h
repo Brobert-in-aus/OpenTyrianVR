@@ -109,6 +109,8 @@ typedef struct PresentSprite
 	Uint16 entity_type;             /* enemies: eDat index (enemytype); 0 for
 	                                   everything else.  Keys the authored
 	                                   hover-height metadata (Stage B). */
+	Uint8 assembly_id;              /* enemies: full linknum; 0 = standalone
+	                                   (v25 host rigid-assembly identity) */
 	Sprite2_array *sheet;
 } PresentSprite;
 

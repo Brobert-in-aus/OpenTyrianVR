@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 24u
+#define OTYR_ABI_VERSION 25u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -261,6 +261,8 @@ typedef struct OtyrSnapshotSprite
 	                           same-id records pair by emit order (v7) */
 	uint16_t entity_type;   /* enemies: eDat index (enemytype), keys authored
 	                           hover-height metadata; 0 otherwise (v16) */
+	uint8_t  assembly_id;   /* enemies: full linknum; 0 = standalone (v25) */
+	uint8_t  reserved;
 } OtyrSnapshotSprite;
 
 /* Per-tick scroll record for one background map layer (v8).  The map data

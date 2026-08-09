@@ -880,6 +880,7 @@ public partial class Main : Node3D
                  $"draws={drawCalls:0} objects={objects:0} prims={primitives:0} " +
                  $"video={videoMiB:0.0}MiB managed={managedMiB:0.0}MiB " +
                  $"cells={_snapshotLayer.CellCount} visible={_snapshotLayer.VisibleInstanceCount} " +
+                 $"assemblies={_snapshotLayer.RigidAssemblyCount}/{_snapshotLayer.SeamGuardCellCount}(groups/cells) " +
                  $"snapshot_gap={_snapshotLayer.LastTickGap}/{_snapshotLayer.MaxTickGap}(last/max) " +
                  $"missed={_snapshotLayer.SkippedTicksTotal}{rangeProbe}");
 

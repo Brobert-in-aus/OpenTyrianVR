@@ -282,7 +282,10 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset,
 	                  enemy[i].ey + y_offset,
 	                  cell_index);
 	if (rec < PRESENT_SPRITE_MAX)
+	{
 		present_sprites[rec].entity_type = enemy[i].enemytype;
+		present_sprites[rec].assembly_id = enemy[i].linknum;
+	}
 }
 
 /* Simulates one enemy band for this tick, recording (not performing) the
