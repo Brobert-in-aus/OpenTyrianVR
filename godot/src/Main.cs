@@ -75,7 +75,9 @@ public partial class Main : Node3D
     private bool _inGameplay;
 
     private const float ControlRectWidth = 0.36f;
-    private const float ControlRectHeight = 0.25f;
+    // Preserve the playable simulation area's 264:150 aspect ratio so one
+    // centimetre of hand travel has the same meaning on both axes.
+    private const float ControlRectHeight = ControlRectWidth * 150f / 264f;
     // E2-full player travel in Tyrian sim coordinates.  Keep this host-side
     // absolute target range identical to mainint.c's de-parallax clamp;
     // keyboard input reaches these bounds directly, so a stale 40..256 here
@@ -1475,8 +1477,12 @@ public partial class Main : Node3D
         // when the hand moves meaningfully, so sensor jitter never twitches
         // the ship.
         const float targetHysteresisPx = 3f;
+        bool exactEndpointChanged =
+            ((lx <= -ControlRectWidth / 2f || lx >= ControlRectWidth / 2f) && targetX != _handTargetX) ||
+            ((ly <= -ControlRectHeight / 2f || ly >= ControlRectHeight / 2f) && targetY != _handTargetY);
         _handTargetActive = true;
         if (!_lastTargetActive ||
+            exactEndpointChanged ||
             Mathf.Abs(targetX - _handTargetX) > targetHysteresisPx ||
             Mathf.Abs(targetY - _handTargetY) > targetHysteresisPx)
         {

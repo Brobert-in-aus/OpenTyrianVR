@@ -608,6 +608,12 @@
   intervals over 12 ms as misses of the 90 Hz budget. The in-headset gate must
   confirm that the runtime selected 90 Hz and that motion remains free of
   recurring judder before this replaces the validated 72 Hz baseline.
+- Hand-control correction (0.1.10): the 36 cm control rectangle now derives
+  its height from the playable 264:150 simulation range (20.45 cm), preserving
+  equal physical scale across both axes. Exact rectangle-edge targets bypass
+  the 3 px sensor-jitter hysteresis, so the commanded endpoints cannot remain
+  at x=19/277 instead of x=16/280. Checklist entries are exclusively pass/fail;
+  skipped or otherwise unchecked entries are recorded as failures.
 
 ## 1. Product direction
 

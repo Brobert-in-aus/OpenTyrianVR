@@ -17,7 +17,6 @@ public partial class TestChecklist : Node3D
         "EDGE FADE: spawning enemies become solid within about half a tile",
         "COMPOSITES: fast stacks, linked bosses and multi-quad ships stay welded",
         "90 HZ: motion stays smooth without recurring judder",
-        "FAILURE? report level + frame number from the green status line",
     };
 
     private readonly bool[] _done = new bool[Items.Length];
@@ -79,7 +78,8 @@ public partial class TestChecklist : Node3D
                 remaining++;
 
         text.Append($"QUEST REGRESSION GATE  ({Items.Length - remaining}/{Items.Length})\n");
-        text.Append("R-stick click: check   L-stick click: skip\n\n");
+        text.Append("R-stick click: PASS   L-stick click: leave failed and advance\n");
+        text.Append("Unchecked items are FAILS; report level + green frame number\n\n");
         for (int i = 0; i < Items.Length; i++)
         {
             text.Append(i == _cursor ? "> " : "  ");
