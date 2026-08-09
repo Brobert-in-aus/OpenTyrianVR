@@ -770,7 +770,6 @@ int opentyrian_main(int argc, char *argv[])
 		printf("Failed to initialize SDL: %s\n", SDL_GetError());
 		return -1;
 	}
-
 	loadConfiguration();
 	loadSaves();
 
@@ -822,7 +821,6 @@ int opentyrian_main(int argc, char *argv[])
 	{
 		printf("audio disabled\n");
 	}
-
 	if (record_demo)
 		printf("demo recording enabled (input limited to keyboard)\n");
 

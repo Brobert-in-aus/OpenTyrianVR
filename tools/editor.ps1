@@ -42,5 +42,5 @@ if ($Section -gt 0) {
     Remove-Item Env:OTYR_START_SECTION -ErrorAction SilentlyContinue
     Remove-Item Env:OTYR_START_EPISODE -ErrorAction SilentlyContinue
 }
-& "D:\Projects\CrimsonVR\Godot_v4.7-stable_mono_win64\Godot_v4.7-stable_mono_win64_console.exe" `
+& "D:\Projects\games-xr\_tools\godot\Godot_v4.7-stable_mono_win64\Godot_v4.7-stable_mono_win64_console.exe" `
     --path "$repo\godot" --xr-mode off

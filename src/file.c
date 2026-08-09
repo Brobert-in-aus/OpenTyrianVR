@@ -28,6 +28,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
+
 const char *custom_data_dir = NULL;
 
 // finds the Tyrian data directory
@@ -98,6 +102,10 @@ FILE *dir_fopen_die(const char *dir, const char *file, const char *mode)
 
 	if (f == NULL)
 	{
+		#ifdef __ANDROID__
+		__android_log_print(ANDROID_LOG_ERROR, "OpenTyrianVR",
+		                    "required data open failed: %s (%s)", file, strerror(errno));
+		#endif
 		fprintf(stderr, "error: failed to open '%s': %s\n", file, strerror(errno));
 		fprintf(stderr, "error: One or more of the required Tyrian " TYRIAN_VERSION " data files could not be found.\n"
 		                "       Please read the README file.\n");

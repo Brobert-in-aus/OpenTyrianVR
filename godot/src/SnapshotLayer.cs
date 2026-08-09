@@ -12,7 +12,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public unsafe partial class SnapshotLayer : Node3D
 {
-    private const bool DumpAtlases = false;  // debug: writes user://atlas_N.png on fetch
+    private static readonly bool DumpAtlases = false;  // debug: writes user://atlas_N.png on fetch
 
     private const float LaneWidth = 1.0f, LaneHeight = 0.625f;
     private const float PxToMeters = LaneWidth / 320f;
@@ -72,7 +72,7 @@ public unsafe partial class SnapshotLayer : Node3D
     private OtyrNative.Snapshot _snapshot;
     private OtyrNative.SpriteSheet _sheet;
     private uint _sheetEpoch;
-    private uint _lastRenderedTick;
+    private uint _lastRenderedSnapshot;
     private ulong _snapshotArrivalUsec;
     private double _snapshotPeriod = 0.02875;  // nominal 35 Hz tick
 
@@ -540,9 +540,9 @@ public unsafe partial class SnapshotLayer : Node3D
         int rc;
         fixed (OtyrNative.Snapshot* snapshotPtr = &_snapshot)
             rc = OtyrNative.GetSnapshot(session, snapshotPtr, _snapshot.StructSize, 0);
-        if (rc == OtyrNative.Ok && _snapshot.LevelTick != _lastRenderedTick)
+        if (rc == OtyrNative.Ok && _snapshot.SnapshotNumber != _lastRenderedSnapshot)
         {
-            _lastRenderedTick = _snapshot.LevelTick;
+            _lastRenderedSnapshot = _snapshot.SnapshotNumber;
 
             if (_snapshot.SheetEpoch != _sheetEpoch)
             {
@@ -919,25 +919,59 @@ public unsafe partial class SnapshotLayer : Node3D
             return;
         }
         var root = parsed.AsGodotDictionary();
-        var classes = root["classes"].AsGodotDictionary();
+        if (!root.TryGetValue("classes", out Variant classesValue) ||
+            classesValue.VariantType != Variant.Type.Dictionary ||
+            !root.TryGetValue("types", out Variant typesValue) ||
+            typesValue.VariantType != Variant.Type.Dictionary)
+        {
+            GD.PushWarning("OpenTyrianVR: hover_heights.json needs dictionary 'classes' and 'types'; ignoring");
+            return;
+        }
+        var classes = classesValue.AsGodotDictionary();
         foreach (var key in classes.Keys)
-            _classHeights[key.AsString()] = (float)classes[key].AsDouble();
-        _groundClassOffset = classes.ContainsKey("ground") ? (float)classes["ground"].AsDouble() : -1f;
-        var types = root["types"].AsGodotDictionary();
+        {
+            Variant value = classes[key];
+            if (value.VariantType is Variant.Type.Int or Variant.Type.Float)
+                _classHeights[key.AsString()] = (float)value.AsDouble();
+            else
+                GD.PushWarning($"OpenTyrianVR: hover height class '{key}' is not numeric; skipping");
+        }
+        _groundClassOffset = _classHeights.TryGetValue("ground", out float ground) ? ground : -1f;
+        var types = typesValue.AsGodotDictionary();
         foreach (var key in types.Keys)
         {
             if (!ushort.TryParse(key.AsString(), out ushort type))
                 continue;
-            var entry = types[key].AsGodotDictionary();
+            Variant entryValue = types[key];
+            if (entryValue.VariantType != Variant.Type.Dictionary)
+            {
+                GD.PushWarning($"OpenTyrianVR: hover height type '{key}' is not a dictionary; skipping");
+                continue;
+            }
+            var entry = entryValue.AsGodotDictionary();
+            if (entry.ContainsKey("review"))
+                _reviewTypes.Add(type);
             if (entry.ContainsKey("height"))
-                _typeHeights[type] = (float)entry["height"].AsDouble();
+            {
+                Variant height = entry["height"];
+                if (height.VariantType is Variant.Type.Int or Variant.Type.Float)
+                    _typeHeights[type] = (float)height.AsDouble();
+                else
+                    GD.PushWarning($"OpenTyrianVR: hover height type '{key}' has a nonnumeric height; skipping");
+            }
             else if (entry.ContainsKey("class"))
             {
-                string cls = entry["class"].AsString();
+                Variant classValue = entry["class"];
+                if (classValue.VariantType != Variant.Type.String)
+                {
+                    GD.PushWarning($"OpenTyrianVR: hover height type '{key}' has a non-string class; skipping");
+                    continue;
+                }
+                string cls = classValue.AsString();
                 if (cls == "ground")
                     _typeHeights[type] = float.NegativeInfinity;  // marker: surface + offset
-                else if (classes.ContainsKey(cls))
-                    _typeHeights[type] = (float)classes[cls].AsDouble();
+                else if (_classHeights.TryGetValue(cls, out float classHeight))
+                    _typeHeights[type] = classHeight;
             }
         }
         GD.Print($"OpenTyrianVR: hover heights loaded ({_typeHeights.Count} types)");
@@ -1045,6 +1079,58 @@ public unsafe partial class SnapshotLayer : Node3D
             _editorMarkers[i].Visible = false;
     }
 
+    // Review markers: pulsing green halos behind every live instance of a
+    // type whose hover_heights.json entry carries a "review" key -- the
+    // ambiguous families the auto-propagation could not settle.  Always on
+    // in the editor; delete the JSON key once a height is confirmed.
+    private readonly System.Collections.Generic.HashSet<ushort> _reviewTypes = new();
+    private readonly System.Collections.Generic.List<MeshInstance3D> _reviewMarkers = new();
+    private StandardMaterial3D? _reviewMaterial;
+
+    public bool IsReviewType(ushort entityType) => _reviewTypes.Contains(entityType);
+
+    public void EditorReviewMarkers()
+    {
+        int used = 0;
+        if (_reviewTypes.Count > 0)
+        {
+            // Mix (not Add): additive green summed with the red hazard halo
+            // read as yellow (user, SAVARA over water); mix keeps the hue.
+            _reviewMaterial ??= new StandardMaterial3D
+            {
+                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+                Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+                CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+                RenderPriority = 8,
+            };
+            float pulse = 0.42f + 0.18f * Mathf.Sin(Time.GetTicksMsec() / 280f);
+            _reviewMaterial.AlbedoColor = new Color(0.15f, 0.95f, 0.35f, pulse);
+            for (int i = 0; i < _cellCount && used < 32; i++)
+            {
+                ref readonly RenderCell cell = ref _cells[i];
+                if (cell.EntityType == 0 || !_reviewTypes.Contains(cell.EntityType))
+                    continue;
+                if (used == _reviewMarkers.Count)
+                {
+                    var marker = new MeshInstance3D
+                    {
+                        Mesh = new QuadMesh { Size = new Vector2(20f / 320f * LaneWidth, 22f / 200f * LaneHeight) },
+                        MaterialOverride = _reviewMaterial,
+                    };
+                    AddChild(marker);
+                    _reviewMarkers.Add(marker);
+                }
+                var m = _reviewMarkers[used];
+                m.Scale = (cell.Flags & 8) != 0 ? new Vector3(2f, 2f, 1f) : Vector3.One;
+                m.Position = CellLanePos(in cell) + new Vector3(0f, 0f, -0.002f);
+                m.Visible = true;
+                ++used;
+            }
+        }
+        for (int i = used; i < _reviewMarkers.Count; i++)
+            _reviewMarkers[i].Visible = false;
+    }
+
     // Hazard (collider) markers: red halos under every record whose contact
     // damages the player (flag bit 64, mirroring JE_playerCollide); blue
     // halos for magnet objects (flag bit 128 -- attract/push force fields,
@@ -1081,6 +1167,10 @@ public unsafe partial class SnapshotLayer : Node3D
             {
                 ref readonly RenderCell cell = ref _cells[i];
                 if (cell.EntityType == 0 || (cell.Flags & (64 | 128)) == 0)
+                    continue;
+                // Review-flagged types show only the green triage glow; the
+                // red halo on top summed to a misleading yellow.
+                if (_reviewTypes.Contains(cell.EntityType))
                     continue;
                 if (used == _hazardMarkers.Count)
                 {
@@ -1218,8 +1308,22 @@ public unsafe partial class SnapshotLayer : Node3D
         const string path = "res://hover_heights.json";
         if (!FileAccess.FileExists(path) || (_editorPending.Count == 0 && !_waterCloudDirty))
             return 0;
-        var root = Json.ParseString(FileAccess.GetFileAsString(path)).AsGodotDictionary();
-        var types = root["types"].AsGodotDictionary();
+        Variant parsed = Json.ParseString(FileAccess.GetFileAsString(path));
+        if (parsed.VariantType != Variant.Type.Dictionary)
+        {
+            GD.PushWarning("OpenTyrianVR: cannot save hover heights: JSON root is not a dictionary");
+            return 0;
+        }
+        var root = parsed.AsGodotDictionary();
+        if (!root.TryGetValue("types", out Variant typesValue) ||
+            typesValue.VariantType != Variant.Type.Dictionary ||
+            !root.TryGetValue("classes", out Variant classesValue) ||
+            classesValue.VariantType != Variant.Type.Dictionary)
+        {
+            GD.PushWarning("OpenTyrianVR: cannot save hover heights: dictionary 'classes' or 'types' is missing");
+            return 0;
+        }
+        var types = typesValue.AsGodotDictionary();
         foreach (var (type, value) in _editorPending)
         {
             var entry = types.ContainsKey(type.ToString())
@@ -1236,12 +1340,17 @@ public unsafe partial class SnapshotLayer : Node3D
                 entry["class"] = value;
                 entry.Remove("height");
             }
+            // A hand-set value settles the type: drop the propagation
+            // provenance and the review glow.
+            entry.Remove("auto");
+            entry.Remove("review");
+            _reviewTypes.Remove(type);
             types[type.ToString()] = entry;
         }
         int saved = _editorPending.Count;
         if (_waterCloudDirty && _background != null)
         {
-            var classes = root["classes"].AsGodotDictionary();
+            var classes = classesValue.AsGodotDictionary();
             classes["water-clouds"] = _background.WaterCloudHeight;
             root["classes"] = classes;
             _waterCloudDirty = false;

@@ -1,6 +1,6 @@
 # OpenTyrian VR conversion plan
 
-## Status (2026-07-10)
+## Status (updated 2026-08-09)
 
 - Phase 0: **complete** (fork/pin, reproducible build, replay + per-tick
   hashes with turbo verification, taxonomy doc, license review).
@@ -557,6 +557,27 @@
   the cloud layer's delta the same way.  True-ground decals are
   unaffected (ground layer and its decals both step), matching the
   report.  Awaiting headset confirmation.
+- ABI v24 working set (2026-08-09, non-headset validation complete):
+  snapshots now carry an independent publication cursor, so pause/menu
+  presents are observable even when the gameplay tick does not advance.
+  Mid-tick publications retain the last complete scene while stripping
+  transient HUD text and sounds.  Session teardown now fully resets a cleanly
+  stopped singleton and poisons a timed-out one instead of permitting an
+  unsafe replacement.  Automated coverage confirms pause publication/tick
+  identity, HUD/sound stripping, resume, clean destroy/recreate, ABI layout,
+  native and managed builds, flat Godot startup/shutdown, Gate A's 88,891-line
+  legacy prefix, and Gate B's 97,472-line de-parallax prefix.  Both gate
+  prefixes are exact.  Height-editor review triage is also in the working set:
+  20 ambiguous types carry pulsing green markers and a saved manual assignment
+  clears their review/provenance tags.  Quest 0.1.3 confirmed packaging,
+  startup, automatic centering, controller/menu interaction, gameplay, and
+  correct stereo multiview presentation in-headset.  Runtime diagnostics show
+  two 1680x1760 views, mirrored asymmetric projections, and a 62.8 mm IPD;
+  restoring the runtime-recommended 1.0 viewport scale fixed the shifted eye
+  boundary and head-motion distortion.  Remaining gate: headset confirmation
+  of pause/menu transitions, elevated platform-rider stability, and review
+  markers.  Quest deployment is install-and-report only; automated launches
+  are prohibited.
 
 ## 1. Product direction
 
@@ -894,8 +915,8 @@ Gate: campaign smoke test with no missing entity/event categories.
   the .NET target framework to be `net9.0`;
 - pinned toolchain (Godot version, .NET TFM, OpenXR Vendors plugin, JDK,
   Android build tools) and parameterized build script;
-- APK payload/manifest verification, alignment, signing, install, and launch
-  diagnostics — fail closed: `extractNativeLibs=true` asserted in the
+- APK payload/manifest verification, alignment, signing, install, and startup
+  diagnostics (tester-launched only) — fail closed: `extractNativeLibs=true` asserted in the
   manifest (P/Invoke `dlopen` fails on Quest without it), `zipalign -P 16`
   (16 KB pages), archive listing must contain the game library and the
   OpenXR loader/vendors libraries;

@@ -355,6 +355,56 @@ int main(void)
 	if (snapshot->sprite_count == 0)
 		die("snapshot has no sprites during demo gameplay");
 
+	/* ABI v24 regression: a pause present happens in the middle of a gameplay
+	 * tick.  It must still publish a new snapshot (via snapshot_number), keep
+	 * the frame's gameplay tick, and strip transient HUD text and sounds. */
+	{
+		const uint32_t before_number = snapshot->snapshot_number;
+		OtyrInputFrame input = { .struct_size = sizeof(OtyrInputFrame),
+		                         .buttons = OTYR_BUTTON_UI_PAUSE };
+		if (p_submit_input(g_session, &input, sizeof(input)) != OTYR_OK)
+			die("submit_input(pause)");
+
+		DWORD pause_start = GetTickCount();
+		while (GetTickCount() - pause_start < 3000)
+		{
+			if (p_acquire_frame(g_session, frame, sizeof(OtyrFrame), 500) == OTYR_OK &&
+			    frame->menu_present)
+				break;
+		}
+		input.buttons = 0;
+		if (p_submit_input(g_session, &input, sizeof(input)) != OTYR_OK)
+			die("submit_input(pause release)");
+		if (!frame->menu_present)
+			die("pause produced no mid-tick menu frame");
+		if (p_snapshot(g_session, snapshot, sizeof(OtyrSnapshot), 2000) != OTYR_OK)
+			die("pause produced no new snapshot publication");
+		if (snapshot->snapshot_number == before_number)
+			die("pause snapshot did not advance publication cursor");
+		if (snapshot->level_tick != frame->level_tick)
+			die("pause snapshot tick does not match menu frame tick");
+		if (snapshot->sound_count != 0)
+			die("pause snapshot replayed gameplay sounds");
+		for (uint32_t i = 0; i < snapshot->sprite_count; ++i)
+			if (snapshot->sprites[i].category == OTYR_CAT_TEXT)
+				die("pause snapshot retained transient gameplay text");
+
+		printf("pause snapshot: publication %u -> %u at tick %u, HUD/sounds stripped\n",
+		       before_number, snapshot->snapshot_number, snapshot->level_tick);
+
+		/* Any fresh key resumes JE_pauseGame. */
+		pulse_button(OTYR_BUTTON_UI_SPACE, 80);
+		DWORD resume_start = GetTickCount();
+		while (GetTickCount() - resume_start < 3000)
+		{
+			if (p_acquire_frame(g_session, frame, sizeof(OtyrFrame), 500) == OTYR_OK &&
+			    !frame->menu_present)
+				break;
+		}
+		if (frame->menu_present)
+			die("game did not resume after pause regression test");
+	}
+
 	/* Phase 4b: mechanically verify snapshot records against the legacy
 	 * frame: reconstruct every record's pixels from the rasterized sheets
 	 * and compare with what the legacy renderer actually drew at that
@@ -938,9 +988,27 @@ int main(void)
 	printf("destroying session...\n");
 	int32_t rc = p_session_destroy(g_session);
 	printf("destroy: %s\n", rc == OTYR_OK ? "clean" : "TIMEOUT (thread detached)");
+	if (rc != OTYR_OK)
+		die("first session did not stop cleanly");
+
+	/* Regression: a cleanly destroyed singleton must be fully reusable.
+	 * This catches leaked synchronization objects and stale per-session input
+	 * or tick state that used to survive in the global session structure. */
+	printf("restarting session...\n");
+	memset(frame, 0, sizeof(*frame));
+	frame->struct_size = sizeof(*frame);
+	if (p_session_create(&config, sizeof(config), &g_session) != OTYR_OK)
+		die("second session_create");
+	if (p_acquire_frame(g_session, frame, sizeof(*frame), 5000) != OTYR_OK)
+		die("second session produced no frame");
+	if (frame->level_tick != 0)
+		die("second session inherited gameplay tick state");
+	if (p_session_destroy(g_session) != OTYR_OK)
+		die("second session_destroy");
+	printf("restart: clean\n");
 
 	free(frame);
 	FreeLibrary(dll);
 	printf("PASS\n");
-	return rc == OTYR_OK ? 0 : 2;
+	return 0;
 }

@@ -16,7 +16,8 @@
       "class": "air-mid"
     },
     "1": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 53: identical art (bank2 gfx1) to user-set 46-65 family",
+      "class": "air-low"
     },
     "10": {
       "class": "air-mid"
@@ -247,17 +248,21 @@
     },
     "166": {
       "class": "ground",
+      "review": "bank10 family split: 162 ground vs 163/165 air-mid",
       "seen": "demo sheet=5 index=106 ticks=441"
     },
     "167": {
       "class": "ground",
+      "review": "bank10 family split: 162 ground vs 163/165 air-mid",
       "seen": "demo sheet=5 index=22 ticks=705"
     },
     "168": {
-      "class": "air-mid"
+      "class": "air-mid",
+      "review": "bank10 family split: 162 ground vs 163/165 air-mid"
     },
     "169": {
       "class": "ground",
+      "review": "bank10 family split: 162 ground vs 163/165 air-mid",
       "seen": "demo sheet=5 index=98 ticks=125"
     },
     "17": {
@@ -265,10 +270,12 @@
       "seen": "demo sheet=5 index=286 ticks=531"
     },
     "170": {
-      "class": "air-mid"
+      "class": "air-mid",
+      "review": "bank10 family split: 162 ground vs 163/165 air-mid"
     },
     "171": {
-      "class": "ground"
+      "class": "ground",
+      "review": "bank10 family split: 162 ground vs 163/165 air-mid"
     },
     "172": {
       "class": "ground"
@@ -357,7 +364,8 @@
       "height": 0.00060000002849847
     },
     "198": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 197: art pair of 197 (bank20 gfx277/279, same armor)",
+      "height": 0.00060000002849847
     },
     "199": {
       "class": "air-mid"
@@ -367,6 +375,7 @@
     },
     "20": {
       "class": "ground",
+      "review": "siblings 18/19/21/22 are pickup; deliberate keep or miss?",
       "seen": "demo sheet=5 index=30 ticks=52"
     },
     "200": {
@@ -456,10 +465,12 @@
       "class": "air-mid"
     },
     "226": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 228: bank7 rail family, user set 228-235 all this height",
+      "height": 0.0315000005066395
     },
     "227": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 228: bank7 rail family, user set 228-235 all this height",
+      "height": 0.0315000005066395
     },
     "228": {
       "height": 0.0315000005066395
@@ -469,6 +480,7 @@
     },
     "23": {
       "class": "ground",
+      "review": "siblings 18/19/21/22 are pickup; deliberate keep or miss?",
       "seen": "demo sheet=5 index=20 ticks=75"
     },
     "230": {
@@ -493,20 +505,24 @@
       "class": "air-mid"
     },
     "237": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 235: bank7 rail family, user set 228-235 all this height",
+      "height": 0.0315000005066395
     },
     "238": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 235: bank7 rail family, user set 228-235 all this height",
+      "height": 0.0315000005066395
     },
     "239": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 235: bank7 rail family, user set 228-235 all this height",
+      "height": 0.0315000005066395
     },
     "24": {
       "class": "air-mid",
       "seen": "demo sheet=5 index=288 ticks=154"
     },
     "240": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 235: bank7 rail family, user set 228-235 all this height",
+      "height": 0.0315000005066395
     },
     "241": {
       "height": 0.033500000834465
@@ -521,50 +537,62 @@
       "height": 0.033500000834465
     },
     "245": {
-      "class": "ground"
+      "class": "ground",
+      "review": "bank25 split: 241-244 h=0.0335 vs 259 h=0.0355 vs 252/255 ground"
     },
     "246": {
-      "class": "ground"
+      "class": "ground",
+      "review": "bank25 split: 241-244 h=0.0335 vs 259 h=0.0355 vs 252/255 ground"
     },
     "247": {
-      "class": "ground"
+      "class": "ground",
+      "review": "bank25 split: 241-244 h=0.0335 vs 259 h=0.0355 vs 252/255 ground"
     },
     "248": {
-      "class": "ground"
+      "class": "ground",
+      "review": "bank25 split: 241-244 h=0.0335 vs 259 h=0.0355 vs 252/255 ground"
     },
     "249": {
-      "class": "ground"
+      "class": "ground",
+      "review": "bank25 split: 241-244 h=0.0335 vs 259 h=0.0355 vs 252/255 ground"
     },
     "25": {
       "class": "air-mid",
       "seen": "demo sheet=5 index=290 ticks=145"
     },
     "250": {
-      "class": "ground"
+      "class": "ground",
+      "review": "bank25 split: 241-244 h=0.0335 vs 259 h=0.0355 vs 252/255 ground"
     },
     "251": {
-      "class": "ground"
+      "class": "ground",
+      "review": "bank25 split: 241-244 h=0.0335 vs 259 h=0.0355 vs 252/255 ground"
     },
     "252": {
       "class": "ground"
     },
     "253": {
-      "class": "ground"
+      "class": "ground",
+      "review": "bank25 split: 241-244 h=0.0335 vs 259 h=0.0355 vs 252/255 ground"
     },
     "254": {
-      "class": "ground"
+      "class": "ground",
+      "review": "bank25 split: 241-244 h=0.0335 vs 259 h=0.0355 vs 252/255 ground"
     },
     "255": {
       "class": "ground"
     },
     "256": {
-      "class": "ground"
+      "class": "ground",
+      "review": "bank25 split: 241-244 h=0.0335 vs 259 h=0.0355 vs 252/255 ground"
     },
     "257": {
-      "class": "ground"
+      "class": "ground",
+      "review": "bank25 split: 241-244 h=0.0335 vs 259 h=0.0355 vs 252/255 ground"
     },
     "258": {
-      "class": "ground"
+      "class": "ground",
+      "review": "bank25 split: 241-244 h=0.0335 vs 259 h=0.0355 vs 252/255 ground"
     },
     "259": {
       "height": 0.0355000011622906
@@ -829,22 +857,28 @@
       "height": 0.0052000000141561
     },
     "332": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 338: bank20 rock run, user set 313-316/338-342 this height; REVIEW: 197 (armor40) got 0.0006",
+      "height": 0.0031999999191612
     },
     "333": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 338: bank20 rock run; REVIEW as 332",
+      "height": 0.0031999999191612
     },
     "334": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 338: bank20 rock run; REVIEW as 332",
+      "height": 0.0031999999191612
     },
     "335": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 338: bank20 rock run; REVIEW as 332",
+      "height": 0.0031999999191612
     },
     "336": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 338: bank20 rock run; REVIEW as 332",
+      "height": 0.0031999999191612
     },
     "337": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 338: bank20 rock run; REVIEW as 332",
+      "height": 0.0031999999191612
     },
     "338": {
       "height": 0.0031999999191612
@@ -1150,7 +1184,8 @@
       "class": "air-mid"
     },
     "42": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 41: bank1 gnd=0 family, user set 32-41 all this height",
+      "height": 0.0315000005066395
     },
     "420": {
       "class": "air-mid"
@@ -1183,7 +1218,8 @@
       "class": "air-mid"
     },
     "43": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 41: bank1 gnd=0 family, user set 32-41 all this height",
+      "height": 0.0315000005066395
     },
     "430": {
       "class": "air-mid"
@@ -1216,19 +1252,24 @@
       "class": "air-mid"
     },
     "44": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 41: bank1 gnd=0 family, user set 32-41 all this height",
+      "height": 0.0315000005066395
     },
     "440": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 288: bank8 armor16 matches user-set 288 (ground junk)",
+      "class": "ground"
     },
     "441": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 288: bank8 armor16 matches user-set 288 (ground junk)",
+      "class": "ground"
     },
     "442": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 288: bank8 armor16 matches user-set 288 (ground junk)",
+      "class": "ground"
     },
     "443": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 288: bank8 armor16 matches user-set 288 (ground junk)",
+      "class": "ground"
     },
     "444": {
       "class": "air-mid"
@@ -1249,19 +1290,24 @@
       "class": "air-mid"
     },
     "45": {
-      "class": "ground"
+      "auto": "2026-07-26 from type 41: bank1 gnd=0 family, user set 32-41 all this height",
+      "height": 0.0315000005066395
     },
     "450": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 456: bank8 big-rock region, nearest user-set 456; REVIEW armor differs",
+      "height": 0.00060000002849847
     },
     "451": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 456: bank8 big-rock region; REVIEW as 450",
+      "height": 0.00060000002849847
     },
     "452": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 456: bank8 big-rock region; REVIEW as 450",
+      "height": 0.00060000002849847
     },
     "453": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 456: bank8 big-rock region; REVIEW as 450",
+      "height": 0.00060000002849847
     },
     "454": {
       "class": "air-mid"
@@ -1279,7 +1325,8 @@
       "class": "air-mid"
     },
     "459": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 312: bank23 armor40 matches user-set 309-312",
+      "height": 0.00600000005215406
     },
     "46": {
       "class": "air-low"
@@ -1297,16 +1344,20 @@
       "class": "air-mid"
     },
     "464": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 516: bank9 building family (dome base, pairs with 465)",
+      "class": "ground"
     },
     "465": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 516: bank9 building family (user set 516-526 ground)",
+      "class": "ground"
     },
     "466": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 516: bank9 building family (dome base, pairs with 467)",
+      "class": "ground"
     },
     "467": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 516: bank9 building family (user set 516-526 ground)",
+      "class": "ground"
     },
     "468": {
       "class": "mid-under",
@@ -1617,10 +1668,12 @@
       "height": 0.0299999993294477
     },
     "554": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 553: bank5 mine family, user set 552/553 this height",
+      "height": 0.0299999993294477
     },
     "555": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 521: bank9 building family (user set 516-526 ground)",
+      "class": "ground"
     },
     "556": {
       "class": "air-mid"
@@ -1692,7 +1745,8 @@
       "height": 0.0031999999191612
     },
     "577": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 593: identical art (bank20 gfx85) to user-set 593",
+      "class": "ground"
     },
     "578": {
       "class": "air-mid"
@@ -1737,10 +1791,12 @@
       "class": "air-low"
     },
     "590": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 325: bank23 armor10 matches user-set 325",
+      "height": 0.0031999999191612
     },
     "591": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 593: identical art (bank20 gfx85) to user-set 593",
+      "class": "ground"
     },
     "592": {
       "class": "air-mid"
@@ -2064,7 +2120,8 @@
       "class": "air-mid"
     },
     "688": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 593: identical art (bank20 gfx85) to user-set 593",
+      "class": "ground"
     },
     "689": {
       "class": "air-mid"
@@ -2528,7 +2585,8 @@
       "class": "air-mid"
     },
     "823": {
-      "class": "air-mid"
+      "auto": "2026-07-26 from type 593: identical art (bank20 gfx85) to user-set 593",
+      "class": "ground"
     },
     "824": {
       "class": "ground",

@@ -13,6 +13,11 @@ namespace OpenTyrianVR;
 public partial class Main : Node3D
 {
     private bool _xrActive;
+    private bool _xrStartupCentered;
+    private int _xrStartupFrames;
+    private int _xrStereoLogCountdown;
+    private XROrigin3D _xrOrigin = null!;
+    private XRCamera3D _xrCamera = null!;
     private ulong _session;
     private bool _sessionLive;
 
@@ -29,6 +34,7 @@ public partial class Main : Node3D
     private Node3D _flipRoot = null!;
     private float _flipScale = 1f;  // animated +1 (normal) .. -1 (mirrored)
     private OtyrNative.Frame _frame;
+    private bool _loggedFirstFrame;
     private readonly byte[] _rgba = new byte[OtyrNative.FrameWidth * OtyrNative.FrameHeight * 4];
     private readonly uint[] _palette = new uint[256];
     private SnapshotLayer _snapshotLayer = null!;
@@ -74,6 +80,10 @@ public partial class Main : Node3D
     // timer, game over, insert coin) proud of the playfield instead of flat
     // in the frame (v13).
     private const bool RenderProudText = true;
+    // Temporary Quest device gate: ambiguous height types pulse green so the
+    // in-headset checklist can verify that review markers are stereo-stable.
+    // Disable after the ABI v24 device pass.
+    private const bool QuestReviewMarkerGate = true;
     private bool _handTargetActive;
     private short _handTargetX, _handTargetY;
     private bool _lastTargetActive;
@@ -148,10 +158,10 @@ public partial class Main : Node3D
         // Rig: origin + camera + hands.  Added in both modes; in flat mode the
         // XRCamera3D behaves as a normal camera at the origin, so we park it
         // at a seated head height.
-        var origin = new XROrigin3D { Name = "XROrigin" };
-        AddChild(origin);
+        _xrOrigin = new XROrigin3D { Name = "XROrigin" };
+        AddChild(_xrOrigin);
 
-        var camera = new XRCamera3D { Name = "XRCamera" };
+        _xrCamera = new XRCamera3D { Name = "XRCamera" };
         if (!_xrActive)
         {
             // Approximate a seated player looking down at the board.  The
@@ -160,13 +170,13 @@ public partial class Main : Node3D
             // perpendicular and flattens all height separation) from close
             // in, so hover heights read as clear vertical offsets.  In
             // editor mode this is just the orbit's starting pose.
-            camera.Position = HeightEditor ? new Vector3(0f, 1.26f, -0.05f) : new Vector3(0f, 1.6f, 0f);
-            camera.RotationDegrees = new Vector3(HeightEditor ? -15f : -25f, 0f, 0f);
+            _xrCamera.Position = HeightEditor ? new Vector3(0f, 1.26f, -0.05f) : new Vector3(0f, 1.6f, 0f);
+            _xrCamera.RotationDegrees = new Vector3(HeightEditor ? -15f : -25f, 0f, 0f);
         }
         if (HeightEditor)
-            _editorCamera = camera;
-        origin.AddChild(camera);
-        camera.MakeCurrent();
+            _editorCamera = _xrCamera;
+        _xrOrigin.AddChild(_xrCamera);
+        _xrCamera.MakeCurrent();
 
         // XR swapchains are not readable through the main viewport texture
         // (run captures came back black), so captures in XR render a
@@ -174,7 +184,7 @@ public partial class Main : Node3D
         // the whole lane: head-pose mirroring proved unreliable (captures
         // aimed at the void), and a stable framing is better for debriefs
         // anyway -- every capture shows the same composition.
-        if (_xrActive && (CaptureRun || CaptureAt.Length > 0))
+        if (_xrActive && (CaptureCount > 0 || CaptureRun || CaptureAt.Length > 0))
         {
             _spectator = new SubViewport
             {
@@ -193,8 +203,8 @@ public partial class Main : Node3D
 
         _leftHand = new XRController3D { Name = "LeftHand", Tracker = "left_hand", Pose = "aim" };
         _rightHand = new XRController3D { Name = "RightHand", Tracker = "right_hand", Pose = "aim" };
-        origin.AddChild(_leftHand);
-        origin.AddChild(_rightHand);
+        _xrOrigin.AddChild(_leftHand);
+        _xrOrigin.AddChild(_rightHand);
 
         // The arcade board: a lane in front of and below the head, top edge
         // leaning away (Guitar Hero).  Dimensions/tilt are the spike's main
@@ -354,7 +364,11 @@ public partial class Main : Node3D
         }
 
         GetViewport().Msaa3D = Viewport.Msaa.Msaa4X;
-        GetViewport().Scaling3DScale = 1.4f;
+        // Keep Quest at the OpenXR-recommended render-target scale while
+        // validating stereo.  Supersampling the intermediate viewport here
+        // can desynchronize multiview subimage extents from the runtime's
+        // per-eye projections on some mobile Vulkan paths.
+        GetViewport().Scaling3DScale = _xrActive ? 1.0f : 1.4f;
 
         _diagnostics = new Label3D
         {
@@ -449,12 +463,18 @@ public partial class Main : Node3D
         if (nativeAbi != OtyrNative.AbiVersion)
             throw new InvalidOperationException($"native ABI {nativeAbi}, expected {OtyrNative.AbiVersion}");
 
-        string dataDir = Path.GetFullPath(Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "tyrian21"));
+        string dataDir = OS.GetName() == "Android"
+            ? ExtractAndroidData()
+            : Path.GetFullPath(Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "tyrian21"));
         string userDir = ProjectSettings.GlobalizePath("user://");
         // E2-full is the VR product's sim: pinned offsets (hitbox truth),
         // full-width travel, wide active windows.
-        var flags = OtyrNative.ConfigFlags.EnableAudio | OtyrNative.ConfigFlags.SuppressEntityDraw |
-                    OtyrNative.ConfigFlags.SimDeparallax;
+        var flags = OtyrNative.ConfigFlags.SuppressEntityDraw | OtyrNative.ConfigFlags.SimDeparallax;
+        // The hosted SDL2 build does not ship SDLActivity's Java audio bridge.
+        // Keep Quest silent until audio is routed through Godot; enabling SDL's
+        // Android backend here aborts inside AudioTrack during startup.
+        if (OS.GetName() != "Android")
+            flags |= OtyrNative.ConfigFlags.EnableAudio;
         // OTYR_MUTE=1: no game audio (solo test runs; the attract demo is
         // loud and the tester may be doing something else entirely).
         if (System.Environment.GetEnvironmentVariable("OTYR_MUTE") == "1")
@@ -484,6 +504,51 @@ public partial class Main : Node3D
                     dir.Remove(file);
             GD.Print("OpenTyrianVR: run capture on (every 2 s, named by frame)");
         }
+    }
+
+    // The C core reads Tyrian assets with stdio, while Android res:// files
+    // live inside Godot's PCK. Materialize the flat freeware data directory in
+    // user:// on first launch (and refresh files whose packaged size changes).
+    private static string ExtractAndroidData()
+    {
+        const string sourceDir = "res://tyrian21";
+        const string targetDir = "user://tyrian21";
+        string[] files = DirAccess.GetFilesAt(sourceDir);
+        if (files.Length == 0)
+            throw new InvalidOperationException("Quest package contains no Tyrian data files");
+
+        Error mkdir = DirAccess.MakeDirRecursiveAbsolute(ProjectSettings.GlobalizePath(targetDir));
+        if (mkdir != Error.Ok && mkdir != Error.AlreadyExists)
+            throw new IOException($"cannot create Quest data directory: {mkdir}");
+
+        int copied = 0;
+        foreach (string file in files)
+        {
+            string source = $"{sourceDir}/{file}";
+            string target = $"{targetDir}/{file}";
+            using var input = Godot.FileAccess.Open(source, Godot.FileAccess.ModeFlags.Read);
+            if (input == null)
+                throw new IOException($"cannot read packaged Tyrian data: {source}");
+
+            bool needsCopy = !Godot.FileAccess.FileExists(target);
+            if (!needsCopy)
+            {
+                using var existing = Godot.FileAccess.Open(target, Godot.FileAccess.ModeFlags.Read);
+                needsCopy = existing == null || existing.GetLength() != input.GetLength();
+            }
+            if (!needsCopy)
+                continue;
+
+            byte[] bytes = input.GetBuffer(checked((long)input.GetLength()));
+            using var output = Godot.FileAccess.Open(target, Godot.FileAccess.ModeFlags.Write);
+            if (output == null)
+                throw new IOException($"cannot write extracted Tyrian data: {target}");
+            output.StoreBuffer(bytes);
+            copied++;
+        }
+
+        GD.Print($"OpenTyrianVR: Quest data ready ({files.Length} files, {copied} refreshed)");
+        return ProjectSettings.GlobalizePath(targetDir);
     }
 
     // OTYR_CAPTURE=N: save the viewport to user://cap_N.png every ~2 s,
@@ -660,6 +725,21 @@ public partial class Main : Node3D
 
     public override void _Process(double delta)
     {
+        // Quest preserves the runtime/Guardian heading across launches.  The
+        // scene is authored around a seated head at the origin facing -Z, so
+        // center that authored space on the live HMD once tracking has had a
+        // few rendered frames to settle.  Without this, the board can appear
+        // far off to one side depending on the saved Guardian forward.
+        if (_xrActive && !_xrStartupCentered && ++_xrStartupFrames >= 3)
+        {
+            XRServer.CenterOnHmd(XRServer.RotationMode.ResetButKeepTilt, true);
+            _xrStartupCentered = true;
+            _xrStereoLogCountdown = 2;
+            GD.Print("OpenTyrianVR: XR presentation centered on startup HMD pose");
+        }
+        if (_xrStereoLogCountdown > 0 && --_xrStereoLogCountdown == 0)
+            LogXrStereo("recentered");
+
         if (!_sessionLive)
             return;
 
@@ -669,7 +749,7 @@ public partial class Main : Node3D
             if (_captureAccumulator >= 2.0 && _captureIndex < CaptureCount)
             {
                 _captureAccumulator = 0;
-                GetViewport().GetTexture().GetImage().SavePng($"user://cap_{_captureIndex++:D3}.png");
+                CaptureViewport.GetTexture().GetImage().SavePng($"user://cap_{_captureIndex++:D3}.png");
             }
         }
 
@@ -702,6 +782,8 @@ public partial class Main : Node3D
         PollFrame();
         PollPlayerState();
         _snapshotLayer.Poll(_session, _palette);
+        if (_xrActive && QuestReviewMarkerGate)
+            _snapshotLayer.EditorReviewMarkers();
         // Menus, pause, and quit-to-title stop gameplay ticks; the 3D scene
         // (sprites AND background layers) must not linger over them.  A
         // legacy-fallback level (smoothie warp) draws its complete frame
@@ -857,6 +939,7 @@ public partial class Main : Node3D
         if (EditorKeyPressed(Key.B))
             _snapshotLayer.HazardMarkersEnabled = !_snapshotLayer.HazardMarkersEnabled;
         _snapshotLayer.EditorHazardMarkers();
+        _snapshotLayer.EditorReviewMarkers();
 
         if (_editorSelected != 0 && _frame.InLevel != 0)
         {
@@ -935,6 +1018,7 @@ public partial class Main : Node3D
             _editorLabel.Text =
                 $"selected type {_editorSelected}  h={heightText}  " +
                 _snapshotLayer.EditorDescribe(_editorSelected) +
+                (_snapshotLayer.IsReviewType(_editorSelected) ? "  [REVIEW]" : "") +
                 (onScreen ? "" : "  (not on screen)");
         }
         else if (_editorSelectedLayer >= 0)
@@ -1019,7 +1103,9 @@ public partial class Main : Node3D
 
     private unsafe void PollFrame()
     {
-        int rc = OtyrNative.AcquireFrame(_session, ref _frame, _frame.StructSize, 0);
+        int rc;
+        fixed (OtyrNative.Frame* frame = &_frame)
+            rc = OtyrNative.AcquireFrame(_session, frame, _frame.StructSize, 0);
         if (rc == OtyrNative.InvalidSession)
         {
             // The player quit from inside the game; the game thread halted.
@@ -1029,7 +1115,16 @@ public partial class Main : Node3D
             return;
         }
         if (rc != OtyrNative.Ok)
+        {
+            if (rc != OtyrNative.Timeout)
+                GD.PushError($"OpenTyrianVR: acquire_frame failed: {rc}, managed size={_frame.StructSize}");
             return;  // Timeout: no new legacy frame this render frame.
+        }
+        if (!_loggedFirstFrame)
+        {
+            _loggedFirstFrame = true;
+            GD.Print($"OpenTyrianVR: managed received frame {_frame.FrameNumber} ({_frame.Width}x{_frame.Height})");
+        }
 
         fixed (OtyrNative.Frame* frame = &_frame)
         {
@@ -1150,6 +1245,7 @@ public partial class Main : Node3D
             {
                 buttons |= OtyrNative.Buttons.UiPause;
                 XRServer.CenterOnHmd(XRServer.RotationMode.ResetButKeepTilt, true);
+                _xrStereoLogCountdown = 2;
             }
 
             HandSteering();
@@ -1169,6 +1265,35 @@ public partial class Main : Node3D
             ? OtyrNative.InputFrame.CreateWithTarget(buttons, _handTargetX, _handTargetY, HandTargetSpeed)
             : OtyrNative.InputFrame.Create(buttons);
         OtyrNative.SubmitInput(_session, in input, input.StructSize);
+    }
+
+    private void LogXrStereo(string reason)
+    {
+        XRInterface? xr = XRServer.PrimaryInterface;
+        if (xr == null)
+        {
+            GD.PushError($"OpenTyrianVR: XR stereo diagnostic ({reason}): no primary interface");
+            return;
+        }
+
+        uint views = xr.GetViewCount();
+        Vector2 target = xr.GetRenderTargetSize();
+        GD.Print($"OpenTyrianVR: XR stereo diagnostic ({reason}): views={views}, target={target.X:0}x{target.Y:0}, " +
+                 $"tracking={xr.GetTrackingStatus()}, viewport_scale={GetViewport().Scaling3DScale:0.00}");
+        GD.Print($"OpenTyrianVR: XR HMD={XRServer.GetHmdTransform()}");
+        GD.Print($"OpenTyrianVR: XR reference={XRServer.GetReferenceFrame()}");
+        GD.Print($"OpenTyrianVR: XR origin={_xrOrigin.GlobalTransform}, camera={_xrCamera.GlobalTransform}");
+
+        Transform3D[] eyes = new Transform3D[views];
+        for (uint view = 0; view < views; ++view)
+        {
+            eyes[view] = xr.GetTransformForView(view, _xrOrigin.GlobalTransform);
+            Projection projection = xr.GetProjectionForView(view, 1.0, _xrCamera.Near, _xrCamera.Far);
+            GD.Print($"OpenTyrianVR: XR eye[{view}]={eyes[view]}");
+            GD.Print($"OpenTyrianVR: XR projection[{view}]={projection}");
+        }
+        if (views == 2)
+            GD.Print($"OpenTyrianVR: XR calculated IPD={eyes[0].Origin.DistanceTo(eyes[1].Origin):0.000000} m");
     }
 
     /// <summary>

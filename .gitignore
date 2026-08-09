@@ -9,7 +9,13 @@
 # Hash logs and scratch recordings (committed captures are added explicitly)
 /captures/*.log
 /captures/*.bmp
+/captures/diag-*.txt
+/captures/demo_*_force.txt
+/captures/demo_gates_late.txt
 /demorec.*
+
+# Signed packages and test/deployment diagnostics
+/artifacts/
 
 # Test harness build output
 /tests/*.exe
@@ -20,7 +26,11 @@
 /godot/bin/
 /godot/obj/
 /godot/native/
+/godot/tyrian21/
+/godot/android/
+/godot/addons/godotopenxrvendors/
 /godot/.vs/
+/godot/OpenTyrianVR.sln
 
 # Core DLL build output
 /opentyrian-core-*.dll

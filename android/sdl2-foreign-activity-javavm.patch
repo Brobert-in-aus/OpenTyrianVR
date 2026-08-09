@@ -1,0 +1,22 @@
+diff --git a/src/core/android/SDL_android.c b/src/core/android/SDL_android.c
+index 0493e8159..3ce6d2807 100644
+--- a/src/core/android/SDL_android.c
++++ b/src/core/android/SDL_android.c
+@@ -532,6 +532,18 @@ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM *vm, void *reserved)
+     return JNI_VERSION_1_4;
+ }
+ 
++/* OpenTyrianVR is hosted by Godot rather than SDLActivity. Its game library
++ * is loaded by Java, while SDL2 arrives as a DT_NEEDED dependency, so the VM
++ * does not call SDL2's JNI_OnLoad. Allow the host library's JNI_OnLoad to
++ * provide the VM without registering the SDLActivity Java bindings. */
++JNIEXPORT void JNICALL SDL_AndroidSetJavaVMForForeignActivity(JavaVM *vm)
++{
++    mJavaVM = vm;
++    Android_JNI_CreateKey_once();
++    SDL_SetMainReady();
++}
++
+ void checkJNIReady(void)
+ {
+     if (!mActivityClass || !mAudioManagerClass || !mControllerManagerClass) {

@@ -43,6 +43,12 @@ or fires while the level plays itself. Then:
   level past progress blockers like end bosses
 - **S** saves all pending edits back to hover_heights.json
 
+Entries carrying a `review` key are unresolved propagation cases. Every live
+instance gets a pulsing green editor marker and the selection label shows
+`[REVIEW]`; red hazard markers are suppressed for those types so the colors do
+not combine misleadingly. Assigning and saving a class or explicit height
+removes both `review` and `auto` from that entry.
+
 Both `OTYR_HEIGHT_EDITOR` and `OTYR_INVULN` mutate behavior and must never be
 set for normal sessions (the hash gate only holds without them).
 
@@ -64,6 +70,10 @@ set for normal sessions (the hash gate only holds without them).
   platform, resolved per tick) — tanks crossing a platform climb with it.
 - The air classes are absolute lane heights (player flies at 0.040).
 - An explicit `height` overrides any class.
+- `review` is an editor-only triage note; it does not change presentation
+  height by itself.
+- `auto` records propagation provenance and is removed with `review` after a
+  manual assignment is saved.
 - Edits load at app start (relaunch to apply).
 
 ## The first pass (generated 2026-07-12)

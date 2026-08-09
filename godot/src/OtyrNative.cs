@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 23;
+    public const uint AbiVersion = 24;
 
     // Palette index of the suppressed background fill (the frame color key);
     // index-0 black in sprite/HUD art stays opaque.
@@ -124,6 +124,7 @@ public static unsafe class OtyrNative
     public unsafe struct Snapshot
     {
         public uint StructSize;
+        public uint SnapshotNumber;  // publication cursor; advances for same-tick menus (v24)
         public uint LevelTick;
         public uint SheetEpoch;
         public uint SpriteCount;
@@ -320,7 +321,8 @@ public static unsafe class OtyrNative
         public int YVelocity;
     }
 
-    private const string Dll = "opentyrian-core-x64-Release";
+    // Logical import name; the resolver maps it to the platform artifact.
+    private const string Dll = "opentyrian_core";
 
     [DllImport(Dll, EntryPoint = "otyr_abi_version")]
     public static extern uint GetAbiVersion();
@@ -338,7 +340,7 @@ public static unsafe class OtyrNative
     public static extern int SubmitInput(ulong session, in InputFrame input, uint inputSize);
 
     [DllImport(Dll, EntryPoint = "otyr_session_acquire_frame")]
-    public static extern int AcquireFrame(ulong session, ref Frame frame, uint frameSize, uint timeoutMs);
+    public static extern int AcquireFrame(ulong session, Frame* frame, uint frameSize, uint timeoutMs);
 
     [DllImport(Dll, EntryPoint = "otyr_session_player_state")]
     public static extern int GetPlayerState(ulong session, ref PlayerState state, uint stateSize);
@@ -365,16 +367,15 @@ public static unsafe class OtyrNative
     }
 
     /// <summary>
-    /// Registers a resolver that loads the native core (and its SDL2
-    /// dependencies) from res://native/&lt;rid&gt;/ so the library is found both
-    /// in the editor and in exported builds.
+    /// Registers a resolver that loads the native core and SDL2 dependencies
+    /// from the desktop staging directory or the Android app native-lib path.
     /// </summary>
     public static void RegisterResolver()
     {
         // ABI layout guards (mirrors the native static asserts).
         if (sizeof(SnapshotSprite) != 16 ||
             sizeof(BackgroundDraw) != 16 ||
-            sizeof(Snapshot) != 36 + SnapshotSpriteMax * 16 + BgLayerCount * 16 + 8 ||  // +8: v21 parallax
+            sizeof(Snapshot) != 40 + SnapshotSpriteMax * 16 + BgLayerCount * 16 + 8 ||  // +4: v24 cursor
             sizeof(SpriteSheet) != 12 + 2 * SheetCellMax * SheetCellW * SheetCellH ||
             sizeof(BackgroundMap) != 16 + BgMapCellMax + BgShapeMax * BgTileW * BgTileH ||
             sizeof(OldSprite) != 8 + 2 * OldSpriteWMax * OldSpriteHMax ||
@@ -386,6 +387,17 @@ public static unsafe class OtyrNative
             if (name != Dll)
                 return IntPtr.Zero;
 
+            if (Godot.OS.GetName() == "Android")
+            {
+                // Gradle packages both arm64 libraries under lib/arm64-v8a.
+                // extractNativeLibs=true makes them visible to .NET dlopen;
+                // load SDL first so the core's DT_NEEDED resolves explicitly.
+                NativeLibrary.TryLoad("libSDL2.so", out _);
+                if (NativeLibrary.TryLoad("libopentyrian_core.so", out var androidHandle))
+                    return androidHandle;
+                return IntPtr.Zero;
+            }
+
             string nativeDir = Godot.ProjectSettings.GlobalizePath("res://native/win-x64/");
 
             // SDL2 must be loadable before the core; load it from the same
@@ -393,7 +405,7 @@ public static unsafe class OtyrNative
             foreach (var dep in new[] { "SDL2.dll", "SDL2_net.dll" })
                 NativeLibrary.TryLoad(System.IO.Path.Combine(nativeDir, dep), out _);
 
-            if (NativeLibrary.TryLoad(System.IO.Path.Combine(nativeDir, Dll + ".dll"), out var handle))
+            if (NativeLibrary.TryLoad(System.IO.Path.Combine(nativeDir, "opentyrian-core-x64-Release.dll"), out var handle))
                 return handle;
 
             return IntPtr.Zero;

@@ -13,13 +13,12 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "Heights read right in 3D (sweep levels, PgUp/PgDn jumps)",
-        "No per-eye shimmer/ghosting anywhere (close one eye to compare)",
-        "Enemy stacking sane (segmented ships, crossing flyers)",
-        "SAVARA: water clouds float, selectable height held",
-        "SAVARA V: storm sea ripples in 3D, entities crisp above",
-        "Ship shadow stable while head-tilting",
-        "Anything else off? quote frame numbers",
+        "PAUSE: left Menu -> clean flat pause; 3D vanishes immediately",
+        "RESUME: A/trigger -> 3D returns once, aligned; play continues",
+        "GAME MENU: B open/close -> no frozen HUD/text or 3D overlay",
+        "PLATFORM RIDERS: head-sweep; statics/shadows stay tile-locked",
+        "GREEN REVIEW HALOS: pulse on flagged enemies, remain eye-stable",
+        "FAILURE? report level + frame number from the green status line",
     };
 
     private readonly bool[] _done = new bool[Items.Length];
@@ -80,7 +79,7 @@ public partial class TestChecklist : Node3D
             if (!done)
                 remaining++;
 
-        text.Append($"TEST CHECKLIST  ({Items.Length - remaining}/{Items.Length})\n");
+        text.Append($"ABI v24 QUEST GATE  ({Items.Length - remaining}/{Items.Length})\n");
         text.Append("R-stick click: check   L-stick click: skip\n\n");
         for (int i = 0; i < Items.Length; i++)
         {

@@ -35,8 +35,9 @@ You need the freeware Tyrian 2.1 data files:
 
 Building on Windows is documented in
 [docs/BUILDING_WINDOWS.md](docs/BUILDING_WINDOWS.md).  PC VR headsets via
-OpenXR (developed against Virtual Desktop / VDXR); a standalone Quest build
-via SideQuest is a goal once the conversion is further along.
+OpenXR (developed against Virtual Desktop / VDXR) and standalone Quest builds
+are supported; see [docs/BUILDING_QUEST.md](docs/BUILDING_QUEST.md). Quest
+deployment installs and reports the version but never launches the app.
 
 ## Free, forever
 

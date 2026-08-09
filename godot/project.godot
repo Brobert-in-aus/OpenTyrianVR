@@ -14,6 +14,11 @@ config/features=PackedStringArray("4.7", "C#", "Forward Plus")
 
 project/assembly_name="OpenTyrianVR"
 
+[rendering]
+
+renderer/rendering_method="mobile"
+textures/vram_compression/import_etc2_astc=true
+
 [xr]
 
 openxr/enabled=true

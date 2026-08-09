@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 23u
+#define OTYR_ABI_VERSION 24u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -288,8 +288,10 @@ typedef struct OtyrBackgroundDraw
 
 typedef struct OtyrSnapshot
 {
-	uint32_t struct_size;   /* sizeof(OtyrSnapshot); doubles as last-seen key
-	                           via level_tick, like OtyrFrame */
+	uint32_t struct_size;   /* sizeof(OtyrSnapshot) */
+	uint32_t snapshot_number; /* increments for every publication, including
+	                             same-tick pause/menu updates; caller supplies
+	                             the last value it consumed (v24) */
 	uint32_t level_tick;    /* gameplay tick this snapshot belongs to */
 	uint32_t sheet_epoch;   /* increments when sprite sheets are (re)loaded */
 	uint32_t sprite_count;
@@ -347,8 +349,10 @@ OTYR_API int32_t otyr_session_create(const OtyrConfig *config,
                                      uint32_t config_size,
                                      uint64_t *out_session);
 
-/* Requests shutdown (as if the window were closed), waits briefly for the
- * game thread to finish, and frees the session. */
+/* Requests shutdown (as if the window were closed) and waits briefly for the
+ * game thread to finish.  OTYR_OK frees the session and permits a new one;
+ * OTYR_TIMEOUT leaves a poisoned singleton that rejects all further calls so
+ * its detached thread cannot race a replacement session. */
 OTYR_API int32_t otyr_session_destroy(uint64_t session);
 
 /* Replaces the currently-held button state.  Applied atomically between
@@ -371,8 +375,9 @@ OTYR_API int32_t otyr_session_player_state(uint64_t session,
                                            OtyrPlayerState *state,
                                            uint32_t state_size);
 
-/* Blocks until a presentation snapshot for a gameplay tick newer than
- * snapshot->level_tick is available (0 polls).  Menus produce none. */
+/* Blocks until a presentation snapshot newer than snapshot->snapshot_number
+ * is available (0 polls).  Same-tick pause/menu publications are observable
+ * even though level_tick does not advance (v24). */
 OTYR_API int32_t otyr_session_snapshot(uint64_t session,
                                        OtyrSnapshot *snapshot,
                                        uint32_t snapshot_size,

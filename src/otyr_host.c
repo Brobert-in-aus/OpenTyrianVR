@@ -38,6 +38,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#endif
+
 #ifdef _WIN32
 #include <windows.h>
 #include <timeapi.h>
@@ -72,7 +76,7 @@ bool otyr_hosted = false;
  * sizes (foundation rule: size asserts on both sides of the boundary). */
 typedef char otyr_assert_sprite_size[sizeof(OtyrSnapshotSprite) == 16 ? 1 : -1];
 typedef char otyr_assert_bg_draw_size[sizeof(OtyrBackgroundDraw) == 16 ? 1 : -1];
-typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 36 + 1024 * 16 + 3 * 16 + 8 ? 1 : -1];  /* +8: v21 parallax deltas */
+typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 40 + 1024 * 16 + 3 * 16 + 8 ? 1 : -1];  /* +4: v24 publication cursor */
 typedef char otyr_assert_sheet_size[sizeof(OtyrSpriteSheet) == 12 + 2 * 1024 * 12 * 14 ? 1 : -1];
 typedef char otyr_assert_frame_size[sizeof(OtyrFrame) == 16 + 320 * 200 + 1024 + 4 + 8 ? 1 : -1];  /* +4: v23 flip */
 typedef char otyr_assert_bg_map_size[sizeof(OtyrBackgroundMap) == 16 + 600 * 15 + 72 * 24 * 28 ? 1 : -1];
@@ -90,6 +94,7 @@ enum session_state
 	SESSION_NONE,
 	SESSION_RUNNING,
 	SESSION_HALTED,
+	SESSION_POISONED,
 };
 
 static struct
@@ -222,13 +227,26 @@ static int game_thread_main(void *data)
 	int code = setjmp(thread_exit_env);
 	if (code == 0)
 	{
-		opentyrian_main(session.argc, session.argv);
+		int result = opentyrian_main(session.argc, session.argv);
+		#ifdef __ANDROID__
+		__android_log_print(ANDROID_LOG_ERROR, "OpenTyrianVR",
+		                    "native game thread returned %d: %s",
+		                    result, SDL_GetError());
+		#endif
 		/* opentyrian_main only returns on early SDL_Init failure; normal
 		   shutdown longjmps from JE_tyrianHalt. */
 	}
+	#ifdef __ANDROID__
+	else
+	{
+		__android_log_print(ANDROID_LOG_ERROR, "OpenTyrianVR",
+		                    "native game halted with code %d", code - 1);
+	}
+	#endif
 
 	SDL_LockMutex(session.mutex);
-	session.state = SESSION_HALTED;
+	if (session.state != SESSION_POISONED)
+		session.state = SESSION_HALTED;
 	SDL_CondBroadcast(session.frame_ready);
 	SDL_UnlockMutex(session.mutex);
 	return code - 1;
@@ -526,9 +544,12 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 		set_error("session already exists");
 		return OTYR_ALREADY_EXISTS;
 	}
-	if (config->data_dir[0] == '\0')
+	if (config->data_dir[0] == '\0' ||
+	    memchr(config->data_dir, '\0', sizeof(config->data_dir)) == NULL ||
+	    memchr(config->hash_log, '\0', sizeof(config->hash_log)) == NULL ||
+	    memchr(config->user_dir, '\0', sizeof(config->user_dir)) == NULL)
 	{
-		set_error("data_dir is required");
+		set_error("config paths must be NUL-terminated and data_dir must be nonempty");
 		return OTYR_INVALID_ARGUMENT;
 	}
 
@@ -536,6 +557,11 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 	session.frame_ready = SDL_CreateCond();
 	if (session.mutex == NULL || session.frame_ready == NULL)
 	{
+		if (session.frame_ready != NULL)
+			SDL_DestroyCond(session.frame_ready);
+		if (session.mutex != NULL)
+			SDL_DestroyMutex(session.mutex);
+		memset(&session, 0, sizeof(session));
 		set_error("failed to create synchronization primitives");
 		return OTYR_ERROR;
 	}
@@ -578,6 +604,14 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 	session.sheet_opacity = calloc(OTYR_SHEET_COUNT, sizeof(*session.sheet_opacity));
 	if (session.sheet_cells == NULL || session.sheet_opacity == NULL)
 	{
+		free(session.sheet_cells);
+		free(session.sheet_opacity);
+		SDL_DestroyCond(session.frame_ready);
+		SDL_DestroyMutex(session.mutex);
+		memset(&session, 0, sizeof(session));
+#ifdef _WIN32
+		timeEndPeriod(1);
+#endif
 		set_error("failed to allocate sheet cache");
 		return OTYR_ERROR;
 	}
@@ -588,6 +622,9 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 	session.frame_number = 0;
 	session.pending_buttons = 0;
 	session.applied_buttons = 0;
+	session.level_tick = 0;
+	otyr_in_level = false;
+	otyr_tick_present = false;
 	memset(&session.player_state, 0, sizeof(session.player_state));
 	session.player_state.struct_size = sizeof(OtyrPlayerState);
 
@@ -610,8 +647,15 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 		"otyr-game", GAME_THREAD_STACK_SIZE, NULL);
 	if (session.thread == NULL)
 	{
-		session.state = SESSION_NONE;
 		otyr_hosted = false;
+		free(session.sheet_cells);
+		free(session.sheet_opacity);
+		SDL_DestroyCond(session.frame_ready);
+		SDL_DestroyMutex(session.mutex);
+		memset(&session, 0, sizeof(session));
+#ifdef _WIN32
+		timeEndPeriod(1);
+#endif
 		set_error("failed to create game thread");
 		return OTYR_ERROR;
 	}
@@ -622,7 +666,8 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 
 int32_t otyr_session_destroy(uint64_t handle)
 {
-	if (handle != SESSION_HANDLE || session.state == SESSION_NONE)
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE ||
+	    session.state == SESSION_POISONED)
 		return OTYR_INVALID_SESSION;
 
 	if (session.state == SESSION_RUNNING)
@@ -642,32 +687,31 @@ int32_t otyr_session_destroy(uint64_t handle)
 		SDL_CondWaitTimeout(session.frame_ready, session.mutex, 100);
 	}
 	bool halted = (session.state == SESSION_HALTED);
+	if (!halted)
+		session.state = SESSION_POISONED;
 	SDL_UnlockMutex(session.mutex);
 
-	if (halted)
-	{
-		SDL_WaitThread(session.thread, NULL);
-	}
-	else
+	if (!halted)
 	{
 		SDL_DetachThread(session.thread);
+		session.thread = NULL;
 		set_error("game thread did not halt within timeout; detached");
+		return OTYR_TIMEOUT;
 	}
 
-	session.thread = NULL;
-	session.state = SESSION_NONE;
+	SDL_WaitThread(session.thread, NULL);
+	free(session.sheet_cells);
+	free(session.sheet_opacity);
+	SDL_DestroyCond(session.frame_ready);
+	SDL_DestroyMutex(session.mutex);
+	memset(&session, 0, sizeof(session));
 	otyr_hosted = false;
-
-	if (halted)
-	{
-		free(session.sheet_cells);
-		session.sheet_cells = NULL;
-		free(session.sheet_opacity);
-		session.sheet_opacity = NULL;
-	}
-	/* (detached thread: leak the cache rather than free under its feet) */
-
-	return halted ? OTYR_OK : OTYR_TIMEOUT;
+	otyr_in_level = false;
+	otyr_tick_present = false;
+#ifdef _WIN32
+	timeEndPeriod(1);
+#endif
+	return OTYR_OK;
 }
 
 static void apply_pending_input_locked(void);
@@ -675,7 +719,8 @@ static void apply_pending_input_locked(void);
 int32_t otyr_session_submit_input(uint64_t handle, const OtyrInputFrame *input,
                                   uint32_t input_size)
 {
-	if (handle != SESSION_HANDLE || session.state == SESSION_NONE)
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE ||
+	    session.state == SESSION_POISONED)
 		return OTYR_INVALID_SESSION;
 	if (input == NULL || input_size < sizeof(OtyrInputFrame) ||
 	    input->struct_size < sizeof(OtyrInputFrame))
@@ -715,7 +760,8 @@ int32_t otyr_session_submit_input(uint64_t handle, const OtyrInputFrame *input,
 int32_t otyr_session_acquire_frame(uint64_t handle, OtyrFrame *frame,
                                    uint32_t frame_size, uint32_t timeout_ms)
 {
-	if (handle != SESSION_HANDLE || session.state == SESSION_NONE)
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE ||
+	    session.state == SESSION_POISONED)
 		return OTYR_INVALID_SESSION;
 	if (frame == NULL || frame_size < sizeof(OtyrFrame) ||
 	    frame->struct_size < sizeof(OtyrFrame))
@@ -764,7 +810,8 @@ int32_t otyr_session_acquire_frame(uint64_t handle, OtyrFrame *frame,
 int32_t otyr_session_player_state(uint64_t handle, OtyrPlayerState *state,
                                   uint32_t state_size)
 {
-	if (handle != SESSION_HANDLE || session.state == SESSION_NONE)
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE ||
+	    session.state == SESSION_POISONED)
 		return OTYR_INVALID_SESSION;
 	if (state == NULL || state_size < sizeof(OtyrPlayerState) ||
 	    state->struct_size < sizeof(OtyrPlayerState))
@@ -779,13 +826,14 @@ int32_t otyr_session_player_state(uint64_t handle, OtyrPlayerState *state,
 int32_t otyr_session_snapshot(uint64_t handle, OtyrSnapshot *snapshot,
                               uint32_t snapshot_size, uint32_t timeout_ms)
 {
-	if (handle != SESSION_HANDLE || session.state == SESSION_NONE)
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE ||
+	    session.state == SESSION_POISONED)
 		return OTYR_INVALID_SESSION;
 	if (snapshot == NULL || snapshot_size < sizeof(OtyrSnapshot) ||
 	    snapshot->struct_size < sizeof(OtyrSnapshot))
 		return OTYR_INVALID_ARGUMENT;
 
-	const uint32_t last_seen = snapshot->level_tick;
+	const uint32_t last_seen = snapshot->snapshot_number;
 
 	int32_t result = OTYR_TIMEOUT;
 	const Uint32 deadline = SDL_GetTicks() + timeout_ms;
@@ -793,7 +841,8 @@ int32_t otyr_session_snapshot(uint64_t handle, OtyrSnapshot *snapshot,
 	SDL_LockMutex(session.mutex);
 	for (;;)
 	{
-		if (session.snapshot.level_tick != last_seen && session.snapshot.level_tick != 0)
+		if (session.snapshot.snapshot_number != last_seen &&
+		    session.snapshot.snapshot_number != 0)
 		{
 			memcpy(snapshot, &session.snapshot, sizeof(OtyrSnapshot));
 			result = OTYR_OK;
@@ -816,7 +865,8 @@ int32_t otyr_session_snapshot(uint64_t handle, OtyrSnapshot *snapshot,
 int32_t otyr_sprite_sheet(uint64_t handle, uint32_t sheet_id,
                           OtyrSpriteSheet *sheet, uint32_t sheet_size)
 {
-	if (handle != SESSION_HANDLE || session.state == SESSION_NONE)
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE ||
+	    session.state == SESSION_POISONED)
 		return OTYR_INVALID_SESSION;
 	if (sheet == NULL || sheet_size < sizeof(OtyrSpriteSheet) ||
 	    sheet->struct_size < sizeof(OtyrSpriteSheet) ||
@@ -837,7 +887,8 @@ int32_t otyr_sprite_sheet(uint64_t handle, uint32_t sheet_id,
 int32_t otyr_background_map(uint64_t handle, uint32_t layer,
                             OtyrBackgroundMap *map, uint32_t map_size)
 {
-	if (handle != SESSION_HANDLE || session.state == SESSION_NONE)
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE ||
+	    session.state == SESSION_POISONED)
 		return OTYR_INVALID_SESSION;
 	if (map == NULL || map_size < sizeof(OtyrBackgroundMap) ||
 	    map->struct_size < sizeof(OtyrBackgroundMap) ||
@@ -855,7 +906,8 @@ int32_t otyr_background_map(uint64_t handle, uint32_t layer,
 int32_t otyr_old_sprite(uint64_t handle, uint32_t table, uint32_t index,
                         OtyrOldSprite *out, uint32_t out_size)
 {
-	if (handle != SESSION_HANDLE || session.state == SESSION_NONE)
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE ||
+	    session.state == SESSION_POISONED)
 		return OTYR_INVALID_SESSION;
 	if (out == NULL || out_size < sizeof(OtyrOldSprite) ||
 	    out->struct_size < sizeof(OtyrOldSprite) ||
@@ -1022,6 +1074,7 @@ void otyr_host_present(SDL_Surface *screen)
 	if (otyr_in_level && !otyr_tick_present)
 	{
 		snapshot->struct_size = sizeof(OtyrSnapshot);
+		++snapshot->snapshot_number;
 		unsigned int kept = 0;
 		for (unsigned int i = 0; i < snapshot->sprite_count; ++i)
 			if (snapshot->sprites[i].category != OTYR_CAT_TEXT)
@@ -1043,6 +1096,7 @@ void otyr_host_present(SDL_Surface *screen)
 	/* Publish the presentation snapshot for this tick (records complete by
 	   present time; sheet pointers resolve to stable ids). */
 	snapshot->struct_size = sizeof(OtyrSnapshot);
+	++snapshot->snapshot_number;
 	snapshot->level_tick = session.level_tick;
 	snapshot->sheet_epoch = session.sheet_epoch;
 
