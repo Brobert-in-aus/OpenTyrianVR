@@ -13,9 +13,10 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "FULL WIDTH: marker edge maps 1:1; ship reaches x about 16/280",
+        "FULL WIDTH: ship reaches both cropped edges at target x about 16/280",
         "EDGE CROP: enemies scroll cleanly across hard playfield edges; no fade",
-        "COMPOSITES: fast stacks, linked bosses and multi-quad ships stay welded",
+        "GROUND SCROLL: terrain below floating platforms glides without judder",
+        "COMPOSITES: fast stacks and the small level-1 boss stay welded",
         "90 HZ: motion stays smooth without recurring judder",
     };
 

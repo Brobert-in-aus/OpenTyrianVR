@@ -8,15 +8,11 @@ namespace OpenTyrianVR;
 /// tile data (ABI v8) in place of the legacy framebuffer background, which is
 /// suppressed natively via ConfigFlags.SuppressBackground.
 ///
-/// Layers 0 (ground) and 1 (structures) stay pixel-locked to the sim tick and
-/// sit a fraction of a millimeter behind the lane overlay: terrain-paint art
-/// in the legacy frame (ground enemies covering their baked destroyed state)
-/// must stay pixel-coplanar with the tiles beneath it, so those layers get no
-/// scroll interpolation.  Layer 2 (clouds/top) carries no terrain paint and
-/// floats at real diorama height with per-render-frame scroll interpolation.
+/// Every map layer scroll-interpolates between simulation ticks. Terrain-paint
+/// enemy records receive the identical sub-tick offset as their underlying
+/// layer, preserving pixel lock while removing the 35 Hz ground judder.
 ///
-/// Each layer is a single quad over the de-parallax-expanded 312x184 play
-/// region; the fragment
+/// Each layer is a single quad over the 264x184 playable surface; the fragment
 /// shader resolves frame pixel -> map tile -> shape pixel -> palette, with a
 /// seam-aware bilinear blend in post-palette RGB for anti-aliasing.
 /// </summary>
@@ -26,12 +22,11 @@ public unsafe partial class BackgroundLayer : Node3D
     private const int PlayW = 264, PlayH = 184;
     private const int AtlasCols = 8;  // 8x9 grid of 24x28 shapes
 
-    // The de-parallax player range grows by 24 px on each side, so retain
-    // that genuinely playable horizontal expansion but crop the old hidden
-    // spawn/departure aprons vertically. This is the visible play boundary:
-    // 312x184 versus the legacy 264x184 and the former 376x268 review canvas.
-    private const float CanvasX0 = -24f, CanvasY0 = 0f;
-    private const float CanvasW = 312f, CanvasH = 184f;
+    // Visible play boundary. De-parallax widens the player's reachable range
+    // inside this fixed surface; the authored side and vertical aprons are
+    // presentation margins, not playable terrain.
+    private const float CanvasX0 = 0f, CanvasY0 = 0f;
+    private const float CanvasW = 264f, CanvasH = 184f;
 
     // Lane-local Z per layer, chosen from the layer's over mode each tick.
     // Coplanar layers hug the lane overlay (sub-pixel offsets: ~0.1 mm of
@@ -310,8 +305,8 @@ public unsafe partial class BackgroundLayer : Node3D
             GroundScrollDy = dy > -0.5f && dy < 6f ? Mathf.Max(dy, 0f) : GroundScrollDy;
         }
         // E2 de-parallax: rebase each layer's origin to its fixed offset.
-        // Deltas are PER TICK and pair with that tick's draw record: the
-        // elevated layers lerp prev->curr origins per render frame, and
+        // Deltas are PER TICK and pair with that tick's draw record: every
+        // layer lerps prev->curr origins per render frame, and
         // rebasing the prev draw with the CURRENT delta made the clouds
         // wobble during strafes (user-caught).
         for (int l = 0; l < OtyrNative.BgLayerCount; l++)
@@ -346,12 +341,8 @@ public unsafe partial class BackgroundLayer : Node3D
             // riders sit at a real lift and win by depth either way.
             _materials[l].RenderPriority = cloudHeight ? 5 : 0;
 
-            // Coplanar layers are pixel-locked to the tick (terrain-paint
-            // coplanarity); their origin updates here and only here.
-            // Elevated layers carry no terrain paint and scroll-interpolate
-            // in OnRender instead.
-            if (z <= 0.001f && _currDraw[l].Drawn != 0)
-                _materials[l].SetShaderParameter("origin_px", Origin(l, _currDraw[l]));
+            // OnRender owns all origin updates so map layers and their
+            // terrain-attached entity records share one interpolation phase.
         }
 
         // Water-cloud split: classify once the level palette has settled
@@ -474,7 +465,7 @@ public unsafe partial class BackgroundLayer : Node3D
     private readonly Vector2[] _subTickPx = new Vector2[OtyrNative.BgLayerCount];
 
     /// <summary>Called every render frame with the tick interpolation phase;
-    /// smooth-scrolls the elevated layers.</summary>
+    /// smooth-scrolls every map layer.</summary>
     public void OnRender(float t)
     {
         // Storm flow: advance the waver in sub-tick time so the smear runs
@@ -482,10 +473,10 @@ public unsafe partial class BackgroundLayer : Node3D
         if (_stormHue >= 0)
             _materials[0].SetShaderParameter("storm_time", _stormTick + t);
 
-        for (int l = 1; l < OtyrNative.BgLayerCount; l++)
+        for (int l = 0; l < OtyrNative.BgLayerCount; l++)
         {
             _subTickPx[l] = Vector2.Zero;
-            if (_currDraw[l].Drawn == 0 || _quads[l].Position.Z <= 0.001f)
+            if (_currDraw[l].Drawn == 0)
                 continue;
 
             Vector2 curr = Origin(l, _currDraw[l]);
@@ -497,18 +488,19 @@ public unsafe partial class BackgroundLayer : Node3D
                     origin = prev.Lerp(curr, t);
             }
             _materials[l].SetShaderParameter("origin_px", origin);
+            if (l == 1 && _cloudQuad.Visible)
+                _cloudMaterial.SetShaderParameter("origin_px", origin);
             _subTickPx[l] = origin - curr;
         }
     }
 
     /// <summary>Sub-tick scroll offset of the elevated layer sitting at (or,
     /// with a wider tolerance, near) the given lane height; zero when no
-    /// layer matches (the ground layer steps per tick and contributes
-    /// none).  Authored-height statics riding just above/below a platform
-    /// pass a wide tolerance to glue to it.</summary>
+    /// layer matches. Authored-height statics riding just above/below a
+    /// platform pass a wide tolerance to glue to it.</summary>
     public Vector2 SubTickOffsetAt(float z, float tolerance = 0.0005f)
     {
-        for (int l = 1; l < OtyrNative.BgLayerCount; l++)
+        for (int l = 0; l < OtyrNative.BgLayerCount; l++)
         {
             if (_currDraw[l].Drawn == 0)
                 continue;

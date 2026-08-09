@@ -622,6 +622,15 @@
   is removed. Event enemies born in the old hidden y apron are instead
   revealed geometrically as their already-interpolated quads cross y=0,
   preserving spawn timing, collision truth, and deterministic simulation.
+- Crop/scroll correction (0.1.12): headset review showed the remaining 24 px
+  side strips separated by the new clip seam, proving they too were authored
+  margin rather than playable surface. Terrain/backing/entities now share the
+  actual 0..264 by 0..184 boundary and the sidebar sits at x=264. All three map
+  layers, including ground beneath floating platforms, interpolate one shared
+  render phase; static/decal records add the exact sub-tick offset of their
+  supporting layer. Aligned sections with one nonzero link id may bridge up to
+  a 32 px transparent authored gap before rigid-motion stabilization, covering
+  the small level-1 boss without merging diagonal/unrelated wave members.
 
 ## 1. Product direction
 

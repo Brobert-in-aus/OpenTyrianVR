@@ -349,11 +349,11 @@ public partial class Main : Node3D
 
         // E1 HUD split: the sidebar (frame x 264..320) and bottom bar
         // (y 184..200 under the play area) render on their own quads,
-        // floated clear of the widened diorama; the lane discards those
+        // floated clear of the cropped playfield; the lane discards those
         // regions while the split is live (in-level, 3D showing).
         _hudSidebar = BuildHudQuad(shader, "HudSidebar",
             new Vector2(264f / 320f, 0f), new Vector2(1f, 1f),
-            56f, 200f, frameCenterX: 316f, frameCenterY: 100f, yawDeg: -18f);
+            56f, 200f, frameCenterX: 292f, frameCenterY: 100f, yawDeg: -18f);
         // Bottom bar returns directly beneath the original y=184 play edge.
         _hudBottomBar = BuildHudQuad(shader, "HudBottomBar",
             new Vector2(0f, 184f / 200f), new Vector2(264f / 320f, 1f),

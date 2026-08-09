@@ -17,9 +17,9 @@ public unsafe partial class SnapshotLayer : Node3D
     private const float LaneWidth = 1.0f, LaneHeight = 0.625f;
     private const float PxToMeters = LaneWidth / 320f;
     private const int AtlasCellsPerRow = 32;  // 32x32 grid of 12x14 cells
-    // Visible playfield after removing parallax: the legacy 264x184 window
-    // widened by 24 px on each side, with no hidden vertical spawn aprons.
-    private const float CropX0 = -24f, CropY0 = 0f, CropX1 = 288f, CropY1 = 184f;
+    // Visible playfield. The wider de-parallax travel range lives inside the
+    // legacy 264x184 surface; authored side/spawn aprons are clipped away.
+    private const float CropX0 = 0f, CropY0 = 0f, CropX1 = 264f, CropY1 = 184f;
 
     // Lane-local Z (out of the board) per category -- the diorama height bands.
     // Every hazard band sits ABOVE the elevated map layers (clouds 0.02,
@@ -913,6 +913,11 @@ public unsafe partial class SnapshotLayer : Node3D
     private void StabilizeRigidAssemblies()
     {
         const float joinTolerancePx = 0.75f;
+        // Linked bosses are often authored as aligned enemy slots with a
+        // transparent gap between their 24x28 sections. Treat a modest gap
+        // as one rigid assembly; requiring literal tile contact split the
+        // small level-1 boss into independently interpolated halves.
+        const float linkedSectionGapPx = 32f;
         for (int i = 0; i < _cellCount; i++)
         {
             _assemblyComponent[i] = i;
@@ -936,6 +941,14 @@ public unsafe partial class SnapshotLayer : Node3D
             Vector2 half = (CellSizePx(in _cells[a]) + CellSizePx(in _cells[b])) * 0.5f;
             float dx = Mathf.Abs(_cells[a].CurrPx.X - _cells[b].CurrPx.X);
             float dy = Mathf.Abs(_cells[a].CurrPx.Y - _cells[b].CurrPx.Y);
+            bool sameSource = _cellSource[a] == _cellSource[b];
+            if (!sameSource)
+            {
+                bool overlapsX = dx < half.X - joinTolerancePx;
+                bool overlapsY = dy < half.Y - joinTolerancePx;
+                return (overlapsX && dy <= half.Y + linkedSectionGapPx) ||
+                       (overlapsY && dx <= half.X + linkedSectionGapPx);
+            }
             if (dx > half.X + joinTolerancePx || dy > half.Y + joinTolerancePx)
                 return false;
             // Exclude corner-only contact: a real join overlaps along at
@@ -1937,18 +1950,15 @@ public unsafe partial class SnapshotLayer : Node3D
 
             Vector2 px = cell.HasPrev ? cell.PrevPx.Lerp(cell.CurrPx, t) : cell.CurrPx;
 
-            // Decals riding an ELEVATED layer (platform statics, shadows on
-            // clouds) follow that layer's sub-tick smooth scroll: they step
-            // per tick like the ground decals, but their underlay glides
-            // between ticks, so without this they swim/blur against their
-            // own platform under head motion.  Ground decals contribute
-            // zero (the ground layer steps too).
-            if (cell.DecalOrder > 0f && cell.Z > 0.001f && _background != null)
+            // Every terrain decal receives the exact sub-tick motion of its
+            // underlying map layer. Ground, structures and platforms now all
+            // glide at render rate without the art swimming off its underlay.
+            if (cell.DecalOrder > 0f && _background != null)
                 px += _background.SubTickOffsetAt(cell.Z);
             // Authored-height STATICS (e.g. platform-under spikes) left the
             // decal path but still step per tick over a smooth-scrolling
             // elevated layer: glue them to the nearest one.
-            else if (!cell.HasPrev && cell.EntityType != 0 && cell.Z > 0.01f && _background != null)
+            else if (!cell.HasPrev && cell.EntityType != 0 && _background != null)
                 px += _background.SubTickOffsetAt(cell.Z, 0.006f);
 
             int id = cell.SheetId;

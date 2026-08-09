@@ -92,3 +92,10 @@ Version 0.1.11 removes per-instance birth/rim opacity and crops terrain and
 entities to the 312x184 playable presentation window. Fragment clipping adds a
 few comparisons to the existing sprite shaders but removes instance-color
 updates; it does not add draw calls or geometry.
+
+Version 0.1.12 corrects the horizontal crop to the actual 264x184 surface and
+interpolates all three terrain layers, including ground. Terrain-attached
+records reuse the layer's already-computed sub-tick offset; there are no new
+draws, meshes, or per-cell searches. Linked boss sections may bridge a maximum
+32 px transparent authored gap when aligned, then reuse the existing median
+component motion pass.
