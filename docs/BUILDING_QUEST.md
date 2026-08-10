@@ -60,8 +60,9 @@ head-motion distortion. A sustained 0.1.5 pass validated pause/resume,
 in-game-menu transitions, platform-rider stability, 4x MSAA, and ample
 performance headroom; review-marker halos are editor-only.
 
-Version 0.1.20 (code 21) is the current validation build. It requests 90 Hz,
-uses the ship-safe -25..288 horizontal crop, keeps the
+Version 0.1.21 (code 22) is the current validation build. It requests 90 Hz,
+crops terrain/backing/map shadows to the reachable 0..264 surface while
+retaining the ship-safe -25..288 sprite envelope, keeps the
 vertical crop at 0..184, render-interpolates all terrain layers, stabilizes
 linked composite enemies across authored transparent gaps, and keeps known
 cloud layers translucent when level events change their draw order. Clouds

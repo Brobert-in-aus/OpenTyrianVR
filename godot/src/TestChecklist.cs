@@ -13,7 +13,7 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "FULL WIDTH: ship reaches x about 16/280; all overhanging ship pixels remain visible",
+        "FULL WIDTH: terrain ends at 0/264; ship reaches x about 16/280 with overhang visible",
         "EDGE CROP: enemies scroll cleanly across hard playfield edges; no fade",
         "GROUND SCROLL: terrain below floating platforms glides without judder",
         "COMPOSITES: fast stacks and the small level-1 boss stay welded",

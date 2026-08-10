@@ -13,7 +13,8 @@ namespace OpenTyrianVR;
 /// enemy records receive the identical sub-tick offset as their underlying
 /// layer, preserving pixel lock while removing the 35 Hz ground judder.
 ///
-/// Each layer is a single quad over the ship-safe 313x184 surface; the fragment
+/// Each layer is a single quad over the reachable 264x184 terrain surface;
+/// sprites use a wider independent clip so edge-overhanging art remains whole. The fragment
 /// shader resolves frame pixel -> map tile -> shape pixel -> palette, with a
 /// seam-aware bilinear blend in post-palette RGB for anti-aliasing.
 /// </summary>
@@ -23,11 +24,11 @@ public unsafe partial class BackgroundLayer : Node3D
     private const int PlayW = 264, PlayH = 184;
     private const int AtlasCols = 8;  // 8x9 grid of 24x28 shapes
 
-    // Visible play boundary. De-parallax exposes 24 px of additional travel
-    // on each side of the legacy surface; retain that horizontal expansion
-    // while cropping the authored vertical spawn/departure aprons.
-    private const float CanvasX0 = PlayfieldGeometry.MinX, CanvasY0 = PlayfieldGeometry.MinY;
-    private const float CanvasW = PlayfieldGeometry.Width, CanvasH = PlayfieldGeometry.Height;
+    // Reachable terrain boundary. The player and enemies retain their wider
+    // sprite clip independently, so art can overhang without exposing the
+    // unpathable authored side columns beneath it.
+    private const float CanvasX0 = PlayfieldGeometry.TerrainMinX, CanvasY0 = PlayfieldGeometry.MinY;
+    private const float CanvasW = PlayfieldGeometry.TerrainWidth, CanvasH = PlayfieldGeometry.Height;
 
     // Lane-local Z per layer, chosen from the layer's over mode each tick.
     // Coplanar layers hug the lane overlay (sub-pixel offsets: ~0.1 mm of

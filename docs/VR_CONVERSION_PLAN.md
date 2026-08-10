@@ -651,6 +651,10 @@
   across legacy draw-order events. Transparent passes use an explicit ground,
   map-shadow, cloud, platform order so a floating platform cannot receive its
   own ground-projected multiply shadow.
+- Split terrain/sprite crop (0.1.21): terrain, backing, and map shadows stop at
+  the reachable 0..264 surface. Entity and effect rendering retain the exact
+  -25..288 ship envelope, so legal edge overhang remains visible without
+  exposing the unpathable authored side columns.
 - Quest refresh follow-up (0.1.9): Android OpenXR requests 90 Hz at startup,
   reapplies the request after the first tracked frames, and logs available,
   requested, and actual refresh rates. XR performance telemetry now treats

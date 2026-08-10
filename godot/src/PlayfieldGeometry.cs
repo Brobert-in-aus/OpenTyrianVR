@@ -2,8 +2,8 @@ namespace OpenTyrianVR;
 
 /// <summary>
 /// Authoritative presentation bounds in the legacy 320x200 frame coordinate
-/// system. Keep terrain, entity clipping/culling, picking, and detached HUD
-/// placement derived from this single definition.
+/// system. Terrain stops at the reachable surface, while sprites retain a
+/// wider envelope for legitimate ship/enemy overhang.
 /// </summary>
 public static class PlayfieldGeometry
 {
@@ -17,6 +17,10 @@ public static class PlayfieldGeometry
     public const float MaxY = 184f;
     public const float Width = MaxX - MinX;
     public const float Height = MaxY - MinY;
+
+    public const float TerrainMinX = 0f;
+    public const float TerrainMaxX = 264f;
+    public const float TerrainWidth = TerrainMaxX - TerrainMinX;
 
     public const float HudSidebarWidth = 56f;
     public const float HudSidebarCenterX = MaxX + HudSidebarWidth / 2f;
