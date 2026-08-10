@@ -1068,7 +1068,8 @@ public partial class Main : Node3D
     private void UpdateChecklistInput()
     {
         // Stick clicks are unused by the game, so they drive the checklist;
-        // C/V cover flat testing.  Edge-triggered.
+        // right cycles unchecked/pass/fail and left advances. C/V cover flat
+        // testing. Edge-triggered.
         bool check = Input.IsKeyPressed(Key.C) ||
             (_xrActive && _rightHand != null && _rightHand.IsButtonPressed("primary_click"));
         bool skip = Input.IsKeyPressed(Key.V) ||

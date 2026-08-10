@@ -60,19 +60,21 @@ head-motion distortion. A sustained 0.1.5 pass validated pause/resume,
 in-game-menu transitions, platform-rider stability, 4x MSAA, and ample
 performance headroom; review-marker halos are editor-only.
 
-Version 0.1.18 (code 19) is the current validation build. It requests 90 Hz,
+Version 0.1.19 (code 20) is the current validation build. It requests 90 Hz,
 restores the de-parallax-expanded -24..288 horizontal playfield, keeps the
 vertical crop at 0..184, render-interpolates all terrain layers, stabilizes
 linked composite enemies across authored transparent gaps, and keeps known
 cloud layers translucent when level events change their draw order. Clouds
 are capped below aerial platforms; surface objects select ground versus
 platform per instance; connected boss components share one surface while
-retaining their authored stack offsets. ABI v26 also carries episode identity
+retaining their authored stack offsets. ABI v27 also carries episode identity
 so Episode 1 type heights cannot leak into Episodes 2-4; conservative
 episode-local semantics cover only exact or validated close-family matches.
+Dynamic type-zero spawns use conservatively validated graphic semantics.
 Entity shadows now mask each fragment against the live elevated receiver art,
 clipping unsupported portions at cloud/platform holes; the deterministic
-desktop presentation suite covers hybrid flip/storm and legacy fallback paths.
+desktop presentation suite covers all six native effects together and the
+unknown-effect legacy safety path.
 The in-headset checklist is the authoritative pass/fail gate:
 
 - the ship reaches both cropped horizontal edges;
@@ -87,12 +89,13 @@ The in-headset checklist is the authoritative pass/fail gate:
 - height-driven entity shadows move farther from higher casters, and elevated
   clouds/platforms cast stable silhouettes without floating across transparent
   holes;
-- storm/flip effects retain the hybrid scene, while lava/blur/iced/searchlight
-  transitions enter and leave the complete legacy fallback cleanly;
+- storm, flip, lava, blur, iced, and searchlight effects remain stereo-correct
+  in the hybrid 3D scene;
 - HUD, pause, death, end-level, and story/lifecycle screens remain complete and
   readable;
 - motion remains smooth at the selected 90 Hz refresh rate.
 
-Unchecked checklist entries count as failures. Quest automation remains
-install-and-report only: do not launch the application from build or deployment
-scripts.
+The check control cycles each entry through pass, fail, and unchecked; the
+navigation control advances separately. Unchecked therefore means untested,
+not failed. Quest automation remains install-and-report only: do not launch the
+application from build or deployment scripts.

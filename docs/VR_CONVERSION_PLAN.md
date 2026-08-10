@@ -638,6 +638,13 @@
   fails on shader/runtime errors, absent entity/map shadows or receiver layers,
   missing captures, or wrong transitions. Desktop gate PASS; multiview and
   subjective shadow strength/landing remain headset checks.
+- Native effects + checklist triage (0.1.18-0.1.19, ABI v27): dynamic type-zero
+  spawns export their retained base graphic for conservative semantic height
+  placement. Lava, iced blur, motion blur, and darkness/searchlight now sample
+  each eye's completed 3D scene instead of forcing a flat frame; all six known
+  effects pass the deterministic hybrid regression together. The Quest
+  checklist reflects the native effect path and records pass, fail, and
+  unchecked separately so an untested item cannot be mistaken for a failure.
 - Quest refresh follow-up (0.1.9): Android OpenXR requests 90 Hz at startup,
   reapplies the request after the first tracked frames, and logs available,
   requested, and actual refresh rates. XR performance telemetry now treats

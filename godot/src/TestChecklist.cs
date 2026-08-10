@@ -6,8 +6,8 @@ namespace OpenTyrianVR;
 /// <summary>
 /// A floating in-headset test checklist, parked to the left of the lane so
 /// the tester can tick off verification items without taking the headset off.
-/// Right stick click (or C) checks the current item and advances; left stick
-/// click (or V) moves the cursor without checking.  Session-only state.
+/// Right stick click (or C) cycles pass/fail/unchecked; left stick click
+/// (or V) moves the cursor. Session-only state.
 /// </summary>
 public partial class TestChecklist : Node3D
 {
@@ -23,12 +23,13 @@ public partial class TestChecklist : Node3D
         "E2-E4: no Episode-1 height leakage; classified objects use right planes",
         "CAST SHADOWS: flyers/entities offset by height; clouds/platforms shade ground",
         "SHADOW LAYERS: shadows land on the intended surface without floating over holes",
-        "EFFECTS: storm/flip stay 3D; lava/blur/searchlight switch cleanly to flat",
+        "EFFECTS: storm/flip/lava/iced/blur/searchlight stay stereo-correct 3D",
         "LIFECYCLE UI: HUD, pause, death, end-level and story screens stay complete/readable",
         "90 HZ: motion stays smooth without recurring judder",
     };
 
-    private readonly bool[] _done = new bool[Items.Length];
+    private enum Result : byte { Unchecked, Pass, Fail }
+    private readonly Result[] _results = new Result[Items.Length];
     private int _cursor;
     private Label3D _label = null!;
 
@@ -48,26 +49,20 @@ public partial class TestChecklist : Node3D
         Refresh();
     }
 
-    /// <summary>Checks/unchecks the cursor item; on check, advances to the
-    /// next unchecked item.</summary>
+    /// <summary>Cycles the current item through unchecked -> pass -> fail ->
+    /// unchecked. Cursor movement is separate so a repeated press edits the
+    /// same result predictably.</summary>
     public void ToggleCurrent()
     {
-        _done[_cursor] = !_done[_cursor];
+        _results[_cursor] = _results[_cursor] switch
+        {
+            Result.Unchecked => Result.Pass,
+            Result.Pass => Result.Fail,
+            _ => Result.Unchecked,
+        };
         // The log is the durable record: headset screenshots crop the panel
         // and the state is session-only.
-        GD.Print($"OpenTyrianVR: checklist {(_done[_cursor] ? "PASS" : "unchecked")}: {Items[_cursor]}");
-        if (_done[_cursor])
-        {
-            for (int step = 1; step <= Items.Length; step++)
-            {
-                int candidate = (_cursor + step) % Items.Length;
-                if (!_done[candidate])
-                {
-                    _cursor = candidate;
-                    break;
-                }
-            }
-        }
+        GD.Print($"OpenTyrianVR: checklist {_results[_cursor].ToString().ToUpperInvariant()}: {Items[_cursor]}");
         Refresh();
     }
 
@@ -81,23 +76,31 @@ public partial class TestChecklist : Node3D
     private void Refresh()
     {
         var text = new StringBuilder();
-        int remaining = 0;
-        foreach (bool done in _done)
-            if (!done)
-                remaining++;
+        int passed = 0, failed = 0, pending = 0;
+        foreach (Result result in _results)
+            if (result == Result.Pass) passed++;
+            else if (result == Result.Fail) failed++;
+            else pending++;
 
-        text.Append($"QUEST REGRESSION GATE  ({Items.Length - remaining}/{Items.Length})\n");
-        text.Append("R-stick click: PASS   L-stick click: leave failed and advance\n");
-        text.Append("Unchecked items are FAILS; report level + green frame number\n\n");
+        text.Append($"QUEST REGRESSION  PASS {passed}  FAIL {failed}  UNCHECKED {pending}\n");
+        text.Append("R-stick: cycle PASS / FAIL / UNCHECKED   L-stick: next item\n");
+        text.Append("For failures, report the level and green frame number\n\n");
         for (int i = 0; i < Items.Length; i++)
         {
             text.Append(i == _cursor ? "> " : "  ");
-            text.Append(_done[i] ? "[x] " : "[  ] ");
+            text.Append(_results[i] switch
+            {
+                Result.Pass => "[x] ",
+                Result.Fail => "[!] ",
+                _ => "[ ] ",
+            });
             text.Append(Items[i]);
             text.Append('\n');
         }
-        if (remaining == 0)
-            text.Append("\nALL DONE - thanks for testing!");
+        if (pending == 0)
+            text.Append(failed == 0
+                ? "\nALL TESTED - ALL PASS"
+                : $"\nALL TESTED - {failed} FAILURE{(failed == 1 ? "" : "S")}");
         _label.Text = text.ToString();
     }
 }
