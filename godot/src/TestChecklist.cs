@@ -25,6 +25,7 @@ public partial class TestChecklist : Node3D
         "SHADOW LAYERS: shadows land on the intended surface without floating over holes",
         "EFFECTS: storm/flip/lava/iced/blur/searchlight stay stereo-correct 3D",
         "LIFECYCLE UI: HUD, pause, death, end-level and story screens stay complete/readable",
+        "AUDIO: music and sound effects play at the headset volume",
         "90 HZ: motion stays smooth without recurring judder",
     };
 

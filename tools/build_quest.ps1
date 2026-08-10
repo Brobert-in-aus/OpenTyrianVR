@@ -41,6 +41,10 @@ Copy-Item -Path (Join-Path $DataSource '*') -Destination $dataTarget -Recurse -F
 Copy-Item -Path (Join-Path $VendorSource '*') -Destination $vendorTarget -Recurse -Force
 Copy-Item -LiteralPath (Join-Path $repo 'android\GodotApp.java') `
     -Destination (Join-Path $godotProject 'android\build\src\main\java\com\godot\game\GodotApp.java') -Force
+$sdlJavaTarget = Join-Path $godotProject 'android\build\src\main\java\org\libsdl\app'
+New-Item -ItemType Directory -Force -Path $sdlJavaTarget | Out-Null
+Copy-Item -LiteralPath (Join-Path $repo 'deps\SDL2-source-2.32.10\android-project\app\src\main\java\org\libsdl\app\SDLAudioManager.java') `
+    -Destination (Join-Path $sdlJavaTarget 'SDLAudioManager.java') -Force
 
 & (Join-Path $PSScriptRoot 'build_android_native.ps1')
 if ($LASTEXITCODE -ne 0) { throw "Android native build failed ($LASTEXITCODE)" }

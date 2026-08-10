@@ -9,6 +9,7 @@ package com.godot.game;
 
 import org.godotengine.godot.Godot;
 import org.godotengine.godot.GodotActivity;
+import org.libsdl.app.SDLAudioManager;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -18,6 +19,10 @@ import androidx.core.splashscreen.SplashScreen;
 
 /** Godot activity with the OpenTyrian native host preloaded by the JVM. */
 public class GodotApp extends GodotActivity {
+	private static boolean sdlAudioReady = false;
+
+	private static native boolean nativeSetupSDLAudio();
+
 	static {
 		if (BuildConfig.FLAVOR.equals("mono")) {
 			try {
@@ -29,6 +34,9 @@ public class GodotApp extends GodotActivity {
 			try {
 				Log.v("GODOT", "Loading OpenTyrian native host library");
 				System.loadLibrary("opentyrian_core");
+				SDLAudioManager.initialize();
+				sdlAudioReady = nativeSetupSDLAudio();
+				Log.i("OpenTyrianVR", "SDL audio bridge ready=" + sdlAudioReady);
 			} catch (UnsatisfiedLinkError e) {
 				Log.e("GODOT", "Unable to load OpenTyrian native host library", e);
 			}
@@ -49,11 +57,22 @@ public class GodotApp extends GodotActivity {
 		SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
 		EdgeToEdge.enable(this);
 		super.onCreate(savedInstanceState);
+		if (sdlAudioReady) {
+			SDLAudioManager.setContext(this);
+		}
 
 		Godot godot = getGodot();
 		if (godot != null && godot.getDisableGodotSplash()) {
 			splashScreen.setKeepOnScreenCondition(() -> godot.getRunStatus() != Godot.RunStatus.STARTED);
 		}
+	}
+
+	@Override
+	protected void onDestroy() {
+		if (sdlAudioReady) {
+			SDLAudioManager.release(this);
+		}
+		super.onDestroy();
 	}
 
 	@Override

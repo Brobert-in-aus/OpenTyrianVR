@@ -511,17 +511,19 @@ public partial class Main : Node3D
         // E2-full is the VR product's sim: pinned offsets (hitbox truth),
         // full-width travel, wide active windows.
         var flags = OtyrNative.ConfigFlags.SuppressEntityDraw | OtyrNative.ConfigFlags.SimDeparallax;
-        // The hosted SDL2 build does not ship SDLActivity's Java audio bridge.
-        // Keep Quest silent until audio is routed through Godot; enabling SDL's
-        // Android backend here aborts inside AudioTrack during startup.
-        if (OS.GetName() != "Android")
-            flags |= OtyrNative.ConfigFlags.EnableAudio;
+        // Quest supplies SDL's audio-manager callbacks through the Godot host
+        // activity; SDLActivity itself remains unnecessary.
+        flags |= OtyrNative.ConfigFlags.EnableAudio;
         // OTYR_MUTE=1: no game audio (solo test runs; the attract demo is
         // loud and the tester may be doing something else entirely).
         if (System.Environment.GetEnvironmentVariable("OTYR_MUTE") == "1")
         {
             GD.Print("OpenTyrianVR: OTYR_MUTE=1, audio disabled");
             flags &= ~OtyrNative.ConfigFlags.EnableAudio;
+        }
+        else
+        {
+            GD.Print($"OpenTyrianVR: audio enabled ({OS.GetName()})");
         }
         if (Render3DBackground)
             flags |= OtyrNative.ConfigFlags.SuppressBackground;

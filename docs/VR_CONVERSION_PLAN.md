@@ -655,6 +655,11 @@
   the reachable 0..264 surface. Entity and effect rendering retain the exact
   -25..288 ship envelope, so legal edge overhang remains visible without
   exposing the unpathable authored side columns.
+- Quest audio bridge (0.1.22): the Godot activity packages SDL's Java audio
+  manager and the native host registers only its playback callbacks. Android
+  now enables the original music and sound mixer without adopting SDLActivity;
+  `OTYR_MUTE=1` remains the mandatory silent path for automated test/export
+  processes. The in-headset checklist verifies both music and effects.
 - Quest refresh follow-up (0.1.9): Android OpenXR requests 90 Hz at startup,
   reapplies the request after the first tracked frames, and logs available,
   requested, and actual refresh rates. XR performance telemetry now treats
