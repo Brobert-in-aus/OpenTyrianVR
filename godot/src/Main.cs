@@ -37,6 +37,8 @@ public partial class Main : Node3D
     private float _flipScale = 1f;  // animated +1 (normal) .. -1 (mirrored)
     private OtyrNative.Frame _frame;
     private bool _loggedFirstFrame;
+    private bool _loggedPresentationMode;
+    private bool _lastLegacyFallback;
     private readonly byte[] _rgba = new byte[OtyrNative.FrameWidth * OtyrNative.FrameHeight * 4];
     private readonly uint[] _palette = new uint[256];
     private SnapshotLayer _snapshotLayer = null!;
@@ -282,7 +284,7 @@ public partial class Main : Node3D
                 HorizontalAlignment = HorizontalAlignment.Left,
             };
             _playfieldRoot.AddChild(_editorLegend);
-            GD.Print("OpenTyrianVR: HEIGHT EDITOR (ctrl+click select, drag orbit, RMB-drag pan, wheel zoom, Up/Down nudge, Shift coarse, 1..= bands, numpad +/- step, S save, P pause, N skip)");
+            GD.Print("OpenTyrianVR: HEIGHT EDITOR (ctrl+click select, drag orbit, RMB-drag pan, wheel zoom, Up/Down nudge, Shift coarse, 1..= bands, numpad +/- step, [/] rewind/forward, Shift fine, Backspace live, S save, P pause, N skip)");
         }
 
         _image = Image.CreateEmpty(OtyrNative.FrameWidth, OtyrNative.FrameHeight, true, Image.Format.Rgba8);
@@ -633,7 +635,8 @@ public partial class Main : Node3D
     // OTYR_HEIGHT_EDITOR=1: flat leaned-camera hover-height editor.  Click an
     // enemy to select its type; Up/Down nudge height (Shift = coarse), 1-5
     // assign classes (ground/pickup/air-low/air-mid/air-high), S saves to
-    // hover_heights.json, P pauses the game, N skips the level.  Pair with
+    // hover_heights.json, [/] scrub the retained timeline (Shift = one tick),
+    // Backspace returns live, P pauses the game, N skips the level. Pair with
     // OTYR_INVULN=1 so the parked ghost player survives the level.
     private static readonly bool HeightEditor =
         System.Environment.GetEnvironmentVariable("OTYR_HEIGHT_EDITOR") == "1";
@@ -699,9 +702,55 @@ public partial class Main : Node3D
         (42, "ALE"),
     };
     private int _editorLevelIndex = -1;
+    private bool _editorHistoryOwnsPause;
+
+    private void EditorPulsePause()
+    {
+        var pause = OtyrNative.InputFrame.Create(OtyrNative.Buttons.UiPause);
+        OtyrNative.SubmitInput(_session, in pause, pause.StructSize);
+        var release = OtyrNative.InputFrame.Create(OtyrNative.Buttons.None);
+        OtyrNative.SubmitInput(_session, in release, release.StructSize);
+        _lastButtons = OtyrNative.Buttons.None;
+    }
+
+    private void EditorStepTimeline(int direction)
+    {
+        if (_frame.InLevel == 0)
+            return;
+        bool entering = direction < 0 && !_snapshotLayer.EditorHistoryActive;
+        if (entering && _frame.MenuPresent == 0)
+        {
+            EditorPulsePause();
+            _editorHistoryOwnsPause = true;
+        }
+        int ticks = Input.IsKeyPressed(Key.Shift) ? 1 : 35;
+        bool changed = _snapshotLayer.EditorStepHistory(_session, direction * ticks);
+        if (!changed && entering && _editorHistoryOwnsPause)
+        {
+            EditorPulsePause();
+            _editorHistoryOwnsPause = false;
+        }
+        if (!_snapshotLayer.EditorHistoryActive && _editorHistoryOwnsPause)
+        {
+            EditorPulsePause();
+            _editorHistoryOwnsPause = false;
+        }
+    }
+
+    private void EditorResumeTimeline()
+    {
+        _snapshotLayer.EditorResumeHistory(_session);
+        if (_editorHistoryOwnsPause)
+        {
+            EditorPulsePause();
+            _editorHistoryOwnsPause = false;
+        }
+    }
 
     private void EditorJumpLevel(int direction)
     {
+        EditorResumeTimeline();
+        _snapshotLayer.EditorClearHistory();
         if (_editorLevelIndex < 0)
         {
             // Seed from OTYR_START_SECTION so the first PageDown continues
@@ -835,6 +884,14 @@ public partial class Main : Node3D
         }
 
         PollFrame();
+        bool legacyFallback = _frame.LegacyFallback != 0;
+        if (!_loggedPresentationMode || legacyFallback != _lastLegacyFallback)
+        {
+            _loggedPresentationMode = true;
+            _lastLegacyFallback = legacyFallback;
+            GD.Print($"OpenTyrianVR: presentation -> {(legacyFallback ? "complete legacy fallback" : "hybrid 3D")}" +
+                     $" tick={_frame.LevelTick} storm={_frame.StormWater} flip={_frame.FlipCode}");
+        }
         PollPlayerState();
         _snapshotLayer.Poll(_session, _palette);
         // Menus, pause, and quit-to-title stop gameplay ticks; the 3D scene
@@ -925,6 +982,7 @@ public partial class Main : Node3D
                  $"draws={drawCalls:0} objects={objects:0} prims={primitives:0} " +
                  $"video={videoMiB:0.0}MiB managed={managedMiB:0.0}MiB " +
                  $"cells={_snapshotLayer.CellCount} visible={_snapshotLayer.VisibleInstanceCount} " +
+                 $"cast_shadows={_snapshotLayer.VirtualShadowCount} " +
                  $"assemblies={_snapshotLayer.RigidAssemblyCount}/{_snapshotLayer.SeamGuardCellCount}(groups/cells) " +
                  $"snapshot_gap={_snapshotLayer.LastTickGap}/{_snapshotLayer.MaxTickGap}(last/max) " +
                  $"missed={_snapshotLayer.SkippedTicksTotal}{rangeProbe}");
@@ -1005,6 +1063,14 @@ public partial class Main : Node3D
     private void UpdateHeightEditor()
     {
         UpdateEditorCamera();
+        // A level/asset boundary can invalidate the retained presentation
+        // segment. If that happens during the pause handshake, return the
+        // game to the state we found it in instead of leaving it paused.
+        if (_editorHistoryOwnsPause && !_snapshotLayer.EditorHistoryActive)
+        {
+            EditorPulsePause();
+            _editorHistoryOwnsPause = false;
+        }
 
         // Ctrl+click selects OBJECTS only; Alt+click selects fixed LAYERS
         // (clouds, platforms, ground).  Falling from object-pick through to
@@ -1049,12 +1115,19 @@ public partial class Main : Node3D
             _editorPitch = -42f;
         }
 
-        // PageUp/PageDown: cycle the playable level sections; B toggles the
-        // red hazard (collider) halos.
+        // PageUp/PageDown cycle levels; [/] scrub one second (Shift = one
+        // simulation tick), Backspace returns to the live edge; B toggles
+        // the red hazard (collider) halos.
         if (EditorKeyPressed(Key.Pagedown))
             EditorJumpLevel(1);
         if (EditorKeyPressed(Key.Pageup))
             EditorJumpLevel(-1);
+        if (EditorKeyPressed(Key.Bracketleft))
+            EditorStepTimeline(-1);
+        if (EditorKeyPressed(Key.Bracketright))
+            EditorStepTimeline(1);
+        if (EditorKeyPressed(Key.Backspace))
+            EditorResumeTimeline();
         if (EditorKeyPressed(Key.B))
             _snapshotLayer.HazardMarkersEnabled = !_snapshotLayer.HazardMarkersEnabled;
         _snapshotLayer.EditorHazardMarkers();
@@ -1190,7 +1263,10 @@ public partial class Main : Node3D
             Math.Abs(_editorBands[marked].Z - selectedHeight) > 0.0008f)
             marked = -1;
 
-        var sb = new System.Text.StringBuilder("HEIGHT BANDS   key\n");
+        string timeline = _snapshotLayer.EditorHistoryActive
+            ? $"REWIND  -{_snapshotLayer.EditorHistorySecondsBack:0.0}s / {_snapshotLayer.EditorHistorySecondsAvailable:0.0}s  [/] Shift=fine  Backspace=live\n"
+            : $"LIVE  history {_snapshotLayer.EditorHistorySecondsAvailable:0.0}s  [/] rewind/forward  Shift=1 tick\n";
+        var sb = new System.Text.StringBuilder(timeline + "HEIGHT BANDS   key\n");
         for (int i = _editorBands.Length - 1; i >= 0; i--)
         {
             ref readonly EditorBand band = ref _editorBands[i];
@@ -1300,7 +1376,8 @@ public partial class Main : Node3D
             if (Input.IsKeyPressed(Key.Enter)) buttons |= OtyrNative.Buttons.UiConfirm;
             if (Input.IsKeyPressed(Key.Escape)) buttons |= OtyrNative.Buttons.UiCancel;
             if (Input.IsKeyPressed(Key.Space)) buttons |= OtyrNative.Buttons.UiSpace;
-            if (Input.IsKeyPressed(Key.P)) buttons |= OtyrNative.Buttons.UiPause;
+            if (Input.IsKeyPressed(Key.P) && !_snapshotLayer.EditorHistoryActive)
+                buttons |= OtyrNative.Buttons.UiPause;
             if (Input.IsKeyPressed(Key.N)) buttons |= OtyrNative.Buttons.DebugSkip;
             if (Input.IsKeyPressed(Key.K)) buttons |= OtyrNative.Buttons.DebugKill;
             if (_frame.InLevel == 0)

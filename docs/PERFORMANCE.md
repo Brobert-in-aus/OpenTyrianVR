@@ -113,3 +113,12 @@ vertical crop. The bounds are now defined once and shared by terrain, entity
 clipping/culling, picking, and HUD placement. Cloud identity is latched per map
 epoch, so draw-order events cannot switch known cloud art from alpha 0.82 back
 to opaque alpha 1.0. This adds no draw calls or per-frame searches.
+
+Version 0.1.16 adds height-driven virtual-sun silhouettes. Entity shadows reuse
+the nine existing per-sheet multiplicative MultiMeshes, adding instances but no
+new entity draw calls. Elevated map geometry adds two active multiplicative
+draws in the representative Episode 1 demo. The deterministic desktop capture
+showed 7-16 candidate entity casters and 21 total draws; hidden-window timing is
+intentionally throttled and is not a performance baseline. Quest telemetry must
+confirm the two added map draws and extra instances remain inside the 90 Hz
+budget.

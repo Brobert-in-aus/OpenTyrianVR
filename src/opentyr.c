@@ -776,6 +776,11 @@ int opentyrian_main(int argc, char *argv[])
 	xmas = xmas_time();  // arg handler may override
 
 	JE_paramCheck(argc, argv);
+	/* Hosted presentation verification: enter the deterministic attract
+	   sequence without synthesizing title/menu input. Never affects normal
+	   sessions and remains silent when paired with OTYR_MUTE/--no-sound. */
+	if (otyr_hosted && SDL_getenv("OTYR_PLAY_DEMO") != NULL)
+		start_with_demo = true;
 
 	JE_scanForEpisodes();
 

@@ -17,7 +17,14 @@ public partial class TestChecklist : Node3D
         "EDGE CROP: enemies scroll cleanly across hard playfield edges; no fade",
         "GROUND SCROLL: terrain below floating platforms glides without judder",
         "COMPOSITES: fast stacks and the small level-1 boss stay welded",
-        "CLOUDS: stay translucent through draw-order and height changes",
+        "CLOUDS: translucent and always below level-1 aerial platforms",
+        "LAYERING: ground/platform objects and flyers occupy the right planes",
+        "TANK BOSS: linked body/turret stack stays together at correct offsets",
+        "E2-E4: no Episode-1 height leakage; classified objects use right planes",
+        "CAST SHADOWS: flyers/entities offset by height; clouds/platforms shade ground",
+        "SHADOW LAYERS: shadows land on the intended surface without floating over holes",
+        "EFFECTS: storm/flip stay 3D; lava/blur/searchlight switch cleanly to flat",
+        "LIFECYCLE UI: HUD, pause, death, end-level and story screens stay complete/readable",
         "90 HZ: motion stays smooth without recurring judder",
     };
 

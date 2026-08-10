@@ -49,6 +49,10 @@ tyrian.sav
 *~
 *.swp
 
+# Python analysis-tool caches
+__pycache__/
+*.py[cod]
+
 # Make build output
 /obj/
 /src/*.gch

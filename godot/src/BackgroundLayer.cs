@@ -39,6 +39,9 @@ public unsafe partial class BackgroundLayer : Node3D
     // ever cover the ship.
     public const float GroundZ = -0.0008f;
     public const float PlatformZ = 0.030f;
+    public const float CloudLowZ = 0.020f;
+    public const float CloudHighZ = 0.025f;
+    public const float MaxCloudZ = PlatformZ - 0.001f;
 
     // Water-cloud split (SAVARA): clouds baked into the water ground art
     // re-render on their own plane between the ground and the real cloud
@@ -53,7 +56,9 @@ public unsafe partial class BackgroundLayer : Node3D
 
     public void SetWaterCloudHeight(float h)
     {
-        WaterCloudHeight = Mathf.Clamp(h, -0.005f, 0.06f);
+        // A cloud is never allowed to cross the aerial-platform plane.
+        // This also constrains old editor saves that predate semantic roles.
+        WaterCloudHeight = Mathf.Clamp(h, -0.005f, MaxCloudZ);
         if (_cloudQuad != null)
         {
             Vector3 p = _cloudQuad.Position;
@@ -63,8 +68,8 @@ public unsafe partial class BackgroundLayer : Node3D
     private static float LayerHeight(int layer, byte overMode) => layer switch
     {
         0 => GroundZ,
-        1 => overMode == 1 ? 0.020f : -0.0004f,
-        _ => overMode == 2 ? 0.025f : PlatformZ,
+        1 => overMode == 1 ? CloudLowZ : -0.0004f,
+        _ => overMode == 2 ? CloudHighZ : PlatformZ,
     };
 
     private OtyrNative.BackgroundMap _map;  // fetch scratch (57 KB)
@@ -72,6 +77,8 @@ public unsafe partial class BackgroundLayer : Node3D
 
     private readonly MeshInstance3D[] _quads = new MeshInstance3D[OtyrNative.BgLayerCount];
     private readonly ShaderMaterial[] _materials = new ShaderMaterial[OtyrNative.BgLayerCount];
+    private readonly MeshInstance3D[] _castShadowQuads = new MeshInstance3D[OtyrNative.BgLayerCount];
+    private readonly ShaderMaterial[] _castShadowMaterials = new ShaderMaterial[OtyrNative.BgLayerCount];
     private readonly ImageTexture[] _tilemapTex = new ImageTexture[OtyrNative.BgLayerCount];
     private readonly ImageTexture[] _atlasTex = new ImageTexture[OtyrNative.BgLayerCount];
     private readonly Vector2I[] _mapSize = new Vector2I[OtyrNative.BgLayerCount];
@@ -115,6 +122,9 @@ public unsafe partial class BackgroundLayer : Node3D
     private const float TeleportGuardPx = 56f;
 
     private readonly ImageTexture _palette;
+    private const float VirtualSunShadowXPerMeter = 100f;
+    private const float VirtualSunShadowYPerMeter = 250f;
+    private const float VirtualShadowLift = 0.00035f;
 
     public BackgroundLayer(ImageTexture palette)
     {
@@ -217,6 +227,53 @@ public unsafe partial class BackgroundLayer : Node3D
                 """,
         };
 
+        // Palette-safe virtual-sun shadows for elevated map geometry. This
+        // samples only the caster's opaque tile silhouette and multiplies the
+        // already-rendered receiver, so the original indexed colors remain
+        // unchanged outside the cast shape.
+        var castShadowShader = new Shader
+        {
+            Code = """
+                shader_type spatial;
+                render_mode unshaded, cull_disabled, blend_mul, depth_draw_never;
+
+                uniform sampler2D tilemap : filter_nearest;
+                uniform sampler2D atlas : filter_nearest;
+                uniform ivec2 map_size;
+                uniform vec2 origin_px;
+                uniform vec2 quad_px0;
+                uniform vec2 quad_size_px = vec2(264.0, 184.0);
+                uniform vec2 shadow_offset_px;
+                uniform vec4 clip_rect_px;
+                uniform float strength = 0.78;
+
+                bool covered(ivec2 mp) {
+                    if (mp.x < 0 || mp.y < 0)
+                        return false;
+                    ivec2 tile = mp / ivec2(24, 28);
+                    if (tile.x >= map_size.x || tile.y >= map_size.y)
+                        return false;
+                    int idx = int(texelFetch(tilemap, tile, 0).r * 255.0 + 0.5);
+                    if (idx > 200)
+                        return false;
+                    ivec2 ap = ivec2((idx % 8) * 24, (idx / 8) * 28) +
+                                (mp - tile * ivec2(24, 28));
+                    return int(texelFetch(atlas, ap, 0).r * 255.0 + 0.5) != 0;
+                }
+
+                void fragment() {
+                    vec2 frame_px = quad_px0 + UV * quad_size_px;
+                    vec2 projected_px = frame_px + shadow_offset_px;
+                    if (projected_px.x < clip_rect_px.x || projected_px.x >= clip_rect_px.z ||
+                        projected_px.y < clip_rect_px.y || projected_px.y >= clip_rect_px.w)
+                        discard;
+                    if (!covered(ivec2(floor(frame_px - origin_px))))
+                        discard;
+                    ALBEDO = vec3(strength);
+                }
+                """,
+        };
+
         // The cropped de-parallax playfield in lane-local coordinates (the
         // lane maps the full 320x200 frame; play area publishes at -24).
         QuadMesh LayerMesh(int l) => new QuadMesh
@@ -251,6 +308,25 @@ public unsafe partial class BackgroundLayer : Node3D
                 Visible = false,
             };
             AddChild(_quads[l]);
+
+            _castShadowMaterials[l] = new ShaderMaterial
+            {
+                Shader = castShadowShader,
+                RenderPriority = 1,
+            };
+            _castShadowMaterials[l].SetShaderParameter("quad_px0", new Vector2(CanvasX0, CanvasY0));
+            _castShadowMaterials[l].SetShaderParameter("quad_size_px", new Vector2(CanvasW, CanvasH));
+            _castShadowMaterials[l].SetShaderParameter("clip_rect_px",
+                new Vector4(CanvasX0, CanvasY0, CanvasX0 + CanvasW, CanvasY0 + CanvasH));
+            _castShadowQuads[l] = new MeshInstance3D
+            {
+                Name = $"BgCastShadow{l}",
+                Mesh = LayerMesh(l),
+                MaterialOverride = _castShadowMaterials[l],
+                Position = new Vector3(LayerCenterX(l), centerY, GroundZ + VirtualShadowLift),
+                Visible = false,
+            };
+            AddChild(_castShadowQuads[l]);
         }
 
         // Water-cloud pass: when a level's COPLANAR layer 1 is dominantly
@@ -357,7 +433,10 @@ public unsafe partial class BackgroundLayer : Node3D
             // on unspecified distance-sort tie-breaking and flipped between
             // level runs.  Platform-height layers keep default order; their
             // riders sit at a real lift and win by depth either way.
-            _materials[l].RenderPriority = cloudHeight ? 5 : 0;
+            // Resolve transparent ordering semantically as well as by Z:
+            // clouds paint before the aerial-platform layer.  The platform
+            // then wins even at translucent edge pixels on level 1.
+            _materials[l].RenderPriority = cloudHeight ? -5 : 0;
 
             // OnRender owns all origin updates so map layers and their
             // terrain-attached entity records share one interpolation phase.
@@ -495,7 +574,10 @@ public unsafe partial class BackgroundLayer : Node3D
         {
             _subTickPx[l] = Vector2.Zero;
             if (_currDraw[l].Drawn == 0)
+            {
+                _castShadowQuads[l].Visible = false;
                 continue;
+            }
 
             Vector2 curr = Origin(l, _currDraw[l]);
             Vector2 origin = curr;
@@ -508,6 +590,26 @@ public unsafe partial class BackgroundLayer : Node3D
             _materials[l].SetShaderParameter("origin_px", origin);
             if (l == 1 && _cloudQuad.Visible)
                 _cloudMaterial.SetShaderParameter("origin_px", origin);
+            _castShadowMaterials[l].SetShaderParameter("origin_px", origin);
+
+            float casterZ = l == 1 && _cloudActive
+                ? WaterCloudHeight : LayerHeight(l, _currDraw[l].OverMode);
+            bool casts = l > 0 && casterZ > GroundZ + 0.002f;
+            _castShadowQuads[l].Visible = casts;
+            if (casts)
+            {
+                float gap = casterZ - GroundZ;
+                float dxPx = gap * VirtualSunShadowXPerMeter;
+                float dyPx = gap * VirtualSunShadowYPerMeter;
+                Vector3 basePosition = _quads[l].Position;
+                _castShadowQuads[l].Position = new Vector3(
+                    basePosition.X + dxPx / 320f * LaneWidth,
+                    basePosition.Y - dyPx / 200f * LaneHeight,
+                    GroundZ + VirtualShadowLift);
+                _castShadowMaterials[l].SetShaderParameter("shadow_offset_px", new Vector2(dxPx, dyPx));
+                bool cloudCaster = (l == 1 && _cloudActive) || _cloudLayer[l];
+                _castShadowMaterials[l].SetShaderParameter("strength", cloudCaster ? 0.84f : 0.74f);
+            }
             _subTickPx[l] = origin - curr;
         }
     }
@@ -710,6 +812,7 @@ public unsafe partial class BackgroundLayer : Node3D
 
             _mapSize[l] = new Vector2I(_map.Width, _map.Height);
             _materials[l].SetShaderParameter("map_size", _mapSize[l]);
+            _castShadowMaterials[l].SetShaderParameter("map_size", _mapSize[l]);
 
             var tiles = new byte[_map.Width * _map.Height];
             fixed (OtyrNative.BackgroundMap* map = &_map)
@@ -721,6 +824,7 @@ public unsafe partial class BackgroundLayer : Node3D
             var tilemapImage = Image.CreateFromData(_map.Width, _map.Height, false, Image.Format.R8, tiles);
             _tilemapTex[l] = ImageTexture.CreateFromImage(tilemapImage);
             _materials[l].SetShaderParameter("tilemap", _tilemapTex[l]);
+            _castShadowMaterials[l].SetShaderParameter("tilemap", _tilemapTex[l]);
 
             int atlasRows = (OtyrNative.BgShapeMax + AtlasCols - 1) / AtlasCols;
             int atlasW = AtlasCols * OtyrNative.BgTileW;
@@ -742,6 +846,7 @@ public unsafe partial class BackgroundLayer : Node3D
             var atlasImage = Image.CreateFromData(atlasW, atlasH, false, Image.Format.R8, atlas);
             _atlasTex[l] = ImageTexture.CreateFromImage(atlasImage);
             _materials[l].SetShaderParameter("atlas", _atlasTex[l]);
+            _castShadowMaterials[l].SetShaderParameter("atlas", _atlasTex[l]);
         }
         // New level art: re-decide the water-cloud split against it.
         _cloudMaskPending = true;

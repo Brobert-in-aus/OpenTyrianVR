@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 25u
+#define OTYR_ABI_VERSION 26u
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -256,7 +256,8 @@ typedef struct OtyrSnapshotSprite
 	uint8_t  aux;           /* per-category metadata; enemies: 1 = baked
 	                           terrain art (flat in the frame), 2 = platform
 	                           rider (render at the elevated platform map
-	                           layer's height) (v11) */
+	                           layer's height), 3 = legacy ground-explosion
+	                           palette signal (weak evidence, v26) */
 	uint16_t source_id;     /* stable entity id across ticks (0xffff none);
 	                           same-id records pair by emit order (v7) */
 	uint16_t entity_type;   /* enemies: eDat index (enemytype), keys authored
@@ -312,7 +313,9 @@ typedef struct OtyrSnapshot
 	 * background draws.  Sign: positive = drawn right of the fixed pose. */
 	int8_t band_parallax[4];
 	int8_t layer_parallax[OTYR_BG_LAYER_COUNT];
-	int8_t parallax_pad;
+	uint8_t episode;         /* active episode number, 1..4 (v26); enemy type
+	                           ids are episode-local and must never share one
+	                           authored semantic table */
 } OtyrSnapshot;
 
 /* Sprite sheet export: every cell is a 12x14 indexed-color bitmap (0 =

@@ -1086,6 +1086,7 @@ void otyr_host_present(SDL_Surface *screen)
 		snapshot->sprite_count = kept;
 		snapshot->sound_count = 0;
 		snapshot->level_tick = session.level_tick;
+		snapshot->episode = episodeNum;
 
 		SDL_CondBroadcast(session.frame_ready);
 		SDL_UnlockMutex(session.mutex);
@@ -1099,6 +1100,7 @@ void otyr_host_present(SDL_Surface *screen)
 	++snapshot->snapshot_number;
 	snapshot->level_tick = session.level_tick;
 	snapshot->sheet_epoch = session.sheet_epoch;
+	snapshot->episode = episodeNum;
 
 	unsigned int sprite_count = present_sprite_count;
 	if (sprite_count > OTYR_SNAPSHOT_SPRITE_MAX)
@@ -1181,7 +1183,6 @@ void otyr_host_present(SDL_Surface *screen)
 	       sizeof(snapshot->band_parallax));
 	memcpy(snapshot->layer_parallax, present_layer_parallax,
 	       sizeof(snapshot->layer_parallax));
-	snapshot->parallax_pad = 0;
 
 	SDL_CondBroadcast(session.frame_ready);
 	SDL_UnlockMutex(session.mutex);

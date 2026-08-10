@@ -1,0 +1,3464 @@
+{
+  "counts": {
+    "1": {
+      "air": 125,
+      "classified": 205,
+      "review": 646,
+      "surface": 80
+    },
+    "2": {
+      "air": 108,
+      "classified": 183,
+      "review": 668,
+      "surface": 75
+    },
+    "3": {
+      "air": 117,
+      "classified": 197,
+      "review": 654,
+      "surface": 80
+    },
+    "4": {
+      "air": 56,
+      "classified": 94,
+      "review": 757,
+      "surface": 38
+    }
+  },
+  "episodes": {
+    "1": {
+      "125": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "126": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "127": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "128": {
+        "class": "air",
+        "distance": 1.53,
+        "reference": 15,
+        "source": "episode-family"
+      },
+      "13": {
+        "class": "air",
+        "distance": 0.37,
+        "reference": 30,
+        "source": "episode-family"
+      },
+      "135": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "136": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "14": {
+        "class": "air",
+        "distance": 0.26,
+        "reference": 30,
+        "source": "episode-family"
+      },
+      "145": {
+        "class": "air",
+        "distance": 1.0,
+        "reference": 235,
+        "source": "episode-family"
+      },
+      "146": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "149": {
+        "class": "air",
+        "distance": 2.56,
+        "reference": 165,
+        "source": "episode-family"
+      },
+      "15": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "150": {
+        "class": "air",
+        "distance": 2.45,
+        "reference": 165,
+        "source": "episode-family"
+      },
+      "151": {
+        "class": "air",
+        "distance": 2.34,
+        "reference": 165,
+        "source": "episode-family"
+      },
+      "152": {
+        "class": "air",
+        "distance": 2.23,
+        "reference": 165,
+        "source": "episode-family"
+      },
+      "162": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "163": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "164": {
+        "class": "air",
+        "distance": 1.91,
+        "reference": 165,
+        "source": "episode-family"
+      },
+      "165": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "166": {
+        "class": "air",
+        "distance": 1.91,
+        "reference": 165,
+        "source": "episode-family"
+      },
+      "167": {
+        "class": "air",
+        "distance": 2.32,
+        "reference": 165,
+        "source": "episode-family"
+      },
+      "168": {
+        "class": "air",
+        "distance": 0.33,
+        "reference": 165,
+        "source": "episode-family"
+      },
+      "169": {
+        "class": "air",
+        "distance": 1.54,
+        "reference": 165,
+        "source": "episode-family"
+      },
+      "170": {
+        "class": "air",
+        "distance": 0.25,
+        "reference": 165,
+        "source": "episode-family"
+      },
+      "171": {
+        "class": "surface",
+        "distance": 0.29,
+        "reference": 162,
+        "source": "episode-family"
+      },
+      "172": {
+        "class": "surface",
+        "distance": 2.2,
+        "reference": 162,
+        "source": "episode-family"
+      },
+      "173": {
+        "class": "surface",
+        "distance": 4.11,
+        "reference": 162,
+        "source": "episode-family"
+      },
+      "194": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "197": {
+        "class": "surface",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "198": {
+        "class": "surface",
+        "distance": 0.11,
+        "reference": 197,
+        "source": "episode-family"
+      },
+      "228": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "229": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "230": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "231": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "232": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "233": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "234": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "235": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "237": {
+        "class": "air",
+        "distance": 9.24,
+        "reference": 233,
+        "source": "episode-family"
+      },
+      "238": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "239": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "240": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "241": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "242": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "243": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "244": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "252": {
+        "class": "surface",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "253": {
+        "class": "surface",
+        "source": "linked-assembly"
+      },
+      "254": {
+        "class": "surface",
+        "source": "linked-assembly"
+      },
+      "255": {
+        "class": "surface",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "256": {
+        "class": "surface",
+        "source": "linked-assembly"
+      },
+      "257": {
+        "class": "surface",
+        "source": "linked-assembly"
+      },
+      "258": {
+        "class": "surface",
+        "source": "linked-assembly"
+      },
+      "259": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "26": {
+        "class": "air",
+        "distance": 2.04,
+        "reference": 30,
+        "source": "episode-family"
+      },
+      "260": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "261": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "262": {
+        "class": "air",
+        "distance": 2.13,
+        "reference": 265,
+        "source": "episode-family"
+      },
+      "263": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "264": {
+        "class": "air",
+        "distance": 2.13,
+        "reference": 261,
+        "source": "episode-family"
+      },
+      "265": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "266": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "267": {
+        "class": "air",
+        "distance": 4.06,
+        "reference": 261,
+        "source": "episode-family"
+      },
+      "268": {
+        "class": "air",
+        "distance": 1.93,
+        "reference": 265,
+        "source": "episode-family"
+      },
+      "269": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "27": {
+        "class": "air",
+        "distance": 1.93,
+        "reference": 30,
+        "source": "episode-family"
+      },
+      "270": {
+        "class": "surface",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "271": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "272": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "273": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "274": {
+        "class": "surface",
+        "distance": 0.02,
+        "reference": 272,
+        "source": "episode-family"
+      },
+      "275": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "276": {
+        "class": "surface",
+        "distance": 1.91,
+        "reference": 275,
+        "source": "episode-family"
+      },
+      "277": {
+        "class": "surface",
+        "distance": 0.02,
+        "reference": 275,
+        "source": "episode-family"
+      },
+      "278": {
+        "class": "surface",
+        "distance": 1.96,
+        "reference": 272,
+        "source": "episode-family"
+      },
+      "279": {
+        "class": "surface",
+        "distance": 7.64,
+        "reference": 275,
+        "source": "episode-family"
+      },
+      "280": {
+        "class": "surface",
+        "distance": 1.95,
+        "reference": 275,
+        "source": "episode-family"
+      },
+      "281": {
+        "class": "surface",
+        "distance": 1.96,
+        "reference": 275,
+        "source": "episode-family"
+      },
+      "282": {
+        "class": "air",
+        "distance": 3.93,
+        "reference": 285,
+        "source": "episode-family"
+      },
+      "283": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "284": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "285": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "287": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "288": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "30": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "302": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "303": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "304": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "305": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "306": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "307": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "308": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "309": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "31": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "310": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "311": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "312": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "313": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "314": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "315": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "316": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "317": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "318": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "319": {
+        "class": "air",
+        "distance": 1.94,
+        "reference": 323,
+        "source": "episode-family"
+      },
+      "320": {
+        "class": "air",
+        "distance": 1.94,
+        "reference": 324,
+        "source": "episode-family"
+      },
+      "321": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "322": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "323": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "324": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "325": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "326": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "327": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "328": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "329": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "330": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "331": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "332": {
+        "class": "surface",
+        "distance": 1.58,
+        "reference": 194,
+        "source": "episode-family"
+      },
+      "333": {
+        "class": "surface",
+        "distance": 1.49,
+        "reference": 194,
+        "source": "episode-family"
+      },
+      "334": {
+        "class": "surface",
+        "distance": 6.39,
+        "reference": 343,
+        "source": "episode-family"
+      },
+      "335": {
+        "class": "surface",
+        "distance": 6.28,
+        "reference": 343,
+        "source": "episode-family"
+      },
+      "336": {
+        "class": "surface",
+        "distance": 5.72,
+        "reference": 338,
+        "source": "episode-family"
+      },
+      "337": {
+        "class": "surface",
+        "distance": 5.61,
+        "reference": 338,
+        "source": "episode-family"
+      },
+      "338": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "339": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "340": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "341": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "342": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "343": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "344": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "345": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "346": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "347": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "348": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "349": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "350": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "351": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "352": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "353": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "354": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "355": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "356": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "357": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "358": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "359": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "360": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "361": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "362": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "363": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "364": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "365": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "400": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "401": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "402": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "403": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "404": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "405": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "406": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "407": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "408": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "409": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "410": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "411": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "456": {
+        "class": "surface",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "462": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "500": {
+        "class": "air",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "511": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "528": {
+        "class": "surface",
+        "distance": 0.57,
+        "reference": 575,
+        "source": "episode-family"
+      },
+      "529": {
+        "class": "air",
+        "distance": 2.74,
+        "reference": 285,
+        "source": "episode-family"
+      },
+      "546": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "547": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "548": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "549": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "550": {
+        "class": "surface",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "552": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "553": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "559": {
+        "class": "surface",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "568": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "569": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "570": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "571": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "572": {
+        "class": "air",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "573": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "574": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "575": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "576": {
+        "class": "surface",
+        "detail": "level 1, asteroids, SAVARA start",
+        "source": "manual"
+      },
+      "577": {
+        "class": "surface",
+        "distance": 0.16,
+        "reference": 593,
+        "source": "episode-family"
+      },
+      "578": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "579": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "580": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "581": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "582": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "583": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "584": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "585": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "591": {
+        "class": "surface",
+        "distance": 0.02,
+        "reference": 593,
+        "source": "episode-family"
+      },
+      "593": {
+        "class": "surface",
+        "detail": "later Episode 1 editor session",
+        "source": "manual"
+      },
+      "6": {
+        "class": "air",
+        "distance": 0.44,
+        "reference": 30,
+        "source": "episode-family"
+      },
+      "688": {
+        "class": "surface",
+        "distance": 0.95,
+        "reference": 593,
+        "source": "episode-family"
+      },
+      "690": {
+        "class": "surface",
+        "distance": 0.97,
+        "reference": 593,
+        "source": "episode-family"
+      },
+      "7": {
+        "class": "air",
+        "distance": 0.33,
+        "reference": 30,
+        "source": "episode-family"
+      },
+      "8": {
+        "class": "air",
+        "distance": 0.43,
+        "reference": 31,
+        "source": "episode-family"
+      },
+      "823": {
+        "class": "surface",
+        "distance": 2.3,
+        "reference": 593,
+        "source": "episode-family"
+      },
+      "826": {
+        "class": "air",
+        "distance": 5.53,
+        "reference": 283,
+        "source": "episode-family"
+      },
+      "840": {
+        "class": "surface",
+        "distance": 6.78,
+        "reference": 162,
+        "source": "episode-family"
+      },
+      "9": {
+        "class": "air",
+        "distance": 0.32,
+        "reference": 31,
+        "source": "episode-family"
+      }
+    },
+    "2": {
+      "128": {
+        "class": "air",
+        "reference": 128,
+        "source": "episode1-exact"
+      },
+      "13": {
+        "class": "air",
+        "reference": 13,
+        "source": "episode1-exact"
+      },
+      "135": {
+        "class": "air",
+        "reference": 135,
+        "source": "episode1-exact"
+      },
+      "136": {
+        "class": "air",
+        "reference": 136,
+        "source": "episode1-exact"
+      },
+      "14": {
+        "class": "air",
+        "reference": 14,
+        "source": "episode1-exact"
+      },
+      "145": {
+        "class": "air",
+        "reference": 145,
+        "source": "episode1-exact"
+      },
+      "149": {
+        "class": "air",
+        "reference": 149,
+        "source": "episode1-exact"
+      },
+      "15": {
+        "class": "air",
+        "reference": 15,
+        "source": "episode1-exact"
+      },
+      "150": {
+        "class": "air",
+        "reference": 150,
+        "source": "episode1-exact"
+      },
+      "151": {
+        "class": "air",
+        "reference": 151,
+        "source": "episode1-exact"
+      },
+      "152": {
+        "class": "air",
+        "reference": 152,
+        "source": "episode1-exact"
+      },
+      "162": {
+        "class": "surface",
+        "reference": 162,
+        "source": "episode1-exact"
+      },
+      "163": {
+        "class": "air",
+        "reference": 163,
+        "source": "episode1-exact"
+      },
+      "164": {
+        "class": "air",
+        "reference": 164,
+        "source": "episode1-exact"
+      },
+      "165": {
+        "class": "air",
+        "reference": 165,
+        "source": "episode1-exact"
+      },
+      "166": {
+        "class": "air",
+        "reference": 166,
+        "source": "episode1-exact"
+      },
+      "167": {
+        "class": "air",
+        "reference": 167,
+        "source": "episode1-exact"
+      },
+      "168": {
+        "class": "air",
+        "reference": 168,
+        "source": "episode1-exact"
+      },
+      "169": {
+        "class": "air",
+        "reference": 169,
+        "source": "episode1-exact"
+      },
+      "170": {
+        "class": "air",
+        "reference": 170,
+        "source": "episode1-exact"
+      },
+      "171": {
+        "class": "surface",
+        "reference": 171,
+        "source": "episode1-exact"
+      },
+      "172": {
+        "class": "surface",
+        "reference": 172,
+        "source": "episode1-exact"
+      },
+      "173": {
+        "class": "surface",
+        "reference": 173,
+        "source": "episode1-exact"
+      },
+      "194": {
+        "class": "surface",
+        "reference": 194,
+        "source": "episode1-exact"
+      },
+      "197": {
+        "class": "surface",
+        "reference": 197,
+        "source": "episode1-exact"
+      },
+      "198": {
+        "class": "surface",
+        "reference": 198,
+        "source": "episode1-exact"
+      },
+      "228": {
+        "class": "air",
+        "reference": 228,
+        "source": "episode1-exact"
+      },
+      "229": {
+        "class": "air",
+        "reference": 229,
+        "source": "episode1-exact"
+      },
+      "230": {
+        "class": "air",
+        "reference": 230,
+        "source": "episode1-exact"
+      },
+      "233": {
+        "class": "air",
+        "reference": 233,
+        "source": "episode1-exact"
+      },
+      "234": {
+        "class": "air",
+        "reference": 234,
+        "source": "episode1-exact"
+      },
+      "235": {
+        "class": "air",
+        "reference": 235,
+        "source": "episode1-exact"
+      },
+      "237": {
+        "class": "air",
+        "reference": 237,
+        "source": "episode1-exact"
+      },
+      "241": {
+        "class": "air",
+        "reference": 241,
+        "source": "episode1-exact"
+      },
+      "242": {
+        "class": "air",
+        "reference": 242,
+        "source": "episode1-exact"
+      },
+      "243": {
+        "class": "air",
+        "reference": 243,
+        "source": "episode1-exact"
+      },
+      "244": {
+        "class": "air",
+        "reference": 244,
+        "source": "episode1-exact"
+      },
+      "252": {
+        "class": "surface",
+        "reference": 252,
+        "source": "episode1-exact"
+      },
+      "255": {
+        "class": "surface",
+        "reference": 255,
+        "source": "episode1-exact"
+      },
+      "259": {
+        "class": "air",
+        "reference": 259,
+        "source": "episode1-exact"
+      },
+      "26": {
+        "class": "air",
+        "reference": 26,
+        "source": "episode1-exact"
+      },
+      "260": {
+        "class": "air",
+        "reference": 260,
+        "source": "episode1-exact"
+      },
+      "261": {
+        "class": "air",
+        "reference": 261,
+        "source": "episode1-exact"
+      },
+      "262": {
+        "class": "air",
+        "reference": 262,
+        "source": "episode1-exact"
+      },
+      "263": {
+        "class": "air",
+        "reference": 263,
+        "source": "episode1-exact"
+      },
+      "264": {
+        "class": "air",
+        "reference": 264,
+        "source": "episode1-exact"
+      },
+      "265": {
+        "class": "air",
+        "reference": 265,
+        "source": "episode1-exact"
+      },
+      "266": {
+        "class": "air",
+        "reference": 266,
+        "source": "episode1-exact"
+      },
+      "267": {
+        "class": "air",
+        "reference": 267,
+        "source": "episode1-exact"
+      },
+      "268": {
+        "class": "air",
+        "reference": 268,
+        "source": "episode1-exact"
+      },
+      "269": {
+        "class": "surface",
+        "reference": 269,
+        "source": "episode1-exact"
+      },
+      "27": {
+        "class": "air",
+        "reference": 27,
+        "source": "episode1-exact"
+      },
+      "270": {
+        "class": "surface",
+        "reference": 270,
+        "source": "episode1-exact"
+      },
+      "271": {
+        "class": "surface",
+        "reference": 271,
+        "source": "episode1-exact"
+      },
+      "272": {
+        "class": "surface",
+        "reference": 272,
+        "source": "episode1-exact"
+      },
+      "273": {
+        "class": "surface",
+        "reference": 273,
+        "source": "episode1-exact"
+      },
+      "274": {
+        "class": "surface",
+        "reference": 272,
+        "source": "episode1-exact"
+      },
+      "275": {
+        "class": "surface",
+        "reference": 275,
+        "source": "episode1-exact"
+      },
+      "276": {
+        "class": "surface",
+        "reference": 276,
+        "source": "episode1-exact"
+      },
+      "277": {
+        "class": "surface",
+        "reference": 275,
+        "source": "episode1-exact"
+      },
+      "278": {
+        "class": "surface",
+        "reference": 278,
+        "source": "episode1-exact"
+      },
+      "279": {
+        "class": "surface",
+        "reference": 279,
+        "source": "episode1-exact"
+      },
+      "280": {
+        "class": "surface",
+        "reference": 280,
+        "source": "episode1-exact"
+      },
+      "281": {
+        "class": "surface",
+        "reference": 276,
+        "source": "episode1-exact"
+      },
+      "282": {
+        "class": "air",
+        "reference": 282,
+        "source": "episode1-exact"
+      },
+      "283": {
+        "class": "air",
+        "reference": 283,
+        "source": "episode1-exact"
+      },
+      "284": {
+        "class": "air",
+        "reference": 284,
+        "source": "episode1-exact"
+      },
+      "285": {
+        "class": "air",
+        "reference": 285,
+        "source": "episode1-exact"
+      },
+      "287": {
+        "class": "surface",
+        "reference": 287,
+        "source": "episode1-exact"
+      },
+      "288": {
+        "class": "surface",
+        "reference": 288,
+        "source": "episode1-exact"
+      },
+      "30": {
+        "class": "air",
+        "reference": 30,
+        "source": "episode1-exact"
+      },
+      "302": {
+        "class": "air",
+        "reference": 302,
+        "source": "episode1-exact"
+      },
+      "303": {
+        "class": "air",
+        "reference": 303,
+        "source": "episode1-exact"
+      },
+      "304": {
+        "class": "air",
+        "reference": 304,
+        "source": "episode1-exact"
+      },
+      "305": {
+        "class": "air",
+        "reference": 305,
+        "source": "episode1-exact"
+      },
+      "306": {
+        "class": "air",
+        "reference": 306,
+        "source": "episode1-exact"
+      },
+      "307": {
+        "class": "air",
+        "reference": 307,
+        "source": "episode1-exact"
+      },
+      "308": {
+        "class": "air",
+        "reference": 308,
+        "source": "episode1-exact"
+      },
+      "309": {
+        "class": "surface",
+        "reference": 309,
+        "source": "episode1-exact"
+      },
+      "31": {
+        "class": "air",
+        "reference": 31,
+        "source": "episode1-exact"
+      },
+      "310": {
+        "class": "surface",
+        "reference": 310,
+        "source": "episode1-exact"
+      },
+      "311": {
+        "class": "surface",
+        "reference": 311,
+        "source": "episode1-exact"
+      },
+      "312": {
+        "class": "surface",
+        "reference": 312,
+        "source": "episode1-exact"
+      },
+      "313": {
+        "class": "surface",
+        "reference": 313,
+        "source": "episode1-exact"
+      },
+      "314": {
+        "class": "surface",
+        "reference": 314,
+        "source": "episode1-exact"
+      },
+      "315": {
+        "class": "surface",
+        "reference": 315,
+        "source": "episode1-exact"
+      },
+      "316": {
+        "class": "surface",
+        "reference": 316,
+        "source": "episode1-exact"
+      },
+      "317": {
+        "class": "air",
+        "reference": 317,
+        "source": "episode1-exact"
+      },
+      "318": {
+        "class": "air",
+        "reference": 318,
+        "source": "episode1-exact"
+      },
+      "319": {
+        "class": "air",
+        "reference": 319,
+        "source": "episode1-exact"
+      },
+      "320": {
+        "class": "air",
+        "reference": 320,
+        "source": "episode1-exact"
+      },
+      "321": {
+        "class": "air",
+        "reference": 321,
+        "source": "episode1-exact"
+      },
+      "322": {
+        "class": "air",
+        "reference": 322,
+        "source": "episode1-exact"
+      },
+      "323": {
+        "class": "air",
+        "reference": 323,
+        "source": "episode1-exact"
+      },
+      "324": {
+        "class": "air",
+        "reference": 324,
+        "source": "episode1-exact"
+      },
+      "325": {
+        "class": "surface",
+        "reference": 325,
+        "source": "episode1-exact"
+      },
+      "326": {
+        "class": "surface",
+        "reference": 326,
+        "source": "episode1-exact"
+      },
+      "327": {
+        "class": "surface",
+        "reference": 327,
+        "source": "episode1-exact"
+      },
+      "328": {
+        "class": "surface",
+        "reference": 328,
+        "source": "episode1-exact"
+      },
+      "329": {
+        "class": "surface",
+        "reference": 329,
+        "source": "episode1-exact"
+      },
+      "330": {
+        "class": "surface",
+        "reference": 330,
+        "source": "episode1-exact"
+      },
+      "331": {
+        "class": "surface",
+        "reference": 331,
+        "source": "episode1-exact"
+      },
+      "332": {
+        "class": "surface",
+        "reference": 332,
+        "source": "episode1-exact"
+      },
+      "333": {
+        "class": "surface",
+        "reference": 333,
+        "source": "episode1-exact"
+      },
+      "334": {
+        "class": "surface",
+        "reference": 334,
+        "source": "episode1-exact"
+      },
+      "335": {
+        "class": "surface",
+        "reference": 335,
+        "source": "episode1-exact"
+      },
+      "336": {
+        "class": "surface",
+        "reference": 336,
+        "source": "episode1-exact"
+      },
+      "337": {
+        "class": "surface",
+        "reference": 337,
+        "source": "episode1-exact"
+      },
+      "338": {
+        "class": "surface",
+        "reference": 338,
+        "source": "episode1-exact"
+      },
+      "339": {
+        "class": "surface",
+        "reference": 339,
+        "source": "episode1-exact"
+      },
+      "340": {
+        "class": "surface",
+        "reference": 340,
+        "source": "episode1-exact"
+      },
+      "341": {
+        "class": "surface",
+        "reference": 341,
+        "source": "episode1-exact"
+      },
+      "342": {
+        "class": "surface",
+        "reference": 342,
+        "source": "episode1-exact"
+      },
+      "343": {
+        "class": "surface",
+        "reference": 343,
+        "source": "episode1-exact"
+      },
+      "344": {
+        "class": "surface",
+        "reference": 344,
+        "source": "episode1-exact"
+      },
+      "345": {
+        "class": "surface",
+        "reference": 345,
+        "source": "episode1-exact"
+      },
+      "346": {
+        "class": "surface",
+        "reference": 346,
+        "source": "episode1-exact"
+      },
+      "347": {
+        "class": "surface",
+        "reference": 347,
+        "source": "episode1-exact"
+      },
+      "348": {
+        "class": "surface",
+        "reference": 348,
+        "source": "episode1-exact"
+      },
+      "349": {
+        "class": "air",
+        "reference": 349,
+        "source": "episode1-exact"
+      },
+      "350": {
+        "class": "air",
+        "reference": 350,
+        "source": "episode1-exact"
+      },
+      "351": {
+        "class": "air",
+        "reference": 351,
+        "source": "episode1-exact"
+      },
+      "352": {
+        "class": "air",
+        "reference": 352,
+        "source": "episode1-exact"
+      },
+      "353": {
+        "class": "air",
+        "reference": 353,
+        "source": "episode1-exact"
+      },
+      "354": {
+        "class": "air",
+        "reference": 354,
+        "source": "episode1-exact"
+      },
+      "355": {
+        "class": "air",
+        "reference": 355,
+        "source": "episode1-exact"
+      },
+      "356": {
+        "class": "air",
+        "reference": 356,
+        "source": "episode1-exact"
+      },
+      "357": {
+        "class": "air",
+        "reference": 357,
+        "source": "episode1-exact"
+      },
+      "358": {
+        "class": "air",
+        "reference": 358,
+        "source": "episode1-exact"
+      },
+      "359": {
+        "class": "air",
+        "reference": 359,
+        "source": "episode1-exact"
+      },
+      "360": {
+        "class": "air",
+        "reference": 360,
+        "source": "episode1-exact"
+      },
+      "361": {
+        "class": "air",
+        "reference": 361,
+        "source": "episode1-exact"
+      },
+      "362": {
+        "class": "air",
+        "reference": 362,
+        "source": "episode1-exact"
+      },
+      "363": {
+        "class": "air",
+        "reference": 363,
+        "source": "episode1-exact"
+      },
+      "364": {
+        "class": "air",
+        "reference": 364,
+        "source": "episode1-exact"
+      },
+      "365": {
+        "class": "air",
+        "reference": 365,
+        "source": "episode1-exact"
+      },
+      "400": {
+        "class": "air",
+        "reference": 400,
+        "source": "episode1-exact"
+      },
+      "401": {
+        "class": "air",
+        "reference": 401,
+        "source": "episode1-exact"
+      },
+      "402": {
+        "class": "air",
+        "reference": 402,
+        "source": "episode1-exact"
+      },
+      "403": {
+        "class": "air",
+        "reference": 403,
+        "source": "episode1-exact"
+      },
+      "404": {
+        "class": "air",
+        "reference": 404,
+        "source": "episode1-exact"
+      },
+      "405": {
+        "class": "air",
+        "reference": 405,
+        "source": "episode1-exact"
+      },
+      "406": {
+        "class": "air",
+        "reference": 406,
+        "source": "episode1-exact"
+      },
+      "407": {
+        "class": "air",
+        "reference": 407,
+        "source": "episode1-exact"
+      },
+      "408": {
+        "class": "air",
+        "reference": 408,
+        "source": "episode1-exact"
+      },
+      "409": {
+        "class": "air",
+        "reference": 409,
+        "source": "episode1-exact"
+      },
+      "410": {
+        "class": "air",
+        "reference": 410,
+        "source": "episode1-exact"
+      },
+      "411": {
+        "class": "air",
+        "reference": 411,
+        "source": "episode1-exact"
+      },
+      "456": {
+        "class": "surface",
+        "reference": 456,
+        "source": "episode1-exact"
+      },
+      "462": {
+        "class": "air",
+        "reference": 462,
+        "source": "episode1-exact"
+      },
+      "500": {
+        "class": "air",
+        "reference": 500,
+        "source": "episode1-exact"
+      },
+      "511": {
+        "class": "air",
+        "reference": 511,
+        "source": "episode1-exact"
+      },
+      "528": {
+        "class": "surface",
+        "reference": 528,
+        "source": "episode1-exact"
+      },
+      "529": {
+        "class": "air",
+        "reference": 529,
+        "source": "episode1-exact"
+      },
+      "546": {
+        "class": "surface",
+        "reference": 546,
+        "source": "episode1-exact"
+      },
+      "547": {
+        "class": "surface",
+        "reference": 547,
+        "source": "episode1-exact"
+      },
+      "548": {
+        "class": "surface",
+        "reference": 548,
+        "source": "episode1-exact"
+      },
+      "549": {
+        "class": "surface",
+        "reference": 549,
+        "source": "episode1-exact"
+      },
+      "550": {
+        "class": "surface",
+        "reference": 550,
+        "source": "episode1-exact"
+      },
+      "552": {
+        "class": "air",
+        "reference": 552,
+        "source": "episode1-exact"
+      },
+      "553": {
+        "class": "air",
+        "reference": 553,
+        "source": "episode1-exact"
+      },
+      "559": {
+        "class": "surface",
+        "reference": 559,
+        "source": "episode1-exact"
+      },
+      "568": {
+        "class": "air",
+        "reference": 568,
+        "source": "episode1-exact"
+      },
+      "569": {
+        "class": "air",
+        "reference": 569,
+        "source": "episode1-exact"
+      },
+      "570": {
+        "class": "air",
+        "reference": 570,
+        "source": "episode1-exact"
+      },
+      "571": {
+        "class": "air",
+        "reference": 571,
+        "source": "episode1-exact"
+      },
+      "572": {
+        "class": "air",
+        "reference": 572,
+        "source": "episode1-exact"
+      },
+      "573": {
+        "class": "surface",
+        "reference": 573,
+        "source": "episode1-exact"
+      },
+      "574": {
+        "class": "surface",
+        "reference": 574,
+        "source": "episode1-exact"
+      },
+      "575": {
+        "class": "surface",
+        "reference": 575,
+        "source": "episode1-exact"
+      },
+      "576": {
+        "class": "surface",
+        "reference": 576,
+        "source": "episode1-exact"
+      },
+      "577": {
+        "class": "surface",
+        "reference": 577,
+        "source": "episode1-exact"
+      },
+      "591": {
+        "class": "surface",
+        "reference": 577,
+        "source": "episode1-exact"
+      },
+      "593": {
+        "class": "surface",
+        "reference": 593,
+        "source": "episode1-exact"
+      },
+      "6": {
+        "class": "air",
+        "reference": 6,
+        "source": "episode1-exact"
+      },
+      "688": {
+        "class": "surface",
+        "reference": 688,
+        "source": "episode1-exact"
+      },
+      "690": {
+        "class": "surface",
+        "reference": 690,
+        "source": "episode1-exact"
+      },
+      "7": {
+        "class": "air",
+        "reference": 7,
+        "source": "episode1-exact"
+      },
+      "8": {
+        "class": "air",
+        "reference": 8,
+        "source": "episode1-exact"
+      },
+      "823": {
+        "class": "surface",
+        "reference": 823,
+        "source": "episode1-exact"
+      },
+      "826": {
+        "class": "air",
+        "reference": 826,
+        "source": "episode1-exact"
+      },
+      "840": {
+        "class": "surface",
+        "reference": 840,
+        "source": "episode1-exact"
+      },
+      "9": {
+        "class": "air",
+        "reference": 9,
+        "source": "episode1-exact"
+      }
+    },
+    "3": {
+      "125": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "126": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "127": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "128": {
+        "class": "air",
+        "reference": 128,
+        "source": "episode1-exact"
+      },
+      "13": {
+        "class": "air",
+        "reference": 13,
+        "source": "episode1-exact"
+      },
+      "135": {
+        "class": "air",
+        "reference": 135,
+        "source": "episode1-exact"
+      },
+      "136": {
+        "class": "air",
+        "reference": 136,
+        "source": "episode1-exact"
+      },
+      "14": {
+        "class": "air",
+        "reference": 14,
+        "source": "episode1-exact"
+      },
+      "145": {
+        "class": "air",
+        "reference": 145,
+        "source": "episode1-exact"
+      },
+      "146": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "149": {
+        "class": "air",
+        "reference": 149,
+        "source": "episode1-exact"
+      },
+      "15": {
+        "class": "air",
+        "reference": 15,
+        "source": "episode1-exact"
+      },
+      "150": {
+        "class": "air",
+        "reference": 150,
+        "source": "episode1-exact"
+      },
+      "151": {
+        "class": "air",
+        "reference": 151,
+        "source": "episode1-exact"
+      },
+      "152": {
+        "class": "air",
+        "reference": 152,
+        "source": "episode1-exact"
+      },
+      "162": {
+        "class": "surface",
+        "reference": 162,
+        "source": "episode1-exact"
+      },
+      "163": {
+        "class": "air",
+        "reference": 163,
+        "source": "episode1-exact"
+      },
+      "164": {
+        "class": "air",
+        "reference": 164,
+        "source": "episode1-exact"
+      },
+      "165": {
+        "class": "air",
+        "reference": 165,
+        "source": "episode1-exact"
+      },
+      "166": {
+        "class": "air",
+        "reference": 166,
+        "source": "episode1-exact"
+      },
+      "167": {
+        "class": "air",
+        "reference": 167,
+        "source": "episode1-exact"
+      },
+      "168": {
+        "class": "air",
+        "reference": 168,
+        "source": "episode1-exact"
+      },
+      "169": {
+        "class": "air",
+        "reference": 169,
+        "source": "episode1-exact"
+      },
+      "170": {
+        "class": "air",
+        "reference": 170,
+        "source": "episode1-exact"
+      },
+      "171": {
+        "class": "surface",
+        "reference": 171,
+        "source": "episode1-exact"
+      },
+      "172": {
+        "class": "surface",
+        "reference": 172,
+        "source": "episode1-exact"
+      },
+      "173": {
+        "class": "surface",
+        "reference": 173,
+        "source": "episode1-exact"
+      },
+      "194": {
+        "class": "surface",
+        "reference": 194,
+        "source": "episode1-exact"
+      },
+      "197": {
+        "class": "surface",
+        "reference": 197,
+        "source": "episode1-exact"
+      },
+      "198": {
+        "class": "surface",
+        "reference": 198,
+        "source": "episode1-exact"
+      },
+      "228": {
+        "class": "air",
+        "reference": 228,
+        "source": "episode1-exact"
+      },
+      "229": {
+        "class": "air",
+        "reference": 229,
+        "source": "episode1-exact"
+      },
+      "230": {
+        "class": "air",
+        "reference": 230,
+        "source": "episode1-exact"
+      },
+      "231": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "232": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "233": {
+        "class": "air",
+        "reference": 233,
+        "source": "episode1-exact"
+      },
+      "234": {
+        "class": "air",
+        "reference": 234,
+        "source": "episode1-exact"
+      },
+      "235": {
+        "class": "air",
+        "reference": 235,
+        "source": "episode1-exact"
+      },
+      "237": {
+        "class": "air",
+        "reference": 237,
+        "source": "episode1-exact"
+      },
+      "238": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "239": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "240": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "241": {
+        "class": "air",
+        "reference": 241,
+        "source": "episode1-exact"
+      },
+      "242": {
+        "class": "air",
+        "reference": 242,
+        "source": "episode1-exact"
+      },
+      "243": {
+        "class": "air",
+        "reference": 243,
+        "source": "episode1-exact"
+      },
+      "244": {
+        "class": "air",
+        "reference": 244,
+        "source": "episode1-exact"
+      },
+      "252": {
+        "class": "surface",
+        "reference": 252,
+        "source": "episode1-exact"
+      },
+      "253": {
+        "class": "surface",
+        "source": "linked-assembly"
+      },
+      "254": {
+        "class": "surface",
+        "source": "linked-assembly"
+      },
+      "255": {
+        "class": "surface",
+        "reference": 255,
+        "source": "episode1-exact"
+      },
+      "256": {
+        "class": "surface",
+        "source": "linked-assembly"
+      },
+      "257": {
+        "class": "surface",
+        "source": "linked-assembly"
+      },
+      "258": {
+        "class": "surface",
+        "source": "linked-assembly"
+      },
+      "259": {
+        "class": "air",
+        "reference": 259,
+        "source": "episode1-exact"
+      },
+      "26": {
+        "class": "air",
+        "reference": 26,
+        "source": "episode1-exact"
+      },
+      "260": {
+        "class": "air",
+        "reference": 260,
+        "source": "episode1-exact"
+      },
+      "261": {
+        "class": "air",
+        "reference": 261,
+        "source": "episode1-exact"
+      },
+      "262": {
+        "class": "air",
+        "reference": 262,
+        "source": "episode1-exact"
+      },
+      "263": {
+        "class": "air",
+        "reference": 263,
+        "source": "episode1-exact"
+      },
+      "264": {
+        "class": "air",
+        "reference": 264,
+        "source": "episode1-exact"
+      },
+      "265": {
+        "class": "air",
+        "reference": 265,
+        "source": "episode1-exact"
+      },
+      "266": {
+        "class": "air",
+        "reference": 266,
+        "source": "episode1-exact"
+      },
+      "267": {
+        "class": "air",
+        "reference": 267,
+        "source": "episode1-exact"
+      },
+      "268": {
+        "class": "air",
+        "reference": 268,
+        "source": "episode1-exact"
+      },
+      "269": {
+        "class": "surface",
+        "reference": 269,
+        "source": "episode1-exact"
+      },
+      "27": {
+        "class": "air",
+        "reference": 27,
+        "source": "episode1-exact"
+      },
+      "270": {
+        "class": "surface",
+        "reference": 270,
+        "source": "episode1-exact"
+      },
+      "271": {
+        "class": "surface",
+        "reference": 271,
+        "source": "episode1-exact"
+      },
+      "272": {
+        "class": "surface",
+        "reference": 272,
+        "source": "episode1-exact"
+      },
+      "273": {
+        "class": "surface",
+        "reference": 273,
+        "source": "episode1-exact"
+      },
+      "274": {
+        "class": "surface",
+        "reference": 272,
+        "source": "episode1-exact"
+      },
+      "275": {
+        "class": "surface",
+        "reference": 275,
+        "source": "episode1-exact"
+      },
+      "276": {
+        "class": "surface",
+        "reference": 276,
+        "source": "episode1-exact"
+      },
+      "277": {
+        "class": "surface",
+        "reference": 275,
+        "source": "episode1-exact"
+      },
+      "278": {
+        "class": "surface",
+        "reference": 278,
+        "source": "episode1-exact"
+      },
+      "279": {
+        "class": "surface",
+        "reference": 279,
+        "source": "episode1-exact"
+      },
+      "280": {
+        "class": "surface",
+        "reference": 280,
+        "source": "episode1-exact"
+      },
+      "281": {
+        "class": "surface",
+        "reference": 276,
+        "source": "episode1-exact"
+      },
+      "282": {
+        "class": "air",
+        "reference": 282,
+        "source": "episode1-exact"
+      },
+      "283": {
+        "class": "air",
+        "reference": 283,
+        "source": "episode1-exact"
+      },
+      "284": {
+        "class": "air",
+        "reference": 284,
+        "source": "episode1-exact"
+      },
+      "285": {
+        "class": "air",
+        "reference": 285,
+        "source": "episode1-exact"
+      },
+      "287": {
+        "class": "surface",
+        "reference": 287,
+        "source": "episode1-exact"
+      },
+      "288": {
+        "class": "surface",
+        "reference": 288,
+        "source": "episode1-exact"
+      },
+      "30": {
+        "class": "air",
+        "reference": 30,
+        "source": "episode1-exact"
+      },
+      "302": {
+        "class": "air",
+        "reference": 302,
+        "source": "episode1-exact"
+      },
+      "303": {
+        "class": "air",
+        "reference": 303,
+        "source": "episode1-exact"
+      },
+      "304": {
+        "class": "air",
+        "reference": 304,
+        "source": "episode1-exact"
+      },
+      "305": {
+        "class": "air",
+        "reference": 305,
+        "source": "episode1-exact"
+      },
+      "306": {
+        "class": "air",
+        "reference": 306,
+        "source": "episode1-exact"
+      },
+      "307": {
+        "class": "air",
+        "reference": 307,
+        "source": "episode1-exact"
+      },
+      "308": {
+        "class": "air",
+        "reference": 308,
+        "source": "episode1-exact"
+      },
+      "309": {
+        "class": "surface",
+        "reference": 309,
+        "source": "episode1-exact"
+      },
+      "31": {
+        "class": "air",
+        "reference": 31,
+        "source": "episode1-exact"
+      },
+      "310": {
+        "class": "surface",
+        "reference": 310,
+        "source": "episode1-exact"
+      },
+      "311": {
+        "class": "surface",
+        "reference": 311,
+        "source": "episode1-exact"
+      },
+      "312": {
+        "class": "surface",
+        "reference": 312,
+        "source": "episode1-exact"
+      },
+      "313": {
+        "class": "surface",
+        "reference": 313,
+        "source": "episode1-exact"
+      },
+      "314": {
+        "class": "surface",
+        "reference": 314,
+        "source": "episode1-exact"
+      },
+      "315": {
+        "class": "surface",
+        "reference": 315,
+        "source": "episode1-exact"
+      },
+      "316": {
+        "class": "surface",
+        "reference": 316,
+        "source": "episode1-exact"
+      },
+      "317": {
+        "class": "air",
+        "reference": 317,
+        "source": "episode1-exact"
+      },
+      "318": {
+        "class": "air",
+        "reference": 318,
+        "source": "episode1-exact"
+      },
+      "319": {
+        "class": "air",
+        "reference": 319,
+        "source": "episode1-exact"
+      },
+      "320": {
+        "class": "air",
+        "reference": 320,
+        "source": "episode1-exact"
+      },
+      "321": {
+        "class": "air",
+        "reference": 321,
+        "source": "episode1-exact"
+      },
+      "322": {
+        "class": "air",
+        "reference": 322,
+        "source": "episode1-exact"
+      },
+      "323": {
+        "class": "air",
+        "reference": 323,
+        "source": "episode1-exact"
+      },
+      "324": {
+        "class": "air",
+        "reference": 324,
+        "source": "episode1-exact"
+      },
+      "325": {
+        "class": "surface",
+        "reference": 325,
+        "source": "episode1-exact"
+      },
+      "326": {
+        "class": "surface",
+        "reference": 326,
+        "source": "episode1-exact"
+      },
+      "327": {
+        "class": "surface",
+        "reference": 327,
+        "source": "episode1-exact"
+      },
+      "328": {
+        "class": "surface",
+        "reference": 328,
+        "source": "episode1-exact"
+      },
+      "329": {
+        "class": "surface",
+        "reference": 329,
+        "source": "episode1-exact"
+      },
+      "330": {
+        "class": "surface",
+        "reference": 330,
+        "source": "episode1-exact"
+      },
+      "331": {
+        "class": "surface",
+        "reference": 331,
+        "source": "episode1-exact"
+      },
+      "332": {
+        "class": "surface",
+        "reference": 332,
+        "source": "episode1-exact"
+      },
+      "333": {
+        "class": "surface",
+        "reference": 333,
+        "source": "episode1-exact"
+      },
+      "334": {
+        "class": "surface",
+        "reference": 334,
+        "source": "episode1-exact"
+      },
+      "335": {
+        "class": "surface",
+        "reference": 335,
+        "source": "episode1-exact"
+      },
+      "336": {
+        "class": "surface",
+        "reference": 336,
+        "source": "episode1-exact"
+      },
+      "337": {
+        "class": "surface",
+        "reference": 337,
+        "source": "episode1-exact"
+      },
+      "338": {
+        "class": "surface",
+        "reference": 338,
+        "source": "episode1-exact"
+      },
+      "339": {
+        "class": "surface",
+        "reference": 339,
+        "source": "episode1-exact"
+      },
+      "340": {
+        "class": "surface",
+        "reference": 340,
+        "source": "episode1-exact"
+      },
+      "341": {
+        "class": "surface",
+        "reference": 341,
+        "source": "episode1-exact"
+      },
+      "342": {
+        "class": "surface",
+        "reference": 342,
+        "source": "episode1-exact"
+      },
+      "343": {
+        "class": "surface",
+        "reference": 343,
+        "source": "episode1-exact"
+      },
+      "344": {
+        "class": "surface",
+        "reference": 344,
+        "source": "episode1-exact"
+      },
+      "345": {
+        "class": "surface",
+        "reference": 345,
+        "source": "episode1-exact"
+      },
+      "346": {
+        "class": "surface",
+        "reference": 346,
+        "source": "episode1-exact"
+      },
+      "347": {
+        "class": "surface",
+        "reference": 347,
+        "source": "episode1-exact"
+      },
+      "348": {
+        "class": "surface",
+        "reference": 348,
+        "source": "episode1-exact"
+      },
+      "349": {
+        "class": "air",
+        "reference": 349,
+        "source": "episode1-exact"
+      },
+      "350": {
+        "class": "air",
+        "reference": 350,
+        "source": "episode1-exact"
+      },
+      "351": {
+        "class": "air",
+        "reference": 351,
+        "source": "episode1-exact"
+      },
+      "352": {
+        "class": "air",
+        "reference": 352,
+        "source": "episode1-exact"
+      },
+      "353": {
+        "class": "air",
+        "reference": 353,
+        "source": "episode1-exact"
+      },
+      "354": {
+        "class": "air",
+        "reference": 354,
+        "source": "episode1-exact"
+      },
+      "355": {
+        "class": "air",
+        "reference": 355,
+        "source": "episode1-exact"
+      },
+      "356": {
+        "class": "air",
+        "reference": 356,
+        "source": "episode1-exact"
+      },
+      "357": {
+        "class": "air",
+        "reference": 357,
+        "source": "episode1-exact"
+      },
+      "358": {
+        "class": "air",
+        "reference": 358,
+        "source": "episode1-exact"
+      },
+      "359": {
+        "class": "air",
+        "reference": 359,
+        "source": "episode1-exact"
+      },
+      "360": {
+        "class": "air",
+        "reference": 360,
+        "source": "episode1-exact"
+      },
+      "361": {
+        "class": "air",
+        "reference": 361,
+        "source": "episode1-exact"
+      },
+      "362": {
+        "class": "air",
+        "reference": 362,
+        "source": "episode1-exact"
+      },
+      "363": {
+        "class": "air",
+        "reference": 363,
+        "source": "episode1-exact"
+      },
+      "364": {
+        "class": "air",
+        "reference": 364,
+        "source": "episode1-exact"
+      },
+      "365": {
+        "class": "air",
+        "reference": 365,
+        "source": "episode1-exact"
+      },
+      "400": {
+        "class": "air",
+        "reference": 400,
+        "source": "episode1-exact"
+      },
+      "401": {
+        "class": "air",
+        "reference": 401,
+        "source": "episode1-exact"
+      },
+      "402": {
+        "class": "air",
+        "reference": 402,
+        "source": "episode1-exact"
+      },
+      "403": {
+        "class": "air",
+        "reference": 403,
+        "source": "episode1-exact"
+      },
+      "404": {
+        "class": "air",
+        "reference": 404,
+        "source": "episode1-exact"
+      },
+      "405": {
+        "class": "air",
+        "reference": 405,
+        "source": "episode1-exact"
+      },
+      "406": {
+        "class": "air",
+        "reference": 406,
+        "source": "episode1-exact"
+      },
+      "407": {
+        "class": "air",
+        "reference": 407,
+        "source": "episode1-exact"
+      },
+      "408": {
+        "class": "air",
+        "reference": 408,
+        "source": "episode1-exact"
+      },
+      "409": {
+        "class": "air",
+        "reference": 409,
+        "source": "episode1-exact"
+      },
+      "410": {
+        "class": "air",
+        "reference": 410,
+        "source": "episode1-exact"
+      },
+      "411": {
+        "class": "air",
+        "reference": 411,
+        "source": "episode1-exact"
+      },
+      "456": {
+        "class": "surface",
+        "reference": 456,
+        "source": "episode1-exact"
+      },
+      "462": {
+        "class": "air",
+        "reference": 462,
+        "source": "episode1-exact"
+      },
+      "500": {
+        "class": "air",
+        "reference": 500,
+        "source": "episode1-exact"
+      },
+      "511": {
+        "class": "air",
+        "reference": 511,
+        "source": "episode1-exact"
+      },
+      "528": {
+        "class": "surface",
+        "reference": 528,
+        "source": "episode1-exact"
+      },
+      "529": {
+        "class": "air",
+        "reference": 529,
+        "source": "episode1-exact"
+      },
+      "546": {
+        "class": "surface",
+        "reference": 546,
+        "source": "episode1-exact"
+      },
+      "547": {
+        "class": "surface",
+        "reference": 547,
+        "source": "episode1-exact"
+      },
+      "548": {
+        "class": "surface",
+        "reference": 548,
+        "source": "episode1-exact"
+      },
+      "549": {
+        "class": "surface",
+        "reference": 549,
+        "source": "episode1-exact"
+      },
+      "550": {
+        "class": "surface",
+        "reference": 550,
+        "source": "episode1-exact"
+      },
+      "552": {
+        "class": "air",
+        "reference": 552,
+        "source": "episode1-exact"
+      },
+      "553": {
+        "class": "air",
+        "reference": 553,
+        "source": "episode1-exact"
+      },
+      "559": {
+        "class": "surface",
+        "reference": 559,
+        "source": "episode1-exact"
+      },
+      "568": {
+        "class": "air",
+        "reference": 568,
+        "source": "episode1-exact"
+      },
+      "569": {
+        "class": "air",
+        "reference": 569,
+        "source": "episode1-exact"
+      },
+      "570": {
+        "class": "air",
+        "reference": 570,
+        "source": "episode1-exact"
+      },
+      "571": {
+        "class": "air",
+        "reference": 571,
+        "source": "episode1-exact"
+      },
+      "572": {
+        "class": "air",
+        "reference": 572,
+        "source": "episode1-exact"
+      },
+      "573": {
+        "class": "surface",
+        "reference": 573,
+        "source": "episode1-exact"
+      },
+      "574": {
+        "class": "surface",
+        "reference": 574,
+        "source": "episode1-exact"
+      },
+      "575": {
+        "class": "surface",
+        "reference": 575,
+        "source": "episode1-exact"
+      },
+      "576": {
+        "class": "surface",
+        "reference": 576,
+        "source": "episode1-exact"
+      },
+      "577": {
+        "class": "surface",
+        "reference": 577,
+        "source": "episode1-exact"
+      },
+      "591": {
+        "class": "surface",
+        "reference": 577,
+        "source": "episode1-exact"
+      },
+      "593": {
+        "class": "surface",
+        "reference": 593,
+        "source": "episode1-exact"
+      },
+      "6": {
+        "class": "air",
+        "reference": 6,
+        "source": "episode1-exact"
+      },
+      "688": {
+        "class": "surface",
+        "reference": 688,
+        "source": "episode1-exact"
+      },
+      "690": {
+        "class": "surface",
+        "reference": 690,
+        "source": "episode1-exact"
+      },
+      "7": {
+        "class": "air",
+        "reference": 7,
+        "source": "episode1-exact"
+      },
+      "8": {
+        "class": "air",
+        "reference": 8,
+        "source": "episode1-exact"
+      },
+      "823": {
+        "class": "surface",
+        "reference": 823,
+        "source": "episode1-exact"
+      },
+      "826": {
+        "class": "air",
+        "reference": 826,
+        "source": "episode1-exact"
+      },
+      "840": {
+        "class": "surface",
+        "reference": 840,
+        "source": "episode1-exact"
+      },
+      "9": {
+        "class": "air",
+        "reference": 9,
+        "source": "episode1-exact"
+      }
+    },
+    "4": {
+      "128": {
+        "class": "air",
+        "reference": 128,
+        "source": "episode1-exact"
+      },
+      "13": {
+        "class": "air",
+        "reference": 13,
+        "source": "episode1-exact"
+      },
+      "135": {
+        "class": "air",
+        "reference": 135,
+        "source": "episode1-exact"
+      },
+      "136": {
+        "class": "air",
+        "reference": 136,
+        "source": "episode1-exact"
+      },
+      "14": {
+        "class": "air",
+        "reference": 14,
+        "source": "episode1-exact"
+      },
+      "145": {
+        "class": "air",
+        "reference": 145,
+        "source": "episode1-exact"
+      },
+      "149": {
+        "class": "air",
+        "reference": 149,
+        "source": "episode1-exact"
+      },
+      "15": {
+        "class": "air",
+        "reference": 15,
+        "source": "episode1-exact"
+      },
+      "150": {
+        "class": "air",
+        "reference": 150,
+        "source": "episode1-exact"
+      },
+      "151": {
+        "class": "air",
+        "reference": 151,
+        "source": "episode1-exact"
+      },
+      "152": {
+        "class": "air",
+        "reference": 152,
+        "source": "episode1-exact"
+      },
+      "162": {
+        "class": "surface",
+        "reference": 162,
+        "source": "episode1-exact"
+      },
+      "163": {
+        "class": "air",
+        "reference": 163,
+        "source": "episode1-exact"
+      },
+      "164": {
+        "class": "air",
+        "reference": 164,
+        "source": "episode1-exact"
+      },
+      "165": {
+        "class": "air",
+        "reference": 165,
+        "source": "episode1-exact"
+      },
+      "166": {
+        "class": "air",
+        "reference": 166,
+        "source": "episode1-exact"
+      },
+      "167": {
+        "class": "air",
+        "reference": 167,
+        "source": "episode1-exact"
+      },
+      "168": {
+        "class": "air",
+        "reference": 168,
+        "source": "episode1-exact"
+      },
+      "169": {
+        "class": "air",
+        "reference": 169,
+        "source": "episode1-exact"
+      },
+      "170": {
+        "class": "air",
+        "reference": 170,
+        "source": "episode1-exact"
+      },
+      "171": {
+        "class": "surface",
+        "distance": 0.29,
+        "reference": 162,
+        "source": "episode-family"
+      },
+      "172": {
+        "class": "surface",
+        "distance": 2.2,
+        "reference": 162,
+        "source": "episode-family"
+      },
+      "173": {
+        "class": "surface",
+        "distance": 4.11,
+        "reference": 162,
+        "source": "episode-family"
+      },
+      "194": {
+        "class": "surface",
+        "reference": 194,
+        "source": "episode1-exact"
+      },
+      "197": {
+        "class": "surface",
+        "reference": 197,
+        "source": "episode1-exact"
+      },
+      "198": {
+        "class": "surface",
+        "reference": 198,
+        "source": "episode1-exact"
+      },
+      "234": {
+        "class": "air",
+        "reference": 234,
+        "source": "episode1-exact"
+      },
+      "235": {
+        "class": "air",
+        "reference": 235,
+        "source": "episode1-exact"
+      },
+      "237": {
+        "class": "air",
+        "reference": 237,
+        "source": "episode1-exact"
+      },
+      "241": {
+        "class": "air",
+        "reference": 241,
+        "source": "episode1-exact"
+      },
+      "242": {
+        "class": "air",
+        "reference": 242,
+        "source": "episode1-exact"
+      },
+      "243": {
+        "class": "air",
+        "reference": 243,
+        "source": "episode1-exact"
+      },
+      "244": {
+        "class": "air",
+        "reference": 244,
+        "source": "episode1-exact"
+      },
+      "26": {
+        "class": "air",
+        "reference": 26,
+        "source": "episode1-exact"
+      },
+      "27": {
+        "class": "air",
+        "reference": 27,
+        "source": "episode1-exact"
+      },
+      "270": {
+        "class": "surface",
+        "reference": 270,
+        "source": "episode1-exact"
+      },
+      "271": {
+        "class": "surface",
+        "reference": 271,
+        "source": "episode1-exact"
+      },
+      "272": {
+        "class": "surface",
+        "reference": 272,
+        "source": "episode1-exact"
+      },
+      "273": {
+        "class": "surface",
+        "reference": 273,
+        "source": "episode1-exact"
+      },
+      "274": {
+        "class": "surface",
+        "reference": 272,
+        "source": "episode1-exact"
+      },
+      "275": {
+        "class": "surface",
+        "reference": 275,
+        "source": "episode1-exact"
+      },
+      "276": {
+        "class": "surface",
+        "reference": 276,
+        "source": "episode1-exact"
+      },
+      "277": {
+        "class": "surface",
+        "reference": 275,
+        "source": "episode1-exact"
+      },
+      "278": {
+        "class": "surface",
+        "reference": 278,
+        "source": "episode1-exact"
+      },
+      "279": {
+        "class": "surface",
+        "reference": 279,
+        "source": "episode1-exact"
+      },
+      "280": {
+        "class": "surface",
+        "reference": 280,
+        "source": "episode1-exact"
+      },
+      "281": {
+        "class": "surface",
+        "reference": 276,
+        "source": "episode1-exact"
+      },
+      "282": {
+        "class": "air",
+        "reference": 282,
+        "source": "episode1-exact"
+      },
+      "283": {
+        "class": "air",
+        "reference": 283,
+        "source": "episode1-exact"
+      },
+      "284": {
+        "class": "air",
+        "reference": 284,
+        "source": "episode1-exact"
+      },
+      "285": {
+        "class": "air",
+        "reference": 285,
+        "source": "episode1-exact"
+      },
+      "30": {
+        "class": "air",
+        "reference": 30,
+        "source": "episode1-exact"
+      },
+      "302": {
+        "class": "air",
+        "reference": 302,
+        "source": "episode1-exact"
+      },
+      "303": {
+        "class": "air",
+        "reference": 303,
+        "source": "episode1-exact"
+      },
+      "304": {
+        "class": "air",
+        "reference": 304,
+        "source": "episode1-exact"
+      },
+      "305": {
+        "class": "air",
+        "reference": 305,
+        "source": "episode1-exact"
+      },
+      "306": {
+        "class": "air",
+        "reference": 306,
+        "source": "episode1-exact"
+      },
+      "307": {
+        "class": "air",
+        "reference": 307,
+        "source": "episode1-exact"
+      },
+      "308": {
+        "class": "air",
+        "reference": 308,
+        "source": "episode1-exact"
+      },
+      "31": {
+        "class": "air",
+        "reference": 31,
+        "source": "episode1-exact"
+      },
+      "456": {
+        "class": "surface",
+        "reference": 456,
+        "source": "episode1-exact"
+      },
+      "462": {
+        "class": "air",
+        "reference": 462,
+        "source": "episode1-exact"
+      },
+      "500": {
+        "class": "air",
+        "reference": 500,
+        "source": "episode1-exact"
+      },
+      "511": {
+        "class": "air",
+        "reference": 511,
+        "source": "episode1-exact"
+      },
+      "528": {
+        "class": "surface",
+        "reference": 528,
+        "source": "episode1-exact"
+      },
+      "529": {
+        "class": "air",
+        "reference": 529,
+        "source": "episode1-exact"
+      },
+      "546": {
+        "class": "surface",
+        "reference": 546,
+        "source": "episode1-exact"
+      },
+      "547": {
+        "class": "surface",
+        "reference": 547,
+        "source": "episode1-exact"
+      },
+      "548": {
+        "class": "surface",
+        "reference": 548,
+        "source": "episode1-exact"
+      },
+      "549": {
+        "class": "surface",
+        "reference": 549,
+        "source": "episode1-exact"
+      },
+      "550": {
+        "class": "surface",
+        "reference": 550,
+        "source": "episode1-exact"
+      },
+      "552": {
+        "class": "air",
+        "reference": 552,
+        "source": "episode1-exact"
+      },
+      "553": {
+        "class": "air",
+        "reference": 553,
+        "source": "episode1-exact"
+      },
+      "559": {
+        "class": "surface",
+        "reference": 559,
+        "source": "episode1-exact"
+      },
+      "568": {
+        "class": "air",
+        "reference": 568,
+        "source": "episode1-exact"
+      },
+      "569": {
+        "class": "air",
+        "reference": 569,
+        "source": "episode1-exact"
+      },
+      "570": {
+        "class": "air",
+        "reference": 570,
+        "source": "episode1-exact"
+      },
+      "571": {
+        "class": "air",
+        "reference": 571,
+        "source": "episode1-exact"
+      },
+      "572": {
+        "class": "air",
+        "reference": 572,
+        "source": "episode1-exact"
+      },
+      "573": {
+        "class": "surface",
+        "reference": 573,
+        "source": "episode1-exact"
+      },
+      "574": {
+        "class": "surface",
+        "reference": 574,
+        "source": "episode1-exact"
+      },
+      "575": {
+        "class": "surface",
+        "reference": 575,
+        "source": "episode1-exact"
+      },
+      "576": {
+        "class": "surface",
+        "reference": 576,
+        "source": "episode1-exact"
+      },
+      "577": {
+        "class": "surface",
+        "reference": 577,
+        "source": "episode1-exact"
+      },
+      "591": {
+        "class": "surface",
+        "reference": 577,
+        "source": "episode1-exact"
+      },
+      "593": {
+        "class": "surface",
+        "reference": 593,
+        "source": "episode1-exact"
+      },
+      "6": {
+        "class": "air",
+        "reference": 6,
+        "source": "episode1-exact"
+      },
+      "690": {
+        "class": "surface",
+        "distance": 0.97,
+        "reference": 593,
+        "source": "episode-family"
+      },
+      "695": {
+        "class": "surface",
+        "distance": 1.02,
+        "reference": 593,
+        "source": "episode-family"
+      },
+      "7": {
+        "class": "air",
+        "reference": 7,
+        "source": "episode1-exact"
+      },
+      "8": {
+        "class": "air",
+        "reference": 8,
+        "source": "episode1-exact"
+      },
+      "823": {
+        "class": "surface",
+        "reference": 823,
+        "source": "episode1-exact"
+      },
+      "840": {
+        "class": "surface",
+        "reference": 840,
+        "source": "episode1-exact"
+      },
+      "9": {
+        "class": "air",
+        "reference": 9,
+        "source": "episode1-exact"
+      }
+    }
+  },
+  "policy": {
+    "family_distance_max": 10,
+    "generated_results_are_not_recursive_seeds": true,
+    "graphic_delta_max": 8,
+    "linked_assembly_requires_same_tick_and_nonzero_link": true,
+    "type_delta_max": 16
+  },
+  "version": 1
+}

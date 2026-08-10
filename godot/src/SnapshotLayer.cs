@@ -74,6 +74,7 @@ public unsafe partial class SnapshotLayer : Node3D
         System.Environment.GetEnvironmentVariable("OTYR_HEIGHT_EDITOR") == "1";
 
     private OtyrNative.Snapshot _snapshot;
+    private OtyrNative.Snapshot _incomingSnapshot;
     private OtyrNative.SpriteSheet _sheet;
     private uint _sheetEpoch;
     private uint _lastRenderedSnapshot;
@@ -89,6 +90,26 @@ public unsafe partial class SnapshotLayer : Node3D
     public ulong SkippedTicksTotal { get; private set; }
     public int RigidAssemblyCount { get; private set; }
     public int SeamGuardCellCount { get; private set; }
+
+    // Height-editor presentation history. The native simulation remains the
+    // authority; complete published snapshots are cheap enough to retain for
+    // a short scrub timeline. Main pauses the game while this is active, so
+    // the selected historical object remains available for picking/editing.
+    private sealed class EditorHistoryFrame
+    {
+        public OtyrNative.Snapshot Snapshot;
+        public uint[] Palette = null!;
+    }
+    private const int EditorHistoryCapacity = 35 * 30;
+    private readonly System.Collections.Generic.List<EditorHistoryFrame> _editorHistory = new(EditorHistoryCapacity);
+    private int _editorHistoryCursor = -1;  // -1 = live
+    public bool EditorHistoryActive => _editorHistoryCursor >= 0;
+    public float EditorHistorySecondsBack => !EditorHistoryActive || _editorHistory.Count == 0
+        ? 0f
+        : (_editorHistory[^1].Snapshot.LevelTick - _editorHistory[_editorHistoryCursor].Snapshot.LevelTick) / 35f;
+    public float EditorHistorySecondsAvailable => _editorHistory.Count < 2
+        ? 0f
+        : (_editorHistory[^1].Snapshot.LevelTick - _editorHistory[0].Snapshot.LevelTick) / 35f;
 
     // Layers 0..SheetCount-1 are sprite sheets; then the glow layer
     // (superpixel debris as small palette-colored quads), the old-table
@@ -140,8 +161,10 @@ public unsafe partial class SnapshotLayer : Node3D
     public override void _Ready()
     {
         _snapshot.StructSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.Snapshot>();
+        _incomingSnapshot.StructSize = _snapshot.StructSize;
         _sheet.StructSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<OtyrNative.SpriteSheet>();
         LoadHoverHeights();
+        LoadHeightSemantics();
 
         _paletteImage = Image.CreateEmpty(256, 1, false, Image.Format.Rgba8);
         _paletteTexture = ImageTexture.CreateFromImage(_paletteImage);
@@ -423,12 +446,14 @@ public unsafe partial class SnapshotLayer : Node3D
                 varying flat float cell;
                 varying flat float v_flags;
                 varying flat float v_decal;
+                varying flat float v_strength;
                 varying vec2 v_play_px;
 
                 void vertex() {
                     cell = INSTANCE_CUSTOM.x;
                     v_flags = INSTANCE_CUSTOM.y;
                     v_decal = INSTANCE_CUSTOM.w;
+                    v_strength = INSTANCE_CUSTOM.z;
                     bool seam = floor(v_flags / 256.0) >= 1.0;
                     bool big = mod(floor(v_flags / 8.0), 2.0) >= 1.0;
                     if (seam) {
@@ -466,7 +491,10 @@ public unsafe partial class SnapshotLayer : Node3D
                     vec2 cell_px = clamp(uv0 * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));
                     if (texture(atlas, (cell_origin_px + cell_px) / vec2(384.0, 448.0)).g < 0.5)
                         discard;
-                    ALBEDO = vec3(0.5);
+                    // Generated virtual-sun shadows pass their multiplier in
+                    // custom-data Z; legacy darken effects retain 0.5.
+                    float strength = v_decal < -1.0 ? v_strength / 255.0 : 0.5;
+                    ALBEDO = vec3(strength);
                 }
                 """,
         };
@@ -636,26 +664,20 @@ public unsafe partial class SnapshotLayer : Node3D
     public void Poll(ulong session, uint[] paletteArgb)
     {
         int rc;
-        fixed (OtyrNative.Snapshot* snapshotPtr = &_snapshot)
-            rc = OtyrNative.GetSnapshot(session, snapshotPtr, _snapshot.StructSize, 0);
-        if (rc == OtyrNative.Ok && _snapshot.SnapshotNumber != _lastRenderedSnapshot)
+        fixed (OtyrNative.Snapshot* snapshotPtr = &_incomingSnapshot)
+            rc = OtyrNative.GetSnapshot(session, snapshotPtr, _incomingSnapshot.StructSize, 0);
+        if (rc == OtyrNative.Ok && _incomingSnapshot.SnapshotNumber != _lastRenderedSnapshot)
         {
-            _lastRenderedSnapshot = _snapshot.SnapshotNumber;
+            _lastRenderedSnapshot = _incomingSnapshot.SnapshotNumber;
 
-            if (_snapshot.SheetEpoch != _sheetEpoch)
-            {
-                _sheetEpoch = _snapshot.SheetEpoch;
-                FetchAtlases(session);
-            }
+            if (FlatEditorMode)
+                RecordEditorHistory(in _incomingSnapshot, paletteArgb);
 
-            UpdatePalette(paletteArgb);
-            // A real tick re-bands ground-class types per instance; drop
-            // their paused-preview overrides so banding wins.
-            foreach (ushort t in _editorGroundTemp)
-                _editorHeights.Remove(t);
-            _editorGroundTemp.Clear();
-            BuildSprites();
-            _background?.OnSnapshot(session, in _snapshot);
+            // A pause/menu publication can arrive just after rewind starts.
+            // Keep ingesting its cursor, but do not replace the selected
+            // historical presentation.
+            if (!EditorHistoryActive)
+                ApplySnapshot(session, in _incomingSnapshot, paletteArgb, historical: false);
 
             // Smoothed snapshot period for interpolation pacing.
             ulong now = Time.GetTicksUsec();
@@ -669,6 +691,107 @@ public unsafe partial class SnapshotLayer : Node3D
         }
 
         WriteTransforms();
+    }
+
+    private void RecordEditorHistory(in OtyrNative.Snapshot snapshot, uint[] paletteArgb)
+    {
+        if (_editorHistory.Count > 0)
+        {
+            OtyrNative.Snapshot previous = _editorHistory[^1].Snapshot;
+            // Never scrub across a level reset or sprite-bank epoch: the
+            // native atlas/map API exposes only the current epoch's assets.
+            if (snapshot.Episode != previous.Episode || snapshot.LevelTick < previous.LevelTick ||
+                snapshot.SheetEpoch != previous.SheetEpoch)
+            {
+                _editorHistory.Clear();
+                _editorHistoryCursor = -1;
+            }
+        }
+        _editorHistory.Add(new EditorHistoryFrame
+        {
+            Snapshot = snapshot,
+            Palette = (uint[])paletteArgb.Clone(),
+        });
+        if (_editorHistory.Count > EditorHistoryCapacity)
+        {
+            _editorHistory.RemoveAt(0);
+            if (_editorHistoryCursor > 0)
+                --_editorHistoryCursor;
+        }
+    }
+
+    private void ApplySnapshot(ulong session, in OtyrNative.Snapshot snapshot,
+                               uint[] paletteArgb, bool historical)
+    {
+        _snapshot = snapshot;
+        if (_snapshot.SheetEpoch != _sheetEpoch)
+        {
+            _sheetEpoch = _snapshot.SheetEpoch;
+            FetchAtlases(session);
+        }
+        UpdatePalette(paletteArgb);
+        foreach (ushort t in _editorGroundTemp)
+            _editorHeights.Remove(t);
+        _editorGroundTemp.Clear();
+        if (historical)
+        {
+            // Scrubbing is exact-frame inspection, not animated playback.
+            _cellCount = 0;
+            _prevCellCount = 0;
+            _cellLevelTick = 0;
+            _snapshotArrivalUsec = 0;
+        }
+        BuildSprites();
+        _background?.OnSnapshot(session, in _snapshot);
+    }
+
+    /// <summary>Move the editor timeline by simulation ticks. Negative enters
+    /// history; moving through the newest retained frame returns to live.</summary>
+    public bool EditorStepHistory(ulong session, int deltaTicks)
+    {
+        if (!FlatEditorMode || _editorHistory.Count < 2 || deltaTicks == 0)
+            return false;
+        int cursor = EditorHistoryActive ? _editorHistoryCursor : _editorHistory.Count - 1;
+        uint current = _editorHistory[cursor].Snapshot.LevelTick;
+        long target = (long)current + deltaTicks;
+        if (deltaTicks < 0)
+        {
+            while (cursor > 0 && _editorHistory[cursor - 1].Snapshot.LevelTick >= target)
+                --cursor;
+        }
+        else
+        {
+            uint newest = _editorHistory[^1].Snapshot.LevelTick;
+            if (target >= newest)
+            {
+                EditorResumeHistory(session);
+                return true;
+            }
+            while (cursor + 1 < _editorHistory.Count &&
+                   _editorHistory[cursor + 1].Snapshot.LevelTick <= target)
+                ++cursor;
+        }
+        if (cursor == _editorHistoryCursor)
+            return false;
+        _editorHistoryCursor = cursor;
+        EditorHistoryFrame frame = _editorHistory[cursor];
+        ApplySnapshot(session, in frame.Snapshot, frame.Palette, historical: true);
+        return true;
+    }
+
+    public void EditorResumeHistory(ulong session)
+    {
+        if (!EditorHistoryActive || _editorHistory.Count == 0)
+            return;
+        _editorHistoryCursor = -1;
+        EditorHistoryFrame frame = _editorHistory[^1];
+        ApplySnapshot(session, in frame.Snapshot, frame.Palette, historical: true);
+    }
+
+    public void EditorClearHistory()
+    {
+        _editorHistory.Clear();
+        _editorHistoryCursor = -1;
     }
 
     private void FetchAtlases(ulong session)
@@ -793,6 +916,8 @@ public unsafe partial class SnapshotLayer : Node3D
         public bool HasPrev;
         public ushort EntityType;  // enemies: eDat index (height editor)
         public byte AssemblyId;    // enemies: native linknum; 0 = standalone
+        public byte Category;
+        public int CastFrom;       // >=0: virtual-sun shadow of this cell
         public bool SeamGuard;     // connected composite: conservative shared edge
     }
 
@@ -819,6 +944,15 @@ public unsafe partial class SnapshotLayer : Node3D
 
     private void BuildSprites()
     {
+        if (_snapshot.Episode != 0 && _snapshot.Episode != _lastLoggedEpisode)
+        {
+            _lastLoggedEpisode = _snapshot.Episode;
+            int classified = _snapshot.Episode < _semanticCountByEpisode.Length
+                ? _semanticCountByEpisode[_snapshot.Episode] : 0;
+            GD.Print($"OpenTyrianVR: height semantics episode {_snapshot.Episode}: " +
+                     $"{classified} classified; Episode-1 fine heights " +
+                     $"{(_snapshot.Episode == 1 ? "enabled" : "disabled")}");
+        }
         // The host exposes the newest snapshot rather than a queue.  A slow
         // render frame can therefore skip one or more 35 Hz publications.
         // Scale rigid multi-cell pairing by the actual tick gap; after a very
@@ -854,10 +988,88 @@ public unsafe partial class SnapshotLayer : Node3D
                 _prevRuns.TryAdd(source, (start, i - start));
         }
         _surfaceBySource.Clear();
+        _groundAssemblySources.Clear();
 
         fixed (OtyrNative.Snapshot* snapshot = &_snapshot)
         {
             var sprites = (OtyrNative.SnapshotSprite*)snapshot->SpritesRaw;
+
+            // First establish CONNECTED assembly semantics before emitting
+            // any cells. Link numbers are reusable group ids, so spatially
+            // separate formations with the same number must not share a
+            // surface. This is the tank-boss case: classify the connected
+            // machine once, not each turret/body independently.
+            for (uint i = 0; i < snapshot->SpriteCount; i++)
+            {
+                ref readonly var sprite = ref sprites[i];
+                _spriteAssemblyParent[i] = (int)i;
+                bool valid = sprite.AssemblyId != 0 && sprite.SourceId != OtyrNative.NoSource &&
+                    sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB && sprite.Index != 0;
+                _spriteAssemblyValid[i] = valid;
+                if (!valid)
+                    continue;
+                bool big = sprite.Kind == 1;
+                float cx = sprite.X + (big ? OtyrNative.SheetCellW : OtyrNative.SheetCellW / 2f);
+                float cy = sprite.Y + (big ? OtyrNative.SheetCellH : OtyrNative.SheetCellH / 2f);
+                cx -= _snapshot.BandParallax(sprite.Category);
+                _spriteAssemblyCenter[i] = new Vector2(cx, cy);
+                _spriteAssemblyHalf[i] = big
+                    ? new Vector2(OtyrNative.SheetCellW, OtyrNative.SheetCellH)
+                    : new Vector2(OtyrNative.SheetCellW / 2f, OtyrNative.SheetCellH / 2f);
+            }
+            int FindSpriteRoot(int item)
+            {
+                int root = item;
+                while (_spriteAssemblyParent[root] != root)
+                    root = _spriteAssemblyParent[root];
+                while (_spriteAssemblyParent[item] != item)
+                {
+                    int next = _spriteAssemblyParent[item];
+                    _spriteAssemblyParent[item] = root;
+                    item = next;
+                }
+                return root;
+            }
+            const float linkedGap = 32f;
+            for (uint i = 0; i < snapshot->SpriteCount; i++)
+            {
+                if (!_spriteAssemblyValid[i])
+                    continue;
+                for (uint j = i + 1; j < snapshot->SpriteCount; j++)
+                {
+                    if (!_spriteAssemblyValid[j] || sprites[i].AssemblyId != sprites[j].AssemblyId)
+                        continue;
+                    Vector2 delta = (_spriteAssemblyCenter[i] - _spriteAssemblyCenter[j]).Abs();
+                    Vector2 reach = _spriteAssemblyHalf[i] + _spriteAssemblyHalf[j];
+                    bool joined = (delta.X < reach.X && delta.Y <= reach.Y + linkedGap) ||
+                                  (delta.Y < reach.Y && delta.X <= reach.X + linkedGap);
+                    if (joined)
+                        _spriteAssemblyParent[FindSpriteRoot((int)j)] = FindSpriteRoot((int)i);
+                }
+            }
+            Array.Clear(_spriteAssemblyGround);
+            Array.Clear(_spriteAssemblySurface);
+            for (uint i = 0; i < snapshot->SpriteCount; i++)
+            {
+                if (!_spriteAssemblyValid[i])
+                    continue;
+                int root = FindSpriteRoot((int)i);
+                _spriteAssemblyGround[root] |= sprites[i].Aux == 3 ||
+                    SemanticFor(_snapshot.Episode, sprites[i].EntityType) == HeightSemantic.Surface;
+                float surface = _background?.SurfaceZAt(
+                    new Vector2(_spriteAssemblyCenter[i].X - 24f, _spriteAssemblyCenter[i].Y)) ?? 0f;
+                _spriteAssemblySurface[root] = Math.Max(_spriteAssemblySurface[root], surface);
+            }
+            for (uint i = 0; i < snapshot->SpriteCount; i++)
+            {
+                if (!_spriteAssemblyValid[i])
+                    continue;
+                int root = FindSpriteRoot((int)i);
+                if (!_spriteAssemblyGround[root])
+                    continue;
+                _groundAssemblySources.Add(sprites[i].SourceId);
+                _surfaceBySource[sprites[i].SourceId] = _spriteAssemblySurface[root];
+            }
 
             for (uint i = 0; i < snapshot->SpriteCount; i++)
             {
@@ -883,6 +1095,10 @@ public unsafe partial class SnapshotLayer : Node3D
 
                 if (sprite.SheetId >= OtyrNative.SheetCount || sprite.Index == 0)
                     continue;
+                // Fixed-offset legacy player/projectile shadow records are
+                // superseded by the height-driven virtual-sun projection.
+                if (sprite.Category == (byte)OtyrNative.Category.Shadow)
+                    continue;
                 // Shadows and baked structures render in 3D too (nothing
                 // dynamic stays in the frame): shadows as translucent dark
                 // quads, structures as map-locked coplanar cells.
@@ -897,7 +1113,44 @@ public unsafe partial class SnapshotLayer : Node3D
         }
 
         StabilizeRigidAssemblies();
+        AddVirtualSunShadows();
         UpdateApronGhosts();
+    }
+
+    private const float VirtualSunShadowXPerMeter = 100f;  // .04 m -> 4 px right
+    private const float VirtualSunShadowYPerMeter = 250f;  // .04 m -> 10 px down
+    private const float VirtualShadowLift = 0.00045f;
+    public int VirtualShadowCount { get; private set; }
+
+    /// <summary>Create silhouette casters once per snapshot. Their exact
+    /// projection is resolved in WriteTransforms so interpolation and editor
+    /// height changes update the shadow immediately.</summary>
+    private void AddVirtualSunShadows()
+    {
+        VirtualShadowCount = 0;
+        int casterCount = _cellCount;
+        for (int i = 0; i < casterCount && _cellCount < _cells.Length; i++)
+        {
+            ref readonly RenderCell caster = ref _cells[i];
+            bool casterCategory = caster.Category <= (byte)OtyrNative.Category.EnemyGroundB ||
+                                  caster.Category == (byte)OtyrNative.Category.Player ||
+                                  caster.Category == (byte)OtyrNative.Category.Sidekick;
+            if (!casterCategory || caster.SheetId < 0 || caster.SheetId >= OtyrNative.SheetCount)
+                continue;
+
+            ref RenderCell shadow = ref _cells[_cellCount];
+            shadow = caster;
+            shadow.SheetId = ShadowLayerBase + caster.SheetId;
+            shadow.FilterColor = 168;  // multiply destination by about 0.66
+            shadow.EntityType = 0;
+            shadow.AssemblyId = 0;
+            shadow.Category = (byte)OtyrNative.Category.Shadow;
+            shadow.CastFrom = i;
+            shadow.DecalOrder = -2f;  // generated-shadow sentinel
+            _cellSource[_cellCount] = OtyrNative.NoSource;
+            ++_cellCount;
+            ++VirtualShadowCount;
+        }
     }
 
     private static Vector2 CellSizePx(in RenderCell cell) =>
@@ -1122,6 +1375,8 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.EntityType = 0;  // reused array slot: clear stale enemy types
         cell.Flags = 0;
         cell.FilterColor = 0;
+        cell.Category = sprite.Category;
+        cell.CastFrom = -1;
         cell.Z = BandHeight[(byte)OtyrNative.Category.Superpixel] + recordIndex * OrderBias;
         cell.CurrPx = new Vector2(sprite.X, sprite.Y);
         cell.PrevPx = cell.CurrPx;
@@ -1135,7 +1390,15 @@ public unsafe partial class SnapshotLayer : Node3D
     // the air classes are absolute lane heights; unlisted types keep the
     // legacy category band.  Loaded once; classes resolve to heights here.
     private readonly System.Collections.Generic.Dictionary<ushort, float> _typeHeights = new();
+    // Explicit numeric heights are deliberate refinements/exceptions. Keep
+    // their provenance so low grounded values can become offsets from an
+    // assembly's sampled surface without flattening high flying exceptions.
+    private readonly System.Collections.Generic.HashSet<ushort> _explicitHeightTypes = new();
     private readonly System.Collections.Generic.Dictionary<string, float> _classHeights = new();
+    private enum HeightSemantic : byte { Unknown, Surface, Air }
+    private readonly System.Collections.Generic.Dictionary<int, HeightSemantic> _heightSemantics = new();
+    private readonly int[] _semanticCountByEpisode = new int[5];
+    private byte _lastLoggedEpisode;
     private float _groundClassOffset = -1f;  // <0: "ground" class absent
 
     /// <summary>Class name -> height table from hover_heights.json (editor).</summary>
@@ -1192,7 +1455,10 @@ public unsafe partial class SnapshotLayer : Node3D
             {
                 Variant height = entry["height"];
                 if (height.VariantType is Variant.Type.Int or Variant.Type.Float)
+                {
                     _typeHeights[type] = (float)height.AsDouble();
+                    _explicitHeightTypes.Add(type);
+                }
                 else
                     GD.PushWarning($"OpenTyrianVR: hover height type '{key}' has a nonnumeric height; skipping");
             }
@@ -1212,6 +1478,66 @@ public unsafe partial class SnapshotLayer : Node3D
             }
         }
         GD.Print($"OpenTyrianVR: hover heights loaded ({_typeHeights.Count} types)");
+    }
+
+    private static int SemanticKey(byte episode, ushort type) => (episode << 16) | type;
+
+    private HeightSemantic SemanticFor(byte episode, ushort type) =>
+        _heightSemantics.TryGetValue(SemanticKey(episode, type), out HeightSemantic semantic)
+            ? semantic : HeightSemantic.Unknown;
+
+    private void LoadHeightSemantics()
+    {
+        const string path = "res://height_semantics.json";
+        if (!FileAccess.FileExists(path))
+        {
+            GD.Print("OpenTyrianVR: no episode height semantics; authored E1 heights only");
+            return;
+        }
+        Variant parsed = Json.ParseString(FileAccess.GetFileAsString(path));
+        if (parsed.VariantType != Variant.Type.Dictionary)
+        {
+            GD.PushWarning("OpenTyrianVR: height_semantics.json did not parse; ignoring");
+            return;
+        }
+        var root = parsed.AsGodotDictionary();
+        if (!root.TryGetValue("episodes", out Variant episodesValue) ||
+            episodesValue.VariantType != Variant.Type.Dictionary)
+        {
+            GD.PushWarning("OpenTyrianVR: height_semantics.json needs 'episodes'; ignoring");
+            return;
+        }
+        var episodes = episodesValue.AsGodotDictionary();
+        foreach (Variant episodeKey in episodes.Keys)
+        {
+            if (!byte.TryParse(episodeKey.AsString(), out byte episode) ||
+                episodes[episodeKey].VariantType != Variant.Type.Dictionary)
+                continue;
+            var types = episodes[episodeKey].AsGodotDictionary();
+            foreach (Variant typeKey in types.Keys)
+            {
+                if (!ushort.TryParse(typeKey.AsString(), out ushort type) ||
+                    types[typeKey].VariantType != Variant.Type.Dictionary)
+                    continue;
+                var entry = types[typeKey].AsGodotDictionary();
+                if (!entry.TryGetValue("class", out Variant classValue) ||
+                    classValue.VariantType != Variant.Type.String)
+                    continue;
+                HeightSemantic semantic = classValue.AsString() switch
+                {
+                    "surface" => HeightSemantic.Surface,
+                    "air" => HeightSemantic.Air,
+                    _ => HeightSemantic.Unknown,
+                };
+                if (semantic != HeightSemantic.Unknown)
+                {
+                    _heightSemantics[SemanticKey(episode, type)] = semantic;
+                    if (episode < _semanticCountByEpisode.Length)
+                        _semanticCountByEpisode[episode]++;
+                }
+            }
+        }
+        GD.Print($"OpenTyrianVR: episode height semantics loaded ({_heightSemantics.Count} placements)");
     }
 
     // --- Height editor support (OTYR_HEIGHT_EDITOR) --------------------
@@ -1636,8 +1962,15 @@ public unsafe partial class SnapshotLayer : Node3D
     // multi-cell structures across heights when they straddled a platform
     // edge (4 cells floating, 2 on the ground).
     private readonly System.Collections.Generic.Dictionary<ushort, float> _surfaceBySource = new();
+    private readonly System.Collections.Generic.HashSet<ushort> _groundAssemblySources = new();
+    private readonly int[] _spriteAssemblyParent = new int[OtyrNative.SnapshotSpriteMax];
+    private readonly bool[] _spriteAssemblyValid = new bool[OtyrNative.SnapshotSpriteMax];
+    private readonly bool[] _spriteAssemblyGround = new bool[OtyrNative.SnapshotSpriteMax];
+    private readonly float[] _spriteAssemblySurface = new float[OtyrNative.SnapshotSpriteMax];
+    private readonly Vector2[] _spriteAssemblyCenter = new Vector2[OtyrNative.SnapshotSpriteMax];
+    private readonly Vector2[] _spriteAssemblyHalf = new Vector2[OtyrNative.SnapshotSpriteMax];
 
-    private float SurfaceForSource(ushort sourceId, float centerX, float centerY)
+    private float SurfaceForEntity(ushort sourceId, float centerX, float centerY)
     {
         if (sourceId != OtyrNative.NoSource && _surfaceBySource.TryGetValue(sourceId, out float cached))
             return cached;
@@ -1730,6 +2063,8 @@ public unsafe partial class SnapshotLayer : Node3D
         // Repurposed for the old layer: quad scale in pixels (fits a byte).
         cell.Flags = (byte)size.X;
         cell.FilterColor = (byte)size.Y;
+        cell.Category = sprite.Category;
+        cell.CastFrom = -1;
         cell.Z = BandHeight[(byte)OtyrNative.Category.PlayerShot] + recordIndex * OrderBias;
         cell.CurrPx = new Vector2(sprite.X + size.X / 2f, sprite.Y + size.Y / 2f);
         cell.PrevPx = cell.CurrPx;
@@ -1768,6 +2103,8 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.FilterColor = (byte)size.Y;
         cell.Aux0 = mode + (sprite.FilterColor & 0x0f) * 4;
         cell.Aux1 = sprite.Aux;  // signed value shift, as a byte
+        cell.Category = sprite.Category;
+        cell.CastFrom = -1;
         // Drop shadows live on their own sub-plane well below the glyphs:
         // a shadow one OrderBias step under its glyph quantized to the SAME
         // depth, and the glyph/shadow nodes have no stable draw order, so
@@ -1812,6 +2149,8 @@ public unsafe partial class SnapshotLayer : Node3D
         // quad; the record flags only use bits 1/2/4.
         cell.Flags = (byte)(sprite.Flags | (big ? 8 : 0));
         cell.FilterColor = sprite.FilterColor;
+        cell.Category = sprite.Category;
+        cell.CastFrom = -1;
         bool isEnemy = sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB;
         bool isShadow = sprite.Category == (byte)OtyrNative.Category.Shadow;
         cell.EntityType = isEnemy ? sprite.EntityType : (ushort)0;
@@ -1819,9 +2158,46 @@ public unsafe partial class SnapshotLayer : Node3D
         float band;
         float decalOrder = 0f;
         float authored = 0f;
-        bool hasAuthored = isEnemy && sprite.EntityType != 0 &&
+        // hover_heights.json is the hand-tuned Episode 1 fine-height table.
+        // Type ids are episode-local, so it must never leak into E2-E4.
+        bool episodeOne = _snapshot.Episode == 1;
+        bool hasAuthored = isEnemy && episodeOne &&
             _typeHeights.TryGetValue(sprite.EntityType, out authored);
-        if (hasAuthored && !float.IsNegativeInfinity(authored))
+        bool explicitHeight = isEnemy && episodeOne &&
+            _explicitHeightTypes.Contains(sprite.EntityType);
+        HeightSemantic semantic = isEnemy
+            ? SemanticFor(_snapshot.Episode, sprite.EntityType)
+            : HeightSemantic.Unknown;
+        if (semantic == HeightSemantic.Surface &&
+            !(explicitHeight && hasAuthored && !float.IsNegativeInfinity(authored) && authored < 0.015f))
+        {
+            authored = float.NegativeInfinity;
+            hasAuthored = true;
+        }
+        else if (semantic == HeightSemantic.Air &&
+                 (!hasAuthored || float.IsNegativeInfinity(authored)))
+        {
+            authored = _classHeights.TryGetValue("air-mid", out float airMid) ? airMid : 0.0355f;
+            hasAuthored = true;
+        }
+        bool weakGroundSignal = isEnemy &&
+            (sprite.Aux == 3 || _groundAssemblySources.Contains(sprite.SourceId));
+        bool authoredSurface = hasAuthored && float.IsNegativeInfinity(authored);
+        bool semanticGround = semantic == HeightSemantic.Surface ||
+            (semantic == HeightSemantic.Unknown && weakGroundSignal && authoredSurface);
+        // Low explicit values are hand-tuned offsets above the original
+        // ground plane.  Preserve that offset when the same building/tank
+        // is instantiated on an aerial platform.  High explicit values are
+        // deliberate flying exceptions (type 15 is the E1 example).
+        bool surfaceRelativeExplicit = semanticGround && explicitHeight &&
+            hasAuthored && !float.IsNegativeInfinity(authored) && authored < 0.015f;
+        // Native metadata corroborates a surface placement; it does not
+        // overrule an authored air class.  Several E1 flying component
+        // families intentionally use the ground-explosion palette.
+        bool automaticSemanticSurface = semanticGround &&
+            (!explicitHeight || authoredSurface || surfaceRelativeExplicit);
+        bool staticEnemy = isEnemy && (sprite.Flags & 32) != 0;
+        if (hasAuthored && !float.IsNegativeInfinity(authored) && !automaticSemanticSurface)
         {
             // Authored hover height (Stage B): an explicit table/class
             // height wins EVEN over decal banding -- the under-platform
@@ -1830,6 +2206,19 @@ public unsafe partial class SnapshotLayer : Node3D
             // makes editor nudges apply to statics, which are the objects
             // most worth tuning.)
             band = authored;
+        }
+        else if (automaticSemanticSurface)
+        {
+            float below = SurfaceForEntity(sprite.SourceId, centerX, centerY);
+            float surface = below > 0f ? below : BackgroundLayer.GroundZ;
+            if (surfaceRelativeExplicit)
+                band = surface + (authored - BackgroundLayer.GroundZ);
+            else if (staticEnemy)
+                band = surface;
+            else
+                band = surface + Math.Max(_groundClassOffset, 0.002f);
+            if (staticEnemy)
+                decalOrder = (recordIndex + 1f) / OtyrNative.SnapshotSpriteMax;
         }
         else if (isEnemy && (sprite.Aux == 1 || sprite.Aux == 2 ||
                              ((sprite.Flags & 32) != 0 && hasAuthored)))
@@ -1852,7 +2241,7 @@ public unsafe partial class SnapshotLayer : Node3D
             // platform height while their ground-band twins sat on the
             // ground (types 237/238, snap-back on unpause).  Unauthored
             // top statics keep the floor (legacy paint order).
-            float below = SurfaceForSource(sprite.SourceId, centerX, centerY);
+            float below = SurfaceForEntity(sprite.SourceId, centerX, centerY);
             band = sprite.Category == (byte)OtyrNative.Category.EnemyTop && !hasAuthored
                 ? Math.Max(below, BackgroundLayer.PlatformZ)
                 : (below > 0f ? below : BackgroundLayer.GroundZ);
@@ -1872,7 +2261,7 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             // "ground" class for MOVERS: the surface actually beneath
             // (terrain or platform) plus a small offset.
-            float below = SurfaceForSource(sprite.SourceId, centerX, centerY);
+            float below = SurfaceForEntity(sprite.SourceId, centerX, centerY);
             band = (below > 0f ? below : 0f) + Math.Max(_groundClassOffset, 0.002f);
         }
         else
@@ -1908,6 +2297,7 @@ public unsafe partial class SnapshotLayer : Node3D
         bool authoredFloat = hasAuthored && !float.IsNegativeInfinity(authored);
         if (isExplosion || (isEnemy && sprite.Aux == 1) ||
             (isEnemy && sprite.Aux == 2 && !authoredFloat) ||
+            (automaticSemanticSurface && staticEnemy) ||
             (isEnemy && (sprite.Flags & 32) != 0 && hasAuthored && !authoredFloat))
         {
             if (isExplosion)
@@ -1950,6 +2340,19 @@ public unsafe partial class SnapshotLayer : Node3D
             ref readonly RenderCell cell = ref _cells[i];
 
             Vector2 px = cell.HasPrev ? cell.PrevPx.Lerp(cell.CurrPx, t) : cell.CurrPx;
+            float castShadowZ = 0f;
+            if (cell.CastFrom >= 0)
+            {
+                ref readonly RenderCell caster = ref _cells[cell.CastFrom];
+                Vector2 casterPx = caster.HasPrev
+                    ? caster.PrevPx.Lerp(caster.CurrPx, t) : caster.CurrPx;
+                float casterZ = caster.Z;
+                if (caster.EntityType != 0 &&
+                    _editorHeights.TryGetValue(caster.EntityType, out float editedCasterZ))
+                    casterZ = editedCasterZ;
+                if (!ProjectVirtualSunShadow(casterPx, casterZ, out px, out castShadowZ))
+                    continue;
+            }
 
             // Every terrain decal receives the exact sub-tick motion of its
             // underlying map layer. Ground, structures and platforms now all
@@ -2004,6 +2407,8 @@ public unsafe partial class SnapshotLayer : Node3D
             // otherwise gained the lift back and hid at the platform plane
             // until unpause re-banded it).
             float z = cell.Z;
+            if (cell.CastFrom >= 0)
+                z = castShadowZ;
             float editH = 0f;
             bool overridden = cell.EntityType != 0 &&
                 _editorHeights.TryGetValue(cell.EntityType, out editH);
@@ -2052,5 +2457,35 @@ public unsafe partial class SnapshotLayer : Node3D
         VisibleInstanceCount = 0;
         for (int id = 0; id < LayerCount; id++)
             VisibleInstanceCount += _instanceCount[id];
+    }
+
+    private bool ProjectVirtualSunShadow(Vector2 casterPx, float casterZ,
+                                         out Vector2 shadowPx, out float shadowZ)
+    {
+        shadowPx = casterPx;
+        float surface = _background?.SurfaceZAt(
+            casterPx - new Vector2(24f, 0f), includeClouds: true) ?? BackgroundLayer.GroundZ;
+        if (surface <= 0f)
+            surface = BackgroundLayer.GroundZ;
+
+        // Re-sample after projection: a flyer can cast from cloud to platform
+        // or from a platform edge onto the deep ground.
+        for (int pass = 0; pass < 2; pass++)
+        {
+            float gap = casterZ - surface;
+            if (gap <= 0.0015f)
+            {
+                shadowZ = 0f;
+                return false;
+            }
+            shadowPx = casterPx + new Vector2(
+                gap * VirtualSunShadowXPerMeter,
+                gap * VirtualSunShadowYPerMeter);
+            float sampled = _background?.SurfaceZAt(
+                shadowPx - new Vector2(24f, 0f), includeClouds: true) ?? BackgroundLayer.GroundZ;
+            surface = sampled > 0f ? sampled : BackgroundLayer.GroundZ;
+        }
+        shadowZ = surface + VirtualShadowLift;
+        return true;
     }
 }

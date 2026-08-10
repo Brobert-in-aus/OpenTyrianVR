@@ -60,18 +60,34 @@ head-motion distortion. A sustained 0.1.5 pass validated pause/resume,
 in-game-menu transitions, platform-rider stability, 4x MSAA, and ample
 performance headroom; review-marker halos are editor-only.
 
-Version 0.1.13 (code 14) is the current validation build. It requests 90 Hz,
+Version 0.1.16 (code 17) is the current validation build. It requests 90 Hz,
 restores the de-parallax-expanded -24..288 horizontal playfield, keeps the
 vertical crop at 0..184, render-interpolates all terrain layers, stabilizes
 linked composite enemies across authored transparent gaps, and keeps known
-cloud layers translucent when level events change their draw order. The
-in-headset checklist is the authoritative pass/fail gate:
+cloud layers translucent when level events change their draw order. Clouds
+are capped below aerial platforms; surface objects select ground versus
+platform per instance; connected boss components share one surface while
+retaining their authored stack offsets. ABI v26 also carries episode identity
+so Episode 1 type heights cannot leak into Episodes 2-4; conservative
+episode-local semantics cover only exact or validated close-family matches.
+The in-headset checklist is the authoritative pass/fail gate:
 
 - the ship reaches both cropped horizontal edges;
 - enemies cross the hard vertical playfield edges cleanly, with no fade;
 - terrain below floating platforms scrolls without judder;
 - fast stacks and the small level-1 boss remain welded;
-- clouds remain translucent through draw-order and height changes;
+- clouds remain translucent and below level-1 aerial platforms;
+- ground/platform objects and flying enemies occupy the intended planes;
+- the stacked tank boss keeps its body/turret offsets on one shared surface;
+- Episodes 2-4 show no Episode 1 height leakage, and classified later-episode
+  objects occupy the intended surface/air planes;
+- height-driven entity shadows move farther from higher casters, and elevated
+  clouds/platforms cast stable silhouettes without floating across transparent
+  holes;
+- storm/flip effects retain the hybrid scene, while lava/blur/iced/searchlight
+  transitions enter and leave the complete legacy fallback cleanly;
+- HUD, pause, death, end-level, and story/lifecycle screens remain complete and
+  readable;
 - motion remains smooth at the selected 90 Hz refresh rate.
 
 Unchecked checklist entries count as failures. Quest automation remains

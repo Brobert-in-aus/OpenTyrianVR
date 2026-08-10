@@ -539,7 +539,11 @@
   nudge (Shift coarse), 1-8 class keys, live even while paused, P
   pause, N=DEBUG_SKIP past bosses (native, armed only with
   OTYR_INVULN), S saves to hover_heights.json.  Both envs are sim
-  mutations: never in normal sessions.  Shot bands moved 0.050 ->
+  mutations: never in normal sessions.  The editor now retains 30 seconds of
+  complete snapshots plus palettes: [ and ] scrub by one second (Shift = one
+  35 Hz tick), Backspace returns live, and entering history automatically
+  pauses the session so rapid objects remain pickable. History resets at map/
+  atlas epoch boundaries and is absent from normal/Quest sessions. Shot bands moved 0.050 ->
   0.041 per the hierarchy.  Hash gate bit-identical (77,386 ticks,
   solo rerun -- two more concurrent-run false alarms reinforced the
   rule: NEVER run the gate while another game instance is active).  NEW (confirmed in code): statics
@@ -602,6 +606,28 @@
   edge-sample extension on each side of joined quads. This covers intrinsic
   2x2s, linked multi-slot bosses/stacks, and same-source multi-quad ships
   without merging unrelated wave members that merely share a link number.
+- Episode-aware height semantics (0.1.15, ABI v26): snapshots export the active
+  episode because enemy type ids are episode-local. The generated broad-layer
+  table transfers validated Episode 1 surface/air placements only through exact
+  static-data matches and one bounded local-family hop; uncertain later-episode
+  types keep their runtime category band instead of inheriting an E1 guess.
+  A complete 53,338-event sweep over all 62 playable Episode 1-4 level records
+  adds one non-recursive same-tick/same-link assembly pass (88/88 manual
+  leave-one-out agreement), classifying 22 more E1 and 14 more E3 boss/stack
+  components. Legacy ground/sky event slots scored only 69/97 and are not
+  misused as semantic heights.
+- Virtual-sun shadows + Phase 4 coverage (0.1.16): the host no longer renders
+  Tyrian's fixed 10-pixel player/projectile shadow records. Sprite silhouettes
+  project down/right in proportion to their authored height and re-sample the
+  receiving ground/cloud/platform surface; elevated cloud/platform map art
+  casts a matching multiplicative silhouette onto the ground. Palette art
+  remains unlit. The campaign event audit covers all 53,338 events in 62
+  playable E1-E4 level records: water storm and vertical mirror remain native
+  hybrid-3D effects; composited lava/blur/iced/searchlight filters switch the
+  complete tick to the retained legacy frame. All observed effect ids
+  (1,2,3,4,5,6,9) are covered and unknown ids fail the audit. Presentation-mode
+  transitions now log at runtime. Headset gates remain shadow landing through
+  transparency holes, multiview consistency, effect transitions, and 90 Hz.
 - Quest refresh follow-up (0.1.9): Android OpenXR requests 90 Hz at startup,
   reapplies the request after the first tracked frames, and logs available,
   requested, and actual refresh rates. XR performance telemetry now treats

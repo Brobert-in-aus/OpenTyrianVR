@@ -11,7 +11,7 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 25;
+    public const uint AbiVersion = 26;
 
     // Palette index of the suppressed background fill (the frame color key);
     // index-0 black in sprite/HUD art stays opaque.
@@ -140,7 +140,7 @@ public static unsafe class OtyrNative
         // Bands 0/1 ground A/B, 2 sky, 3 top; layers mirror the bg draws.
         public fixed sbyte BandParallaxRaw[4];
         public fixed sbyte LayerParallaxRaw[BgLayerCount];
-        public sbyte ParallaxPad;
+        public byte Episode;  // active episode 1..4; EntityType is local to it (v26)
 
         public BackgroundDraw Background(int layer) => layer switch
         {

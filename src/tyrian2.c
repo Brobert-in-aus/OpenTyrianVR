@@ -216,7 +216,13 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset,
 		otyr_enemy_moved[i] = 1;
 	}
 
-	Uint8 terrain_art = enemy[i].enemyground ? 1 : 0;
+	/* Preserve the authored ground-EXPLOSION signal separately from the
+	   visual opaque-cell fallback. Value 3 is corroborating evidence only:
+	   several flying multipart families deliberately use this palette, so
+	   the host combines it with episode-local semantic metadata. Value 1
+	   remains "looks like terrain" for otherwise static art, and value 2
+	   remains the runtime surface-rider inference. */
+	Uint8 terrain_art = enemy[i].enemyground ? 3 : 0;
 	if (!terrain_art && !otyr_enemy_moved[i])
 	{
 		if (enemy[i].size == 1)
