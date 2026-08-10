@@ -4,7 +4,8 @@
 # and writes godot\hover_heights.json for the host.  The output is a FIRST
 # PASS -- docs\HOVER_HEIGHTS.md describes the manual assignment workflow.
 $ErrorActionPreference = 'Stop'
-Set-Location (Join-Path $PSScriptRoot '..')
+Push-Location (Join-Path $PSScriptRoot '..')
+try {
 
 $edat = Import-Csv captures\edat_dump.csv | Where-Object { $_.episode -eq '1' }
 $seen = @{}
@@ -56,3 +57,6 @@ $out = [ordered]@{
 }
 $out | ConvertTo-Json -Depth 4 | Out-File godot\hover_heights.json -Encoding utf8
 "wrote godot\hover_heights.json ($($types.Count) types, $($seen.Count) demo-observed)"
+} finally {
+    Pop-Location
+}

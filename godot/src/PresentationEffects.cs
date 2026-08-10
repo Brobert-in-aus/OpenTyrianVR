@@ -34,7 +34,7 @@ public partial class PresentationEffects : MeshInstance3D
                     uniform int effect_mask = 0;
                     uniform float effect_time = 0.0;
                     uniform vec2 player_px = vec2(132.0, 140.0);
-                    uniform vec4 play_rect_px = vec4(-24.0, 0.0, 288.0, 184.0);
+                    uniform vec4 play_rect_px;
 
                     varying vec2 play_uv;
 
@@ -96,6 +96,9 @@ public partial class PresentationEffects : MeshInstance3D
             },
             RenderPriority = 120,
         };
+        _material.SetShaderParameter("play_rect_px", new Vector4(
+            PlayfieldGeometry.MinX, PlayfieldGeometry.MinY,
+            PlayfieldGeometry.MaxX, PlayfieldGeometry.MaxY));
         MaterialOverride = _material;
         Visible = false;
     }

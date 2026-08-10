@@ -60,7 +60,7 @@ head-motion distortion. A sustained 0.1.5 pass validated pause/resume,
 in-game-menu transitions, platform-rider stability, 4x MSAA, and ample
 performance headroom; review-marker halos are editor-only.
 
-Version 0.1.22 (code 23) is the current validation build. It requests 90 Hz,
+Version 0.1.23 (code 24) is the current validation build. It requests 90 Hz,
 crops terrain/backing/map shadows to the reachable 0..264 surface while
 retaining the ship-safe -25..288 sprite envelope, keeps the
 vertical crop at 0..184, render-interpolates all terrain layers, stabilizes
@@ -102,3 +102,8 @@ The check control cycles each entry through pass, fail, and unchecked; the
 navigation control advances separately. Unchecked therefore means untested,
 not failed. Quest automation remains install-and-report only: do not launch the
 application from build or deployment scripts.
+
+The 0.1.23 sweep also keeps the darkness/searchlight effect aligned with the
+ship-safe -25..288 sprite crop and corrects SDL's input/output device direction
+for Android route changes. Editor and regression launchers force dummy/muted
+audio and restore their caller's directory and environment when they finish.

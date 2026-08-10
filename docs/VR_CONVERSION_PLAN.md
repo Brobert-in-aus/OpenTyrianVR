@@ -660,6 +660,12 @@
   now enables the original music and sound mixer without adopting SDLActivity;
   `OTYR_MUTE=1` remains the mandatory silent path for automated test/export
   processes. The in-headset checklist verifies both music and effects.
+- Comprehensive regression sweep (0.1.23): the full host replay, 62-level
+  effect audit, warning-as-error managed build, and deterministic presentation
+  suite pass silently. Darkness now derives its mapping from the authoritative
+  -25..288 crop; Quest packaging corrects SDL's reversed input/output hot-plug
+  routes; the ABI-v26 ground observation mask is refreshed; and PowerShell
+  development tools no longer leak their working directory or audio settings.
 - Quest refresh follow-up (0.1.9): Android OpenXR requests 90 Hz at startup,
   reapplies the request after the first tracked frames, and logs available,
   requested, and actual refresh rates. XR performance telemetry now treats
