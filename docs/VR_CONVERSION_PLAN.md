@@ -645,6 +645,12 @@
   effects pass the deterministic hybrid regression together. The Quest
   checklist reflects the native effect path and records pass, fail, and
   unchecked separately so an untested item cannot be mistaken for a failure.
+- Ship-safe crop + explicit elevated ordering (0.1.20): the horizontal crop is
+  -25..288, the exact full-quad envelope of every ship variant at the legal
+  16/280 centres. Cloud identity now retains height as well as translucency
+  across legacy draw-order events. Transparent passes use an explicit ground,
+  map-shadow, cloud, platform order so a floating platform cannot receive its
+  own ground-projected multiply shadow.
 - Quest refresh follow-up (0.1.9): Android OpenXR requests 90 Hz at startup,
   reapplies the request after the first tracked frames, and logs available,
   requested, and actual refresh rates. XR performance telemetry now treats

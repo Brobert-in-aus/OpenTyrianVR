@@ -7,7 +7,11 @@ namespace OpenTyrianVR;
 /// </summary>
 public static class PlayfieldGeometry
 {
-    public const float MinX = -24f;
+    // The legal ship centres are 16..280. Split-wing variants emit a 24 px
+    // left section at playerX-17, then frame rebasing subtracts 24: the
+    // leftmost quad begins at -25. On the right the last covered pixel is
+    // 287, so the exclusive boundary remains 288.
+    public const float MinX = -25f;
     public const float MaxX = 288f;
     public const float MinY = 0f;
     public const float MaxY = 184f;

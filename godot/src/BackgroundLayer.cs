@@ -13,7 +13,7 @@ namespace OpenTyrianVR;
 /// enemy records receive the identical sub-tick offset as their underlying
 /// layer, preserving pixel lock while removing the 35 Hz ground judder.
 ///
-/// Each layer is a single quad over the 312x184 playable surface; the fragment
+/// Each layer is a single quad over the ship-safe 313x184 surface; the fragment
 /// shader resolves frame pixel -> map tile -> shape pixel -> palette, with a
 /// seam-aware bilinear blend in post-palette RGB for anti-aliasing.
 /// </summary>
@@ -66,12 +66,23 @@ public unsafe partial class BackgroundLayer : Node3D
             _cloudQuad.Position = new Vector3(p.X, p.Y, WaterCloudHeight);
         }
     }
-    private static float LayerHeight(int layer, byte overMode) => layer switch
+    private static float RawLayerHeight(int layer, byte overMode) => layer switch
     {
         0 => GroundZ,
         1 => overMode == 1 ? CloudLowZ : -0.0004f,
         _ => overMode == 2 ? CloudHighZ : PlatformZ,
     };
+
+    // Draw-order events may change OverMode without changing the map art.
+    // Once this epoch proves a layer is cloud art, retain its cloud plane as
+    // well as its alpha; reverting only the Z put translucent clouds beneath
+    // the ground after the first order transition on Quest.
+    private float LayerHeight(int layer, byte overMode)
+    {
+        if (_cloudLayer[layer])
+            return layer == 1 ? CloudLowZ : CloudHighZ;
+        return RawLayerHeight(layer, overMode);
+    }
 
     private OtyrNative.BackgroundMap _map;  // fetch scratch (57 KB)
     private uint _mapEpoch;
@@ -319,7 +330,10 @@ public unsafe partial class BackgroundLayer : Node3D
             _castShadowMaterials[l] = new ShaderMaterial
             {
                 Shader = castShadowShader,
-                RenderPriority = 1,
+                // Ground/coplanar art paints at -20..-18, then its shadow,
+                // then elevated clouds and platforms. A positive priority
+                // painted the multiply silhouette on top of its own caster.
+                RenderPriority = -10,
             };
             _castShadowMaterials[l].SetShaderParameter("quad_px0", new Vector2(CanvasX0, CanvasY0));
             _castShadowMaterials[l].SetShaderParameter("quad_size_px", new Vector2(CanvasW, CanvasH));
@@ -346,7 +360,7 @@ public unsafe partial class BackgroundLayer : Node3D
         _cloudMaterial.SetShaderParameter("alpha_mul", 0.82f);
         _cloudMaterial.SetShaderParameter("quad_px0", new Vector2(CanvasX0, CanvasY0));
         _cloudMaterial.SetShaderParameter("quad_size_px", new Vector2(CanvasW, CanvasH));
-        _cloudMaterial.RenderPriority = 5;  // cloud look: draw late, translucent
+        _cloudMaterial.RenderPriority = -5;  // after ground shadows, before platforms
         _cloudQuad = new MeshInstance3D
         {
             Name = "WaterClouds",
@@ -410,11 +424,11 @@ public unsafe partial class BackgroundLayer : Node3D
             _currDraw[l] = snapshot.Background(l);
             _quads[l].Visible = _currDraw[l].Drawn != 0;
 
-            float z = LayerHeight(l, _currDraw[l].OverMode);
+            float rawZ = RawLayerHeight(l, _currDraw[l].OverMode);
             // Cloud-height layers get an extra transparency nudge on top of
             // the legacy blend flag (user-tuned, 2026-07-12: the kept
             // translucent look, a tad lighter).
-            bool cloudHeight = z > 0.001f && Mathf.Abs(z - PlatformZ) > 0.0005f;
+            bool cloudHeight = rawZ > 0.001f && Mathf.Abs(rawZ - PlatformZ) > 0.0005f;
             if (!_cloudLayer[l] && cloudHeight)
             {
                 _cloudLayer[l] = true;
@@ -424,9 +438,11 @@ public unsafe partial class BackgroundLayer : Node3D
             else if (_cloudLayer[l] && !cloudHeight && !_cloudOrderChangeLogged[l])
             {
                 _cloudOrderChangeLogged[l] = true;
-                GD.Print($"OpenTyrianVR: background layer {l} retaining cloud alpha across " +
-                         $"draw-order change (epoch {_mapEpoch}, over {_currDraw[l].OverMode})");
+                GD.Print($"OpenTyrianVR: background layer {l} retaining cloud height/alpha " +
+                         $"across draw-order change " +
+                         $"(epoch {_mapEpoch}, over {_currDraw[l].OverMode})");
             }
+            float z = LayerHeight(l, _currDraw[l].OverMode);
             float alpha = (_currDraw[l].Blend != 0 ? 0.55f : 1.0f) * (_cloudLayer[l] ? 0.82f : 1.0f);
             _materials[l].SetShaderParameter("alpha_mul", alpha);
             Vector3 position = _quads[l].Position;
@@ -443,7 +459,9 @@ public unsafe partial class BackgroundLayer : Node3D
             // Resolve transparent ordering semantically as well as by Z:
             // clouds paint before the aerial-platform layer.  The platform
             // then wins even at translucent edge pixels on level 1.
-            _materials[l].RenderPriority = cloudHeight ? -5 : 0;
+            _materials[l].RenderPriority = _cloudLayer[l] ? -5
+                : z > 0.001f ? 0
+                : -20 + l;
 
             // OnRender owns all origin updates so map layers and their
             // terrain-attached entity records share one interpolation phase.
