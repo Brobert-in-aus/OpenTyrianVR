@@ -52,6 +52,8 @@ public partial class Main : Node3D
     private readonly byte[] _rgba = new byte[OtyrNative.FrameWidth * OtyrNative.FrameHeight * 4];
     private readonly uint[] _palette = new uint[256];
     private SnapshotLayer _snapshotLayer = null!;
+    private PresentationEffects _presentationEffects = null!;
+    private byte _regressionEffectsSeen;
 
     private OtyrNative.Buttons _lastButtons;
     private double _statusAccumulator;
@@ -377,6 +379,8 @@ public partial class Main : Node3D
 
         _snapshotLayer = new SnapshotLayer { Name = "SnapshotLayer", EnableBackground = Render3DBackground };
         _flipRoot.AddChild(_snapshotLayer);
+        _presentationEffects = new PresentationEffects();
+        _flipRoot.AddChild(_presentationEffects);
 
         MeshInstance3D BuildHudQuad(Shader laneShader, string name, Vector2 uv0, Vector2 uv1,
                                     float widthPx, float heightPx,
@@ -925,6 +929,7 @@ public partial class Main : Node3D
         _regressionLegacySeen |= legacyFallback && _frame.InLevel != 0;
         _regressionFlipSeen |= _frame.FlipCode == 1 && _frame.InLevel != 0;
         _regressionStormSeen |= _frame.StormWater != 0 && _frame.InLevel != 0;
+        _regressionEffectsSeen |= _frame.EffectMask;
         PollPlayerState();
         _snapshotLayer.Poll(_session, _palette);
         _regressionMaxShadows = Math.Max(_regressionMaxShadows, _snapshotLayer.VirtualShadowCount);
@@ -944,6 +949,9 @@ public partial class Main : Node3D
             ? _frame.InLevel != 0 && _frame.LegacyFallback == 0
             : _inGameplay && _frame.LegacyFallback == 0 && _frame.MenuPresent == 0;
         _snapshotLayer.SetStorm(_frame.StormWater);
+        _presentationEffects.Update(_frame.EffectMask, _frame.LevelTick,
+            _playerState.X, _playerState.Y,
+            _snapshotLayer.Visible && _frame.MenuPresent == 0);
         // E1 HUD split follows the 3D scene: in-level the lane drops the
         // sidebar/bottom-bar regions and the floating quads show them;
         // menus/fallback restore the whole flat frame.
@@ -1002,6 +1010,7 @@ public partial class Main : Node3D
                      $"frames={_frame.FrameNumber} hybrid={(_regressionHybridSeen ? 1 : 0)} " +
                      $"legacy={(_regressionLegacySeen ? 1 : 0)} " +
                      $"flip={(_regressionFlipSeen ? 1 : 0)} storm={(_regressionStormSeen ? 1 : 0)} " +
+                     $"effects=0x{_regressionEffectsSeen:X2} " +
                      $"transitions={_presentationTransitions} max_cells={_regressionMaxCells} " +
                      $"max_cast_shadows={_regressionMaxShadows} " +
                      $"max_map_cast_shadows={_regressionMaxMapShadows} " +

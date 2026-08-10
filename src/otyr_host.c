@@ -78,7 +78,7 @@ typedef char otyr_assert_sprite_size[sizeof(OtyrSnapshotSprite) == 18 ? 1 : -1];
 typedef char otyr_assert_bg_draw_size[sizeof(OtyrBackgroundDraw) == 16 ? 1 : -1];
 typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 40 + 1024 * 18 + 3 * 16 + 8 ? 1 : -1];  /* +4: v24 publication cursor */
 typedef char otyr_assert_sheet_size[sizeof(OtyrSpriteSheet) == 12 + 2 * 1024 * 12 * 14 ? 1 : -1];
-typedef char otyr_assert_frame_size[sizeof(OtyrFrame) == 16 + 320 * 200 + 1024 + 4 + 8 ? 1 : -1];  /* +4: v23 flip */
+typedef char otyr_assert_frame_size[sizeof(OtyrFrame) == 16 + 320 * 200 + 1024 + 4 + 8 ? 1 : -1];  /* fixed through v27 */
 typedef char otyr_assert_bg_map_size[sizeof(OtyrBackgroundMap) == 16 + 600 * 15 + 72 * 24 * 28 ? 1 : -1];
 typedef char otyr_assert_old_sprite_size[sizeof(OtyrOldSprite) == 8 + 2 * 64 * 64 ? 1 : -1];
 
@@ -118,6 +118,8 @@ static struct
 	uint8_t frame_menu_present;
 	uint8_t frame_storm_water;       /* v20: host-rendered water smoothie */
 	uint8_t frame_flip_code;         /* v23: host-rendered vertical mirror */
+	uint8_t frame_effect_mask;       /* v27: all host-rendered effects */
+	uint8_t frame_lava_data;
 	uint16_t applied_debug_section;  /* edge detect for the v18 level jump */
 	uint8_t pixels[OTYR_FRAME_WIDTH * OTYR_FRAME_HEIGHT];
 	uint32_t palette_argb[256];
@@ -789,7 +791,9 @@ int32_t otyr_session_acquire_frame(uint64_t handle, OtyrFrame *frame,
 			frame->menu_present = session.frame_menu_present;
 			frame->storm_water = session.frame_storm_water;
 			frame->flip_code = session.frame_flip_code;
-			memset(frame->reserved, 0, sizeof(frame->reserved));
+			frame->effect_mask = session.frame_effect_mask;
+			frame->lava_data = session.frame_lava_data;
+			frame->reserved = 0;
 			result = OTYR_OK;
 			break;
 		}
@@ -1060,6 +1064,17 @@ void otyr_host_present(SDL_Surface *screen)
 	session.frame_flip_code =
 		(otyr_in_level && starShowVGASpecialCode == 1 && !present_legacy_fallback)
 			? 1 : 0;
+	session.frame_effect_mask = 0;
+	if (otyr_in_level && !present_legacy_fallback)
+	{
+		if (processorType > 2 && smoothies[1-1]) session.frame_effect_mask |= OTYR_EFFECT_LAVA;
+		if (processorType > 2 && smoothies[2-1]) session.frame_effect_mask |= OTYR_EFFECT_WATER;
+		if (processorType > 1 && smoothies[3-1]) session.frame_effect_mask |= OTYR_EFFECT_ICED_A;
+		if (processorType > 1 && smoothies[4-1]) session.frame_effect_mask |= OTYR_EFFECT_BLUR;
+		if (processorType > 1 && smoothies[5-1]) session.frame_effect_mask |= OTYR_EFFECT_ICED_B;
+		if (processorType >= 2 && starShowVGASpecialCode == 2) session.frame_effect_mask |= OTYR_EFFECT_DARKNESS;
+	}
+	session.frame_lava_data = (uint8_t)smoothie_data[1-1];
 
 	OtyrSnapshot *snapshot = &session.snapshot;
 

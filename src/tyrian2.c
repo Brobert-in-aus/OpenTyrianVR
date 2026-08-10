@@ -111,7 +111,7 @@ void JE_starShowVGA(void)
 				src -= game_screen->pitch;
 			}
 		}
-		else if (starShowVGASpecialCode == 2 && processorType >= 2)
+		else if (starShowVGASpecialCode == 2 && processorType >= 2 && !present_suppress_background)
 		{
 			lighty = 172 - player[0].y;
 			lightx = 281 - player[0].x;
@@ -289,7 +289,12 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset,
 	                  cell_index);
 	if (rec < PRESENT_SPRITE_MAX)
 	{
-		present_sprites[rec].entity_type = enemy[i].enemytype;
+		/* Temporary event enemies use table slot zero, but each instance keeps
+		   its original base graphic in egr[0]. Reserve the high bit for a
+		   semantic-only dynamic-graphic key so the host can place repeated
+		   custom buildings/flyers without pretending they share one type. */
+		present_sprites[rec].entity_type = enemy[i].enemytype != 0
+			? enemy[i].enemytype : (Uint16)(0x8000u | (enemy[i].egr[0] & 0x7fffu));
 		present_sprites[rec].assembly_id = enemy[i].linknum;
 	}
 }
@@ -833,23 +838,32 @@ static enum LevelTickResult JE_levelTick(void)
 	if (otyr_hosted)
 		otyr_host_level_tick();
 
-	/* Debug (OTYR_FORCE_SMOOTHIE=<id>): force a smoothie so native and
+	/* Debug (OTYR_FORCE_SMOOTHIE=<id[,id...]>): force smoothies so native and
 	   complete-frame fallback presentation paths can be exercised on any
-	   level. A missing/non-numeric value retains the historical water id 2.
+	   level. Invalid ids are ignored.
 	   Changes frame content -- never set during hash gates. */
 	{
-		static int force_smoothie_id = -1;
-		if (force_smoothie_id < 0)
+		static int forced_smoothies = -1;
+		if (forced_smoothies < 0)
 		{
 			const char *forced = SDL_getenv("OTYR_FORCE_SMOOTHIE");
-			force_smoothie_id = forced != NULL ? atoi(forced) : 0;
-			if (forced != NULL && (force_smoothie_id < 1 || force_smoothie_id > 9))
-				force_smoothie_id = 2;
+			forced_smoothies = 0;
+			while (forced != NULL && *forced != '\0')
+			{
+				int id = atoi(forced);
+				if (id >= 1 && id <= 9)
+					forced_smoothies |= 1 << (id - 1);
+				forced = strchr(forced, ',');
+				if (forced != NULL)
+					++forced;
+			}
 		}
-		if (force_smoothie_id > 0)
+		for (int id = 1; id <= 9; ++id)
 		{
-			smoothies[force_smoothie_id-1] = true;
-			if (force_smoothie_id == 2)
+			if ((forced_smoothies & (1 << (id - 1))) == 0)
+				continue;
+			smoothies[id-1] = true;
+			if (id == 2)
 				smoothie_data[2-1] = 3;  /* SAVARA V's real hue row (blue) */
 		}
 		/* OTYR_FORCE_FLIP: force the vertical-mirror special code so the
@@ -860,6 +874,25 @@ static enum LevelTickResult JE_levelTick(void)
 			force_flip = SDL_getenv("OTYR_FORCE_FLIP") != NULL;
 		if (force_flip)
 			smoothies[9-1] = true;
+		/* Unknown special-code regression: values above 2 deliberately use
+		   the complete legacy safety path. */
+		static int force_special_code = -1;
+		if (force_special_code < 0)
+		{
+			const char *forced = SDL_getenv("OTYR_FORCE_SPECIAL_CODE");
+			force_special_code = forced != NULL ? atoi(forced) : 0;
+		}
+		if (force_special_code > 0)
+		{
+			starShowVGASpecialCode = (JE_byte)force_special_code;
+			if (force_special_code == 2)
+				smoothies[6-1] = true;
+			else if (force_special_code == 3)
+			{
+				smoothies[9-1] = true;
+				smoothies[6-1] = true;
+			}
+		}
 	}
 
 	present_frame_reset();
@@ -1081,7 +1114,7 @@ static enum LevelTickResult JE_levelTick(void)
 	if (starActive || astralDuration > 0)
 		update_and_draw_starfield(VGAScreen, starfield_speed);
 
-	if (processorType > 1 && smoothies[5-1])
+	if (processorType > 1 && smoothies[5-1] && !present_suppress_background)
 	{
 		iced_blur_filter(game_screen, VGAScreen);
 		VGAScreen = game_screen;
@@ -1106,7 +1139,7 @@ static enum LevelTickResult JE_levelTick(void)
 		}
 	}
 
-	if (smoothies[0] && processorType > 2 && smoothie_data[0] == 0)
+	if (smoothies[0] && processorType > 2 && smoothie_data[0] == 0 && !present_suppress_background)
 	{
 		lava_filter(game_screen, VGAScreen);
 		VGAScreen = game_screen;
@@ -1135,7 +1168,7 @@ static enum LevelTickResult JE_levelTick(void)
 			stopBackgroundNum = 9;
 	}
 
-	if (smoothies[0] && processorType > 2 && smoothie_data[0] > 0)
+	if (smoothies[0] && processorType > 2 && smoothie_data[0] > 0 && !present_suppress_background)
 	{
 		lava_filter(game_screen, VGAScreen);
 		VGAScreen = game_screen;
@@ -1179,12 +1212,12 @@ static enum LevelTickResult JE_levelTick(void)
 		b = JE_newEnemy(0, tempW, 0);
 	}
 
-	if (processorType > 1 && smoothies[3-1])
+	if (processorType > 1 && smoothies[3-1] && !present_suppress_background)
 	{
 		iced_blur_filter(game_screen, VGAScreen);
 		VGAScreen = game_screen;
 	}
-	if (processorType > 1 && smoothies[4-1])
+	if (processorType > 1 && smoothies[4-1] && !present_suppress_background)
 	{
 		blur_filter(game_screen, VGAScreen);
 		VGAScreen = game_screen;

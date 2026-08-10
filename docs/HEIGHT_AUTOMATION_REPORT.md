@@ -26,18 +26,18 @@ event sweep described below.
 
 ## Episodes 2-4 and unedited levels
 
-Enemy type ids are episode-local. ABI v26 exports the active episode with each
+Enemy type ids are episode-local. ABI v27 exports the active episode with each
 snapshot, and `godot/height_semantics.json` keeps separate type maps. The
 cross-episode pass accepts only a complete static-data signature match to a
 validated Episode 1 placement. It may then make one non-recursive local family
 hop under the same strict threshold:
 
-| Episode | Manual | Exact E1 match | Local family | Linked assembly | Classified | Review |
-|---|---:|---:|---:|---:|---:|---:|
-| 1 | 129 | - | 54 | 22 | 205 | 646 |
-| 2 | - | 183 | 0 | 0 | 183 | 668 |
-| 3 | - | 183 | 0 | 14 | 197 | 654 |
-| 4 | - | 89 | 5 | 0 | 94 | 757 |
+| Episode | Stable classified | Stable review | Dynamic graphics classified / observed |
+|---|---:|---:|---:|
+| 1 | 275 | 576 | 0 / 0 |
+| 2 | 241 | 610 | 10 / 50 |
+| 3 | 307 | 544 | 3 / 47 |
+| 4 | 294 | 557 | 0 / 11 |
 
 Episodes 2 and 3 have identical static enemy tables to Episode 1. Episode 4
 changes 378 of 851 same-index definitions, so only exact/family-supported
@@ -48,14 +48,17 @@ placements transfer. Episode 5 is not present in this Tyrian data build.
 The event scanner reads every event in all 62 playable episode/section/level
 records, including secret and conditionally selected levels: 53,338 events in
 total. It observes 1,424 stable episode-local enemy types. A further 1,775
-custom spawns construct temporary type-zero definitions from graphic ids and
-are deliberately excluded from type automation.
+custom spawns construct temporary type-zero definitions from 108 episode-local
+graphic ids.
 
 Tyrian's event names are not semantic height labels. `Ground Enemy`, `Sky
 Enemy`, and `Top Enemy` select legacy scrolling/draw slots. Treating the first
 two names as surface/air classifications agrees with only 69 of 97 covered
 manual Episode 1 placements (71.1%). The generated map therefore does not use
-that tempting but unsafe rule.
+that tempting but unsafe rule. It accepts two narrower intersections checked
+against every applicable manual reference: top-only types are air (16/16), and
+direct-air evidence must also carry the static enemy-data air bit. These rules
+add coverage without treating an event channel name as sufficient evidence.
 
 One event relationship is reliable: multiple types spawned on the same tick
 with the same nonzero link id are components of one authored assembly.
@@ -64,6 +67,13 @@ The generator uses this relationship for one non-recursive pass, only where
 all existing seeds agree; reused, contradictory, single-component, and
 unseeded links remain review-only. This adds 22 Episode 1 and 14 Episode 3
 component types without turning event-channel names into guessed heights.
+
+Dynamic events 49-52 retain their base graphic on each live instance. ABI v27
+exports that graphic as a semantic-only high-bit key. The generator classifies
+it only when every event-band use agrees and every validated stable type using
+the exact same art agrees with that class. This resolves 13 of 108 observed
+dynamic graphics; conflicting or reused art remains on its runtime band and is
+never written as an editor type.
 
 Run the reproducible, non-destructive audit with:
 

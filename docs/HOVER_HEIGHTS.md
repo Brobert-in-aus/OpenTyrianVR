@@ -13,6 +13,10 @@ surface-class instances choose ground versus floating platform from the map art
 beneath them; linked boss components share that surface decision.
 `godot/height_semantics.json` is the generated episode-aware broad-layer map;
 `hover_heights.json` remains the hand-authored Episode 1 fine-height map.
+Temporary type-zero enemies use their retained base graphic as a semantic-only
+key. They are auto-placed only when event use and validated stable reuse of the
+same art unanimously agree, and are intentionally not exposed as editable type
+zero entries.
 
 ## The height editor (preferred workflow)
 
@@ -132,4 +136,6 @@ global identity: E2-E4 transfers require a complete static-data signature
 match, followed by at most one close local-family hop. Generated results do not
 seed another hop. One non-recursive same-tick/same-link assembly pass then
 classifies only components whose existing seeds all agree. Unclassified and
-conflicting types retain their runtime category band.
+conflicting types retain their runtime category band. Two validated event
+intersections extend stable coverage (top-only and statically corroborated
+air), while dynamic graphics require unanimous event and exact-art agreement.

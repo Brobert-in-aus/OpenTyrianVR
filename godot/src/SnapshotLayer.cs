@@ -1601,6 +1601,40 @@ public unsafe partial class SnapshotLayer : Node3D
                 }
             }
         }
+        if (root.TryGetValue("dynamic_graphics", out Variant dynamicValue) &&
+            dynamicValue.VariantType == Variant.Type.Dictionary)
+        {
+            var dynamicEpisodes = dynamicValue.AsGodotDictionary();
+            foreach (Variant episodeKey in dynamicEpisodes.Keys)
+            {
+                if (!byte.TryParse(episodeKey.AsString(), out byte episode) ||
+                    dynamicEpisodes[episodeKey].VariantType != Variant.Type.Dictionary)
+                    continue;
+                var graphics = dynamicEpisodes[episodeKey].AsGodotDictionary();
+                foreach (Variant graphicKey in graphics.Keys)
+                {
+                    if (!ushort.TryParse(graphicKey.AsString(), out ushort graphic) ||
+                        graphic >= 0x8000 || graphics[graphicKey].VariantType != Variant.Type.Dictionary)
+                        continue;
+                    var entry = graphics[graphicKey].AsGodotDictionary();
+                    if (!entry.TryGetValue("class", out Variant classValue) ||
+                        classValue.VariantType != Variant.Type.String)
+                        continue;
+                    HeightSemantic semantic = classValue.AsString() switch
+                    {
+                        "surface" => HeightSemantic.Surface,
+                        "air" => HeightSemantic.Air,
+                        _ => HeightSemantic.Unknown,
+                    };
+                    if (semantic != HeightSemantic.Unknown)
+                    {
+                        _heightSemantics[SemanticKey(episode, (ushort)(0x8000 | graphic))] = semantic;
+                        if (episode < _semanticCountByEpisode.Length)
+                            _semanticCountByEpisode[episode]++;
+                    }
+                }
+            }
+        }
         GD.Print($"OpenTyrianVR: episode height semantics loaded ({_heightSemantics.Count} placements)");
     }
 
@@ -2217,7 +2251,10 @@ public unsafe partial class SnapshotLayer : Node3D
         cell.CastFrom = -1;
         bool isEnemy = sprite.Category <= (byte)OtyrNative.Category.EnemyGroundB;
         bool isShadow = sprite.Category == (byte)OtyrNative.Category.Shadow;
-        cell.EntityType = isEnemy ? sprite.EntityType : (ushort)0;
+        // Dynamic type-zero semantic keys are deliberately not editor keys:
+        // the same temporary slot is reused for unrelated graphics.
+        bool dynamicSemantic = (sprite.EntityType & 0x8000) != 0;
+        cell.EntityType = isEnemy && !dynamicSemantic ? sprite.EntityType : (ushort)0;
         cell.AssemblyId = isEnemy ? sprite.AssemblyId : (byte)0;
         float band;
         float decalOrder = 0f;

@@ -1,32 +1,123 @@
 {
   "counts": {
     "1": {
-      "air": 125,
-      "classified": 205,
-      "review": 646,
+      "air": 195,
+      "classified": 275,
+      "dynamic_classified": 0,
+      "dynamic_observed": 0,
+      "review": 576,
       "surface": 80
     },
     "2": {
-      "air": 108,
-      "classified": 183,
-      "review": 668,
+      "air": 166,
+      "classified": 241,
+      "dynamic_classified": 10,
+      "dynamic_observed": 50,
+      "review": 610,
       "surface": 75
     },
     "3": {
-      "air": 117,
-      "classified": 197,
-      "review": 654,
+      "air": 227,
+      "classified": 307,
+      "dynamic_classified": 3,
+      "dynamic_observed": 47,
+      "review": 544,
       "surface": 80
     },
     "4": {
-      "air": 56,
-      "classified": 94,
-      "review": 757,
+      "air": 256,
+      "classified": 294,
+      "dynamic_classified": 0,
+      "dynamic_observed": 11,
+      "review": 557,
       "surface": 38
     }
   },
+  "dynamic_graphics": {
+    "1": {},
+    "2": {
+      "157": {
+        "class": "air",
+        "observations": 3,
+        "source": "dynamic-graphic-validated"
+      },
+      "159": {
+        "class": "air",
+        "observations": 17,
+        "source": "dynamic-graphic-validated"
+      },
+      "197": {
+        "class": "air",
+        "observations": 17,
+        "source": "dynamic-graphic-validated"
+      },
+      "271": {
+        "class": "air",
+        "observations": 3,
+        "source": "dynamic-graphic-validated"
+      },
+      "283": {
+        "class": "surface",
+        "observations": 39,
+        "source": "dynamic-graphic-validated"
+      },
+      "45": {
+        "class": "air",
+        "observations": 1,
+        "source": "dynamic-graphic-validated"
+      },
+      "47": {
+        "class": "air",
+        "observations": 1,
+        "source": "dynamic-graphic-validated"
+      },
+      "7": {
+        "class": "air",
+        "observations": 1,
+        "source": "dynamic-graphic-validated"
+      },
+      "83": {
+        "class": "air",
+        "observations": 1,
+        "source": "dynamic-graphic-validated"
+      },
+      "93": {
+        "class": "air",
+        "observations": 1,
+        "source": "dynamic-graphic-validated"
+      }
+    },
+    "3": {
+      "129": {
+        "class": "air",
+        "observations": 7,
+        "source": "dynamic-graphic-validated"
+      },
+      "161": {
+        "class": "air",
+        "observations": 35,
+        "source": "dynamic-graphic-validated"
+      },
+      "163": {
+        "class": "air",
+        "observations": 35,
+        "source": "dynamic-graphic-validated"
+      }
+    },
+    "4": {}
+  },
   "episodes": {
     "1": {
+      "1": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "12": {
+        "class": "air",
+        "observations": 25,
+        "source": "event-air-corroborated"
+      },
       "125": {
         "class": "air",
         "source": "linked-assembly"
@@ -191,6 +282,16 @@
         "reference": 197,
         "source": "episode-family"
       },
+      "226": {
+        "class": "air",
+        "observations": 27,
+        "source": "event-air-corroborated"
+      },
+      "227": {
+        "class": "air",
+        "observations": 27,
+        "source": "event-air-corroborated"
+      },
       "228": {
         "class": "air",
         "detail": "later Episode 1 editor session",
@@ -243,6 +344,11 @@
         "class": "air",
         "source": "linked-assembly"
       },
+      "24": {
+        "class": "air",
+        "observations": 21,
+        "source": "event-air-corroborated"
+      },
       "240": {
         "class": "air",
         "source": "linked-assembly"
@@ -266,6 +372,11 @@
         "class": "air",
         "detail": "later Episode 1 editor session",
         "source": "manual"
+      },
+      "25": {
+        "class": "air",
+        "observations": 20,
+        "source": "event-air-corroborated"
       },
       "252": {
         "class": "surface",
@@ -466,6 +577,11 @@
         "detail": "level 1, asteroids, SAVARA start",
         "source": "manual"
       },
+      "3": {
+        "class": "air",
+        "observations": 60,
+        "source": "event-air-corroborated"
+      },
       "30": {
         "class": "air",
         "detail": "level 1, asteroids, SAVARA start",
@@ -567,6 +683,11 @@
         "reference": 323,
         "source": "episode-family"
       },
+      "32": {
+        "class": "air",
+        "observations": 20,
+        "source": "event-top-only"
+      },
       "320": {
         "class": "air",
         "distance": 1.94,
@@ -617,6 +738,11 @@
         "class": "surface",
         "detail": "level 1, asteroids, SAVARA start",
         "source": "manual"
+      },
+      "33": {
+        "class": "air",
+        "observations": 14,
+        "source": "event-top-only"
       },
       "330": {
         "class": "surface",
@@ -674,6 +800,11 @@
         "detail": "level 1, asteroids, SAVARA start",
         "source": "manual"
       },
+      "34": {
+        "class": "air",
+        "observations": 20,
+        "source": "event-top-only"
+      },
       "340": {
         "class": "surface",
         "detail": "level 1, asteroids, SAVARA start",
@@ -723,6 +854,11 @@
         "class": "air",
         "detail": "later Episode 1 editor session",
         "source": "manual"
+      },
+      "35": {
+        "class": "air",
+        "observations": 20,
+        "source": "event-top-only"
       },
       "350": {
         "class": "air",
@@ -774,6 +910,11 @@
         "detail": "later Episode 1 editor session",
         "source": "manual"
       },
+      "36": {
+        "class": "air",
+        "observations": 14,
+        "source": "event-top-only"
+      },
       "360": {
         "class": "air",
         "detail": "later Episode 1 editor session",
@@ -803,6 +944,31 @@
         "class": "air",
         "detail": "later Episode 1 editor session",
         "source": "manual"
+      },
+      "37": {
+        "class": "air",
+        "observations": 20,
+        "source": "event-top-only"
+      },
+      "38": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
+      "39": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
+      "395": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-air-corroborated"
+      },
+      "40": {
+        "class": "air",
+        "observations": 30,
+        "source": "event-top-only"
       },
       "400": {
         "class": "air",
@@ -854,6 +1020,11 @@
         "detail": "later Episode 1 editor session",
         "source": "manual"
       },
+      "41": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
       "410": {
         "class": "air",
         "detail": "later Episode 1 editor session",
@@ -864,25 +1035,125 @@
         "detail": "later Episode 1 editor session",
         "source": "manual"
       },
+      "42": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-top-only"
+      },
+      "43": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-top-only"
+      },
+      "44": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-top-only"
+      },
+      "45": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-top-only"
+      },
       "456": {
         "class": "surface",
         "detail": "later Episode 1 editor session",
         "source": "manual"
+      },
+      "459": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "46": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
       },
       "462": {
         "class": "air",
         "detail": "level 1, asteroids, SAVARA start",
         "source": "manual"
       },
+      "468": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "469": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "47": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
+      "470": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "471": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "472": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "473": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "474": {
+        "class": "air",
+        "observations": 50,
+        "source": "event-top-only"
+      },
+      "478": {
+        "class": "air",
+        "observations": 21,
+        "source": "event-top-only"
+      },
+      "48": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
+      "49": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
+      "50": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
       "500": {
         "class": "air",
         "detail": "level 1, asteroids, SAVARA start",
         "source": "manual"
       },
+      "51": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
       "511": {
         "class": "air",
         "detail": "later Episode 1 editor session",
         "source": "manual"
+      },
+      "52": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
       },
       "528": {
         "class": "surface",
@@ -895,6 +1166,16 @@
         "distance": 2.74,
         "reference": 285,
         "source": "episode-family"
+      },
+      "53": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-air-corroborated"
+      },
+      "54": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
       },
       "546": {
         "class": "surface",
@@ -916,6 +1197,11 @@
         "detail": "level 1, asteroids, SAVARA start",
         "source": "manual"
       },
+      "55": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
       "550": {
         "class": "surface",
         "detail": "later Episode 1 editor session",
@@ -936,6 +1222,11 @@
         "detail": "later Episode 1 editor session",
         "source": "manual"
       },
+      "56": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
       "568": {
         "class": "air",
         "detail": "later Episode 1 editor session",
@@ -945,6 +1236,11 @@
         "class": "air",
         "detail": "later Episode 1 editor session",
         "source": "manual"
+      },
+      "57": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
       },
       "570": {
         "class": "air",
@@ -995,6 +1291,11 @@
         "class": "air",
         "source": "linked-assembly"
       },
+      "58": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
       "580": {
         "class": "air",
         "source": "linked-assembly"
@@ -1019,6 +1320,11 @@
         "class": "air",
         "source": "linked-assembly"
       },
+      "59": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
       "591": {
         "class": "surface",
         "distance": 0.02,
@@ -1036,11 +1342,66 @@
         "reference": 30,
         "source": "episode-family"
       },
+      "60": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
+      "61": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
+      "62": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
+      "63": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
+      "64": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
+      "65": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
+      "66": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
+      "67": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
+      "68": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
+      "681": {
+        "class": "air",
+        "observations": 10,
+        "source": "event-top-only"
+      },
       "688": {
         "class": "surface",
         "distance": 0.95,
         "reference": 593,
         "source": "episode-family"
+      },
+      "69": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
       },
       "690": {
         "class": "surface",
@@ -1054,17 +1415,82 @@
         "reference": 30,
         "source": "episode-family"
       },
+      "70": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
+      "701": {
+        "class": "air",
+        "observations": 9,
+        "source": "event-top-only"
+      },
+      "71": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
+      "72": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
+      "73": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
+      "74": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
+      "75": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
+      "76": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
+      "77": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
+      "78": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
+      "79": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
       "8": {
         "class": "air",
         "distance": 0.43,
         "reference": 31,
         "source": "episode-family"
       },
+      "822": {
+        "class": "air",
+        "observations": 104,
+        "source": "event-top-only"
+      },
       "823": {
         "class": "surface",
         "distance": 2.3,
         "reference": 593,
         "source": "episode-family"
+      },
+      "824": {
+        "class": "air",
+        "observations": 72,
+        "source": "event-air-corroborated"
       },
       "826": {
         "class": "air",
@@ -1077,6 +1503,11 @@
         "distance": 6.78,
         "reference": 162,
         "source": "episode-family"
+      },
+      "841": {
+        "class": "air",
+        "observations": 18,
+        "source": "event-top-only"
       },
       "9": {
         "class": "air",
@@ -1115,6 +1546,11 @@
         "class": "air",
         "reference": 145,
         "source": "episode1-exact"
+      },
+      "147": {
+        "class": "air",
+        "observations": 108,
+        "source": "event-air-corroborated"
       },
       "149": {
         "class": "air",
@@ -1200,6 +1636,41 @@
         "class": "surface",
         "reference": 173,
         "source": "episode1-exact"
+      },
+      "184": {
+        "class": "air",
+        "observations": 38,
+        "source": "event-air-corroborated"
+      },
+      "186": {
+        "class": "air",
+        "observations": 8,
+        "source": "event-top-only"
+      },
+      "187": {
+        "class": "air",
+        "observations": 8,
+        "source": "event-top-only"
+      },
+      "188": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
+      "189": {
+        "class": "air",
+        "observations": 10,
+        "source": "event-top-only"
+      },
+      "190": {
+        "class": "air",
+        "observations": 16,
+        "source": "event-top-only"
+      },
+      "191": {
+        "class": "air",
+        "observations": 28,
+        "source": "event-top-only"
       },
       "194": {
         "class": "surface",
@@ -1766,6 +2237,126 @@
         "reference": 365,
         "source": "episode1-exact"
       },
+      "366": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "367": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "368": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "369": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "370": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "371": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "372": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "373": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "374": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "375": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "376": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "377": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "378": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "379": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "380": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "381": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "382": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "383": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "384": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "385": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "386": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "387": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "388": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "389": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
       "400": {
         "class": "air",
         "reference": 400,
@@ -1826,6 +2417,51 @@
         "reference": 411,
         "source": "episode1-exact"
       },
+      "417": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "418": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "419": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "420": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "421": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "422": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "423": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "424": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
+      "425": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
       "456": {
         "class": "surface",
         "reference": 456,
@@ -1855,6 +2491,11 @@
         "class": "air",
         "reference": 529,
         "source": "episode1-exact"
+      },
+      "531": {
+        "class": "air",
+        "observations": 39,
+        "source": "event-air-corroborated"
       },
       "546": {
         "class": "surface",
@@ -1976,10 +2617,85 @@
         "reference": 7,
         "source": "episode1-exact"
       },
+      "772": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "773": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "774": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "775": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "788": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-air-corroborated"
+      },
+      "789": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-air-corroborated"
+      },
+      "792": {
+        "class": "air",
+        "observations": 84,
+        "source": "event-air-corroborated"
+      },
+      "793": {
+        "class": "air",
+        "observations": 90,
+        "source": "event-air-corroborated"
+      },
+      "794": {
+        "class": "air",
+        "observations": 114,
+        "source": "event-air-corroborated"
+      },
+      "795": {
+        "class": "air",
+        "observations": 56,
+        "source": "event-top-only"
+      },
+      "797": {
+        "class": "air",
+        "observations": 11,
+        "source": "event-air-corroborated"
+      },
       "8": {
         "class": "air",
         "reference": 8,
         "source": "episode1-exact"
+      },
+      "806": {
+        "class": "air",
+        "observations": 10,
+        "source": "event-air-corroborated"
+      },
+      "811": {
+        "class": "air",
+        "observations": 12,
+        "source": "event-air-corroborated"
+      },
+      "814": {
+        "class": "air",
+        "observations": 18,
+        "source": "event-air-corroborated"
+      },
+      "815": {
+        "class": "air",
+        "observations": 7,
+        "source": "event-air-corroborated"
       },
       "823": {
         "class": "surface",
@@ -1990,6 +2706,11 @@
         "class": "air",
         "reference": 826,
         "source": "episode1-exact"
+      },
+      "835": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
       },
       "840": {
         "class": "surface",
@@ -2003,6 +2724,41 @@
       }
     },
     "3": {
+      "10": {
+        "class": "air",
+        "observations": 15,
+        "source": "event-air-corroborated"
+      },
+      "103": {
+        "class": "air",
+        "observations": 7,
+        "source": "event-air-corroborated"
+      },
+      "105": {
+        "class": "air",
+        "observations": 18,
+        "source": "event-air-corroborated"
+      },
+      "106": {
+        "class": "air",
+        "observations": 9,
+        "source": "event-air-corroborated"
+      },
+      "107": {
+        "class": "air",
+        "observations": 9,
+        "source": "event-air-corroborated"
+      },
+      "108": {
+        "class": "air",
+        "observations": 10,
+        "source": "event-air-corroborated"
+      },
+      "12": {
+        "class": "air",
+        "observations": 25,
+        "source": "event-air-corroborated"
+      },
       "125": {
         "class": "air",
         "source": "linked-assembly"
@@ -2020,10 +2776,35 @@
         "reference": 128,
         "source": "episode1-exact"
       },
+      "129": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-air-corroborated"
+      },
       "13": {
         "class": "air",
         "reference": 13,
         "source": "episode1-exact"
+      },
+      "131": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
+      "132": {
+        "class": "air",
+        "observations": 42,
+        "source": "event-air-corroborated"
+      },
+      "133": {
+        "class": "air",
+        "observations": 12,
+        "source": "event-air-corroborated"
+      },
+      "134": {
+        "class": "air",
+        "observations": 22,
+        "source": "event-air-corroborated"
       },
       "135": {
         "class": "air",
@@ -2134,6 +2915,16 @@
         "reference": 173,
         "source": "episode1-exact"
       },
+      "192": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
+      "193": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-top-only"
+      },
       "194": {
         "class": "surface",
         "reference": 194,
@@ -2148,6 +2939,26 @@
         "class": "surface",
         "reference": 198,
         "source": "episode1-exact"
+      },
+      "221": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-air-corroborated"
+      },
+      "222": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-air-corroborated"
+      },
+      "226": {
+        "class": "air",
+        "observations": 108,
+        "source": "event-air-corroborated"
+      },
+      "227": {
+        "class": "air",
+        "observations": 108,
+        "source": "event-air-corroborated"
       },
       "228": {
         "class": "air",
@@ -2200,6 +3011,11 @@
         "class": "air",
         "source": "linked-assembly"
       },
+      "24": {
+        "class": "air",
+        "observations": 14,
+        "source": "event-air-corroborated"
+      },
       "240": {
         "class": "air",
         "source": "linked-assembly"
@@ -2223,6 +3039,11 @@
         "class": "air",
         "reference": 244,
         "source": "episode1-exact"
+      },
+      "25": {
+        "class": "air",
+        "observations": 14,
+        "source": "event-air-corroborated"
       },
       "252": {
         "class": "surface",
@@ -2509,6 +3330,11 @@
         "reference": 319,
         "source": "episode1-exact"
       },
+      "32": {
+        "class": "air",
+        "observations": 10,
+        "source": "event-top-only"
+      },
       "320": {
         "class": "air",
         "reference": 320,
@@ -2558,6 +3384,11 @@
         "class": "surface",
         "reference": 329,
         "source": "episode1-exact"
+      },
+      "33": {
+        "class": "air",
+        "observations": 7,
+        "source": "event-top-only"
       },
       "330": {
         "class": "surface",
@@ -2609,6 +3440,11 @@
         "reference": 339,
         "source": "episode1-exact"
       },
+      "34": {
+        "class": "air",
+        "observations": 10,
+        "source": "event-top-only"
+      },
       "340": {
         "class": "surface",
         "reference": 340,
@@ -2658,6 +3494,11 @@
         "class": "air",
         "reference": 349,
         "source": "episode1-exact"
+      },
+      "35": {
+        "class": "air",
+        "observations": 10,
+        "source": "event-top-only"
       },
       "350": {
         "class": "air",
@@ -2709,6 +3550,11 @@
         "reference": 359,
         "source": "episode1-exact"
       },
+      "36": {
+        "class": "air",
+        "observations": 7,
+        "source": "event-top-only"
+      },
       "360": {
         "class": "air",
         "reference": 360,
@@ -2738,6 +3584,41 @@
         "class": "air",
         "reference": 365,
         "source": "episode1-exact"
+      },
+      "37": {
+        "class": "air",
+        "observations": 10,
+        "source": "event-top-only"
+      },
+      "38": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-top-only"
+      },
+      "39": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-top-only"
+      },
+      "395": {
+        "class": "air",
+        "observations": 7,
+        "source": "event-air-corroborated"
+      },
+      "397": {
+        "class": "air",
+        "observations": 11,
+        "source": "event-air-corroborated"
+      },
+      "4": {
+        "class": "air",
+        "observations": 64,
+        "source": "event-top-only"
+      },
+      "40": {
+        "class": "air",
+        "observations": 15,
+        "source": "event-top-only"
       },
       "400": {
         "class": "air",
@@ -2789,6 +3670,11 @@
         "reference": 409,
         "source": "episode1-exact"
       },
+      "41": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-top-only"
+      },
       "410": {
         "class": "air",
         "reference": 410,
@@ -2799,25 +3685,115 @@
         "reference": 411,
         "source": "episode1-exact"
       },
+      "42": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "43": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "434": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-air-corroborated"
+      },
+      "435": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-air-corroborated"
+      },
+      "436": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-air-corroborated"
+      },
+      "437": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-air-corroborated"
+      },
+      "438": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-air-corroborated"
+      },
+      "439": {
+        "class": "air",
+        "observations": 6,
+        "source": "event-air-corroborated"
+      },
+      "44": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "45": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
       "456": {
         "class": "surface",
         "reference": 456,
         "source": "episode1-exact"
+      },
+      "46": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
       },
       "462": {
         "class": "air",
         "reference": 462,
         "source": "episode1-exact"
       },
+      "47": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "48": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "49": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "5": {
+        "class": "air",
+        "observations": 15,
+        "source": "event-air-corroborated"
+      },
+      "50": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
       "500": {
         "class": "air",
         "reference": 500,
         "source": "episode1-exact"
       },
+      "51": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
       "511": {
         "class": "air",
         "reference": 511,
         "source": "episode1-exact"
+      },
+      "52": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
       },
       "528": {
         "class": "surface",
@@ -2828,6 +3804,16 @@
         "class": "air",
         "reference": 529,
         "source": "episode1-exact"
+      },
+      "53": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "54": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
       },
       "546": {
         "class": "surface",
@@ -2849,6 +3835,11 @@
         "reference": 549,
         "source": "episode1-exact"
       },
+      "55": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
       "550": {
         "class": "surface",
         "reference": 550,
@@ -2869,6 +3860,16 @@
         "reference": 559,
         "source": "episode1-exact"
       },
+      "56": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "562": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-air-corroborated"
+      },
       "568": {
         "class": "air",
         "reference": 568,
@@ -2878,6 +3879,11 @@
         "class": "air",
         "reference": 569,
         "source": "episode1-exact"
+      },
+      "57": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
       },
       "570": {
         "class": "air",
@@ -2919,6 +3925,21 @@
         "reference": 577,
         "source": "episode1-exact"
       },
+      "58": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "59": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "590": {
+        "class": "air",
+        "observations": 10,
+        "source": "event-air-corroborated"
+      },
       "591": {
         "class": "surface",
         "reference": 577,
@@ -2929,15 +3950,90 @@
         "reference": 593,
         "source": "episode1-exact"
       },
+      "594": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-air-corroborated"
+      },
+      "595": {
+        "class": "air",
+        "observations": 135,
+        "source": "event-air-corroborated"
+      },
       "6": {
         "class": "air",
         "reference": 6,
         "source": "episode1-exact"
       },
+      "60": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "600": {
+        "class": "air",
+        "observations": 46,
+        "source": "event-air-corroborated"
+      },
+      "601": {
+        "class": "air",
+        "observations": 20,
+        "source": "event-air-corroborated"
+      },
+      "61": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "62": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "63": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "64": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "65": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "66": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "67": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "68": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
       "688": {
         "class": "surface",
         "reference": 688,
         "source": "episode1-exact"
+      },
+      "689": {
+        "class": "air",
+        "observations": 14,
+        "source": "event-air-corroborated"
+      },
+      "69": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
       },
       "690": {
         "class": "surface",
@@ -2948,6 +4044,146 @@
         "class": "air",
         "reference": 7,
         "source": "episode1-exact"
+      },
+      "70": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "702": {
+        "class": "air",
+        "observations": 16,
+        "source": "event-air-corroborated"
+      },
+      "704": {
+        "class": "air",
+        "observations": 57,
+        "source": "event-top-only"
+      },
+      "706": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "707": {
+        "class": "air",
+        "observations": 34,
+        "source": "event-air-corroborated"
+      },
+      "708": {
+        "class": "air",
+        "observations": 28,
+        "source": "event-air-corroborated"
+      },
+      "71": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "72": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "722": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "723": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "724": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "725": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "726": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "727": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "728": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "729": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "73": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "730": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "731": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "732": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "733": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "734": {
+        "class": "air",
+        "observations": 12,
+        "source": "event-air-corroborated"
+      },
+      "74": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "75": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "76": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "77": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "78": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "79": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
       },
       "8": {
         "class": "air",
@@ -2973,6 +4209,41 @@
         "class": "air",
         "reference": 9,
         "source": "episode1-exact"
+      },
+      "93": {
+        "class": "air",
+        "observations": 25,
+        "source": "event-air-corroborated"
+      },
+      "94": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "95": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "96": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "97": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "98": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "99": {
+        "class": "air",
+        "observations": 25,
+        "source": "event-air-corroborated"
       }
     },
     "4": {
@@ -2981,10 +4252,40 @@
         "reference": 128,
         "source": "episode1-exact"
       },
+      "129": {
+        "class": "air",
+        "observations": 15,
+        "source": "event-air-corroborated"
+      },
       "13": {
         "class": "air",
         "reference": 13,
         "source": "episode1-exact"
+      },
+      "130": {
+        "class": "air",
+        "observations": 151,
+        "source": "event-air-corroborated"
+      },
+      "131": {
+        "class": "air",
+        "observations": 24,
+        "source": "event-air-corroborated"
+      },
+      "132": {
+        "class": "air",
+        "observations": 41,
+        "source": "event-air-corroborated"
+      },
+      "133": {
+        "class": "air",
+        "observations": 23,
+        "source": "event-air-corroborated"
+      },
+      "134": {
+        "class": "air",
+        "observations": 24,
+        "source": "event-air-corroborated"
       },
       "135": {
         "class": "air",
@@ -3000,6 +4301,11 @@
         "class": "air",
         "reference": 14,
         "source": "episode1-exact"
+      },
+      "142": {
+        "class": "air",
+        "observations": 20,
+        "source": "event-top-only"
       },
       "145": {
         "class": "air",
@@ -3094,6 +4400,11 @@
         "reference": 162,
         "source": "episode-family"
       },
+      "182": {
+        "class": "air",
+        "observations": 72,
+        "source": "event-top-only"
+      },
       "194": {
         "class": "surface",
         "reference": 194,
@@ -3108,6 +4419,81 @@
         "class": "surface",
         "reference": 198,
         "source": "episode1-exact"
+      },
+      "201": {
+        "class": "air",
+        "observations": 50,
+        "source": "event-air-corroborated"
+      },
+      "202": {
+        "class": "air",
+        "observations": 48,
+        "source": "event-air-corroborated"
+      },
+      "214": {
+        "class": "air",
+        "observations": 50,
+        "source": "event-top-only"
+      },
+      "217": {
+        "class": "air",
+        "observations": 50,
+        "source": "event-top-only"
+      },
+      "218": {
+        "class": "air",
+        "observations": 48,
+        "source": "event-top-only"
+      },
+      "219": {
+        "class": "air",
+        "observations": 48,
+        "source": "event-top-only"
+      },
+      "220": {
+        "class": "air",
+        "observations": 48,
+        "source": "event-top-only"
+      },
+      "223": {
+        "class": "air",
+        "observations": 32,
+        "source": "event-top-only"
+      },
+      "224": {
+        "class": "air",
+        "observations": 32,
+        "source": "event-top-only"
+      },
+      "228": {
+        "class": "air",
+        "observations": 8,
+        "source": "event-top-only"
+      },
+      "229": {
+        "class": "air",
+        "observations": 8,
+        "source": "event-top-only"
+      },
+      "230": {
+        "class": "air",
+        "observations": 8,
+        "source": "event-top-only"
+      },
+      "231": {
+        "class": "air",
+        "observations": 8,
+        "source": "event-top-only"
+      },
+      "232": {
+        "class": "air",
+        "observations": 8,
+        "source": "event-top-only"
+      },
+      "233": {
+        "class": "air",
+        "observations": 8,
+        "source": "event-top-only"
       },
       "234": {
         "class": "air",
@@ -3144,10 +4530,95 @@
         "reference": 244,
         "source": "episode1-exact"
       },
+      "245": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
+      "246": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
+      "247": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
+      "248": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
+      "249": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
+      "250": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
+      "259": {
+        "class": "air",
+        "observations": 12,
+        "source": "event-top-only"
+      },
       "26": {
         "class": "air",
         "reference": 26,
         "source": "episode1-exact"
+      },
+      "260": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "261": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "262": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "263": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "264": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "265": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "266": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "267": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "268": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "269": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
       },
       "27": {
         "class": "air",
@@ -3234,6 +4705,51 @@
         "reference": 285,
         "source": "episode1-exact"
       },
+      "287": {
+        "class": "air",
+        "observations": 20,
+        "source": "event-air-corroborated"
+      },
+      "288": {
+        "class": "air",
+        "observations": 26,
+        "source": "event-air-corroborated"
+      },
+      "289": {
+        "class": "air",
+        "observations": 152,
+        "source": "event-air-corroborated"
+      },
+      "290": {
+        "class": "air",
+        "observations": 152,
+        "source": "event-air-corroborated"
+      },
+      "293": {
+        "class": "air",
+        "observations": 20,
+        "source": "event-air-corroborated"
+      },
+      "294": {
+        "class": "air",
+        "observations": 9,
+        "source": "event-top-only"
+      },
+      "295": {
+        "class": "air",
+        "observations": 9,
+        "source": "event-top-only"
+      },
+      "296": {
+        "class": "air",
+        "observations": 87,
+        "source": "event-air-corroborated"
+      },
+      "297": {
+        "class": "air",
+        "observations": 40,
+        "source": "event-air-corroborated"
+      },
       "30": {
         "class": "air",
         "reference": 30,
@@ -3279,6 +4795,341 @@
         "reference": 31,
         "source": "episode1-exact"
       },
+      "327": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "328": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "329": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "330": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "331": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "332": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "333": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "334": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "335": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "336": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "338": {
+        "class": "air",
+        "observations": 50,
+        "source": "event-top-only"
+      },
+      "339": {
+        "class": "air",
+        "observations": 40,
+        "source": "event-air-corroborated"
+      },
+      "340": {
+        "class": "air",
+        "observations": 18,
+        "source": "event-air-corroborated"
+      },
+      "342": {
+        "class": "air",
+        "observations": 25,
+        "source": "event-air-corroborated"
+      },
+      "343": {
+        "class": "air",
+        "observations": 25,
+        "source": "event-air-corroborated"
+      },
+      "344": {
+        "class": "air",
+        "observations": 66,
+        "source": "event-air-corroborated"
+      },
+      "345": {
+        "class": "air",
+        "observations": 44,
+        "source": "event-air-corroborated"
+      },
+      "347": {
+        "class": "air",
+        "observations": 44,
+        "source": "event-air-corroborated"
+      },
+      "349": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-top-only"
+      },
+      "350": {
+        "class": "air",
+        "observations": 5,
+        "source": "event-top-only"
+      },
+      "351": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "352": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "353": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "354": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "355": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "356": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "357": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-top-only"
+      },
+      "366": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "367": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "368": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "369": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "370": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "371": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "372": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "373": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "374": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "375": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "376": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "377": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "378": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "379": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "380": {
+        "class": "air",
+        "observations": 110,
+        "source": "event-air-corroborated"
+      },
+      "381": {
+        "class": "air",
+        "observations": 45,
+        "source": "event-air-corroborated"
+      },
+      "382": {
+        "class": "air",
+        "observations": 12,
+        "source": "event-air-corroborated"
+      },
+      "384": {
+        "class": "air",
+        "observations": 26,
+        "source": "event-air-corroborated"
+      },
+      "386": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
+      "390": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "391": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "392": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "393": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "394": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-top-only"
+      },
+      "400": {
+        "class": "air",
+        "observations": 22,
+        "source": "event-top-only"
+      },
+      "401": {
+        "class": "air",
+        "observations": 22,
+        "source": "event-top-only"
+      },
+      "402": {
+        "class": "air",
+        "observations": 22,
+        "source": "event-top-only"
+      },
+      "403": {
+        "class": "air",
+        "observations": 22,
+        "source": "event-top-only"
+      },
+      "404": {
+        "class": "air",
+        "observations": 22,
+        "source": "event-top-only"
+      },
+      "405": {
+        "class": "air",
+        "observations": 22,
+        "source": "event-top-only"
+      },
+      "406": {
+        "class": "air",
+        "observations": 22,
+        "source": "event-top-only"
+      },
+      "407": {
+        "class": "air",
+        "observations": 22,
+        "source": "event-top-only"
+      },
+      "408": {
+        "class": "air",
+        "observations": 22,
+        "source": "event-top-only"
+      },
+      "409": {
+        "class": "air",
+        "observations": 22,
+        "source": "event-top-only"
+      },
+      "410": {
+        "class": "air",
+        "observations": 22,
+        "source": "event-top-only"
+      },
+      "411": {
+        "class": "air",
+        "observations": 22,
+        "source": "event-top-only"
+      },
+      "412": {
+        "class": "air",
+        "observations": 16,
+        "source": "event-air-corroborated"
+      },
+      "413": {
+        "class": "air",
+        "observations": 16,
+        "source": "event-air-corroborated"
+      },
+      "414": {
+        "class": "air",
+        "observations": 16,
+        "source": "event-air-corroborated"
+      },
+      "415": {
+        "class": "air",
+        "observations": 16,
+        "source": "event-air-corroborated"
+      },
       "456": {
         "class": "surface",
         "reference": 456,
@@ -3289,15 +5140,55 @@
         "reference": 462,
         "source": "episode1-exact"
       },
+      "49": {
+        "class": "air",
+        "observations": 18,
+        "source": "event-air-corroborated"
+      },
+      "50": {
+        "class": "air",
+        "observations": 18,
+        "source": "event-air-corroborated"
+      },
       "500": {
         "class": "air",
         "reference": 500,
         "source": "episode1-exact"
       },
+      "51": {
+        "class": "air",
+        "observations": 18,
+        "source": "event-air-corroborated"
+      },
       "511": {
         "class": "air",
         "reference": 511,
         "source": "episode1-exact"
+      },
+      "516": {
+        "class": "air",
+        "observations": 48,
+        "source": "event-top-only"
+      },
+      "517": {
+        "class": "air",
+        "observations": 48,
+        "source": "event-top-only"
+      },
+      "518": {
+        "class": "air",
+        "observations": 59,
+        "source": "event-top-only"
+      },
+      "520": {
+        "class": "air",
+        "observations": 9,
+        "source": "event-top-only"
+      },
+      "521": {
+        "class": "air",
+        "observations": 64,
+        "source": "event-top-only"
       },
       "528": {
         "class": "surface",
@@ -3308,6 +5199,16 @@
         "class": "air",
         "reference": 529,
         "source": "episode1-exact"
+      },
+      "533": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "540": {
+        "class": "air",
+        "observations": 10,
+        "source": "event-top-only"
       },
       "546": {
         "class": "surface",
@@ -3329,6 +5230,11 @@
         "reference": 549,
         "source": "episode1-exact"
       },
+      "55": {
+        "class": "air",
+        "observations": 15,
+        "source": "event-air-corroborated"
+      },
       "550": {
         "class": "surface",
         "reference": 550,
@@ -3349,6 +5255,11 @@
         "reference": 559,
         "source": "episode1-exact"
       },
+      "56": {
+        "class": "air",
+        "observations": 15,
+        "source": "event-air-corroborated"
+      },
       "568": {
         "class": "air",
         "reference": 568,
@@ -3358,6 +5269,11 @@
         "class": "air",
         "reference": 569,
         "source": "episode1-exact"
+      },
+      "57": {
+        "class": "air",
+        "observations": 15,
+        "source": "event-air-corroborated"
       },
       "570": {
         "class": "air",
@@ -3414,6 +5330,241 @@
         "reference": 6,
         "source": "episode1-exact"
       },
+      "630": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "631": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "632": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "633": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "634": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "635": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "636": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "637": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "638": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "639": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "641": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
+      "642": {
+        "class": "air",
+        "observations": 24,
+        "source": "event-top-only"
+      },
+      "645": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "646": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "647": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "648": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "649": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "650": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "651": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "652": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-air-corroborated"
+      },
+      "653": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "654": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "655": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "656": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "657": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "658": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "659": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "660": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "661": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "662": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "663": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "664": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "665": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "666": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "667": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "668": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "669": {
+        "class": "air",
+        "observations": 14,
+        "source": "event-top-only"
+      },
+      "67": {
+        "class": "air",
+        "observations": 55,
+        "source": "event-top-only"
+      },
+      "670": {
+        "class": "air",
+        "observations": 12,
+        "source": "event-top-only"
+      },
+      "671": {
+        "class": "air",
+        "observations": 14,
+        "source": "event-top-only"
+      },
+      "672": {
+        "class": "air",
+        "observations": 23,
+        "source": "event-top-only"
+      },
+      "673": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "674": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "675": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "676": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "68": {
+        "class": "air",
+        "observations": 55,
+        "source": "event-top-only"
+      },
+      "69": {
+        "class": "air",
+        "observations": 55,
+        "source": "event-top-only"
+      },
       "690": {
         "class": "surface",
         "distance": 0.97,
@@ -3431,6 +5582,116 @@
         "reference": 7,
         "source": "episode1-exact"
       },
+      "70": {
+        "class": "air",
+        "observations": 15,
+        "source": "event-air-corroborated"
+      },
+      "71": {
+        "class": "air",
+        "observations": 16,
+        "source": "event-top-only"
+      },
+      "73": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-air-corroborated"
+      },
+      "731": {
+        "class": "air",
+        "observations": 60,
+        "source": "event-air-corroborated"
+      },
+      "739": {
+        "class": "air",
+        "observations": 35,
+        "source": "event-air-corroborated"
+      },
+      "740": {
+        "class": "air",
+        "observations": 35,
+        "source": "event-air-corroborated"
+      },
+      "741": {
+        "class": "air",
+        "observations": 35,
+        "source": "event-air-corroborated"
+      },
+      "742": {
+        "class": "air",
+        "observations": 218,
+        "source": "event-air-corroborated"
+      },
+      "743": {
+        "class": "air",
+        "observations": 218,
+        "source": "event-air-corroborated"
+      },
+      "744": {
+        "class": "air",
+        "observations": 218,
+        "source": "event-air-corroborated"
+      },
+      "780": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-top-only"
+      },
+      "781": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "782": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "783": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "784": {
+        "class": "air",
+        "observations": 28,
+        "source": "event-top-only"
+      },
+      "785": {
+        "class": "air",
+        "observations": 28,
+        "source": "event-top-only"
+      },
+      "786": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
+      "787": {
+        "class": "air",
+        "observations": 4,
+        "source": "event-top-only"
+      },
+      "790": {
+        "class": "air",
+        "observations": 3,
+        "source": "event-top-only"
+      },
+      "792": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "793": {
+        "class": "air",
+        "observations": 1,
+        "source": "event-top-only"
+      },
+      "794": {
+        "class": "air",
+        "observations": 2,
+        "source": "event-top-only"
+      },
       "8": {
         "class": "air",
         "reference": 8,
@@ -3440,6 +5701,16 @@
         "class": "surface",
         "reference": 823,
         "source": "episode1-exact"
+      },
+      "824": {
+        "class": "air",
+        "observations": 48,
+        "source": "event-air-corroborated"
+      },
+      "826": {
+        "class": "air",
+        "observations": 45,
+        "source": "event-air-corroborated"
       },
       "840": {
         "class": "surface",
@@ -3454,6 +5725,9 @@
     }
   },
   "policy": {
+    "dynamic_graphic_requires_unanimous_event_and_stable_art_match": true,
+    "event_air_requires_static_air_bit": true,
+    "event_top_only_manual_validation": "16/16",
     "family_distance_max": 10,
     "generated_results_are_not_recursive_seeds": true,
     "graphic_delta_max": 8,

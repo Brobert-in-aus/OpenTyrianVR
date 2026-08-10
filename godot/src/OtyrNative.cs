@@ -11,7 +11,18 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 26;
+    public const uint AbiVersion = 27;
+
+    [Flags]
+    public enum Effects : byte
+    {
+        Lava = 1 << 0,
+        Water = 1 << 1,
+        IcedA = 1 << 2,
+        Blur = 1 << 3,
+        IcedB = 1 << 4,
+        Darkness = 1 << 5,
+    }
 
     // Palette index of the suppressed background fill (the frame color key);
     // index-0 black in sprite/HUD art stays opaque.
@@ -92,7 +103,8 @@ public static unsafe class OtyrNative
         public byte SheetId;
         public byte Aux;  // per-category metadata; enemies: terrain-art flag
         public ushort SourceId;  // stable entity id across ticks; 0xffff none
-        public ushort EntityType;  // enemies: eDat index, keys hover-height
+        public ushort EntityType;  // eDat index, or 0x8000|base graphic for
+                                   // temporary type-zero spawns (v27)
                                    // metadata; 0 otherwise (v16)
         public byte AssemblyId;    // enemies: full linknum; 0 standalone (v25)
         public byte Reserved;
@@ -305,7 +317,9 @@ public static unsafe class OtyrNative
                                   // 0 off, else 0x10 | hue row (v20)
         public byte FlipCode;     // vertical mirror active, host-rendered:
                                   // the card-flip (v23)
-        public byte R1, R2, R3;
+        public byte EffectMask;    // Effects flags, host-rendered (v27)
+        public byte LavaData;      // smoothie 1 placement selector (v27)
+        public byte Reserved;
     }
 
     [StructLayout(LayoutKind.Sequential)]

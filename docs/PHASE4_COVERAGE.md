@@ -6,19 +6,18 @@ Static audit of **53,338 events** in all **62 playable Episode 1-4 level records
 
 | Effect | Presentation | Level records | On | Off |
 |---|---|---:|---:|---:|
-| 1: lava displacement | legacy full-frame fallback | 5 | 14 | 2 |
+| 1: lava displacement | host per-eye post effect | 5 | 14 | 2 |
 | 2: water storm | host background ripple shader | 8 | 8 | 2 |
-| 3: iced blur A | legacy full-frame fallback | 1 | 1 | 0 |
-| 4: motion blur | legacy full-frame fallback | 4 | 5 | 3 |
-| 5: iced blur B | legacy full-frame fallback | 1 | 1 | 1 |
-| 6: darkness/searchlight | legacy full-frame fallback | 5 | 5 | 2 |
+| 3: iced blur A | host per-eye post effect | 1 | 1 | 0 |
+| 4: motion blur | host per-eye post effect | 4 | 5 | 3 |
+| 5: iced blur B | host per-eye post effect | 1 | 1 | 1 |
+| 6: darkness/searchlight | host per-eye post effect | 5 | 5 | 2 |
 | 9: vertical mirror | host card-flip presentation | 2 | 2 | 2 |
 
-The host-native effects preserve the 3D scene. Filters that read and rewrite the
-already-composited 320x200 frame deliberately switch the whole tick to the complete
-legacy surface; entities, HUD, and backgrounds cannot go missing or be double-drawn.
-Menus, cinematics, story prompts, pause, and unsupported full-frame filters use the
-same retained legacy-surface path by design.
+All known effects preserve the 3D scene. Full-playfield filters sample each eye's
+already-rendered scene, so shimmer, blur, ice tint, and the player searchlight remain
+stereo-correct. Menus, cinematics, story prompts, pause, and unknown future effect
+combinations retain the complete legacy-surface safety path.
 
 ## Generic coverage
 
@@ -43,5 +42,6 @@ python tools/audit_phase4_coverage.py --write
 ```
 
 The runtime half of this gate is `tools/test_presentation.ps1`. It performs
-silent, self-terminating hybrid/card-flip, native-storm, and legacy-fallback
-runs and validates addressed captures plus presentation/shadow telemetry.
+silent, self-terminating hybrid/card-flip, all-native-effects, and unknown-code
+legacy-fallback runs and validates addressed captures plus presentation/shadow
+telemetry.

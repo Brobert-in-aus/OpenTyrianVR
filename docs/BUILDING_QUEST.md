@@ -60,7 +60,7 @@ head-motion distortion. A sustained 0.1.5 pass validated pause/resume,
 in-game-menu transitions, platform-rider stability, 4x MSAA, and ample
 performance headroom; review-marker halos are editor-only.
 
-Version 0.1.17 (code 18) is the current validation build. It requests 90 Hz,
+Version 0.1.18 (code 19) is the current validation build. It requests 90 Hz,
 restores the de-parallax-expanded -24..288 horizontal playfield, keeps the
 vertical crop at 0..184, render-interpolates all terrain layers, stabilizes
 linked composite enemies across authored transparent gaps, and keeps known

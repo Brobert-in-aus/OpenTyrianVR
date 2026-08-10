@@ -10,12 +10,12 @@ from pathlib import Path
 
 
 EFFECTS = {
-    1: ("lava displacement", "legacy full-frame fallback"),
+    1: ("lava displacement", "host per-eye post effect"),
     2: ("water storm", "host background ripple shader"),
-    3: ("iced blur A", "legacy full-frame fallback"),
-    4: ("motion blur", "legacy full-frame fallback"),
-    5: ("iced blur B", "legacy full-frame fallback"),
-    6: ("darkness/searchlight", "legacy full-frame fallback"),
+    3: ("iced blur A", "host per-eye post effect"),
+    4: ("motion blur", "host per-eye post effect"),
+    5: ("iced blur B", "host per-eye post effect"),
+    6: ("darkness/searchlight", "host per-eye post effect"),
     9: ("vertical mirror", "host card-flip presentation"),
 }
 
@@ -67,11 +67,10 @@ def main() -> int:
         )
     lines += [
         "",
-        "The host-native effects preserve the 3D scene. Filters that read and rewrite the",
-        "already-composited 320x200 frame deliberately switch the whole tick to the complete",
-        "legacy surface; entities, HUD, and backgrounds cannot go missing or be double-drawn.",
-        "Menus, cinematics, story prompts, pause, and unsupported full-frame filters use the",
-        "same retained legacy-surface path by design.",
+        "All known effects preserve the 3D scene. Full-playfield filters sample each eye's",
+        "already-rendered scene, so shimmer, blur, ice tint, and the player searchlight remain",
+        "stereo-correct. Menus, cinematics, story prompts, pause, and unknown future effect",
+        "combinations retain the complete legacy-surface safety path.",
         "",
         "## Generic coverage",
         "",

@@ -67,6 +67,23 @@ def linked_spawn_groups(path: Path) -> dict[int, list[set[int]]]:
     return groups
 
 
+def event_evidence(path: Path):
+    """Stable-type band evidence plus temporary type-zero graphic usage."""
+    stable: dict[tuple[int, int], Counter[str]] = defaultdict(Counter)
+    dynamic: dict[tuple[int, int], Counter[str]] = defaultdict(Counter)
+    dynamic_band = {49: "surface", 50: "air", 51: "air", 52: "surface"}
+    with path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            episode = int(row["episode"])
+            for enemy_type, label in spawned_types(row):
+                if 0 <= enemy_type <= 850:
+                    stable[(episode, enemy_type)][label] += 1
+            event_type = int(row["event_type"])
+            if event_type in dynamic_band:
+                dynamic[(episode, int(row["d1"]))][dynamic_band[event_type]] += 1
+    return stable, dynamic
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--edat", type=Path, default=Path("captures/edat_all_episodes.csv"))
@@ -201,11 +218,61 @@ def main() -> int:
                 "source": "linked-assembly",
             }
 
+    # Recorded event bands are weak evidence in general, but two bounded
+    # intersections are clean against every applicable manual reference:
+    # top-only spawns are flying (16/16), and an air event corroborated by
+    # the static enemy-data air bit removes the direct-event rule's sole
+    # known false positive. These results never become propagation seeds.
+    stable_events, dynamic_events = event_evidence(args.events)
+    for episode in episodes:
+        for enemy_type in range(851):
+            if enemy_type in generated[episode]:
+                continue
+            evidence = stable_events.get((episode, enemy_type), Counter())
+            direct = {label for label in ("surface", "air") if evidence[label]}
+            if not direct and evidence["top"]:
+                generated[episode][enemy_type] = {
+                    "class": "air",
+                    "source": "event-top-only",
+                    "observations": evidence["top"],
+                }
+            elif direct == {"air"} and rows[(episode, enemy_type)]["ground"] != "0":
+                generated[episode][enemy_type] = {
+                    "class": "air",
+                    "source": "event-air-corroborated",
+                    "observations": evidence["air"],
+                }
+
+    # Events 49..52 construct temporary enemy definition zero. The instance
+    # retains its base graphic even after slot zero is overwritten, so runtime
+    # exports 0x8000|graphic as a semantic-only key. Accept a graphic only
+    # when its event-band uses agree and validated stable types using exactly
+    # that art agree with the same class. Conflicts remain review-only.
+    dynamic_generated: dict[int, dict[int, dict]] = {episode: {} for episode in episodes}
+    for episode in episodes:
+        stable_by_graphic: dict[int, set[str]] = defaultdict(set)
+        for enemy_type, entry in generated[episode].items():
+            stable_by_graphic[int(rows[(episode, enemy_type)]["egraphic0"])].add(entry["class"])
+        for (event_episode, graphic), evidence in dynamic_events.items():
+            if event_episode != episode or graphic >= 0x8000:
+                continue
+            labels = {label for label in ("surface", "air") if evidence[label]}
+            references = stable_by_graphic.get(graphic, set())
+            if len(labels) != 1 or references != labels:
+                continue
+            dynamic_generated[episode][graphic] = {
+                "class": next(iter(labels)),
+                "source": "dynamic-graphic-validated",
+                "observations": sum(evidence.values()),
+            }
+
     counts = {
         str(episode): {
             **Counter(entry["class"] for entry in generated[episode].values()),
             "classified": len(generated[episode]),
             "review": 851 - len(generated[episode]),
+            "dynamic_classified": len(dynamic_generated[episode]),
+            "dynamic_observed": sum(1 for event_episode, _graphic in dynamic_events if event_episode == episode),
         }
         for episode in episodes
     }
@@ -217,12 +284,22 @@ def main() -> int:
             "graphic_delta_max": 8,
             "generated_results_are_not_recursive_seeds": True,
             "linked_assembly_requires_same_tick_and_nonzero_link": True,
+            "event_top_only_manual_validation": "16/16",
+            "event_air_requires_static_air_bit": True,
+            "dynamic_graphic_requires_unanimous_event_and_stable_art_match": True,
         },
         "counts": counts,
         "episodes": {
             str(episode): {
                 str(enemy_type): entry
                 for enemy_type, entry in sorted(generated[episode].items())
+            }
+            for episode in episodes
+        },
+        "dynamic_graphics": {
+            str(episode): {
+                str(graphic): entry
+                for graphic, entry in sorted(dynamic_generated[episode].items())
             }
             for episode in episodes
         },

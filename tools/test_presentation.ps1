@@ -42,7 +42,7 @@ New-Item -ItemType Directory -Force -Path $runRoot | Out-Null
 $saved = @{}
 $envNames = @('OTYR_MUTE','SDL_AUDIODRIVER','OTYR_FLAT','OTYR_TOPDOWN','OTYR_PLAY_DEMO',
               'OTYR_TEST_FRAMES','OTYR_CAPTURE_AT','OTYR_CAPTURE_DIR','OTYR_FORCE_FLIP',
-              'OTYR_FORCE_SMOOTHIE')
+              'OTYR_FORCE_SMOOTHIE','OTYR_FORCE_SPECIAL_CODE')
 foreach ($name in $envNames) {
     $item = Get-Item "Env:$name" -ErrorAction SilentlyContinue
     $saved[$name] = if ($null -ne $item) { $item.Value } else { $null }
@@ -53,6 +53,7 @@ function Invoke-PresentationCase {
         [string]$Name,
         [string]$CaptureAt,
         [string]$Smoothie = '',
+        [string]$SpecialCode = '',
         [switch]$ForceFlip
     )
     $caseDir = Join-Path $runRoot $Name
@@ -70,6 +71,7 @@ function Invoke-PresentationCase {
     $env:OTYR_CAPTURE_DIR = $caseDir
     if ($ForceFlip) { $env:OTYR_FORCE_FLIP = '1' } else { Remove-Item Env:OTYR_FORCE_FLIP -ErrorAction SilentlyContinue }
     if ($Smoothie) { $env:OTYR_FORCE_SMOOTHIE = $Smoothie } else { Remove-Item Env:OTYR_FORCE_SMOOTHIE -ErrorAction SilentlyContinue }
+    if ($SpecialCode) { $env:OTYR_FORCE_SPECIAL_CODE = $SpecialCode } else { Remove-Item Env:OTYR_FORCE_SPECIAL_CODE -ErrorAction SilentlyContinue }
 
     $process = Start-Process -FilePath $Godot -PassThru `
         -ArgumentList @('--path', $godotProject, '--xr-mode', 'off', '--audio-driver', 'Dummy') `
@@ -107,12 +109,13 @@ try {
     if ($hybrid.Log -notmatch 'max_receiver_layers=2') { throw 'Hybrid run did not expose both elevated receiver layers.' }
     if ($hybrid.Log -notmatch 'REGRESSION .*flip=1') { throw 'Hybrid run did not exercise the native card flip.' }
 
-    $storm = Invoke-PresentationCase -Name 'native-storm' -CaptureAt '80' -Smoothie '2'
-    if ($storm.Log -notmatch 'REGRESSION .*hybrid=1.*storm=1') {
-        throw 'Storm run did not retain hybrid 3D while exercising the native water effect.'
+    $effects = Invoke-PresentationCase -Name 'native-effects' -CaptureAt '80' `
+        -Smoothie '1,2,3,4,5' -SpecialCode '2'
+    if ($effects.Log -notmatch 'REGRESSION .*hybrid=1.*storm=1.*effects=0x3F') {
+        throw 'Native-effects run did not expose all six effects while retaining hybrid 3D.'
     }
 
-    $fallback = Invoke-PresentationCase -Name 'legacy-fallback' -CaptureAt '80' -Smoothie '6'
+    $fallback = Invoke-PresentationCase -Name 'legacy-fallback' -CaptureAt '80' -SpecialCode '3'
     if ($fallback.Log -notmatch 'REGRESSION .*legacy=1') { throw 'Fallback run never entered complete legacy presentation.' }
     if ($fallback.Log -notmatch 'presentation -> complete legacy fallback') {
         throw 'Fallback transition was not logged.'
@@ -132,7 +135,7 @@ try {
     }
 
     Write-Host "Presentation regression PASS: $runRoot"
-    Select-String -Path (Join-Path $hybrid.Directory 'stdout.log'),(Join-Path $storm.Directory 'stdout.log'),(Join-Path $fallback.Directory 'stdout.log') `
+    Select-String -Path (Join-Path $hybrid.Directory 'stdout.log'),(Join-Path $effects.Directory 'stdout.log'),(Join-Path $fallback.Directory 'stdout.log') `
         -Pattern 'OpenTyrianVR: REGRESSION|presentation ->|PERF ' | ForEach-Object Line
 } finally {
     foreach ($name in $envNames) {

@@ -45,7 +45,14 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 26u
+#define OTYR_ABI_VERSION 27u
+
+#define OTYR_EFFECT_LAVA       (1u << 0)
+#define OTYR_EFFECT_WATER      (1u << 1)
+#define OTYR_EFFECT_ICED_A     (1u << 2)
+#define OTYR_EFFECT_BLUR       (1u << 3)
+#define OTYR_EFFECT_ICED_B     (1u << 4)
+#define OTYR_EFFECT_DARKNESS   (1u << 5)
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -170,10 +177,9 @@ typedef struct OtyrFrame
 	                           gates the background color key: menus redraw
 	                           the frame fully and may legitimately use the
 	                           key index in art (v12) */
-	uint8_t  legacy_fallback; /* nonzero while the level's presentation fell
-	                             back to full legacy drawing (smoothie warp
-	                             filters); the frame is complete and opaque --
-	                             hide the 3D layers and show it flat (v14) */
+	uint8_t  legacy_fallback; /* nonzero only for an unsupported/unknown full-
+	                             frame effect; known campaign effects are host-
+	                             rendered and preserve hybrid 3D (v27) */
 	uint8_t  menu_present;  /* nonzero when this present came MID-TICK from a
 	                           pause/menu/dialog loop rather than the tick's
 	                           own present: the flat frame shows the menu, so
@@ -187,10 +193,11 @@ typedef struct OtyrFrame
 	uint8_t  flip_code;     /* starShowVGASpecialCode 1 (vertical mirror) is
 	                           active and HOST-rendered: the host plays the
 	                           card-flip and mirrors the play content; the
-	                           native flip blit and the fallback are skipped
-	                           under suppression.  Code 2 (darkness) still
-	                           falls back (v23) */
-	uint8_t  reserved[3];
+	                           native flip blit is skipped under suppression.
+	                           Code 2 is the host-rendered darkness cone (v27) */
+	uint8_t  effect_mask;    /* OTYR_EFFECT_* active this tick (v27) */
+	uint8_t  lava_data;      /* smoothie 1 placement selector (v27) */
+	uint8_t  reserved;
 } OtyrFrame;
 
 typedef struct OtyrPlayerState
@@ -260,8 +267,9 @@ typedef struct OtyrSnapshotSprite
 	                           palette signal (weak evidence, v26) */
 	uint16_t source_id;     /* stable entity id across ticks (0xffff none);
 	                           same-id records pair by emit order (v7) */
-	uint16_t entity_type;   /* enemies: eDat index (enemytype), keys authored
-	                           hover-height metadata; 0 otherwise (v16) */
+	uint16_t entity_type;   /* enemies: eDat index; high bit marks a temporary
+	                           type-zero spawn and low 15 bits carry its retained
+	                           base graphic for semantic placement (v27) */
 	uint8_t  assembly_id;   /* enemies: full linknum; 0 = standalone (v25) */
 	uint8_t  reserved;
 } OtyrSnapshotSprite;
