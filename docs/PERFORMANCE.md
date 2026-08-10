@@ -122,3 +122,12 @@ showed 7-16 candidate entity casters and 21 total draws; hidden-window timing is
 intentionally throttled and is not a performance baseline. Quest telemetry must
 confirm the two added map draws and extra instances remain inside the 90 Hz
 budget.
+
+Version 0.1.17 validates every generated entity-shadow fragment against the
+two live elevated map tile/atlas pairs. Receiver origins use the visible
+layers' interpolated scroll phase, so unsupported portions clip over
+transparent cloud/platform holes and the higher receiver wins overlaps. This
+adds no draw calls or CPU-built mask texture; only generated-shadow fragments
+perform the extra nearest-neighbour coverage reads. The silent desktop gate
+observed five entity shadows, two elevated map-shadow passes, both elevated
+receiver layers, native flip/storm presentation, and complete legacy fallback.

@@ -60,7 +60,7 @@ head-motion distortion. A sustained 0.1.5 pass validated pause/resume,
 in-game-menu transitions, platform-rider stability, 4x MSAA, and ample
 performance headroom; review-marker halos are editor-only.
 
-Version 0.1.16 (code 17) is the current validation build. It requests 90 Hz,
+Version 0.1.17 (code 18) is the current validation build. It requests 90 Hz,
 restores the de-parallax-expanded -24..288 horizontal playfield, keeps the
 vertical crop at 0..184, render-interpolates all terrain layers, stabilizes
 linked composite enemies across authored transparent gaps, and keeps known
@@ -70,6 +70,9 @@ platform per instance; connected boss components share one surface while
 retaining their authored stack offsets. ABI v26 also carries episode identity
 so Episode 1 type heights cannot leak into Episodes 2-4; conservative
 episode-local semantics cover only exact or validated close-family matches.
+Entity shadows now mask each fragment against the live elevated receiver art,
+clipping unsupported portions at cloud/platform holes; the deterministic
+desktop presentation suite covers hybrid flip/storm and legacy fallback paths.
 The in-headset checklist is the authoritative pass/fail gate:
 
 - the ship reaches both cropped horizontal edges;

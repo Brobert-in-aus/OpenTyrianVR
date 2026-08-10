@@ -628,6 +628,16 @@
   (1,2,3,4,5,6,9) are covered and unknown ids fail the audit. Presentation-mode
   transitions now log at runtime. Headset gates remain shadow landing through
   transparency holes, multiview consistency, effect transitions, and 90 Hz.
+- Receiver-masked shadows + deterministic presentation gate (0.1.17): each
+  generated entity-shadow fragment checks the live, scroll-interpolated
+  layer-1/layer-2 tile silhouettes against its centre-selected receiving plane.
+  Unsupported fragments clip at transparent platform/cloud holes and the
+  topmost elevated receiver wins overlaps without a CPU mask texture or new
+  draw call. `tools/test_presentation.ps1` builds silently and runs addressed
+  hybrid/card-flip, native-storm, and complete legacy-fallback captures; it
+  fails on shader/runtime errors, absent entity/map shadows or receiver layers,
+  missing captures, or wrong transitions. Desktop gate PASS; multiview and
+  subjective shadow strength/landing remain headset checks.
 - Quest refresh follow-up (0.1.9): Android OpenXR requests 90 Hz at startup,
   reapplies the request after the first tracked frames, and logs available,
   requested, and actual refresh rates. XR performance telemetry now treats

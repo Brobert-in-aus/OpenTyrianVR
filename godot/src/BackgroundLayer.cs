@@ -1,5 +1,6 @@
 ﻿using Godot;
 using System;
+using System.Collections.Generic;
 
 namespace OpenTyrianVR;
 
@@ -84,6 +85,10 @@ public unsafe partial class BackgroundLayer : Node3D
     private readonly Vector2I[] _mapSize = new Vector2I[OtyrNative.BgLayerCount];
     private readonly byte[][] _tilesCpu = new byte[OtyrNative.BgLayerCount][];
     private readonly byte[][] _atlasCpu = new byte[OtyrNative.BgLayerCount][];
+    // Entity-shadow materials use the same live map data to reject fragments
+    // whose selected receiving plane is transparent at that pixel. This keeps
+    // a shadow centred on a platform from floating across its holes.
+    private readonly List<ShaderMaterial> _shadowReceiverMaterials = new();
 
     private readonly OtyrNative.BackgroundDraw[] _currDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
     private readonly OtyrNative.BackgroundDraw[] _prevDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
@@ -125,6 +130,8 @@ public unsafe partial class BackgroundLayer : Node3D
     private const float VirtualSunShadowXPerMeter = 100f;
     private const float VirtualSunShadowYPerMeter = 250f;
     private const float VirtualShadowLift = 0.00035f;
+    public int CastShadowLayerCount { get; private set; }
+    public int ElevatedReceiverLayerCount { get; private set; }
 
     public BackgroundLayer(ImageTexture palette)
     {
@@ -450,6 +457,7 @@ public unsafe partial class BackgroundLayer : Node3D
         _cloudQuad.Visible = _cloudActive && _currDraw[1].Drawn != 0;
         if (_cloudQuad.Visible)
             _cloudMaterial.SetShaderParameter("origin_px", Origin(1, _currDraw[1]));
+        UpdateShadowReceiverState();
         // No in-place copy while lifted: the darkened-shadow look reads
         // wrong over land (user call, 2026-07-12).  Clouds cast nothing
         // until the real directional-sun shadow pass.
@@ -570,6 +578,8 @@ public unsafe partial class BackgroundLayer : Node3D
         if (_stormHue >= 0)
             _materials[0].SetShaderParameter("storm_time", _stormTick + t);
 
+        CastShadowLayerCount = 0;
+        ElevatedReceiverLayerCount = 0;
         for (int l = 0; l < OtyrNative.BgLayerCount; l++)
         {
             _subTickPx[l] = Vector2.Zero;
@@ -591,13 +601,19 @@ public unsafe partial class BackgroundLayer : Node3D
             if (l == 1 && _cloudQuad.Visible)
                 _cloudMaterial.SetShaderParameter("origin_px", origin);
             _castShadowMaterials[l].SetShaderParameter("origin_px", origin);
+            if (l > 0)
+                foreach (ShaderMaterial material in _shadowReceiverMaterials)
+                    material.SetShaderParameter($"receiver_origin_{l}", origin);
 
             float casterZ = l == 1 && _cloudActive
                 ? WaterCloudHeight : LayerHeight(l, _currDraw[l].OverMode);
             bool casts = l > 0 && casterZ > GroundZ + 0.002f;
+            if (l > 0 && PresentedHeight(l) > 0.001f)
+                ElevatedReceiverLayerCount++;
             _castShadowQuads[l].Visible = casts;
             if (casts)
             {
+                CastShadowLayerCount++;
                 float gap = casterZ - GroundZ;
                 float dxPx = gap * VirtualSunShadowXPerMeter;
                 float dyPx = gap * VirtualSunShadowYPerMeter;
@@ -649,6 +665,15 @@ public unsafe partial class BackgroundLayer : Node3D
 
     public float SurfaceZAt(Vector2 framePx, bool includeClouds = false)
     {
+        return SurfaceZAt(framePx, includeClouds, out _);
+    }
+
+    /// <summary>Surface-height query with the actual receiving map layer.
+    /// Layer zero denotes the ground fallback; one and two identify an
+    /// opaque elevated receiver suitable for per-fragment shadow masking.</summary>
+    public float SurfaceZAt(Vector2 framePx, bool includeClouds, out int receiverLayer)
+    {
+        receiverLayer = 0;
         for (int l = OtyrNative.BgLayerCount - 1; l >= 1; l--)
         {
             if (_currDraw[l].Drawn == 0)
@@ -665,9 +690,40 @@ public unsafe partial class BackgroundLayer : Node3D
             if (!platform && !includeClouds)
                 continue;
             if (OpaqueAt(l, framePx))
+            {
+                receiverLayer = l;
                 return z;
+            }
         }
         return 0f;
+    }
+
+    /// <summary>Connect an entity-shadow material to the current background
+    /// receiver maps. Resources update at map epochs; draw state and origins
+    /// update with the presentation so interpolation remains pixel-locked.</summary>
+    public void RegisterShadowReceiverMaterial(ShaderMaterial material)
+    {
+        _shadowReceiverMaterials.Add(material);
+        for (int l = 1; l < OtyrNative.BgLayerCount; l++)
+        {
+            if (_tilemapTex[l] != null)
+                material.SetShaderParameter($"receiver_tilemap_{l}", _tilemapTex[l]);
+            if (_atlasTex[l] != null)
+                material.SetShaderParameter($"receiver_atlas_{l}", _atlasTex[l]);
+            material.SetShaderParameter($"receiver_map_size_{l}", _mapSize[l]);
+            material.SetShaderParameter($"receiver_origin_{l}",
+                _currDraw[l].Drawn != 0 ? Origin(l, _currDraw[l]) : Vector2.Zero);
+            material.SetShaderParameter($"receiver_drawn_{l}",
+                _currDraw[l].Drawn != 0 && PresentedHeight(l) > 0.001f ? 1 : 0);
+        }
+    }
+
+    private void UpdateShadowReceiverState()
+    {
+        foreach (ShaderMaterial material in _shadowReceiverMaterials)
+            for (int l = 1; l < OtyrNative.BgLayerCount; l++)
+                material.SetShaderParameter($"receiver_drawn_{l}",
+                    _currDraw[l].Drawn != 0 && PresentedHeight(l) > 0.001f ? 1 : 0);
     }
 
     // Pixel-granular art test: a PLACED tile can still be transparent at
@@ -813,6 +869,8 @@ public unsafe partial class BackgroundLayer : Node3D
             _mapSize[l] = new Vector2I(_map.Width, _map.Height);
             _materials[l].SetShaderParameter("map_size", _mapSize[l]);
             _castShadowMaterials[l].SetShaderParameter("map_size", _mapSize[l]);
+            foreach (ShaderMaterial material in _shadowReceiverMaterials)
+                material.SetShaderParameter($"receiver_map_size_{l}", _mapSize[l]);
 
             var tiles = new byte[_map.Width * _map.Height];
             fixed (OtyrNative.BackgroundMap* map = &_map)
@@ -825,6 +883,8 @@ public unsafe partial class BackgroundLayer : Node3D
             _tilemapTex[l] = ImageTexture.CreateFromImage(tilemapImage);
             _materials[l].SetShaderParameter("tilemap", _tilemapTex[l]);
             _castShadowMaterials[l].SetShaderParameter("tilemap", _tilemapTex[l]);
+            foreach (ShaderMaterial material in _shadowReceiverMaterials)
+                material.SetShaderParameter($"receiver_tilemap_{l}", _tilemapTex[l]);
 
             int atlasRows = (OtyrNative.BgShapeMax + AtlasCols - 1) / AtlasCols;
             int atlasW = AtlasCols * OtyrNative.BgTileW;
@@ -847,6 +907,8 @@ public unsafe partial class BackgroundLayer : Node3D
             _atlasTex[l] = ImageTexture.CreateFromImage(atlasImage);
             _materials[l].SetShaderParameter("atlas", _atlasTex[l]);
             _castShadowMaterials[l].SetShaderParameter("atlas", _atlasTex[l]);
+            foreach (ShaderMaterial material in _shadowReceiverMaterials)
+                material.SetShaderParameter($"receiver_atlas_{l}", _atlasTex[l]);
         }
         // New level art: re-decide the water-cloud split against it.
         _cloudMaskPending = true;

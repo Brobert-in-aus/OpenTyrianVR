@@ -58,3 +58,19 @@ in a few seconds. (Without the flags, the title screen auto-plays demos after
 30 seconds idle, so it also works unattended in real time.)
 
 Reference capture: `captures/demorec-ep1-tyrian.0` (episode 1, level TYRIAN).
+
+## Silent presentation regression
+
+`tools/test_presentation.ps1` builds the native and managed hosts, audits all
+campaign effect events, then runs three self-terminating Godot attract-mode
+cases with dummy audio: hybrid 3D plus card flip, native water storm, and a
+complete legacy-filter fallback. It writes five addressed frame captures and
+logs beneath the ignored `artifacts/presentation-regression-*` directory and
+fails on shader/runtime errors, missing captures, absent entity/map shadows,
+missing receiver layers, or an incorrect presentation transition.
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\test_presentation.ps1
+```
+
+Pass `-SkipBuild` only after both native and managed outputs are current.

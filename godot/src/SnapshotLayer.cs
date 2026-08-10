@@ -441,6 +441,16 @@ public unsafe partial class SnapshotLayer : Node3D
                 uniform sampler2D atlas : filter_nearest;
                 uniform mat4 world_to_playfield;
                 uniform vec4 clip_rect_px;
+                uniform sampler2D receiver_tilemap_1 : filter_nearest;
+                uniform sampler2D receiver_atlas_1 : filter_nearest;
+                uniform ivec2 receiver_map_size_1;
+                uniform vec2 receiver_origin_1;
+                uniform int receiver_drawn_1 = 0;
+                uniform sampler2D receiver_tilemap_2 : filter_nearest;
+                uniform sampler2D receiver_atlas_2 : filter_nearest;
+                uniform ivec2 receiver_map_size_2;
+                uniform vec2 receiver_origin_2;
+                uniform int receiver_drawn_2 = 0;
 
                 // FLAT: see the sprite shader.
                 varying flat float cell;
@@ -448,6 +458,48 @@ public unsafe partial class SnapshotLayer : Node3D
                 varying flat float v_decal;
                 varying flat float v_strength;
                 varying vec2 v_play_px;
+
+                bool receiver_covered_1(vec2 frame_px) {
+                    if (receiver_drawn_1 == 0)
+                        return false;
+                    ivec2 mp = ivec2(floor(frame_px - receiver_origin_1));
+                    if (mp.x < 0 || mp.y < 0)
+                        return false;
+                    ivec2 tile = mp / ivec2(24, 28);
+                    if (tile.x >= receiver_map_size_1.x || tile.y >= receiver_map_size_1.y)
+                        return false;
+                    int idx = int(texelFetch(receiver_tilemap_1, tile, 0).r * 255.0 + 0.5);
+                    if (idx > 200)
+                        return false;
+                    ivec2 ap = ivec2((idx % 8) * 24, (idx / 8) * 28) +
+                                (mp - tile * ivec2(24, 28));
+                    return int(texelFetch(receiver_atlas_1, ap, 0).r * 255.0 + 0.5) != 0;
+                }
+
+                bool receiver_covered_2(vec2 frame_px) {
+                    if (receiver_drawn_2 == 0)
+                        return false;
+                    ivec2 mp = ivec2(floor(frame_px - receiver_origin_2));
+                    if (mp.x < 0 || mp.y < 0)
+                        return false;
+                    ivec2 tile = mp / ivec2(24, 28);
+                    if (tile.x >= receiver_map_size_2.x || tile.y >= receiver_map_size_2.y)
+                        return false;
+                    int idx = int(texelFetch(receiver_tilemap_2, tile, 0).r * 255.0 + 0.5);
+                    if (idx > 200)
+                        return false;
+                    ivec2 ap = ivec2((idx % 8) * 24, (idx / 8) * 28) +
+                                (mp - tile * ivec2(24, 28));
+                    return int(texelFetch(receiver_atlas_2, ap, 0).r * 255.0 + 0.5) != 0;
+                }
+
+                int top_receiver(vec2 frame_px) {
+                    if (receiver_covered_2(frame_px))
+                        return 2;
+                    if (receiver_covered_1(frame_px))
+                        return 1;
+                    return 0;
+                }
 
                 void vertex() {
                     cell = INSTANCE_CUSTOM.x;
@@ -491,6 +543,15 @@ public unsafe partial class SnapshotLayer : Node3D
                     vec2 cell_px = clamp(uv0 * vec2(12.0, 14.0), vec2(0.5), vec2(11.5, 13.5));
                     if (texture(atlas, (cell_origin_px + cell_px) / vec2(384.0, 448.0)).g < 0.5)
                         discard;
+                    // Generated shadows encode the centre-selected receiver
+                    // in custom-data W. Validate every covered fragment
+                    // against the live map art so transparent holes do not
+                    // acquire a floating multiplicative silhouette.
+                    if (v_decal <= -2.0) {
+                        int expected_receiver = int(round(-v_decal - 2.0));
+                        if (top_receiver(v_play_px) != expected_receiver)
+                            discard;
+                    }
                     // Generated virtual-sun shadows pass their multiplier in
                     // custom-data Z; legacy darken effects retain 0.5.
                     float strength = v_decal < -1.0 ? v_strength / 255.0 : 0.5;
@@ -503,6 +564,7 @@ public unsafe partial class SnapshotLayer : Node3D
             var shadowMaterial = new ShaderMaterial { Shader = shadowShader, RenderPriority = 1 };
             shadowMaterial.SetShaderParameter("atlas", _atlas[id]);
             RegisterClipMaterial(shadowMaterial);
+            _background?.RegisterShadowReceiverMaterial(shadowMaterial);
 
             _multiMesh[ShadowLayerBase + id] = new MultiMesh
             {
@@ -1121,6 +1183,8 @@ public unsafe partial class SnapshotLayer : Node3D
     private const float VirtualSunShadowYPerMeter = 250f;  // .04 m -> 10 px down
     private const float VirtualShadowLift = 0.00045f;
     public int VirtualShadowCount { get; private set; }
+    public int MapCastShadowCount => _background?.CastShadowLayerCount ?? 0;
+    public int ElevatedReceiverLayerCount => _background?.ElevatedReceiverLayerCount ?? 0;
 
     /// <summary>Create silhouette casters once per snapshot. Their exact
     /// projection is resolved in WriteTransforms so interpolation and editor
@@ -2341,6 +2405,7 @@ public unsafe partial class SnapshotLayer : Node3D
 
             Vector2 px = cell.HasPrev ? cell.PrevPx.Lerp(cell.CurrPx, t) : cell.CurrPx;
             float castShadowZ = 0f;
+            int castShadowReceiver = 0;
             if (cell.CastFrom >= 0)
             {
                 ref readonly RenderCell caster = ref _cells[cell.CastFrom];
@@ -2350,7 +2415,8 @@ public unsafe partial class SnapshotLayer : Node3D
                 if (caster.EntityType != 0 &&
                     _editorHeights.TryGetValue(caster.EntityType, out float editedCasterZ))
                     casterZ = editedCasterZ;
-                if (!ProjectVirtualSunShadow(casterPx, casterZ, out px, out castShadowZ))
+                if (!ProjectVirtualSunShadow(casterPx, casterZ, out px, out castShadowZ,
+                                             out castShadowReceiver))
                     continue;
             }
 
@@ -2448,7 +2514,8 @@ public unsafe partial class SnapshotLayer : Node3D
                 id == TextLayer || id == TextShadowLayer
                     ? new Color(cell.CellIndex, cell.Flags + cell.FilterColor * 65f, cell.Aux0, cell.Aux1)
                     : new Color(cell.CellIndex, cell.Flags + (cell.SeamGuard ? 256f : 0f),
-                                cell.FilterColor, cell.DecalOrder));
+                                cell.FilterColor, cell.CastFrom >= 0
+                                    ? -2f - castShadowReceiver : cell.DecalOrder));
 
         }
 
@@ -2460,11 +2527,14 @@ public unsafe partial class SnapshotLayer : Node3D
     }
 
     private bool ProjectVirtualSunShadow(Vector2 casterPx, float casterZ,
-                                         out Vector2 shadowPx, out float shadowZ)
+                                         out Vector2 shadowPx, out float shadowZ,
+                                         out int receiverLayer)
     {
         shadowPx = casterPx;
+        receiverLayer = 0;
         float surface = _background?.SurfaceZAt(
-            casterPx - new Vector2(24f, 0f), includeClouds: true) ?? BackgroundLayer.GroundZ;
+            casterPx - new Vector2(24f, 0f), includeClouds: true,
+            out receiverLayer) ?? BackgroundLayer.GroundZ;
         if (surface <= 0f)
             surface = BackgroundLayer.GroundZ;
 
@@ -2481,9 +2551,12 @@ public unsafe partial class SnapshotLayer : Node3D
             shadowPx = casterPx + new Vector2(
                 gap * VirtualSunShadowXPerMeter,
                 gap * VirtualSunShadowYPerMeter);
+            int sampledLayer = 0;
             float sampled = _background?.SurfaceZAt(
-                shadowPx - new Vector2(24f, 0f), includeClouds: true) ?? BackgroundLayer.GroundZ;
+                shadowPx - new Vector2(24f, 0f), includeClouds: true,
+                out sampledLayer) ?? BackgroundLayer.GroundZ;
             surface = sampled > 0f ? sampled : BackgroundLayer.GroundZ;
+            receiverLayer = sampled > 0f ? sampledLayer : 0;
         }
         shadowZ = surface + VirtualShadowLift;
         return true;

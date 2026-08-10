@@ -39,6 +39,16 @@ public partial class Main : Node3D
     private bool _loggedFirstFrame;
     private bool _loggedPresentationMode;
     private bool _lastLegacyFallback;
+    private int _presentationTransitions;
+    private bool _regressionHybridSeen;
+    private bool _regressionLegacySeen;
+    private bool _regressionFlipSeen;
+    private bool _regressionStormSeen;
+    private int _regressionMaxShadows;
+    private int _regressionMaxMapShadows;
+    private int _regressionMaxReceiverLayers;
+    private int _regressionMaxCells;
+    private bool _regressionFinished;
     private readonly byte[] _rgba = new byte[OtyrNative.FrameWidth * OtyrNative.FrameHeight * 4];
     private readonly uint[] _palette = new uint[256];
     private SnapshotLayer _snapshotLayer = null!;
@@ -608,6 +618,9 @@ public partial class Main : Node3D
     // self-service visual verification -- window capture is unreliable on
     // multi-monitor setups and XR grabs the window entirely.
     private static readonly int CaptureCount = ParseCaptureCount();
+    private static readonly uint RegressionFrameLimit = ParseUnsignedEnvironment("OTYR_TEST_FRAMES");
+    private static readonly string CaptureDirectory =
+        System.Environment.GetEnvironmentVariable("OTYR_CAPTURE_DIR")?.Trim() ?? "";
     private double _captureAccumulator;
     private int _captureIndex;
 
@@ -822,6 +835,20 @@ public partial class Main : Node3D
         return targets.ToArray();
     }
 
+    private static uint ParseUnsignedEnvironment(string name)
+    {
+        string value = System.Environment.GetEnvironmentVariable(name) ?? "";
+        return uint.TryParse(value, out uint parsed) ? parsed : 0;
+    }
+
+    private static string CapturePath(string fileName)
+    {
+        if (CaptureDirectory.Length == 0)
+            return $"user://{fileName}";
+        Directory.CreateDirectory(CaptureDirectory);
+        return Path.Combine(CaptureDirectory, fileName);
+    }
+
     public override void _Process(double delta)
     {
         if (_xrRefreshLogCountdown > 0 && --_xrRefreshLogCountdown == 0)
@@ -853,7 +880,7 @@ public partial class Main : Node3D
             if (_captureAccumulator >= 2.0 && _captureIndex < CaptureCount)
             {
                 _captureAccumulator = 0;
-                CaptureViewport.GetTexture().GetImage().SavePng($"user://cap_{_captureIndex++:D3}.png");
+                CaptureViewport.GetTexture().GetImage().SavePng(CapturePath($"cap_{_captureIndex++:D3}.png"));
             }
         }
 
@@ -865,7 +892,8 @@ public partial class Main : Node3D
         // alignment probe).
         while (_captureAtIndex < CaptureAt.Length && _frame.FrameNumber >= CaptureAt[_captureAtIndex])
         {
-            CaptureViewport.GetTexture().GetImage().SavePng($"user://cap_at_{CaptureAt[_captureAtIndex]}.png");
+            CaptureViewport.GetTexture().GetImage().SavePng(
+                CapturePath($"cap_at_{CaptureAt[_captureAtIndex]}.png"));
             GD.Print($"OpenTyrianVR: cap_at_{CaptureAt[_captureAtIndex]} level_tick={_frame.LevelTick}");
             ++_captureAtIndex;
         }
@@ -878,7 +906,7 @@ public partial class Main : Node3D
                 _captureRunAccumulator = 0;
                 ++_captureRunCount;
                 var image = CaptureViewport.GetTexture().GetImage();
-                string path = $"user://cap_f{_frame.FrameNumber:D6}.jpg";
+                string path = CapturePath($"cap_f{_frame.FrameNumber:D6}.jpg");
                 System.Threading.Tasks.Task.Run(() => image.SaveJpg(path, 0.8f));
             }
         }
@@ -889,11 +917,21 @@ public partial class Main : Node3D
         {
             _loggedPresentationMode = true;
             _lastLegacyFallback = legacyFallback;
+            _presentationTransitions++;
             GD.Print($"OpenTyrianVR: presentation -> {(legacyFallback ? "complete legacy fallback" : "hybrid 3D")}" +
                      $" tick={_frame.LevelTick} storm={_frame.StormWater} flip={_frame.FlipCode}");
         }
+        _regressionHybridSeen |= !legacyFallback && _frame.InLevel != 0;
+        _regressionLegacySeen |= legacyFallback && _frame.InLevel != 0;
+        _regressionFlipSeen |= _frame.FlipCode == 1 && _frame.InLevel != 0;
+        _regressionStormSeen |= _frame.StormWater != 0 && _frame.InLevel != 0;
         PollPlayerState();
         _snapshotLayer.Poll(_session, _palette);
+        _regressionMaxShadows = Math.Max(_regressionMaxShadows, _snapshotLayer.VirtualShadowCount);
+        _regressionMaxMapShadows = Math.Max(_regressionMaxMapShadows, _snapshotLayer.MapCastShadowCount);
+        _regressionMaxReceiverLayers = Math.Max(_regressionMaxReceiverLayers,
+                                                _snapshotLayer.ElevatedReceiverLayerCount);
+        _regressionMaxCells = Math.Max(_regressionMaxCells, _snapshotLayer.CellCount);
         // Menus, pause, and quit-to-title stop gameplay ticks; the 3D scene
         // (sprites AND background layers) must not linger over them.  A
         // legacy-fallback level (smoothie warp) draws its complete frame
@@ -954,6 +992,23 @@ public partial class Main : Node3D
         {
             _perfPlayerMinX = Math.Min(_perfPlayerMinX, _playerState.X);
             _perfPlayerMaxX = Math.Max(_perfPlayerMaxX, _playerState.X);
+        }
+
+        if (!_regressionFinished && RegressionFrameLimit > 0 &&
+            _frame.FrameNumber > RegressionFrameLimit && _captureAtIndex >= CaptureAt.Length)
+        {
+            _regressionFinished = true;
+            GD.Print("OpenTyrianVR: REGRESSION " +
+                     $"frames={_frame.FrameNumber} hybrid={(_regressionHybridSeen ? 1 : 0)} " +
+                     $"legacy={(_regressionLegacySeen ? 1 : 0)} " +
+                     $"flip={(_regressionFlipSeen ? 1 : 0)} storm={(_regressionStormSeen ? 1 : 0)} " +
+                     $"transitions={_presentationTransitions} max_cells={_regressionMaxCells} " +
+                     $"max_cast_shadows={_regressionMaxShadows} " +
+                     $"max_map_cast_shadows={_regressionMaxMapShadows} " +
+                     $"max_receiver_layers={_regressionMaxReceiverLayers} captures={_captureAtIndex}");
+            ShutDown();
+            GetTree().Quit();
+            return;
         }
 
         if (_perfWindowStartUsec == 0)

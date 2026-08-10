@@ -833,17 +833,24 @@ static enum LevelTickResult JE_levelTick(void)
 	if (otyr_hosted)
 		otyr_host_level_tick();
 
-	/* Debug (OTYR_FORCE_SMOOTHIE env): force the water smoothie so the
-	   legacy-fallback presentation path can be exercised on any level.
+	/* Debug (OTYR_FORCE_SMOOTHIE=<id>): force a smoothie so native and
+	   complete-frame fallback presentation paths can be exercised on any
+	   level. A missing/non-numeric value retains the historical water id 2.
 	   Changes frame content -- never set during hash gates. */
 	{
-		static int force_smoothie = -1;
-		if (force_smoothie < 0)
-			force_smoothie = SDL_getenv("OTYR_FORCE_SMOOTHIE") != NULL;
-		if (force_smoothie)
+		static int force_smoothie_id = -1;
+		if (force_smoothie_id < 0)
 		{
-			smoothies[2-1] = true;
-			smoothie_data[2-1] = 3;  /* SAVARA V's real hue row (blue) */
+			const char *forced = SDL_getenv("OTYR_FORCE_SMOOTHIE");
+			force_smoothie_id = forced != NULL ? atoi(forced) : 0;
+			if (forced != NULL && (force_smoothie_id < 1 || force_smoothie_id > 9))
+				force_smoothie_id = 2;
+		}
+		if (force_smoothie_id > 0)
+		{
+			smoothies[force_smoothie_id-1] = true;
+			if (force_smoothie_id == 2)
+				smoothie_data[2-1] = 3;  /* SAVARA V's real hue row (blue) */
 		}
 		/* OTYR_FORCE_FLIP: force the vertical-mirror special code so the
 		   host card-flip can be exercised on any level (no ep1 level uses

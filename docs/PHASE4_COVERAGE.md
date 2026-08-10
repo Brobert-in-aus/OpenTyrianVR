@@ -41,3 +41,7 @@ Regenerate with:
 ```powershell
 python tools/audit_phase4_coverage.py --write
 ```
+
+The runtime half of this gate is `tools/test_presentation.ps1`. It performs
+silent, self-terminating hybrid/card-flip, native-storm, and legacy-fallback
+runs and validates addressed captures plus presentation/shadow telemetry.
