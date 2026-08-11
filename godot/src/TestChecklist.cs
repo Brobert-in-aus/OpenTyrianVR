@@ -18,7 +18,7 @@ public partial class TestChecklist : Node3D
         "GROUND SCROLL: terrain below floating platforms glides without judder",
         "COMPOSITES: fast stacks and the small level-1 boss stay welded",
         "CLOUDS: translucent and always below level-1 aerial platforms",
-        "LAYERING: ground/platform objects and flyers occupy the right planes",
+        "LAYERING: stationary buildings are coplanar with ground/platforms; flyers use air planes",
         "TANK BOSS: linked body/turret stack stays together at correct offsets",
         "E2-E4: no Episode-1 height leakage; classified objects use right planes",
         "CAST SHADOWS: flyers/entities offset by height; clouds/platforms shade ground",

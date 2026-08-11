@@ -666,6 +666,12 @@
   -25..288 crop; Quest packaging corrects SDL's reversed input/output hot-plug
   routes; the ABI-v26 ground observation mask is refreshed; and PowerShell
   development tools no longer leak their working directory or audio settings.
+- Platform-arrival interpolation + coplanar buildings (0.1.24): snapshot
+  arrival smoothing divides wall time by the actual skipped-tick gap. A
+  one-off platform/shadow shader compilation therefore cannot stretch the
+  nominal 35 Hz interpolation period and turn ground scrolling into a
+  sawtooth. Stationary surface objects use the exact sampled ground/platform
+  Z; stronger depth-only ordering replaces their former geometric lift.
 - Quest refresh follow-up (0.1.9): Android OpenXR requests 90 Hz at startup,
   reapplies the request after the first tracked frames, and logs available,
   requested, and actual refresh rates. XR performance telemetry now treats

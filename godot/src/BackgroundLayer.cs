@@ -423,6 +423,9 @@ public unsafe partial class BackgroundLayer : Node3D
         {
             _prevDraw[l] = _currDraw[l];
             _currDraw[l] = snapshot.Background(l);
+            if (_prevDraw[l].Drawn == 0 && _currDraw[l].Drawn != 0)
+                GD.Print($"OpenTyrianVR: background layer {l} appeared " +
+                         $"tick={snapshot.LevelTick} over={_currDraw[l].OverMode}");
             _quads[l].Visible = _currDraw[l].Drawn != 0;
 
             float rawZ = RawLayerHeight(l, _currDraw[l].OverMode);

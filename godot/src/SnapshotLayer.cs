@@ -79,6 +79,7 @@ public unsafe partial class SnapshotLayer : Node3D
     private uint _sheetEpoch;
     private uint _lastRenderedSnapshot;
     private ulong _snapshotArrivalUsec;
+    private uint _snapshotArrivalLevelTick;
     private double _snapshotPeriod = 0.02875;  // nominal 35 Hz tick
     private uint _cellLevelTick;
     private uint _pairTickGap = 1;
@@ -226,7 +227,11 @@ public unsafe partial class SnapshotLayer : Node3D
                     // head parallax, so transparent art pixels composite
                     // the baked tiles beneath); a depth-only bias encodes
                     // the paint order against the tiles and each other.
-                    DEPTH = FRAGCOORD.z + (v_decal > 0.0 ? 0.00001 + v_decal * 0.00002 : 0.0);
+                    // Depth-only ordering keeps stationary buildings exactly
+                    // coplanar with their receiver while remaining stable in
+                    // Quest multiview. This is intentionally larger than the
+                    // old 1e-5 bias, which quantized away at the lane's far end.
+                    DEPTH = FRAGCOORD.z + (v_decal > 0.0 ? 0.00015 + v_decal * 0.00005 : 0.0);
                     // Rounded decode (see the text layer): custom data can
                     // arrive a hair under the integer and wrap the atlas
                     // origin at column boundaries.
@@ -743,13 +748,26 @@ public unsafe partial class SnapshotLayer : Node3D
 
             // Smoothed snapshot period for interpolation pacing.
             ulong now = Time.GetTicksUsec();
-            if (_snapshotArrivalUsec != 0)
+            if (_snapshotArrivalUsec != 0 &&
+                _incomingSnapshot.LevelTick > _snapshotArrivalLevelTick)
             {
                 double dt = (now - _snapshotArrivalUsec) / 1_000_000.0;
-                if (dt > 0.001 && dt < 0.25)
-                    _snapshotPeriod = _snapshotPeriod * 0.8 + dt * 0.2;
+                uint tickGap = _incomingSnapshot.LevelTick - _snapshotArrivalLevelTick;
+                // A render stall can skip several native publications. Its
+                // wall time spans all skipped ticks; treating that as ONE
+                // tick poisoned the interpolation period for seconds. The
+                // first platform/shadow shader compilation triggered exactly
+                // that pattern, making otherwise smooth ground sawtooth.
+                double perTick = dt / tickGap;
+                if (perTick > 0.010 && perTick < 0.060)
+                    _snapshotPeriod = _snapshotPeriod * 0.8 + perTick * 0.2;
+                if (tickGap > 1)
+                    GD.Print($"OpenTyrianVR: snapshot arrival gap={tickGap} " +
+                             $"wall={dt * 1000.0:0.0}ms per_tick={perTick * 1000.0:0.0}ms " +
+                             $"interp={_snapshotPeriod * 1000.0:0.0}ms");
             }
             _snapshotArrivalUsec = now;
+            _snapshotArrivalLevelTick = _incomingSnapshot.LevelTick;
         }
 
         WriteTransforms();
@@ -802,6 +820,7 @@ public unsafe partial class SnapshotLayer : Node3D
             _prevCellCount = 0;
             _cellLevelTick = 0;
             _snapshotArrivalUsec = 0;
+            _snapshotArrivalLevelTick = 0;
         }
         BuildSprites();
         _background?.OnSnapshot(session, in _snapshot);
@@ -2312,10 +2331,10 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             float below = SurfaceForEntity(sprite.SourceId, centerX, centerY);
             float surface = below > 0f ? below : BackgroundLayer.GroundZ;
-            if (surfaceRelativeExplicit)
-                band = surface + (authored - BackgroundLayer.GroundZ);
-            else if (staticEnemy)
+            if (staticEnemy)
                 band = surface;
+            else if (surfaceRelativeExplicit)
+                band = surface + (authored - BackgroundLayer.GroundZ);
             else
                 band = surface + Math.Max(_groundClassOffset, 0.002f);
             if (staticEnemy)
@@ -2490,17 +2509,10 @@ public unsafe partial class SnapshotLayer : Node3D
             float laneX = (frameX / 320f - 0.5f) * LaneWidth;
             float laneY = (0.5f - px.Y / 200f) * LaneHeight;
 
-            // ALL decals get a real geometric lift above their layer, with
-            // the paint order folded into real height: the in-shader depth
-            // bias (1e-5) sits below the VR multiview depth-precision floor,
-            // so exactly-coplanar decals z-fight their own layer -- worst at
-            // the lane's FAR half where precision is coarsest (the round-7
-            // "offset in the top half of the screen" ground statics and the
-            // see-through carrier wings).  Ground decals ride 0.0006 above
-            // the tiles (~0.2 mm parallax) which also matches legacy paint
-            // order over the structure layers; elevated decals ride 0.0015
-            // above their platform/cloud.  Real depth wins everywhere; the
-            // shader bias stays as flat-mode belt-and-braces.
+            // Stationary buildings are geometrically COPLANAR with the ground
+            // or floating platform they belong to. Paint ordering is encoded
+            // only in fragment depth, so head movement cannot reveal a small
+            // artificial hover/parallax offset.
             // Height-editor live override FIRST (decals included -- statics
             // are the objects most worth tuning); applies to frozen (paused)
             // cells too, so nudges are visible without unpausing.  The
@@ -2517,19 +2529,6 @@ public unsafe partial class SnapshotLayer : Node3D
                 _editorHeights.TryGetValue(cell.EntityType, out editH);
             if (overridden)
                 z = editH + EnemyOrderBias(cell.CurrPx.Y, i);
-            // The lift exists for VR multiview (per-eye depth-precision
-            // ghosting); viewed obliquely it parallaxes decals up to ~1 px
-            // off their baked underlay.  The editor is flat single-view,
-            // where the in-shader depth bias alone is reliable -- skip the
-            // lift there so alignment reads pixel-true at any orbit angle.
-            // EXCEPT shadows: they have no baked underlay to align with,
-            // and unlifted they sit exactly on the ground quad's depth-
-            // prepass plane -- the depth-test tie flickered the player
-            // shadow in and out with camera tilt.
-            bool isShadowCell = cell.SheetId >= ShadowLayerBase &&
-                                cell.SheetId < ShadowLayerBase + OtyrNative.SheetCount;
-            if (cell.DecalOrder > 0f && !overridden && (!FlatEditorMode || isShadowCell))
-                z += (z > 0.001f ? 0.0015f : 0.0006f) + cell.DecalOrder * 0.0004f;
             int instance = _instanceCount[id]++;
             if (instance >= _multiMesh[id].InstanceCount)
             {
