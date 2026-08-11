@@ -60,9 +60,9 @@ head-motion distortion. A sustained 0.1.5 pass validated pause/resume,
 in-game-menu transitions, platform-rider stability, 4x MSAA, and ample
 performance headroom; review-marker halos are editor-only.
 
-Version 0.1.25 (code 26) is the current validation build. It requests 90 Hz,
-crops terrain/backing/map shadows to the reachable 0..264 surface while
-retaining the ship-safe -25..288 sprite envelope, keeps the
+Version 0.1.26 (code 27) is the current validation build. It requests 90 Hz,
+renders continuous mirrored terrain side lanes from -24..288 while retaining
+the ship-safe -25..288 sprite envelope, keeps the
 vertical crop at 0..184, render-interpolates all terrain layers, stabilizes
 linked composite enemies across authored transparent gaps, and keeps known
 cloud layers translucent when level events change their draw order. Clouds
@@ -79,22 +79,25 @@ desktop presentation suite covers all six native effects together and the
 unknown-effect legacy safety path.
 The in-headset checklist is the authoritative pass/fail gate:
 
-- the ship reaches both cropped horizontal edges;
+- both 24 px side lanes remain visible without a seam at x=0/264, and the ship
+  reaches both horizontal limits;
 - enemies cross the hard vertical playfield edges cleanly, with no fade;
 - terrain below floating platforms scrolls without judder;
-- fast stacks and the small level-1 boss remain welded;
+- fast stacks and small boss types 468-473 remain welded;
 - clouds remain translucent and below level-1 aerial platforms;
-- ground/platform objects and flying enemies occupy the intended planes;
+- ground objects blend behind clouds; layer-6 objects stay under platforms,
+  layer-7 objects share the platform plane, and flying enemies use air planes;
 - the stacked tank boss keeps its body/turret offsets on one shared surface;
 - Episodes 2-4 show no Episode 1 height leakage, and classified later-episode
   objects occupy the intended surface/air planes;
-- height-driven entity shadows move farther from higher casters, and elevated
+- top-edge shadows appear before their off-screen casters, height-driven
+  entity shadows move farther from higher casters, and elevated
   clouds/platforms cast stable silhouettes without floating across transparent
   holes;
 - storm, flip, lava, blur, iced, and searchlight effects remain stereo-correct
   in the hybrid 3D scene;
-- HUD, pause, death, end-level, and story/lifecycle screens remain complete and
-  readable;
+- HUD, death, end-level, and story/lifecycle screens remain complete; PAUSED
+  text and boss HP bars remain above aerial platforms;
 - music and sound effects play at the headset volume;
 - motion remains smooth at the selected 90 Hz refresh rate.
 
@@ -118,3 +121,12 @@ Version 0.1.25 makes connected, near-coplanar flying boss sections share one
 exact render plane. This removes the headset-only horizontal split between the
 upper and lower rows of the small Episode 1 boss while preserving meaningful
 authored height offsets and all surface/tank assemblies.
+
+Version 0.1.26 corrects the actual zero-link six-part boss (types 468-473) by
+carrying a presentation-only same-event spawn cohort, restores side terrain as
+one -24..288 quad with mirrored edge-continuous backing, and uses a fixed 35 Hz
+interpolation clock. Explicit depth/transparent ordering puts ground objects
+behind clouds and key-6 objects below platforms; type 559 moves to the new
+key-7 platform class while 66-79 remain platform-under. Map shadows now sample
+off-screen caster pixels into the visible top edge. The proud keyed lane keeps
+PAUSED text and boss HP primitives above all terrain geometry.

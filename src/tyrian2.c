@@ -177,6 +177,13 @@ static PresentCategory enemy_band_category;
  * host's publish-time reclassification pass reads it too. */
 Uint8 otyr_enemy_moved[100];
 
+/* Presentation-only spawn cohort. Legacy linknum is gameplay state and many
+ * multi-slot art assemblies legitimately leave it zero (E1 types 468-473).
+ * Consecutive event records at one event time share this byte; the managed
+ * renderer still requires spatial contact before welding them, so unrelated
+ * same-tick formations remain separate. */
+static Uint8 otyr_enemy_present_assembly[100];
+
 inline static void record_enemy_blit(unsigned int i, signed int x_offset,
                                      signed int y_offset, signed int sprite_offset,
                                      bool two_by_two)
@@ -295,7 +302,8 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset,
 		   custom buildings/flyers without pretending they share one type. */
 		present_sprites[rec].entity_type = enemy[i].enemytype != 0
 			? enemy[i].enemytype : (Uint16)(0x8000u | (enemy[i].egr[0] & 0x7fffu));
-		present_sprites[rec].assembly_id = enemy[i].linknum;
+		present_sprites[rec].assembly_id = enemy[i].linknum != 0
+			? enemy[i].linknum : otyr_enemy_present_assembly[i];
 	}
 }
 
@@ -4174,6 +4182,7 @@ Sint16 JE_newEnemy(int enemyOffset, Uint16 eDatI, Sint16 uniqueShapeTableI)
 		{
 			enemyAvail[i] = JE_makeEnemy(&enemy[i], eDatI, uniqueShapeTableI);
 			otyr_enemy_moved[i] = 0;  /* fresh slot: may classify as static */
+			otyr_enemy_present_assembly[i] = 0;
 			return i + 1;
 		}
 	}
@@ -4529,6 +4538,11 @@ void JE_createNewEventEnemy(JE_byte enemyTypeOfs, JE_word enemyOffset, Sint16 un
 	enemy[b-1].ey += eventRec[eventLoc-1].eventdat5;
 	enemy[b-1].eyc += eventRec[eventLoc-1].eventdat3;
 	enemy[b-1].linknum = eventRec[eventLoc-1].eventdat4;
+	/* A nonzero legacy link remains authoritative. For zero-link event art,
+	 * retain a stable presentation cohort so adjacent records created by the
+	 * same event time (notably the 3x2 small boss) move as one object. */
+	otyr_enemy_present_assembly[b-1] = enemy[b-1].linknum != 0 ? 0
+		: (Uint8)(eventRec[eventLoc-1].eventtime % 255 + 1);
 	enemy[b-1].fixedmovey = eventRec[eventLoc-1].eventdat6;
 }
 

@@ -18,8 +18,13 @@ public static class PlayfieldGeometry
     public const float Width = MaxX - MinX;
     public const float Height = MaxY - MinY;
 
-    public const float TerrainMinX = 0f;
-    public const float TerrainMaxX = 264f;
+    // The authored maps include one side tile beyond each reachable edge.
+    // Structures legitimately occupy those columns (for example E1 types
+    // 522-527 at x=258..306). Render the whole continuous map span; using a
+    // separate centre crop exposed a hard seam at x=0/264 and cut those
+    // structures in half.
+    public const float TerrainMinX = -24f;
+    public const float TerrainMaxX = 288f;
     public const float TerrainWidth = TerrainMaxX - TerrainMinX;
 
     public const float HudSidebarWidth = 56f;

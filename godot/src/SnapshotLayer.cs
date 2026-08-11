@@ -80,7 +80,10 @@ public unsafe partial class SnapshotLayer : Node3D
     private uint _lastRenderedSnapshot;
     private ulong _snapshotArrivalUsec;
     private uint _snapshotArrivalLevelTick;
-    private double _snapshotPeriod = 0.02875;  // nominal 35 Hz tick
+    // Native simulation is fixed at 35 Hz. Estimating this from render-thread
+    // receipt times aliases badly at 60/72/90 Hz (alternating 16/33 ms), and
+    // the oscillation becomes conspicuous when platforms first appear.
+    private const double SnapshotPeriod = 1.0 / 35.0;
     private uint _cellLevelTick;
     private uint _pairTickGap = 1;
 
@@ -295,8 +298,8 @@ public unsafe partial class SnapshotLayer : Node3D
             _atlas[id] = ImageTexture.CreateFromImage(atlasImage);
 
             // Explicit transparent-pass ordering (the distance-sort roulette
-            // has bitten repeatedly): tile layers 0/+5 (BackgroundLayer),
-            // shadows 1, color sprites 2, in-play text 4.
+            // has bitten repeatedly): terrain/map shadows (<0), color sprites
+            // 2, clouds 3, platforms 4, entity shadows 5, in-play text 6.
             var material = new ShaderMaterial { Shader = shader, RenderPriority = 2 };
             material.SetShaderParameter("atlas", _atlas[id]);
             material.SetShaderParameter("palette", _paletteTexture);
@@ -468,6 +471,8 @@ public unsafe partial class SnapshotLayer : Node3D
                 bool receiver_covered_1(vec2 frame_px) {
                     if (receiver_drawn_1 == 0)
                         return false;
+                    if (frame_px.x < 0.0) frame_px.x = -frame_px.x - 1.0;
+                    else if (frame_px.x >= 264.0) frame_px.x = 527.0 - frame_px.x;
                     ivec2 mp = ivec2(floor(frame_px - receiver_origin_1));
                     if (mp.x < 0 || mp.y < 0)
                         return false;
@@ -485,6 +490,8 @@ public unsafe partial class SnapshotLayer : Node3D
                 bool receiver_covered_2(vec2 frame_px) {
                     if (receiver_drawn_2 == 0)
                         return false;
+                    if (frame_px.x < 0.0) frame_px.x = -frame_px.x - 1.0;
+                    else if (frame_px.x >= 264.0) frame_px.x = 527.0 - frame_px.x;
                     ivec2 mp = ivec2(floor(frame_px - receiver_origin_2));
                     if (mp.x < 0 || mp.y < 0)
                         return false;
@@ -567,7 +574,7 @@ public unsafe partial class SnapshotLayer : Node3D
         };
         for (int id = 0; id < OtyrNative.SheetCount; id++)
         {
-            var shadowMaterial = new ShaderMaterial { Shader = shadowShader, RenderPriority = 1 };
+            var shadowMaterial = new ShaderMaterial { Shader = shadowShader, RenderPriority = 5 };
             shadowMaterial.SetShaderParameter("atlas", _atlas[id]);
             RegisterClipMaterial(shadowMaterial);
             _background?.RegisterShadowReceiverMaterial(shadowMaterial);
@@ -652,7 +659,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 }
                 """,
         };
-        var textMaterial = new ShaderMaterial { Shader = textShader, RenderPriority = 4 };
+        var textMaterial = new ShaderMaterial { Shader = textShader, RenderPriority = 6 };
         textMaterial.SetShaderParameter("atlas", _oldAtlas);
         textMaterial.SetShaderParameter("palette", _paletteTexture);
         RegisterClipMaterial(textMaterial);
@@ -707,7 +714,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 }
                 """,
         };
-        var textShadowMaterial = new ShaderMaterial { Shader = textShadowShader, RenderPriority = 4 };
+        var textShadowMaterial = new ShaderMaterial { Shader = textShadowShader, RenderPriority = 6 };
         textShadowMaterial.SetShaderParameter("atlas", _oldAtlas);
         RegisterClipMaterial(textShadowMaterial);
 
@@ -759,13 +766,10 @@ public unsafe partial class SnapshotLayer : Node3D
                 // tick poisoned the interpolation period for seconds. The
                 // first platform/shadow shader compilation triggered exactly
                 // that pattern, making otherwise smooth ground sawtooth.
-                double perTick = dt / tickGap;
-                if (perTick > 0.010 && perTick < 0.060)
-                    _snapshotPeriod = _snapshotPeriod * 0.8 + perTick * 0.2;
                 if (tickGap > 1)
                     GD.Print($"OpenTyrianVR: snapshot arrival gap={tickGap} " +
-                             $"wall={dt * 1000.0:0.0}ms per_tick={perTick * 1000.0:0.0}ms " +
-                             $"interp={_snapshotPeriod * 1000.0:0.0}ms");
+                             $"wall={dt * 1000.0:0.0}ms " +
+                             $"interp={SnapshotPeriod * 1000.0:0.0}ms(fixed)");
             }
             _snapshotArrivalUsec = now;
             _snapshotArrivalLevelTick = _incomingSnapshot.LevelTick;
@@ -808,6 +812,7 @@ public unsafe partial class SnapshotLayer : Node3D
         if (_snapshot.SheetEpoch != _sheetEpoch)
         {
             _sheetEpoch = _snapshot.SheetEpoch;
+            _loggedRigidPlanes.Clear();
             FetchAtlases(session);
         }
         UpdatePalette(paletteArgb);
@@ -1018,6 +1023,7 @@ public unsafe partial class SnapshotLayer : Node3D
     private readonly int[] _assemblyComponent = new int[OtyrNative.SnapshotSpriteMax * 4];
     private readonly float[] _assemblyMotionX = new float[OtyrNative.SnapshotSpriteMax * 4];
     private readonly float[] _assemblyMotionY = new float[OtyrNative.SnapshotSpriteMax * 4];
+    private readonly System.Collections.Generic.HashSet<int> _loggedRigidPlanes = new();
     private readonly System.Collections.Generic.Dictionary<ushort, (int Start, int Count)> _prevRuns = new();
 
     private const float PairRadiusPx = 16f;
@@ -1376,10 +1382,21 @@ public unsafe partial class SnapshotLayer : Node3D
             if (dynamic && linkedSlots && allAir && maxZ - minZ <= 0.0015f)
             {
                 float planeZ = sumZ / members;
+                ushort minType = ushort.MaxValue, maxType = 0;
                 for (int i = 0; i < _cellCount; i++)
                     if (_assemblyComponent[i] == root)
+                    {
                         _cells[i].Z = planeZ;
+                        minType = Math.Min(minType, _cells[i].EntityType);
+                        maxType = Math.Max(maxType, _cells[i].EntityType);
+                    }
                 RigidPlaneCellCount += members;
+                int logKey = (_snapshot.Episode << 24) |
+                    (_cells[root].AssemblyId << 16) | minType;
+                if (_loggedRigidPlanes.Add(logKey))
+                    GD.Print($"OpenTyrianVR: rigid air assembly plane-locked " +
+                             $"id={_cells[root].AssemblyId} types={minType}-{maxType} " +
+                             $"members={members} z={planeZ:0.0000}");
             }
 
             if (!dynamic || motionCount == 0)
@@ -2478,7 +2495,7 @@ public unsafe partial class SnapshotLayer : Node3D
         if (_snapshotArrivalUsec != 0)
         {
             double elapsed = (Time.GetTicksUsec() - _snapshotArrivalUsec) / 1_000_000.0;
-            t = (float)Mathf.Clamp(elapsed / _snapshotPeriod, 0.0, 1.0);
+            t = (float)Mathf.Clamp(elapsed / SnapshotPeriod, 0.0, 1.0);
         }
 
         _background?.OnRender(t);

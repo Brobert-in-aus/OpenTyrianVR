@@ -131,3 +131,12 @@ adds no draw calls or CPU-built mask texture; only generated-shadow fragments
 perform the extra nearest-neighbour coverage reads. The silent desktop gate
 observed five entity shadows, two elevated map-shadow passes, both elevated
 receiver layers, native flip/storm presentation, and complete legacy fallback.
+
+Version 0.1.26 presents snapshots on the native fixed 35 Hz simulation period
+instead of estimating their period from render-thread receipt times. At 90 Hz,
+receipt-time sampling aliases into alternating intervals and can create a
+persistent terrain sawtooth even when no native snapshot is skipped. The fixed
+period removes that source of judder without changing simulation or adding work.
+The same build restores the authored -24..288 side lanes by mirroring the
+adjacent playable terrain phase, so it does not depend on the discontinuous
+legacy tile hidden behind the original HUD.

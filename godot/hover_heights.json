@@ -7,6 +7,7 @@
     "ground": 0.004,
     "mid-under": 0.012,
     "over-top": 0.075,
+    "platform": 0.03,
     "pickup": 0.04,
     "platform-under": 0.0285,
     "water-clouds": 0.0120000001043081
@@ -1685,7 +1686,7 @@
       "class": "air-mid"
     },
     "559": {
-      "class": "platform-under"
+      "class": "platform"
     },
     "56": {
       "class": "air-low"

@@ -358,6 +358,10 @@ public partial class Main : Node3D
             Name = "Lane",
             Mesh = new QuadMesh { Size = new Vector2(LaneWidth, LaneHeight) },  // 320:200
             MaterialOverride = material,
+            // The keyed lane contains only proud legacy overlays during
+            // hybrid play (pause text, boss bars, HUD primitives). Keep
+            // those at the UI plane so platforms cannot cover them.
+            Position = new Vector3(0f, 0f, 0.09f),
         };
         _flipRoot.AddChild(lane);
 
@@ -688,7 +692,7 @@ public partial class Main : Node3D
             new EditorBand { Z = 0.020f, Label = "clouds (lo)", Key = '4' },
             new EditorBand { Z = 0.025f, Label = "clouds (hi)", Key = '5' },
             new EditorBand { Z = H("platform-under", 0.0285f), Cls = "platform-under", Label = "platform-under", Key = '6' },
-            new EditorBand { Z = 0.030f, Label = "platforms", Key = '7' },
+            new EditorBand { Z = H("platform", 0.030f), Cls = "platform", Label = "platforms", Key = '7' },
             new EditorBand { Z = 0.0315f, Label = "platform objects", Key = '8' },
             new EditorBand { Z = H("air-low", 0.033f), Cls = "air-low", Label = "air-low", Key = '\0' },
             new EditorBand { Z = H("air-mid", 0.0355f), Cls = "air-mid", Label = "air-mid", Key = '9' },

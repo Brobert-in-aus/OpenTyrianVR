@@ -13,18 +13,18 @@ public partial class TestChecklist : Node3D
 {
     private static readonly string[] Items =
     {
-        "FULL WIDTH: terrain ends at 0/264; ship reaches x about 16/280 with overhang visible",
-        "EDGE CROP: enemies scroll cleanly across hard playfield edges; no fade",
+        "FULL WIDTH: side terrain visible -24..288; no seam at playable 0/264 edges",
+        "EDGE RANGE: ship reaches x about 16/280; side structures (522-527) remain visible",
         "GROUND SCROLL: terrain below floating platforms glides without judder",
-        "COMPOSITES: fast stacks and the small level-1 boss stay welded",
+        "COMPOSITES: fast stacks and small boss types 468-473 stay welded",
         "CLOUDS: translucent and always below level-1 aerial platforms",
-        "LAYERING: stationary buildings are coplanar with ground/platforms; flyers use air planes",
+        "LAYERING: ground objects stay behind clouds; layer 6 below and layer 7 on platforms",
         "TANK BOSS: linked body/turret stack stays together at correct offsets",
         "E2-E4: no Episode-1 height leakage; classified objects use right planes",
-        "CAST SHADOWS: flyers/entities offset by height; clouds/platforms shade ground",
+        "CAST SHADOWS: visible from top edge before their off-screen caster enters",
         "SHADOW LAYERS: shadows land on the intended surface without floating over holes",
         "EFFECTS: storm/flip/lava/iced/blur/searchlight stay stereo-correct 3D",
-        "LIFECYCLE UI: HUD, pause, death, end-level and story screens stay complete/readable",
+        "LIFECYCLE UI: pause text and boss HP bar stay above platforms; all screens readable",
         "AUDIO: music and sound effects play at the headset volume",
         "90 HZ: motion stays smooth without recurring judder",
     };

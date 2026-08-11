@@ -677,6 +677,15 @@
   collapsed onto one exact plane. This closes the horizontal headset seam
   between the small Episode 1 boss's upper and lower rows without flattening
   meaningful authored stacks or the surface-based tank boss.
+- Side-lane/layer/composite correction (0.1.26): terrain is again one
+  -24..288 quad, but each unauthored HUD-side tile is a screen-space mirror of
+  its playable edge so x=0/264 is continuous. Zero-link enemies spawned by
+  consecutive records at one event time receive a presentation-only cohort;
+  spatial contact then welds the real six-part E1 boss (types 468-473).
+  Explicit color/cloud/platform/shadow/text ordering preserves translucent
+  clouds over ground objects, key 6 below platforms, and proud pause/boss-bar
+  UI. Back-projected map-shadow sampling includes off-screen top casters, and
+  the interpolation period is fixed to the native 35 Hz clock.
 - Quest refresh follow-up (0.1.9): Android OpenXR requests 90 Hz at startup,
   reapplies the request after the first tracked frames, and logs available,
   requested, and actual refresh rates. XR performance telemetry now treats

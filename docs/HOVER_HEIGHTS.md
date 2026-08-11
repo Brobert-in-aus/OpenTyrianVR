@@ -50,7 +50,7 @@ or fires while the level plays itself. Then:
 - **Up/Down** nudge height ±0.002 (**Shift** = ±0.01), visible immediately,
   even while paused
 - **1–8** assign classes: ground / pickup / air-low / air-mid / air-high /
-  platform-under / mid-under / over-top ("ground" resolves against the
+  platform-under / platform / mid-under / over-top ("ground" resolves against the
   surface beneath from the next tick)
 - **P** pauses the game (the scene stays up for selection); **N** skips the
   level past progress blockers like end bosses

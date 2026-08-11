@@ -13,20 +13,19 @@ namespace OpenTyrianVR;
 /// enemy records receive the identical sub-tick offset as their underlying
 /// layer, preserving pixel lock while removing the 35 Hz ground judder.
 ///
-/// Each layer is a single quad over the reachable 264x184 terrain surface;
-/// sprites use a wider independent clip so edge-overhanging art remains whole. The fragment
+/// Each layer is one continuous quad over the authored -24..288 side lanes;
+/// sprites use a nearly identical independent clip. The fragment
 /// shader resolves frame pixel -> map tile -> shape pixel -> palette, with a
 /// seam-aware bilinear blend in post-palette RGB for anti-aliasing.
 /// </summary>
 public unsafe partial class BackgroundLayer : Node3D
 {
     private const float LaneWidth = 1.0f, LaneHeight = 0.625f;
-    private const int PlayW = 264, PlayH = 184;
+    private const int PlayW = 312, PlayH = 184;
     private const int AtlasCols = 8;  // 8x9 grid of 24x28 shapes
 
-    // Reachable terrain boundary. The player and enemies retain their wider
-    // sprite clip independently, so art can overhang without exposing the
-    // unpathable authored side columns beneath it.
+    // Full authored terrain boundary. One continuous shader sample removes
+    // the old join between the playable centre and its side columns.
     private const float CanvasX0 = PlayfieldGeometry.TerrainMinX, CanvasY0 = PlayfieldGeometry.MinY;
     private const float CanvasW = PlayfieldGeometry.TerrainWidth, CanvasH = PlayfieldGeometry.Height;
 
@@ -158,7 +157,10 @@ public unsafe partial class BackgroundLayer : Node3D
         {
             Code = """
                 shader_type spatial;
-                render_mode unshaded, cull_disabled, depth_prepass_alpha;
+                // Elevated translucent geometry must still own depth. Without
+                // this, later sprite materials painted ground objects over
+                // clouds and platform-under objects over aerial platforms.
+                render_mode unshaded, cull_disabled, depth_draw_always;
 
                 uniform sampler2D tilemap : filter_nearest;
                 uniform sampler2D atlas : filter_nearest;
@@ -166,7 +168,7 @@ public unsafe partial class BackgroundLayer : Node3D
                 uniform ivec2 map_size;
                 uniform vec2 origin_px;   // map tile (0,0) position, play-region px
                 uniform vec2 quad_px0;    // quad top-left in play-region px (E1 canvas)
-                uniform vec2 quad_size_px = vec2(264.0, 184.0);
+                uniform vec2 quad_size_px = vec2(312.0, 184.0);
                 uniform float alpha_mul;  // 1.0, or 0.55 for the legacy blend variant
                 // 1: darken everything -- the in-place shadow copy of a
                 // lifted water-cloud layer.
@@ -178,6 +180,16 @@ public unsafe partial class BackgroundLayer : Node3D
                 // cascade).  0 = off.
                 uniform int storm_hue = -1;
                 uniform float storm_time = 0.0;
+
+                // The twelfth legacy map tile sat behind the HUD and is not
+                // authored as a guaranteed continuation. Mirror the playable
+                // edge into each restored side lane so their boundary pixel
+                // is exact while side-lane structures retain terrain backing.
+                float terrain_x(float x) {
+                    if (x < 0.0) return -x - 1.0;
+                    if (x >= 264.0) return 527.0 - x;
+                    return x;
+                }
 
                 // Palette index at one integer map pixel; -1 = transparent.
                 int map_index(ivec2 mp) {
@@ -220,7 +232,7 @@ public unsafe partial class BackgroundLayer : Node3D
 
                 void fragment() {
                     vec2 frame_px = quad_px0 + UV * quad_size_px;
-                    vec2 mpf = frame_px - origin_px;
+                    vec2 mpf = vec2(terrain_x(frame_px.x), frame_px.y) - origin_px;
 
                     // Anti-aliased point sampling: snap to texel centers except
                     // in a fwidth-wide band at texel seams (the lane shader's
@@ -261,10 +273,16 @@ public unsafe partial class BackgroundLayer : Node3D
                 uniform ivec2 map_size;
                 uniform vec2 origin_px;
                 uniform vec2 quad_px0;
-                uniform vec2 quad_size_px = vec2(264.0, 184.0);
+                uniform vec2 quad_size_px = vec2(312.0, 184.0);
                 uniform vec2 shadow_offset_px;
                 uniform vec4 clip_rect_px;
                 uniform float strength = 0.78;
+
+                float terrain_x(float x) {
+                    if (x < 0.0) return -x - 1.0;
+                    if (x >= 264.0) return 527.0 - x;
+                    return x;
+                }
 
                 bool covered(ivec2 mp) {
                     if (mp.x < 0 || mp.y < 0)
@@ -281,12 +299,17 @@ public unsafe partial class BackgroundLayer : Node3D
                 }
 
                 void fragment() {
-                    vec2 frame_px = quad_px0 + UV * quad_size_px;
-                    vec2 projected_px = frame_px + shadow_offset_px;
+                    // The quad covers the RECEIVER area. Sample the caster
+                    // backwards through the sun offset so map art that is
+                    // still just above the screen can cast its complete
+                    // leading shadow into view.
+                    vec2 projected_px = quad_px0 + UV * quad_size_px;
                     if (projected_px.x < clip_rect_px.x || projected_px.x >= clip_rect_px.z ||
                         projected_px.y < clip_rect_px.y || projected_px.y >= clip_rect_px.w)
                         discard;
-                    if (!covered(ivec2(floor(frame_px - origin_px))))
+                    vec2 caster_px = projected_px - shadow_offset_px;
+                    caster_px.x = terrain_x(caster_px.x);
+                    if (!covered(ivec2(floor(caster_px - origin_px))))
                         discard;
                     ALBEDO = vec3(strength);
                 }
@@ -304,14 +327,11 @@ public unsafe partial class BackgroundLayer : Node3D
 
         for (int l = 0; l < OtyrNative.BgLayerCount; l++)
         {
-            // Default transparent sorting (node-origin distance): the
-            // elevated layers draw LAST among transparents, which is what
-            // gives the clouds their kept-on-purpose translucent look over
-            // the scene.  Entities above them survive via their real depth;
-            // decals riding a layer sit at a real geometric lift above it
-            // (see SnapshotLayer) rather than fighting it in depth-bias
-            // space -- a RenderPriority experiment here broke the cloud
-            // look without fixing the riders (headset round 6).
+            // Explicit transparent order: terrain/map shadows, color sprites,
+            // clouds, platforms, entity shadows, text. Color sprites write
+            // their real depth before translucent geometry: clouds blend over
+            // ground objects but fail depth against flying objects; platforms
+            // similarly cover platform-under art but not platform objects.
             _materials[l] = new ShaderMaterial { Shader = shader };
             _materials[l].SetShaderParameter("palette", _palette);
             _materials[l].SetShaderParameter("alpha_mul", 1.0f);
@@ -361,7 +381,7 @@ public unsafe partial class BackgroundLayer : Node3D
         _cloudMaterial.SetShaderParameter("alpha_mul", 0.82f);
         _cloudMaterial.SetShaderParameter("quad_px0", new Vector2(CanvasX0, CanvasY0));
         _cloudMaterial.SetShaderParameter("quad_size_px", new Vector2(CanvasW, CanvasH));
-        _cloudMaterial.RenderPriority = -5;  // after ground shadows, before platforms
+        _cloudMaterial.RenderPriority = 3;  // after color sprites, before platforms
         _cloudQuad = new MeshInstance3D
         {
             Name = "WaterClouds",
@@ -453,18 +473,10 @@ public unsafe partial class BackgroundLayer : Node3D
             if (position.Z != z)
                 _quads[l].Position = new Vector3(position.X, position.Y, z);
 
-            // Cloud-height layers (elevated but not the ridable platform
-            // plane) draw LAST among transparents -- the kept translucent-
-            // cloud look blends them over the scene, and entities above
-            // them survive by real depth.  Explicit: the look used to ride
-            // on unspecified distance-sort tie-breaking and flipped between
-            // level runs.  Platform-height layers keep default order; their
-            // riders sit at a real lift and win by depth either way.
-            // Resolve transparent ordering semantically as well as by Z:
-            // clouds paint before the aerial-platform layer.  The platform
-            // then wins even at translucent edge pixels on level 1.
-            _materials[l].RenderPriority = _cloudLayer[l] ? -5
-                : z > 0.001f ? 0
+            // See the construction-time ordering note. Ground remains first;
+            // cloud geometry follows color sprites, and platforms follow it.
+            _materials[l].RenderPriority = _cloudLayer[l] ? 3
+                : z > 0.001f ? 4
                 : -20 + l;
 
             // OnRender owns all origin updates so map layers and their
@@ -641,8 +653,8 @@ public unsafe partial class BackgroundLayer : Node3D
                 float dyPx = gap * VirtualSunShadowYPerMeter;
                 Vector3 basePosition = _quads[l].Position;
                 _castShadowQuads[l].Position = new Vector3(
-                    basePosition.X + dxPx / 320f * LaneWidth,
-                    basePosition.Y - dyPx / 200f * LaneHeight,
+                    basePosition.X,
+                    basePosition.Y,
                     GroundZ + VirtualShadowLift);
                 _castShadowMaterials[l].SetShaderParameter("shadow_offset_px", new Vector2(dxPx, dyPx));
                 bool cloudCaster = (l == 1 && _cloudActive) || _cloudLayer[l];
@@ -756,6 +768,7 @@ public unsafe partial class BackgroundLayer : Node3D
     {
         if (_tilesCpu[l] == null)
             return false;
+        framePx.X = MirrorTerrainX(framePx.X);
         Vector2 mp = framePx - Origin(l, _currDraw[l]);
         int tx = (int)Mathf.Floor(mp.X / OtyrNative.BgTileW);
         int ty = (int)Mathf.Floor(mp.Y / OtyrNative.BgTileH);
@@ -772,6 +785,13 @@ public unsafe partial class BackgroundLayer : Node3D
         int ay = (shape / AtlasCols) * OtyrNative.BgTileH + py;
         return _atlasCpu[l][ay * AtlasCols * OtyrNative.BgTileW + ax] != 0;
     }
+
+    private static float MirrorTerrainX(float x) => x switch
+    {
+        < 0f => -x - 1f,
+        >= 264f => 527f - x,
+        _ => x,
+    };
 
     /// <summary>Editor: pick the topmost layer whose art is opaque where
     /// the (local-space) ray crosses its plane.  Returns the layer index
