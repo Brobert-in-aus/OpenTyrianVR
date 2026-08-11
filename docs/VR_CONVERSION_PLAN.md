@@ -672,6 +672,11 @@
   nominal 35 Hz interpolation period and turn ground scrolling into a
   sawtooth. Stationary surface objects use the exact sampled ground/platform
   Z; stronger depth-only ordering replaces their former geometric lift.
+- Flying composite plane lock (0.1.25): connected enemy slots with one nonzero
+  assembly id, air semantics, and only the tiny painter-order Z spread are
+  collapsed onto one exact plane. This closes the horizontal headset seam
+  between the small Episode 1 boss's upper and lower rows without flattening
+  meaningful authored stacks or the surface-based tank boss.
 - Quest refresh follow-up (0.1.9): Android OpenXR requests 90 Hz at startup,
   reapplies the request after the first tracked frames, and logs available,
   requested, and actual refresh rates. XR performance telemetry now treats

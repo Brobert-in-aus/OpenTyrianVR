@@ -1049,7 +1049,7 @@ public partial class Main : Node3D
                  $"video={videoMiB:0.0}MiB managed={managedMiB:0.0}MiB " +
                  $"cells={_snapshotLayer.CellCount} visible={_snapshotLayer.VisibleInstanceCount} " +
                  $"cast_shadows={_snapshotLayer.VirtualShadowCount} " +
-                 $"assemblies={_snapshotLayer.RigidAssemblyCount}/{_snapshotLayer.SeamGuardCellCount}(groups/cells) " +
+                 $"assemblies={_snapshotLayer.RigidAssemblyCount}/{_snapshotLayer.SeamGuardCellCount}/{_snapshotLayer.RigidPlaneCellCount}(groups/cells/plane) " +
                  $"snapshot_gap={_snapshotLayer.LastTickGap}/{_snapshotLayer.MaxTickGap}(last/max) " +
                  $"missed={_snapshotLayer.SkippedTicksTotal}{rangeProbe}");
 

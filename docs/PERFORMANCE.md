@@ -41,7 +41,7 @@ Version 0.1.5 logs a `PERF` line every five seconds containing:
   allowing a small margin over the 90 Hz 11.11 ms interval);
 - draw calls, visible objects/primitives, video and managed memory;
 - snapshot cell/visible-instance counts;
-- detected rigid-assembly group/seam-guard cell counts;
+- detected rigid-assembly group/seam-guard/plane-locked cell counts;
 - last/maximum simulation-tick gap and cumulative skipped ticks.
 
 The decisive test is two or more minutes of representative Quest gameplay. If

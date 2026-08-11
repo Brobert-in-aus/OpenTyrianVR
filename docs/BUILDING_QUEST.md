@@ -60,7 +60,7 @@ head-motion distortion. A sustained 0.1.5 pass validated pause/resume,
 in-game-menu transitions, platform-rider stability, 4x MSAA, and ample
 performance headroom; review-marker halos are editor-only.
 
-Version 0.1.24 (code 25) is the current validation build. It requests 90 Hz,
+Version 0.1.25 (code 26) is the current validation build. It requests 90 Hz,
 crops terrain/backing/map shadows to the reachable 0..264 surface while
 retaining the ship-safe -25..288 sprite envelope, keeps the
 vertical crop at 0..184, render-interpolates all terrain layers, stabilizes
@@ -113,3 +113,8 @@ gap, so the one-off shader compilation when floating platforms first appear
 cannot poison ground interpolation. Stationary surface-class buildings now use
 the exact ground or platform plane; a depth-only bias preserves paint order
 without introducing head-parallax from a geometric lift.
+
+Version 0.1.25 makes connected, near-coplanar flying boss sections share one
+exact render plane. This removes the headset-only horizontal split between the
+upper and lower rows of the small Episode 1 boss while preserving meaningful
+authored height offsets and all surface/tank assemblies.

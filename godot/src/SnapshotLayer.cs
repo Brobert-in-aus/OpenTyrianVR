@@ -91,6 +91,7 @@ public unsafe partial class SnapshotLayer : Node3D
     public ulong SkippedTicksTotal { get; private set; }
     public int RigidAssemblyCount { get; private set; }
     public int SeamGuardCellCount { get; private set; }
+    public int RigidPlaneCellCount { get; private set; }
 
     // Height-editor presentation history. The native simulation remains the
     // authority; complete published snapshots are cheap enough to retain for
@@ -1322,18 +1323,32 @@ public unsafe partial class SnapshotLayer : Node3D
 
         RigidAssemblyCount = 0;
         SeamGuardCellCount = 0;
+        RigidPlaneCellCount = 0;
         for (int root = 0; root < _cellCount; root++)
         {
             if (_assemblyComponent[root] != root)
                 continue;
             int members = 0, motionCount = 0;
             bool dynamic = true;
+            bool allAir = true;
+            bool linkedSlots = false;
+            ushort firstSource = OtyrNative.NoSource;
+            float minZ = float.PositiveInfinity, maxZ = float.NegativeInfinity, sumZ = 0f;
             for (int i = 0; i < _cellCount; i++)
             {
                 if (_assemblyComponent[i] != root)
                     continue;
                 members++;
                 dynamic &= _cells[i].DecalOrder <= 0f;
+                allAir &= _cells[i].EntityType != 0 &&
+                    SemanticFor(_snapshot.Episode, _cells[i].EntityType) == HeightSemantic.Air;
+                if (firstSource == OtyrNative.NoSource)
+                    firstSource = _cellSource[i];
+                else
+                    linkedSlots |= _cellSource[i] != firstSource;
+                minZ = Math.Min(minZ, _cells[i].Z);
+                maxZ = Math.Max(maxZ, _cells[i].Z);
+                sumZ += _cells[i].Z;
                 if (_cells[i].HasPrev)
                 {
                     Vector2 motion = _cells[i].CurrPx - _cells[i].PrevPx;
@@ -1350,6 +1365,22 @@ public unsafe partial class SnapshotLayer : Node3D
             for (int i = 0; i < _cellCount; i++)
                 if (_assemblyComponent[i] == root)
                     _cells[i].SeamGuard = true;
+
+            // A flying boss assembled from multiple enemy slots is one flat
+            // piece of 2D art. Per-record painter-order bias put adjacent
+            // sections on slightly different physical planes; in an oblique
+            // stereo view that turns a tile-perfect 28 px join into a visible
+            // split. Collapse only near-coplanar AIR mosaics. A meaningful
+            // authored height spread is preserved, as are surface assemblies
+            // such as the tank boss and its stacked components.
+            if (dynamic && linkedSlots && allAir && maxZ - minZ <= 0.0015f)
+            {
+                float planeZ = sumZ / members;
+                for (int i = 0; i < _cellCount; i++)
+                    if (_assemblyComponent[i] == root)
+                        _cells[i].Z = planeZ;
+                RigidPlaneCellCount += members;
+            }
 
             if (!dynamic || motionCount == 0)
                 continue;
