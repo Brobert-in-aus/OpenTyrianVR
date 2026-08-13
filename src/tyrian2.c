@@ -1084,7 +1084,12 @@ static enum LevelTickResult JE_levelTick(void)
 
 	/* SMOOTHIES! */
 	JE_checkSmoothies();
-	if (anySmoothies)
+	/* The legacy smoothie filters render through VGAScreen2 and then copy
+	   their result back to game_screen.  Hybrid presentation skips those
+	   filters and implements them in Godot; switching buffers in that mode
+	   stranded the keyed UI on VGAScreen2 while JE_starShowVGA published the
+	   untouched black game_screen (most visibly on SAVARA V). */
+	if (anySmoothies && !present_suppress_background)
 		VGAScreen = VGAScreen2;  // this makes things complicated, but we do it anyway :(
 
 	/* --- BACKGROUNDS --- */
@@ -2322,7 +2327,7 @@ start_level:
 			static int otyr_linear = -1;
 			if (otyr_linear < 0)
 				otyr_linear = SDL_getenv("OTYR_LINEAR") != NULL ? 1 : 0;
-			if (otyr_linear)
+			if (otyr_linear && !otyr_editor_section_jump_pending)
 			{
 				int linear_next = otyr_linear_next_section(mainLevel);
 				if (linear_next > 0)
@@ -2330,6 +2335,7 @@ start_level:
 			}
 
 			mainLevel = nextLevel;
+			otyr_editor_section_jump_pending = false;
 			JE_endLevelAni();
 
 			fade_song();
@@ -2358,6 +2364,14 @@ start_level:
 		return;
 
 start_level_first:
+	/* A runtime debug warp changes episode data only after the old level has
+	   fully shut down. Applying JE_initEpisode from the host input thread would
+	   replace enemy/map tables while the simulation could still read them. */
+	if (otyr_debug_next_episode != 0)
+	{
+		JE_initEpisode(otyr_debug_next_episode);
+		otyr_debug_next_episode = 0;
+	}
 
 	set_volume(tyrMusicVolume, fxVolume);
 

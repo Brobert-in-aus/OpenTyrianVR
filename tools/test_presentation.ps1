@@ -42,7 +42,8 @@ New-Item -ItemType Directory -Force -Path $runRoot | Out-Null
 $saved = @{}
 $envNames = @('OTYR_MUTE','SDL_AUDIODRIVER','OTYR_FLAT','OTYR_TOPDOWN','OTYR_PLAY_DEMO',
               'OTYR_TEST_FRAMES','OTYR_CAPTURE_AT','OTYR_CAPTURE_DIR','OTYR_FORCE_FLIP',
-              'OTYR_FORCE_SMOOTHIE','OTYR_FORCE_SPECIAL_CODE')
+              'OTYR_FORCE_SMOOTHIE','OTYR_FORCE_SPECIAL_CODE','OTYR_START_EPISODE',
+              'OTYR_START_SECTION')
 foreach ($name in $envNames) {
     $item = Get-Item "Env:$name" -ErrorAction SilentlyContinue
     $saved[$name] = if ($null -ne $item) { $item.Value } else { $null }
@@ -54,6 +55,9 @@ function Invoke-PresentationCase {
         [string]$CaptureAt,
         [string]$Smoothie = '',
         [string]$SpecialCode = '',
+        [int]$StartEpisode = 0,
+        [int]$StartSection = 0,
+        [int]$CaseFrames = 0,
         [switch]$ForceFlip
     )
     $caseDir = Join-Path $runRoot $Name
@@ -66,12 +70,14 @@ function Invoke-PresentationCase {
     $env:OTYR_FLAT = '1'
     $env:OTYR_TOPDOWN = '1'
     $env:OTYR_PLAY_DEMO = '1'
-    $env:OTYR_TEST_FRAMES = "$Frames"
+    $env:OTYR_TEST_FRAMES = if ($CaseFrames -gt 0) { "$CaseFrames" } else { "$Frames" }
     $env:OTYR_CAPTURE_AT = $CaptureAt
     $env:OTYR_CAPTURE_DIR = $caseDir
     if ($ForceFlip) { $env:OTYR_FORCE_FLIP = '1' } else { Remove-Item Env:OTYR_FORCE_FLIP -ErrorAction SilentlyContinue }
     if ($Smoothie) { $env:OTYR_FORCE_SMOOTHIE = $Smoothie } else { Remove-Item Env:OTYR_FORCE_SMOOTHIE -ErrorAction SilentlyContinue }
     if ($SpecialCode) { $env:OTYR_FORCE_SPECIAL_CODE = $SpecialCode } else { Remove-Item Env:OTYR_FORCE_SPECIAL_CODE -ErrorAction SilentlyContinue }
+    if ($StartEpisode -gt 0) { $env:OTYR_START_EPISODE = "$StartEpisode" } else { Remove-Item Env:OTYR_START_EPISODE -ErrorAction SilentlyContinue }
+    if ($StartSection -gt 0) { $env:OTYR_START_SECTION = "$StartSection" } else { Remove-Item Env:OTYR_START_SECTION -ErrorAction SilentlyContinue }
 
     $process = Start-Process -FilePath $Godot -PassThru `
         -ArgumentList @('--path', $godotProject, '--xr-mode', 'off', '--audio-driver', 'Dummy') `
@@ -115,15 +121,40 @@ try {
         throw 'Native-effects run did not expose all six effects while retaining hybrid 3D.'
     }
 
+    # At frame 80 the level-start "Good luck" card can still be active, before
+    # the player (and therefore the searchlight cone) has entered. Capture once
+    # gameplay is established so this checks the rendered darkness effect.
+    $darkness = Invoke-PresentationCase -Name 'darkness' -CaptureAt '120' -SpecialCode '2'
+    if ($darkness.Log -notmatch 'REGRESSION .*hybrid=1.*effects=0x20') {
+        throw 'Darkness run did not retain hybrid 3D with the searchlight enabled.'
+    }
+
+    # Water used to switch native drawing to VGAScreen2 even though hybrid
+    # mode skips the legacy filter.  The host then published the untouched
+    # black primary framebuffer as its UI plane (SAVARA V regression).
+    $water = Invoke-PresentationCase -Name 'water' -CaptureAt '80' -Smoothie '2'
+    if ($water.Log -notmatch 'REGRESSION .*hybrid=1.*storm=1.*effects=0x02') {
+        throw 'Water run did not retain hybrid 3D with the storm renderer enabled.'
+    }
+
     $fallback = Invoke-PresentationCase -Name 'legacy-fallback' -CaptureAt '80' -SpecialCode '3'
     if ($fallback.Log -notmatch 'REGRESSION .*legacy=1') { throw 'Fallback run never entered complete legacy presentation.' }
     if ($fallback.Log -notmatch 'presentation -> complete legacy fallback') {
         throw 'Fallback transition was not logged.'
     }
 
+    # TIME WAR uses a fully opaque layer-1 cover drawn after both ground enemy
+    # bands. The hybrid renderer must preserve that native paint-order
+    # occlusion instead of resurrecting covered structures in 3D.
+    $opaqueCover = Invoke-PresentationCase -Name 'opaque-cover' -CaptureAt '350' `
+        -StartEpisode 4 -StartSection 41 -CaseFrames 360
+    if ($opaqueCover.Log -notmatch 'REGRESSION .*hybrid=1') {
+        throw 'Opaque-cover run did not retain hybrid presentation.'
+    }
+
     Add-Type -AssemblyName System.Drawing
     $captures = Get-ChildItem $runRoot -Recurse -Filter 'cap_at_*.png'
-    if ($captures.Count -ne 5) { throw "Expected 5 captures, found $($captures.Count)." }
+    if ($captures.Count -ne 8) { throw "Expected 8 captures, found $($captures.Count)." }
     foreach ($capture in $captures) {
         if ($capture.Length -lt 4096) { throw "Capture is unexpectedly small: $($capture.FullName)" }
         $image = [System.Drawing.Image]::FromFile($capture.FullName)
@@ -134,8 +165,49 @@ try {
         } finally { $image.Dispose() }
     }
 
+    # Guard the failure that motivated the dedicated darkness mask: the old
+    # screen-copy quad captured before transparent terrain and produced an
+    # almost entirely black playfield. Sample the left 80% (excluding HUD)
+    # and require substantial visible scene content.
+    $darkCapture = Get-ChildItem $darkness.Directory -Filter 'cap_at_*.png' | Select-Object -First 1
+    $bitmap = [System.Drawing.Bitmap]::FromFile($darkCapture.FullName)
+    try {
+        $visible = 0
+        $samples = 0
+        for ($y = 0; $y -lt [int]($bitmap.Height * 0.90); $y += 8) {
+            for ($x = 0; $x -lt [int]($bitmap.Width * 0.80); $x += 8) {
+                $pixel = $bitmap.GetPixel($x, $y)
+                if (($pixel.R + $pixel.G + $pixel.B) -gt 45) { ++$visible }
+                ++$samples
+            }
+        }
+        if ($visible -lt [int]($samples * 0.10)) {
+            throw "Darkness capture is effectively black ($visible/$samples visible samples)."
+        }
+    } finally { $bitmap.Dispose() }
+
+    # The water-only case must contain visible playfield content.  This is
+    # deliberately separate from the combined-effects smoke test, whose
+    # screen-copy filters exercise a different compositing path.
+    $waterCapture = Get-ChildItem $water.Directory -Filter 'cap_at_*.png' | Select-Object -First 1
+    $bitmap = [System.Drawing.Bitmap]::FromFile($waterCapture.FullName)
+    try {
+        $visible = 0
+        $samples = 0
+        for ($y = 0; $y -lt [int]($bitmap.Height * 0.90); $y += 8) {
+            for ($x = 0; $x -lt [int]($bitmap.Width * 0.80); $x += 8) {
+                $pixel = $bitmap.GetPixel($x, $y)
+                if (($pixel.R + $pixel.G + $pixel.B) -gt 45) { ++$visible }
+                ++$samples
+            }
+        }
+        if ($visible -lt [int]($samples * 0.10)) {
+            throw "Water capture is effectively black ($visible/$samples visible samples)."
+        }
+    } finally { $bitmap.Dispose() }
+
     Write-Host "Presentation regression PASS: $runRoot"
-    Select-String -Path (Join-Path $hybrid.Directory 'stdout.log'),(Join-Path $effects.Directory 'stdout.log'),(Join-Path $fallback.Directory 'stdout.log') `
+    Select-String -Path (Join-Path $hybrid.Directory 'stdout.log'),(Join-Path $effects.Directory 'stdout.log'),(Join-Path $darkness.Directory 'stdout.log'),(Join-Path $water.Directory 'stdout.log'),(Join-Path $fallback.Directory 'stdout.log'),(Join-Path $opaqueCover.Directory 'stdout.log') `
         -Pattern 'OpenTyrianVR: REGRESSION|presentation ->|PERF ' | ForEach-Object Line
 } finally {
     foreach ($name in $envNames) {

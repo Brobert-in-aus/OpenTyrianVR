@@ -45,7 +45,7 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 27u
+#define OTYR_ABI_VERSION 30u
 
 #define OTYR_EFFECT_LAVA       (1u << 0)
 #define OTYR_EFFECT_WATER      (1u << 1)
@@ -91,6 +91,10 @@ extern "C" {
                                                   release without skipping the
                                                   level (same OTYR_INVULN
                                                   arming as DEBUG_SKIP) (v19) */
+
+#define OTYR_DEBUG_ENABLE          (1u << 0) /* authorize runtime debug-menu
+                                                simulation controls (v30) */
+#define OTYR_DEBUG_INVULNERABLE    (1u << 1) /* ignore player damage (v30) */
 
 /* OtyrConfig.flags bits. */
 #define OTYR_CONFIG_ENABLE_AUDIO           (1u << 0)
@@ -162,6 +166,9 @@ typedef struct OtyrInputFrame
 	                           episode script to this section (height-editor
 	                           level select; ignored unless the OTYR_INVULN
 	                           ghost mode is active) (v18) */
+	uint8_t  debug_flags;   /* OTYR_DEBUG_* runtime debug-menu state (v30) */
+	uint8_t  debug_episode; /* 1..4 with debug_section; 0 = current (v30) */
+	uint16_t reserved;
 } OtyrInputFrame;
 
 typedef struct OtyrFrame
@@ -292,7 +299,8 @@ typedef struct OtyrBackgroundDraw
 	                           enemies, 1 = over them (e.g. clouds); layer 2
 	                           (background3over): 0 = over sky enemies,
 	                           2 = under them */
-	uint8_t  reserved;
+	uint8_t  scroll_rate_ratio; /* high nibble pixels / low nibble ticks;
+	                              * exact delayed-scroll rate (v28) */
 	uint32_t hash;          /* standalone-raster FNV-1a; only filled when
 	                           OTYR_CONFIG_BACKGROUND_HASHES is set */
 } OtyrBackgroundDraw;
@@ -371,8 +379,19 @@ OTYR_API int32_t otyr_session_destroy(uint64_t session);
 /* Replaces the currently-held button state.  Applied atomically between
  * legacy frames. */
 OTYR_API int32_t otyr_session_submit_input(uint64_t session,
-                                           const OtyrInputFrame *input,
-                                           uint32_t input_size);
+                                            const OtyrInputFrame *input,
+                                            uint32_t input_size);
+
+/* Changes hosted simulation pacing. rate_tenths is 1..100, where 10 is
+ * normal speed. The game thread applies it at its next presentation point. */
+OTYR_API int32_t otyr_session_set_playback_rate(uint64_t session,
+                                                 uint32_t rate_tenths);
+
+/* Freezes/unfreezes the hosted game thread at a complete presentation tick.
+ * This is an editor timeline primitive: unlike the legacy P-key pause it does
+ * not draw a pause screen or consume gameplay input. */
+OTYR_API int32_t otyr_session_set_editor_suspended(uint64_t session,
+                                                   uint8_t suspended);
 
 /* Blocks until a frame newer than the last one delivered to the caller is
  * available (or timeout_ms elapses; 0 polls).  On OTYR_OK the frame, palette,

@@ -878,7 +878,10 @@ int opentyrian_main(int argc, char *argv[])
 			JE_initEpisode(ep != NULL && atoi(ep) > 0 ? (JE_byte)atoi(ep) : 1);
 			difficultyLevel = initialDifficulty = DIFFICULTY_NORMAL;
 			player[0].cash = 0;
-			mainLevel = saveLevel = (JE_word)atoi(SDL_getenv("OTYR_START_SECTION"));
+			/* The editor exposes the 1-based section ids printed by
+			   OTYR_DUMP_SECTIONS.  JE_loadMap's marker counter starts at zero,
+			   so its internal seek target is one lower. */
+			mainLevel = saveLevel = (JE_word)(atoi(SDL_getenv("OTYR_START_SECTION")) - 1);
 			gameLoaded = true;
 		}
 #ifdef WITH_NETWORK

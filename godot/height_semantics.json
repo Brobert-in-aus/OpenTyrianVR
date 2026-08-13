@@ -1,89 +1,59 @@
 {
   "counts": {
     "1": {
-      "air": 195,
-      "classified": 275,
+      "air": 258,
+      "classified": 427,
       "dynamic_classified": 0,
       "dynamic_observed": 0,
-      "review": 576,
-      "surface": 80
+      "review": 424,
+      "surface": 169
     },
     "2": {
-      "air": 166,
-      "classified": 241,
-      "dynamic_classified": 10,
+      "air": 318,
+      "classified": 487,
+      "dynamic_classified": 4,
       "dynamic_observed": 50,
-      "review": 610,
-      "surface": 75
+      "review": 364,
+      "surface": 169
     },
     "3": {
-      "air": 227,
-      "classified": 307,
+      "air": 305,
+      "classified": 474,
       "dynamic_classified": 3,
       "dynamic_observed": 47,
-      "review": 544,
-      "surface": 80
+      "review": 377,
+      "surface": 169
     },
     "4": {
-      "air": 256,
-      "classified": 294,
+      "air": 376,
+      "classified": 443,
       "dynamic_classified": 0,
       "dynamic_observed": 11,
-      "review": 557,
-      "surface": 38
+      "review": 408,
+      "surface": 67
     }
   },
   "dynamic_graphics": {
     "1": {},
     "2": {
-      "157": {
-        "class": "air",
-        "observations": 3,
-        "source": "dynamic-graphic-validated"
-      },
-      "159": {
-        "class": "air",
-        "observations": 17,
-        "source": "dynamic-graphic-validated"
-      },
       "197": {
         "class": "air",
         "observations": 17,
         "source": "dynamic-graphic-validated"
       },
-      "271": {
+      "199": {
         "class": "air",
-        "observations": 3,
+        "observations": 14,
         "source": "dynamic-graphic-validated"
       },
-      "283": {
-        "class": "surface",
-        "observations": 39,
+      "230": {
+        "class": "air",
+        "observations": 14,
         "source": "dynamic-graphic-validated"
       },
-      "45": {
+      "232": {
         "class": "air",
-        "observations": 1,
-        "source": "dynamic-graphic-validated"
-      },
-      "47": {
-        "class": "air",
-        "observations": 1,
-        "source": "dynamic-graphic-validated"
-      },
-      "7": {
-        "class": "air",
-        "observations": 1,
-        "source": "dynamic-graphic-validated"
-      },
-      "83": {
-        "class": "air",
-        "observations": 1,
-        "source": "dynamic-graphic-validated"
-      },
-      "93": {
-        "class": "air",
-        "observations": 1,
+        "observations": 14,
         "source": "dynamic-graphic-validated"
       }
     },
@@ -110,37 +80,69 @@
     "1": {
       "1": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "distance": 0.52,
+        "reference": 53,
+        "source": "episode-family"
+      },
+      "10": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "11": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "12": {
         "class": "air",
-        "observations": 25,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "121": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "122": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "123": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "124": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "125": {
-        "class": "air",
-        "source": "linked-assembly"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "126": {
-        "class": "air",
-        "source": "linked-assembly"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "127": {
-        "class": "air",
-        "source": "linked-assembly"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "128": {
-        "class": "air",
-        "distance": 1.53,
-        "reference": 15,
-        "source": "episode-family"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "13": {
         "class": "air",
-        "distance": 0.37,
-        "reference": 30,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "135": {
         "class": "air",
@@ -152,276 +154,354 @@
         "detail": "level 1, asteroids, SAVARA start",
         "source": "manual"
       },
+      "138": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "139": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
       "14": {
         "class": "air",
-        "distance": 0.26,
-        "reference": 30,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "140": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "141": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "142": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "143": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "145": {
-        "class": "air",
-        "distance": 1.0,
-        "reference": 235,
-        "source": "episode-family"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "146": {
-        "class": "air",
-        "source": "linked-assembly"
-      },
-      "149": {
-        "class": "air",
-        "distance": 2.56,
-        "reference": 165,
-        "source": "episode-family"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "15": {
         "class": "air",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
-      "150": {
+      "16": {
         "class": "air",
-        "distance": 2.45,
-        "reference": 165,
-        "source": "episode-family"
-      },
-      "151": {
-        "class": "air",
-        "distance": 2.34,
-        "reference": 165,
-        "source": "episode-family"
-      },
-      "152": {
-        "class": "air",
-        "distance": 2.23,
-        "reference": 165,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "162": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "163": {
         "class": "air",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "164": {
         "class": "air",
-        "distance": 1.91,
-        "reference": 165,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "165": {
         "class": "air",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "166": {
-        "class": "air",
-        "distance": 1.91,
-        "reference": 165,
-        "source": "episode-family"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "167": {
-        "class": "air",
-        "distance": 2.32,
-        "reference": 165,
-        "source": "episode-family"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "168": {
         "class": "air",
-        "distance": 0.33,
-        "reference": 165,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "169": {
         "class": "air",
-        "distance": 1.54,
-        "reference": 165,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "17": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "170": {
         "class": "air",
-        "distance": 0.25,
-        "reference": 165,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "171": {
         "class": "surface",
-        "distance": 0.29,
-        "reference": 162,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "172": {
         "class": "surface",
-        "distance": 2.2,
-        "reference": 162,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "173": {
         "class": "surface",
-        "distance": 4.11,
-        "reference": 162,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "18": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "19": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "194": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "197": {
         "class": "surface",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "198": {
         "class": "surface",
-        "distance": 0.11,
-        "reference": 197,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "20": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "21": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "22": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "226": {
         "class": "air",
-        "observations": 27,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "227": {
         "class": "air",
-        "observations": 27,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "228": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "229": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "23": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "230": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "231": {
         "class": "air",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "232": {
         "class": "air",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "233": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "234": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "235": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "237": {
         "class": "air",
-        "distance": 9.24,
-        "reference": 233,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "238": {
         "class": "air",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "239": {
         "class": "air",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "24": {
         "class": "air",
-        "observations": 21,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "240": {
         "class": "air",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "241": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "242": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "243": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "244": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "245": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "246": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "247": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "248": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "249": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "25": {
         "class": "air",
-        "observations": 20,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "250": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "251": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "252": {
         "class": "surface",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "253": {
         "class": "surface",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "254": {
         "class": "surface",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "255": {
         "class": "surface",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "256": {
         "class": "surface",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "257": {
         "class": "surface",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "258": {
         "class": "surface",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "259": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "26": {
         "class": "air",
-        "distance": 2.04,
-        "reference": 30,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "260": {
         "class": "air",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "261": {
@@ -470,33 +550,32 @@
       },
       "269": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "27": {
         "class": "air",
-        "distance": 1.93,
-        "reference": 30,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "270": {
         "class": "surface",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "271": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "272": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "273": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "274": {
@@ -507,14 +586,13 @@
       },
       "275": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "276": {
         "class": "surface",
-        "distance": 1.91,
-        "reference": 275,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "277": {
         "class": "surface",
@@ -534,6 +612,11 @@
         "reference": 275,
         "source": "episode-family"
       },
+      "28": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
       "280": {
         "class": "surface",
         "distance": 1.95,
@@ -542,129 +625,133 @@
       },
       "281": {
         "class": "surface",
-        "distance": 1.96,
-        "reference": 275,
+        "distance": 0.05,
+        "reference": 276,
         "source": "episode-family"
       },
       "282": {
         "class": "air",
-        "distance": 3.93,
-        "reference": 285,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "283": {
         "class": "air",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "284": {
         "class": "air",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "285": {
         "class": "air",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "287": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "288": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "29": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "3": {
         "class": "air",
-        "observations": 60,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "30": {
         "class": "air",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "302": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "303": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "304": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "305": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "306": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "307": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "308": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "309": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "31": {
         "class": "air",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "310": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "311": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "312": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "313": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "314": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "315": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "316": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "317": {
@@ -684,9 +771,9 @@
         "source": "episode-family"
       },
       "32": {
-        "class": "air",
-        "observations": 20,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "320": {
         "class": "air",
@@ -716,444 +803,786 @@
       },
       "325": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "326": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "327": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "328": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "329": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "33": {
-        "class": "air",
-        "observations": 14,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "330": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "331": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "332": {
         "class": "surface",
-        "distance": 1.58,
-        "reference": 194,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "333": {
         "class": "surface",
-        "distance": 1.49,
-        "reference": 194,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "334": {
         "class": "surface",
-        "distance": 6.39,
-        "reference": 343,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "335": {
         "class": "surface",
-        "distance": 6.28,
-        "reference": 343,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "336": {
         "class": "surface",
-        "distance": 5.72,
-        "reference": 338,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "337": {
         "class": "surface",
-        "distance": 5.61,
-        "reference": 338,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "338": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "339": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "34": {
-        "class": "air",
-        "observations": 20,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "340": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "341": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "342": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "343": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "344": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "345": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "346": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "347": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "348": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "349": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "35": {
-        "class": "air",
-        "observations": 20,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "350": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "351": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "352": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "353": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "354": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "355": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "356": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "357": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "358": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "359": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "36": {
-        "class": "air",
-        "observations": 14,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "360": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "361": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "362": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "363": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "364": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "365": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "37": {
-        "class": "air",
-        "observations": 20,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "38": {
-        "class": "air",
-        "observations": 4,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "39": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "390": {
         "class": "air",
-        "observations": 4,
-        "source": "event-top-only"
+        "distance": 1.59,
+        "reference": 394,
+        "source": "episode-family"
+      },
+      "391": {
+        "class": "surface",
+        "distance": 0.39,
+        "reference": 395,
+        "source": "episode-family"
+      },
+      "392": {
+        "class": "air",
+        "distance": 0.32,
+        "reference": 394,
+        "source": "episode-family"
+      },
+      "393": {
+        "class": "surface",
+        "distance": 0.32,
+        "reference": 395,
+        "source": "episode-family"
+      },
+      "394": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "395": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "396": {
         "class": "air",
-        "observations": 3,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "397": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "399": {
+        "class": "air",
+        "distance": 3.82,
+        "reference": 397,
+        "source": "episode-family"
+      },
+      "4": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "40": {
-        "class": "air",
-        "observations": 30,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "400": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "401": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "402": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "403": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "404": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "405": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "406": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "407": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "408": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "409": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "41": {
-        "class": "air",
-        "observations": 4,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "410": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "411": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "42": {
-        "class": "air",
-        "observations": 2,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "43": {
-        "class": "air",
-        "observations": 2,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "44": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "440": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "441": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "442": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "443": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "444": {
         "class": "air",
-        "observations": 2,
-        "source": "event-top-only"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "445": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "446": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "447": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "448": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "449": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "45": {
-        "class": "air",
-        "observations": 2,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "450": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "451": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "452": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "453": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "456": {
         "class": "surface",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "457": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "459": {
-        "class": "air",
-        "observations": 2,
-        "source": "event-air-corroborated"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "46": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "461": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "462": {
         "class": "air",
         "detail": "level 1, asteroids, SAVARA start",
         "source": "manual"
       },
+      "464": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "465": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "466": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "467": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
       "468": {
         "class": "air",
-        "observations": 2,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "469": {
         "class": "air",
-        "observations": 2,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "47": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "470": {
         "class": "air",
-        "observations": 2,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "471": {
         "class": "air",
-        "observations": 2,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "472": {
         "class": "air",
-        "observations": 2,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "473": {
         "class": "air",
-        "observations": 2,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "474": {
         "class": "air",
         "observations": 50,
         "source": "event-top-only"
       },
+      "475": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "477": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
       "478": {
         "class": "air",
-        "observations": 21,
-        "source": "event-top-only"
+        "distance": 1.91,
+        "reference": 477,
+        "source": "episode-family"
       },
       "48": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "480": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "481": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "482": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "483": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "484": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "485": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "486": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "487": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "488": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "489": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "49": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "490": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "491": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "492": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "493": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "494": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "495": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "496": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "497": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "498": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "499": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "5": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "50": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "500": {
         "class": "air",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
+      },
+      "503": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "505": {
+        "class": "air",
+        "distance": 2.82,
+        "reference": 503,
+        "source": "episode-family"
+      },
+      "506": {
+        "class": "air",
+        "distance": 1.88,
+        "reference": 503,
+        "source": "episode-family"
       },
       "51": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "511": {
         "class": "air",
         "detail": "later Episode 1 editor session",
         "source": "manual"
       },
+      "514": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "516": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "517": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "518": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "519": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
       "52": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "520": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "521": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "522": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "523": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "524": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "525": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "526": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "527": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "528": {
         "class": "surface",
@@ -1169,38 +1598,83 @@
       },
       "53": {
         "class": "air",
-        "observations": 4,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "531": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "536": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "537": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "538": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "539": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "54": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "540": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "541": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "542": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "545": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "546": {
-        "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "547": {
-        "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "548": {
-        "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "549": {
-        "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "55": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "550": {
         "class": "surface",
@@ -1209,121 +1683,183 @@
       },
       "552": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "553": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "554": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "555": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "559": {
         "class": "surface",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "56": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "564": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "565": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "566": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "567": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "568": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "569": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "57": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "570": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "571": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "572": {
         "class": "air",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "573": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "574": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "575": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "576": {
         "class": "surface",
-        "detail": "level 1, asteroids, SAVARA start",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "577": {
         "class": "surface",
-        "distance": 0.16,
-        "reference": 593,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "578": {
         "class": "air",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "579": {
         "class": "air",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "58": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "580": {
         "class": "air",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "581": {
         "class": "air",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "582": {
         "class": "air",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "583": {
         "class": "air",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "584": {
         "class": "air",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "585": {
         "class": "air",
-        "source": "linked-assembly"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "586": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "587": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "588": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "589": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "59": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "590": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "591": {
         "class": "surface",
@@ -1333,64 +1869,230 @@
       },
       "593": {
         "class": "surface",
-        "detail": "later Episode 1 editor session",
+        "detail": "verified Episode 1 through WINDY",
         "source": "manual"
       },
       "6": {
         "class": "air",
-        "distance": 0.44,
-        "reference": 30,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "60": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "602": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "603": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "604": {
+        "class": "air",
+        "distance": 0.11,
+        "reference": 603,
+        "source": "episode-family"
+      },
+      "605": {
+        "class": "air",
+        "distance": 0.22,
+        "reference": 603,
+        "source": "episode-family"
+      },
+      "606": {
+        "class": "air",
+        "distance": 0.22,
+        "reference": 608,
+        "source": "episode-family"
+      },
+      "607": {
+        "class": "air",
+        "distance": 0.11,
+        "reference": 608,
+        "source": "episode-family"
+      },
+      "608": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "609": {
+        "class": "air",
+        "distance": 0.11,
+        "reference": 608,
+        "source": "episode-family"
       },
       "61": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "610": {
+        "class": "air",
+        "distance": 0.22,
+        "reference": 608,
+        "source": "episode-family"
+      },
+      "611": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "612": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "613": {
+        "class": "air",
+        "distance": 0.11,
+        "reference": 612,
+        "source": "episode-family"
+      },
+      "614": {
+        "class": "air",
+        "distance": 0.11,
+        "reference": 615,
+        "source": "episode-family"
+      },
+      "615": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "616": {
+        "class": "air",
+        "distance": 0.11,
+        "reference": 615,
+        "source": "episode-family"
+      },
+      "617": {
+        "class": "air",
+        "distance": 0.22,
+        "reference": 615,
+        "source": "episode-family"
+      },
+      "618": {
+        "class": "air",
+        "distance": 0.33,
+        "reference": 615,
+        "source": "episode-family"
+      },
+      "619": {
+        "class": "air",
+        "distance": 0.44,
+        "reference": 615,
+        "source": "episode-family"
       },
       "62": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "620": {
+        "class": "air",
+        "distance": 0.55,
+        "reference": 625,
+        "source": "episode-family"
+      },
+      "621": {
+        "class": "air",
+        "distance": 0.44,
+        "reference": 625,
+        "source": "episode-family"
+      },
+      "622": {
+        "class": "air",
+        "distance": 0.33,
+        "reference": 625,
+        "source": "episode-family"
+      },
+      "623": {
+        "class": "air",
+        "distance": 0.22,
+        "reference": 625,
+        "source": "episode-family"
+      },
+      "624": {
+        "class": "air",
+        "distance": 0.11,
+        "reference": 625,
+        "source": "episode-family"
+      },
+      "625": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "626": {
+        "class": "air",
+        "distance": 0.11,
+        "reference": 625,
+        "source": "episode-family"
+      },
+      "627": {
+        "class": "air",
+        "distance": 0.22,
+        "reference": 625,
+        "source": "episode-family"
+      },
+      "628": {
+        "class": "air",
+        "distance": 7.76,
+        "reference": 612,
+        "source": "episode-family"
+      },
+      "629": {
+        "class": "air",
+        "distance": 0.34,
+        "reference": 625,
+        "source": "episode-family"
       },
       "63": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "64": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "65": {
         "class": "air",
-        "observations": 5,
-        "source": "event-air-corroborated"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "66": {
-        "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "67": {
-        "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "68": {
-        "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "681": {
         "class": "air",
         "observations": 10,
         "source": "event-top-only"
+      },
+      "686": {
+        "class": "air",
+        "distance": 2.09,
+        "reference": 477,
+        "source": "episode-family"
       },
       "688": {
         "class": "surface",
@@ -1398,10 +2100,16 @@
         "reference": 593,
         "source": "episode-family"
       },
-      "69": {
+      "689": {
         "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "distance": 1.58,
+        "reference": 531,
+        "source": "episode-family"
+      },
+      "69": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "690": {
         "class": "surface",
@@ -1411,14 +2119,13 @@
       },
       "7": {
         "class": "air",
-        "distance": 0.33,
-        "reference": 30,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "70": {
-        "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "701": {
         "class": "air",
@@ -1426,60 +2133,65 @@
         "source": "event-top-only"
       },
       "71": {
-        "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "72": {
-        "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "73": {
-        "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "74": {
-        "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "75": {
-        "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "76": {
-        "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "77": {
-        "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "78": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "783": {
         "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "distance": 2.48,
+        "reference": 565,
+        "source": "episode-family"
       },
       "79": {
-        "class": "air",
-        "observations": 6,
-        "source": "event-top-only"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "8": {
         "class": "air",
-        "distance": 0.43,
-        "reference": 31,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "822": {
         "class": "air",
-        "observations": 104,
-        "source": "event-top-only"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "823": {
         "class": "surface",
@@ -1488,9 +2200,9 @@
         "source": "episode-family"
       },
       "824": {
-        "class": "air",
-        "observations": 72,
-        "source": "event-air-corroborated"
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "826": {
         "class": "air",
@@ -1498,27 +2210,120 @@
         "reference": 283,
         "source": "episode-family"
       },
+      "837": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "838": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
       "840": {
         "class": "surface",
-        "distance": 6.78,
-        "reference": 162,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       },
       "841": {
         "class": "air",
         "observations": 18,
         "source": "event-top-only"
       },
+      "842": {
+        "class": "surface",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "845": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "846": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "847": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "848": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
+      "849": {
+        "class": "air",
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
+      },
       "9": {
         "class": "air",
-        "distance": 0.32,
-        "reference": 31,
-        "source": "episode-family"
+        "detail": "verified Episode 1 through WINDY",
+        "source": "manual"
       }
     },
     "2": {
-      "128": {
+      "1": {
         "class": "air",
+        "reference": 1,
+        "source": "episode1-exact"
+      },
+      "10": {
+        "class": "air",
+        "reference": 10,
+        "source": "episode1-exact"
+      },
+      "11": {
+        "class": "air",
+        "reference": 11,
+        "source": "episode1-exact"
+      },
+      "12": {
+        "class": "air",
+        "reference": 12,
+        "source": "episode1-exact"
+      },
+      "121": {
+        "class": "surface",
+        "reference": 121,
+        "source": "episode1-exact"
+      },
+      "122": {
+        "class": "surface",
+        "reference": 122,
+        "source": "episode1-exact"
+      },
+      "123": {
+        "class": "surface",
+        "reference": 123,
+        "source": "episode1-exact"
+      },
+      "124": {
+        "class": "surface",
+        "reference": 124,
+        "source": "episode1-exact"
+      },
+      "125": {
+        "class": "surface",
+        "reference": 125,
+        "source": "episode1-exact"
+      },
+      "126": {
+        "class": "surface",
+        "reference": 126,
+        "source": "episode1-exact"
+      },
+      "127": {
+        "class": "surface",
+        "reference": 127,
+        "source": "episode1-exact"
+      },
+      "128": {
+        "class": "surface",
         "reference": 128,
         "source": "episode1-exact"
       },
@@ -1537,14 +2342,49 @@
         "reference": 136,
         "source": "episode1-exact"
       },
+      "138": {
+        "class": "air",
+        "reference": 138,
+        "source": "episode1-exact"
+      },
+      "139": {
+        "class": "air",
+        "reference": 139,
+        "source": "episode1-exact"
+      },
       "14": {
         "class": "air",
         "reference": 14,
         "source": "episode1-exact"
       },
-      "145": {
+      "140": {
         "class": "air",
+        "reference": 140,
+        "source": "episode1-exact"
+      },
+      "141": {
+        "class": "air",
+        "reference": 141,
+        "source": "episode1-exact"
+      },
+      "142": {
+        "class": "surface",
+        "reference": 142,
+        "source": "episode1-exact"
+      },
+      "143": {
+        "class": "surface",
+        "reference": 143,
+        "source": "episode1-exact"
+      },
+      "145": {
+        "class": "surface",
         "reference": 145,
+        "source": "episode1-exact"
+      },
+      "146": {
+        "class": "surface",
+        "reference": 146,
         "source": "episode1-exact"
       },
       "147": {
@@ -1552,29 +2392,14 @@
         "observations": 108,
         "source": "event-air-corroborated"
       },
-      "149": {
-        "class": "air",
-        "reference": 149,
-        "source": "episode1-exact"
-      },
       "15": {
         "class": "air",
         "reference": 15,
         "source": "episode1-exact"
       },
-      "150": {
+      "16": {
         "class": "air",
-        "reference": 150,
-        "source": "episode1-exact"
-      },
-      "151": {
-        "class": "air",
-        "reference": 151,
-        "source": "episode1-exact"
-      },
-      "152": {
-        "class": "air",
-        "reference": 152,
+        "reference": 16,
         "source": "episode1-exact"
       },
       "162": {
@@ -1598,12 +2423,12 @@
         "source": "episode1-exact"
       },
       "166": {
-        "class": "air",
+        "class": "surface",
         "reference": 166,
         "source": "episode1-exact"
       },
       "167": {
-        "class": "air",
+        "class": "surface",
         "reference": 167,
         "source": "episode1-exact"
       },
@@ -1615,6 +2440,11 @@
       "169": {
         "class": "air",
         "reference": 169,
+        "source": "episode1-exact"
+      },
+      "17": {
+        "class": "air",
+        "reference": 17,
         "source": "episode1-exact"
       },
       "170": {
@@ -1635,6 +2465,11 @@
       "173": {
         "class": "surface",
         "reference": 173,
+        "source": "episode1-exact"
+      },
+      "18": {
+        "class": "air",
+        "reference": 18,
         "source": "episode1-exact"
       },
       "184": {
@@ -1662,6 +2497,11 @@
         "observations": 10,
         "source": "event-top-only"
       },
+      "19": {
+        "class": "air",
+        "reference": 19,
+        "source": "episode1-exact"
+      },
       "190": {
         "class": "air",
         "observations": 16,
@@ -1687,6 +2527,31 @@
         "reference": 198,
         "source": "episode1-exact"
       },
+      "20": {
+        "class": "surface",
+        "reference": 20,
+        "source": "episode1-exact"
+      },
+      "21": {
+        "class": "air",
+        "reference": 21,
+        "source": "episode1-exact"
+      },
+      "22": {
+        "class": "air",
+        "reference": 22,
+        "source": "episode1-exact"
+      },
+      "226": {
+        "class": "air",
+        "reference": 226,
+        "source": "episode1-exact"
+      },
+      "227": {
+        "class": "air",
+        "reference": 227,
+        "source": "episode1-exact"
+      },
       "228": {
         "class": "air",
         "reference": 228,
@@ -1697,9 +2562,24 @@
         "reference": 229,
         "source": "episode1-exact"
       },
+      "23": {
+        "class": "surface",
+        "reference": 23,
+        "source": "episode1-exact"
+      },
       "230": {
         "class": "air",
         "reference": 230,
+        "source": "episode1-exact"
+      },
+      "231": {
+        "class": "air",
+        "reference": 231,
+        "source": "episode1-exact"
+      },
+      "232": {
+        "class": "air",
+        "reference": 232,
         "source": "episode1-exact"
       },
       "233": {
@@ -1722,6 +2602,26 @@
         "reference": 237,
         "source": "episode1-exact"
       },
+      "238": {
+        "class": "air",
+        "reference": 238,
+        "source": "episode1-exact"
+      },
+      "239": {
+        "class": "air",
+        "reference": 239,
+        "source": "episode1-exact"
+      },
+      "24": {
+        "class": "air",
+        "reference": 24,
+        "source": "episode1-exact"
+      },
+      "240": {
+        "class": "air",
+        "reference": 240,
+        "source": "episode1-exact"
+      },
       "241": {
         "class": "air",
         "reference": 241,
@@ -1742,14 +2642,79 @@
         "reference": 244,
         "source": "episode1-exact"
       },
+      "245": {
+        "class": "surface",
+        "reference": 245,
+        "source": "episode1-exact"
+      },
+      "246": {
+        "class": "surface",
+        "reference": 246,
+        "source": "episode1-exact"
+      },
+      "247": {
+        "class": "surface",
+        "reference": 247,
+        "source": "episode1-exact"
+      },
+      "248": {
+        "class": "surface",
+        "reference": 248,
+        "source": "episode1-exact"
+      },
+      "249": {
+        "class": "surface",
+        "reference": 249,
+        "source": "episode1-exact"
+      },
+      "25": {
+        "class": "air",
+        "reference": 25,
+        "source": "episode1-exact"
+      },
+      "250": {
+        "class": "surface",
+        "reference": 250,
+        "source": "episode1-exact"
+      },
+      "251": {
+        "class": "surface",
+        "reference": 251,
+        "source": "episode1-exact"
+      },
       "252": {
         "class": "surface",
         "reference": 252,
         "source": "episode1-exact"
       },
+      "253": {
+        "class": "surface",
+        "reference": 253,
+        "source": "episode1-exact"
+      },
+      "254": {
+        "class": "surface",
+        "reference": 254,
+        "source": "episode1-exact"
+      },
       "255": {
         "class": "surface",
         "reference": 255,
+        "source": "episode1-exact"
+      },
+      "256": {
+        "class": "surface",
+        "reference": 256,
+        "source": "episode1-exact"
+      },
+      "257": {
+        "class": "surface",
+        "reference": 257,
+        "source": "episode1-exact"
+      },
+      "258": {
+        "class": "surface",
+        "reference": 251,
         "source": "episode1-exact"
       },
       "259": {
@@ -1867,6 +2832,11 @@
         "reference": 279,
         "source": "episode1-exact"
       },
+      "28": {
+        "class": "air",
+        "reference": 28,
+        "source": "episode1-exact"
+      },
       "280": {
         "class": "surface",
         "reference": 280,
@@ -1905,6 +2875,16 @@
       "288": {
         "class": "surface",
         "reference": 288,
+        "source": "episode1-exact"
+      },
+      "29": {
+        "class": "air",
+        "reference": 29,
+        "source": "episode1-exact"
+      },
+      "3": {
+        "class": "air",
+        "reference": 3,
         "source": "episode1-exact"
       },
       "30": {
@@ -2007,6 +2987,11 @@
         "reference": 319,
         "source": "episode1-exact"
       },
+      "32": {
+        "class": "surface",
+        "reference": 32,
+        "source": "episode1-exact"
+      },
       "320": {
         "class": "air",
         "reference": 320,
@@ -2055,6 +3040,11 @@
       "329": {
         "class": "surface",
         "reference": 329,
+        "source": "episode1-exact"
+      },
+      "33": {
+        "class": "surface",
+        "reference": 33,
         "source": "episode1-exact"
       },
       "330": {
@@ -2107,6 +3097,11 @@
         "reference": 339,
         "source": "episode1-exact"
       },
+      "34": {
+        "class": "surface",
+        "reference": 34,
+        "source": "episode1-exact"
+      },
       "340": {
         "class": "surface",
         "reference": 340,
@@ -2157,6 +3152,11 @@
         "reference": 349,
         "source": "episode1-exact"
       },
+      "35": {
+        "class": "surface",
+        "reference": 35,
+        "source": "episode1-exact"
+      },
       "350": {
         "class": "air",
         "reference": 350,
@@ -2205,6 +3205,11 @@
       "359": {
         "class": "air",
         "reference": 359,
+        "source": "episode1-exact"
+      },
+      "36": {
+        "class": "surface",
+        "reference": 36,
         "source": "episode1-exact"
       },
       "360": {
@@ -2257,6 +3262,11 @@
         "observations": 1,
         "source": "event-air-corroborated"
       },
+      "37": {
+        "class": "surface",
+        "reference": 37,
+        "source": "episode1-exact"
+      },
       "370": {
         "class": "air",
         "observations": 1,
@@ -2306,6 +3316,11 @@
         "class": "air",
         "observations": 1,
         "source": "event-air-corroborated"
+      },
+      "38": {
+        "class": "surface",
+        "reference": 38,
+        "source": "episode1-exact"
       },
       "380": {
         "class": "air",
@@ -2357,6 +3372,66 @@
         "observations": 1,
         "source": "event-air-corroborated"
       },
+      "39": {
+        "class": "surface",
+        "reference": 39,
+        "source": "episode1-exact"
+      },
+      "390": {
+        "class": "air",
+        "reference": 390,
+        "source": "episode1-exact"
+      },
+      "391": {
+        "class": "surface",
+        "reference": 391,
+        "source": "episode1-exact"
+      },
+      "392": {
+        "class": "air",
+        "reference": 392,
+        "source": "episode1-exact"
+      },
+      "393": {
+        "class": "surface",
+        "reference": 393,
+        "source": "episode1-exact"
+      },
+      "394": {
+        "class": "air",
+        "reference": 394,
+        "source": "episode1-exact"
+      },
+      "395": {
+        "class": "surface",
+        "reference": 395,
+        "source": "episode1-exact"
+      },
+      "396": {
+        "class": "air",
+        "reference": 396,
+        "source": "episode1-exact"
+      },
+      "397": {
+        "class": "air",
+        "reference": 397,
+        "source": "episode1-exact"
+      },
+      "399": {
+        "class": "air",
+        "reference": 399,
+        "source": "episode1-exact"
+      },
+      "4": {
+        "class": "air",
+        "reference": 4,
+        "source": "episode1-exact"
+      },
+      "40": {
+        "class": "surface",
+        "reference": 40,
+        "source": "episode1-exact"
+      },
       "400": {
         "class": "air",
         "reference": 400,
@@ -2407,6 +3482,11 @@
         "reference": 409,
         "source": "episode1-exact"
       },
+      "41": {
+        "class": "surface",
+        "reference": 41,
+        "source": "episode1-exact"
+      },
       "410": {
         "class": "air",
         "reference": 410,
@@ -2431,6 +3511,11 @@
         "class": "air",
         "observations": 1,
         "source": "event-air-corroborated"
+      },
+      "42": {
+        "class": "surface",
+        "reference": 42,
+        "source": "episode1-exact"
       },
       "420": {
         "class": "air",
@@ -2462,9 +3547,114 @@
         "observations": 1,
         "source": "event-air-corroborated"
       },
+      "43": {
+        "class": "surface",
+        "reference": 43,
+        "source": "episode1-exact"
+      },
+      "44": {
+        "class": "surface",
+        "reference": 44,
+        "source": "episode1-exact"
+      },
+      "440": {
+        "class": "surface",
+        "reference": 440,
+        "source": "episode1-exact"
+      },
+      "441": {
+        "class": "surface",
+        "reference": 441,
+        "source": "episode1-exact"
+      },
+      "442": {
+        "class": "surface",
+        "reference": 442,
+        "source": "episode1-exact"
+      },
+      "443": {
+        "class": "surface",
+        "reference": 443,
+        "source": "episode1-exact"
+      },
+      "444": {
+        "class": "air",
+        "reference": 444,
+        "source": "episode1-exact"
+      },
+      "445": {
+        "class": "air",
+        "reference": 445,
+        "source": "episode1-exact"
+      },
+      "446": {
+        "class": "air",
+        "reference": 446,
+        "source": "episode1-exact"
+      },
+      "447": {
+        "class": "air",
+        "reference": 447,
+        "source": "episode1-exact"
+      },
+      "448": {
+        "class": "air",
+        "reference": 448,
+        "source": "episode1-exact"
+      },
+      "449": {
+        "class": "air",
+        "reference": 449,
+        "source": "episode1-exact"
+      },
+      "45": {
+        "class": "surface",
+        "reference": 45,
+        "source": "episode1-exact"
+      },
+      "450": {
+        "class": "surface",
+        "reference": 450,
+        "source": "episode1-exact"
+      },
+      "451": {
+        "class": "surface",
+        "reference": 451,
+        "source": "episode1-exact"
+      },
+      "452": {
+        "class": "surface",
+        "reference": 452,
+        "source": "episode1-exact"
+      },
+      "453": {
+        "class": "surface",
+        "reference": 453,
+        "source": "episode1-exact"
+      },
       "456": {
         "class": "surface",
         "reference": 456,
+        "source": "episode1-exact"
+      },
+      "457": {
+        "class": "surface",
+        "reference": 457,
+        "source": "episode1-exact"
+      },
+      "459": {
+        "class": "surface",
+        "reference": 459,
+        "source": "episode1-exact"
+      },
+      "46": {
+        "class": "air",
+        "reference": 46,
+        "source": "episode1-exact"
+      },
+      "461": {
+        "class": "air",
+        "reference": 461,
         "source": "episode1-exact"
       },
       "462": {
@@ -2472,14 +3662,294 @@
         "reference": 462,
         "source": "episode1-exact"
       },
+      "464": {
+        "class": "surface",
+        "reference": 464,
+        "source": "episode1-exact"
+      },
+      "465": {
+        "class": "surface",
+        "reference": 465,
+        "source": "episode1-exact"
+      },
+      "466": {
+        "class": "surface",
+        "reference": 466,
+        "source": "episode1-exact"
+      },
+      "467": {
+        "class": "surface",
+        "reference": 467,
+        "source": "episode1-exact"
+      },
+      "468": {
+        "class": "air",
+        "reference": 468,
+        "source": "episode1-exact"
+      },
+      "469": {
+        "class": "air",
+        "reference": 469,
+        "source": "episode1-exact"
+      },
+      "47": {
+        "class": "air",
+        "reference": 47,
+        "source": "episode1-exact"
+      },
+      "470": {
+        "class": "air",
+        "reference": 470,
+        "source": "episode1-exact"
+      },
+      "471": {
+        "class": "air",
+        "reference": 471,
+        "source": "episode1-exact"
+      },
+      "472": {
+        "class": "air",
+        "reference": 472,
+        "source": "episode1-exact"
+      },
+      "473": {
+        "class": "air",
+        "reference": 473,
+        "source": "episode1-exact"
+      },
+      "475": {
+        "class": "air",
+        "reference": 475,
+        "source": "episode1-exact"
+      },
+      "477": {
+        "class": "air",
+        "reference": 477,
+        "source": "episode1-exact"
+      },
+      "478": {
+        "class": "air",
+        "reference": 478,
+        "source": "episode1-exact"
+      },
+      "48": {
+        "class": "air",
+        "reference": 48,
+        "source": "episode1-exact"
+      },
+      "480": {
+        "class": "air",
+        "reference": 480,
+        "source": "episode1-exact"
+      },
+      "481": {
+        "class": "air",
+        "reference": 481,
+        "source": "episode1-exact"
+      },
+      "482": {
+        "class": "air",
+        "reference": 482,
+        "source": "episode1-exact"
+      },
+      "483": {
+        "class": "air",
+        "reference": 483,
+        "source": "episode1-exact"
+      },
+      "484": {
+        "class": "air",
+        "reference": 484,
+        "source": "episode1-exact"
+      },
+      "485": {
+        "class": "air",
+        "reference": 485,
+        "source": "episode1-exact"
+      },
+      "486": {
+        "class": "air",
+        "reference": 486,
+        "source": "episode1-exact"
+      },
+      "487": {
+        "class": "air",
+        "reference": 487,
+        "source": "episode1-exact"
+      },
+      "488": {
+        "class": "air",
+        "reference": 488,
+        "source": "episode1-exact"
+      },
+      "489": {
+        "class": "air",
+        "reference": 489,
+        "source": "episode1-exact"
+      },
+      "49": {
+        "class": "air",
+        "reference": 49,
+        "source": "episode1-exact"
+      },
+      "490": {
+        "class": "air",
+        "reference": 490,
+        "source": "episode1-exact"
+      },
+      "491": {
+        "class": "air",
+        "reference": 491,
+        "source": "episode1-exact"
+      },
+      "492": {
+        "class": "air",
+        "reference": 492,
+        "source": "episode1-exact"
+      },
+      "493": {
+        "class": "air",
+        "reference": 493,
+        "source": "episode1-exact"
+      },
+      "494": {
+        "class": "air",
+        "reference": 494,
+        "source": "episode1-exact"
+      },
+      "495": {
+        "class": "air",
+        "reference": 495,
+        "source": "episode1-exact"
+      },
+      "496": {
+        "class": "air",
+        "reference": 496,
+        "source": "episode1-exact"
+      },
+      "497": {
+        "class": "air",
+        "reference": 497,
+        "source": "episode1-exact"
+      },
+      "498": {
+        "class": "air",
+        "reference": 498,
+        "source": "episode1-exact"
+      },
+      "499": {
+        "class": "air",
+        "reference": 499,
+        "source": "episode1-exact"
+      },
+      "5": {
+        "class": "air",
+        "reference": 5,
+        "source": "episode1-exact"
+      },
+      "50": {
+        "class": "air",
+        "reference": 50,
+        "source": "episode1-exact"
+      },
       "500": {
         "class": "air",
         "reference": 500,
         "source": "episode1-exact"
       },
+      "503": {
+        "class": "air",
+        "reference": 503,
+        "source": "episode1-exact"
+      },
+      "505": {
+        "class": "air",
+        "reference": 505,
+        "source": "episode1-exact"
+      },
+      "506": {
+        "class": "air",
+        "reference": 506,
+        "source": "episode1-exact"
+      },
+      "51": {
+        "class": "air",
+        "reference": 51,
+        "source": "episode1-exact"
+      },
       "511": {
         "class": "air",
         "reference": 511,
+        "source": "episode1-exact"
+      },
+      "514": {
+        "class": "air",
+        "reference": 514,
+        "source": "episode1-exact"
+      },
+      "516": {
+        "class": "surface",
+        "reference": 516,
+        "source": "episode1-exact"
+      },
+      "517": {
+        "class": "surface",
+        "reference": 517,
+        "source": "episode1-exact"
+      },
+      "518": {
+        "class": "surface",
+        "reference": 518,
+        "source": "episode1-exact"
+      },
+      "519": {
+        "class": "surface",
+        "reference": 519,
+        "source": "episode1-exact"
+      },
+      "52": {
+        "class": "air",
+        "reference": 52,
+        "source": "episode1-exact"
+      },
+      "520": {
+        "class": "surface",
+        "reference": 520,
+        "source": "episode1-exact"
+      },
+      "521": {
+        "class": "surface",
+        "reference": 521,
+        "source": "episode1-exact"
+      },
+      "522": {
+        "class": "surface",
+        "reference": 522,
+        "source": "episode1-exact"
+      },
+      "523": {
+        "class": "surface",
+        "reference": 523,
+        "source": "episode1-exact"
+      },
+      "524": {
+        "class": "surface",
+        "reference": 524,
+        "source": "episode1-exact"
+      },
+      "525": {
+        "class": "surface",
+        "reference": 525,
+        "source": "episode1-exact"
+      },
+      "526": {
+        "class": "surface",
+        "reference": 526,
+        "source": "episode1-exact"
+      },
+      "527": {
+        "class": "surface",
+        "reference": 527,
         "source": "episode1-exact"
       },
       "528": {
@@ -2492,29 +3962,84 @@
         "reference": 529,
         "source": "episode1-exact"
       },
+      "53": {
+        "class": "air",
+        "reference": 53,
+        "source": "episode1-exact"
+      },
       "531": {
         "class": "air",
-        "observations": 39,
-        "source": "event-air-corroborated"
+        "reference": 531,
+        "source": "episode1-exact"
+      },
+      "536": {
+        "class": "surface",
+        "reference": 536,
+        "source": "episode1-exact"
+      },
+      "537": {
+        "class": "surface",
+        "reference": 537,
+        "source": "episode1-exact"
+      },
+      "538": {
+        "class": "surface",
+        "reference": 538,
+        "source": "episode1-exact"
+      },
+      "539": {
+        "class": "surface",
+        "reference": 539,
+        "source": "episode1-exact"
+      },
+      "54": {
+        "class": "air",
+        "reference": 54,
+        "source": "episode1-exact"
+      },
+      "540": {
+        "class": "surface",
+        "reference": 540,
+        "source": "episode1-exact"
+      },
+      "541": {
+        "class": "surface",
+        "reference": 541,
+        "source": "episode1-exact"
+      },
+      "542": {
+        "class": "surface",
+        "reference": 542,
+        "source": "episode1-exact"
+      },
+      "545": {
+        "class": "surface",
+        "reference": 545,
+        "source": "episode1-exact"
       },
       "546": {
-        "class": "surface",
+        "class": "air",
         "reference": 546,
         "source": "episode1-exact"
       },
       "547": {
-        "class": "surface",
+        "class": "air",
         "reference": 547,
         "source": "episode1-exact"
       },
       "548": {
-        "class": "surface",
+        "class": "air",
         "reference": 548,
         "source": "episode1-exact"
       },
       "549": {
-        "class": "surface",
+        "class": "air",
         "reference": 549,
+        "source": "episode1-exact"
+      },
+      "55": {
+        "class": "air",
+        "reference": 55,
         "source": "episode1-exact"
       },
       "550": {
@@ -2532,9 +4057,44 @@
         "reference": 553,
         "source": "episode1-exact"
       },
+      "554": {
+        "class": "air",
+        "reference": 554,
+        "source": "episode1-exact"
+      },
+      "555": {
+        "class": "surface",
+        "reference": 555,
+        "source": "episode1-exact"
+      },
       "559": {
         "class": "surface",
         "reference": 559,
+        "source": "episode1-exact"
+      },
+      "56": {
+        "class": "air",
+        "reference": 56,
+        "source": "episode1-exact"
+      },
+      "564": {
+        "class": "air",
+        "reference": 564,
+        "source": "episode1-exact"
+      },
+      "565": {
+        "class": "air",
+        "reference": 565,
+        "source": "episode1-exact"
+      },
+      "566": {
+        "class": "air",
+        "reference": 566,
+        "source": "episode1-exact"
+      },
+      "567": {
+        "class": "air",
+        "reference": 567,
         "source": "episode1-exact"
       },
       "568": {
@@ -2545,6 +4105,11 @@
       "569": {
         "class": "air",
         "reference": 569,
+        "source": "episode1-exact"
+      },
+      "57": {
+        "class": "air",
+        "reference": 57,
         "source": "episode1-exact"
       },
       "570": {
@@ -2587,6 +4152,81 @@
         "reference": 577,
         "source": "episode1-exact"
       },
+      "578": {
+        "class": "air",
+        "reference": 578,
+        "source": "episode1-exact"
+      },
+      "579": {
+        "class": "air",
+        "reference": 579,
+        "source": "episode1-exact"
+      },
+      "58": {
+        "class": "air",
+        "reference": 58,
+        "source": "episode1-exact"
+      },
+      "580": {
+        "class": "air",
+        "reference": 580,
+        "source": "episode1-exact"
+      },
+      "581": {
+        "class": "air",
+        "reference": 581,
+        "source": "episode1-exact"
+      },
+      "582": {
+        "class": "air",
+        "reference": 582,
+        "source": "episode1-exact"
+      },
+      "583": {
+        "class": "air",
+        "reference": 583,
+        "source": "episode1-exact"
+      },
+      "584": {
+        "class": "air",
+        "reference": 584,
+        "source": "episode1-exact"
+      },
+      "585": {
+        "class": "air",
+        "reference": 585,
+        "source": "episode1-exact"
+      },
+      "586": {
+        "class": "air",
+        "reference": 586,
+        "source": "episode1-exact"
+      },
+      "587": {
+        "class": "air",
+        "reference": 587,
+        "source": "episode1-exact"
+      },
+      "588": {
+        "class": "air",
+        "reference": 588,
+        "source": "episode1-exact"
+      },
+      "589": {
+        "class": "air",
+        "reference": 589,
+        "source": "episode1-exact"
+      },
+      "59": {
+        "class": "air",
+        "reference": 59,
+        "source": "episode1-exact"
+      },
+      "590": {
+        "class": "surface",
+        "reference": 590,
+        "source": "episode1-exact"
+      },
       "591": {
         "class": "surface",
         "reference": 577,
@@ -2602,9 +4242,209 @@
         "reference": 6,
         "source": "episode1-exact"
       },
+      "60": {
+        "class": "air",
+        "reference": 60,
+        "source": "episode1-exact"
+      },
+      "602": {
+        "class": "air",
+        "reference": 602,
+        "source": "episode1-exact"
+      },
+      "603": {
+        "class": "air",
+        "reference": 603,
+        "source": "episode1-exact"
+      },
+      "604": {
+        "class": "air",
+        "reference": 604,
+        "source": "episode1-exact"
+      },
+      "605": {
+        "class": "air",
+        "reference": 605,
+        "source": "episode1-exact"
+      },
+      "606": {
+        "class": "air",
+        "reference": 606,
+        "source": "episode1-exact"
+      },
+      "607": {
+        "class": "air",
+        "reference": 607,
+        "source": "episode1-exact"
+      },
+      "608": {
+        "class": "air",
+        "reference": 608,
+        "source": "episode1-exact"
+      },
+      "609": {
+        "class": "air",
+        "reference": 609,
+        "source": "episode1-exact"
+      },
+      "61": {
+        "class": "air",
+        "reference": 61,
+        "source": "episode1-exact"
+      },
+      "610": {
+        "class": "air",
+        "reference": 610,
+        "source": "episode1-exact"
+      },
+      "611": {
+        "class": "air",
+        "reference": 611,
+        "source": "episode1-exact"
+      },
+      "612": {
+        "class": "air",
+        "reference": 612,
+        "source": "episode1-exact"
+      },
+      "613": {
+        "class": "air",
+        "reference": 613,
+        "source": "episode1-exact"
+      },
+      "614": {
+        "class": "air",
+        "reference": 614,
+        "source": "episode1-exact"
+      },
+      "615": {
+        "class": "air",
+        "reference": 615,
+        "source": "episode1-exact"
+      },
+      "616": {
+        "class": "air",
+        "reference": 616,
+        "source": "episode1-exact"
+      },
+      "617": {
+        "class": "air",
+        "reference": 617,
+        "source": "episode1-exact"
+      },
+      "618": {
+        "class": "air",
+        "reference": 618,
+        "source": "episode1-exact"
+      },
+      "619": {
+        "class": "air",
+        "reference": 619,
+        "source": "episode1-exact"
+      },
+      "62": {
+        "class": "air",
+        "reference": 62,
+        "source": "episode1-exact"
+      },
+      "620": {
+        "class": "air",
+        "reference": 620,
+        "source": "episode1-exact"
+      },
+      "621": {
+        "class": "air",
+        "reference": 621,
+        "source": "episode1-exact"
+      },
+      "622": {
+        "class": "air",
+        "reference": 622,
+        "source": "episode1-exact"
+      },
+      "623": {
+        "class": "air",
+        "reference": 623,
+        "source": "episode1-exact"
+      },
+      "624": {
+        "class": "air",
+        "reference": 624,
+        "source": "episode1-exact"
+      },
+      "625": {
+        "class": "air",
+        "reference": 625,
+        "source": "episode1-exact"
+      },
+      "626": {
+        "class": "air",
+        "reference": 626,
+        "source": "episode1-exact"
+      },
+      "627": {
+        "class": "air",
+        "reference": 627,
+        "source": "episode1-exact"
+      },
+      "628": {
+        "class": "air",
+        "reference": 628,
+        "source": "episode1-exact"
+      },
+      "629": {
+        "class": "air",
+        "reference": 629,
+        "source": "episode1-exact"
+      },
+      "63": {
+        "class": "air",
+        "reference": 63,
+        "source": "episode1-exact"
+      },
+      "64": {
+        "class": "air",
+        "reference": 64,
+        "source": "episode1-exact"
+      },
+      "65": {
+        "class": "air",
+        "reference": 65,
+        "source": "episode1-exact"
+      },
+      "66": {
+        "class": "surface",
+        "reference": 66,
+        "source": "episode1-exact"
+      },
+      "67": {
+        "class": "surface",
+        "reference": 67,
+        "source": "episode1-exact"
+      },
+      "68": {
+        "class": "surface",
+        "reference": 68,
+        "source": "episode1-exact"
+      },
+      "686": {
+        "class": "air",
+        "reference": 686,
+        "source": "episode1-exact"
+      },
       "688": {
         "class": "surface",
         "reference": 688,
+        "source": "episode1-exact"
+      },
+      "689": {
+        "class": "air",
+        "reference": 689,
+        "source": "episode1-exact"
+      },
+      "69": {
+        "class": "surface",
+        "reference": 69,
         "source": "episode1-exact"
       },
       "690": {
@@ -2615,6 +4455,46 @@
       "7": {
         "class": "air",
         "reference": 7,
+        "source": "episode1-exact"
+      },
+      "70": {
+        "class": "surface",
+        "reference": 70,
+        "source": "episode1-exact"
+      },
+      "71": {
+        "class": "surface",
+        "reference": 71,
+        "source": "episode1-exact"
+      },
+      "72": {
+        "class": "surface",
+        "reference": 72,
+        "source": "episode1-exact"
+      },
+      "73": {
+        "class": "surface",
+        "reference": 73,
+        "source": "episode1-exact"
+      },
+      "74": {
+        "class": "surface",
+        "reference": 74,
+        "source": "episode1-exact"
+      },
+      "75": {
+        "class": "surface",
+        "reference": 75,
+        "source": "episode1-exact"
+      },
+      "76": {
+        "class": "surface",
+        "reference": 76,
+        "source": "episode1-exact"
+      },
+      "77": {
+        "class": "surface",
+        "reference": 77,
         "source": "episode1-exact"
       },
       "772": {
@@ -2637,6 +4517,44 @@
         "observations": 3,
         "source": "event-top-only"
       },
+      "78": {
+        "class": "surface",
+        "reference": 78,
+        "source": "episode1-exact"
+      },
+      "780": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "781": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "782": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "783": {
+        "class": "air",
+        "reference": 783,
+        "source": "episode1-exact"
+      },
+      "784": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "785": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "786": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "787": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
       "788": {
         "class": "air",
         "observations": 3,
@@ -2646,6 +4564,11 @@
         "class": "air",
         "observations": 3,
         "source": "event-air-corroborated"
+      },
+      "79": {
+        "class": "surface",
+        "reference": 79,
+        "source": "episode1-exact"
       },
       "792": {
         "class": "air",
@@ -2697,9 +4620,19 @@
         "observations": 7,
         "source": "event-air-corroborated"
       },
+      "822": {
+        "class": "air",
+        "reference": 822,
+        "source": "episode1-exact"
+      },
       "823": {
         "class": "surface",
         "reference": 823,
+        "source": "episode1-exact"
+      },
+      "824": {
+        "class": "surface",
+        "reference": 824,
         "source": "episode1-exact"
       },
       "826": {
@@ -2712,9 +4645,49 @@
         "observations": 1,
         "source": "event-top-only"
       },
+      "837": {
+        "class": "air",
+        "reference": 837,
+        "source": "episode1-exact"
+      },
+      "838": {
+        "class": "surface",
+        "reference": 838,
+        "source": "episode1-exact"
+      },
       "840": {
         "class": "surface",
         "reference": 840,
+        "source": "episode1-exact"
+      },
+      "842": {
+        "class": "surface",
+        "reference": 842,
+        "source": "episode1-exact"
+      },
+      "845": {
+        "class": "air",
+        "reference": 845,
+        "source": "episode1-exact"
+      },
+      "846": {
+        "class": "air",
+        "reference": 846,
+        "source": "episode1-exact"
+      },
+      "847": {
+        "class": "air",
+        "reference": 847,
+        "source": "episode1-exact"
+      },
+      "848": {
+        "class": "air",
+        "reference": 848,
+        "source": "episode1-exact"
+      },
+      "849": {
+        "class": "air",
+        "reference": 849,
         "source": "episode1-exact"
       },
       "9": {
@@ -2724,10 +4697,15 @@
       }
     },
     "3": {
+      "1": {
+        "class": "air",
+        "reference": 1,
+        "source": "episode1-exact"
+      },
       "10": {
         "class": "air",
-        "observations": 15,
-        "source": "event-air-corroborated"
+        "reference": 10,
+        "source": "episode1-exact"
       },
       "103": {
         "class": "air",
@@ -2754,25 +4732,53 @@
         "observations": 10,
         "source": "event-air-corroborated"
       },
+      "11": {
+        "class": "air",
+        "reference": 11,
+        "source": "episode1-exact"
+      },
       "12": {
         "class": "air",
-        "observations": 25,
-        "source": "event-air-corroborated"
+        "reference": 12,
+        "source": "episode1-exact"
+      },
+      "121": {
+        "class": "surface",
+        "reference": 121,
+        "source": "episode1-exact"
+      },
+      "122": {
+        "class": "surface",
+        "reference": 122,
+        "source": "episode1-exact"
+      },
+      "123": {
+        "class": "surface",
+        "reference": 123,
+        "source": "episode1-exact"
+      },
+      "124": {
+        "class": "surface",
+        "reference": 124,
+        "source": "episode1-exact"
       },
       "125": {
-        "class": "air",
-        "source": "linked-assembly"
+        "class": "surface",
+        "reference": 125,
+        "source": "episode1-exact"
       },
       "126": {
-        "class": "air",
-        "source": "linked-assembly"
+        "class": "surface",
+        "reference": 126,
+        "source": "episode1-exact"
       },
       "127": {
-        "class": "air",
-        "source": "linked-assembly"
+        "class": "surface",
+        "reference": 127,
+        "source": "episode1-exact"
       },
       "128": {
-        "class": "air",
+        "class": "surface",
         "reference": 128,
         "source": "episode1-exact"
       },
@@ -2816,23 +4822,49 @@
         "reference": 136,
         "source": "episode1-exact"
       },
+      "138": {
+        "class": "air",
+        "reference": 138,
+        "source": "episode1-exact"
+      },
+      "139": {
+        "class": "air",
+        "reference": 139,
+        "source": "episode1-exact"
+      },
       "14": {
         "class": "air",
         "reference": 14,
         "source": "episode1-exact"
       },
-      "145": {
+      "140": {
         "class": "air",
+        "reference": 140,
+        "source": "episode1-exact"
+      },
+      "141": {
+        "class": "air",
+        "reference": 141,
+        "source": "episode1-exact"
+      },
+      "142": {
+        "class": "surface",
+        "reference": 142,
+        "source": "episode1-exact"
+      },
+      "143": {
+        "class": "surface",
+        "reference": 143,
+        "source": "episode1-exact"
+      },
+      "145": {
+        "class": "surface",
         "reference": 145,
         "source": "episode1-exact"
       },
       "146": {
-        "class": "air",
-        "source": "linked-assembly"
-      },
-      "149": {
-        "class": "air",
-        "reference": 149,
+        "class": "surface",
+        "reference": 146,
         "source": "episode1-exact"
       },
       "15": {
@@ -2840,19 +4872,9 @@
         "reference": 15,
         "source": "episode1-exact"
       },
-      "150": {
+      "16": {
         "class": "air",
-        "reference": 150,
-        "source": "episode1-exact"
-      },
-      "151": {
-        "class": "air",
-        "reference": 151,
-        "source": "episode1-exact"
-      },
-      "152": {
-        "class": "air",
-        "reference": 152,
+        "reference": 16,
         "source": "episode1-exact"
       },
       "162": {
@@ -2876,12 +4898,12 @@
         "source": "episode1-exact"
       },
       "166": {
-        "class": "air",
+        "class": "surface",
         "reference": 166,
         "source": "episode1-exact"
       },
       "167": {
-        "class": "air",
+        "class": "surface",
         "reference": 167,
         "source": "episode1-exact"
       },
@@ -2893,6 +4915,11 @@
       "169": {
         "class": "air",
         "reference": 169,
+        "source": "episode1-exact"
+      },
+      "17": {
+        "class": "air",
+        "reference": 17,
         "source": "episode1-exact"
       },
       "170": {
@@ -2913,6 +4940,16 @@
       "173": {
         "class": "surface",
         "reference": 173,
+        "source": "episode1-exact"
+      },
+      "18": {
+        "class": "air",
+        "reference": 18,
+        "source": "episode1-exact"
+      },
+      "19": {
+        "class": "air",
+        "reference": 19,
         "source": "episode1-exact"
       },
       "192": {
@@ -2940,6 +4977,21 @@
         "reference": 198,
         "source": "episode1-exact"
       },
+      "20": {
+        "class": "surface",
+        "reference": 20,
+        "source": "episode1-exact"
+      },
+      "21": {
+        "class": "air",
+        "reference": 21,
+        "source": "episode1-exact"
+      },
+      "22": {
+        "class": "air",
+        "reference": 22,
+        "source": "episode1-exact"
+      },
       "221": {
         "class": "air",
         "observations": 4,
@@ -2952,13 +5004,13 @@
       },
       "226": {
         "class": "air",
-        "observations": 108,
-        "source": "event-air-corroborated"
+        "reference": 226,
+        "source": "episode1-exact"
       },
       "227": {
         "class": "air",
-        "observations": 108,
-        "source": "event-air-corroborated"
+        "reference": 227,
+        "source": "episode1-exact"
       },
       "228": {
         "class": "air",
@@ -2970,6 +5022,11 @@
         "reference": 229,
         "source": "episode1-exact"
       },
+      "23": {
+        "class": "surface",
+        "reference": 23,
+        "source": "episode1-exact"
+      },
       "230": {
         "class": "air",
         "reference": 230,
@@ -2977,11 +5034,13 @@
       },
       "231": {
         "class": "air",
-        "source": "linked-assembly"
+        "reference": 231,
+        "source": "episode1-exact"
       },
       "232": {
         "class": "air",
-        "source": "linked-assembly"
+        "reference": 232,
+        "source": "episode1-exact"
       },
       "233": {
         "class": "air",
@@ -3005,20 +5064,23 @@
       },
       "238": {
         "class": "air",
-        "source": "linked-assembly"
+        "reference": 238,
+        "source": "episode1-exact"
       },
       "239": {
         "class": "air",
-        "source": "linked-assembly"
+        "reference": 239,
+        "source": "episode1-exact"
       },
       "24": {
         "class": "air",
-        "observations": 14,
-        "source": "event-air-corroborated"
+        "reference": 24,
+        "source": "episode1-exact"
       },
       "240": {
         "class": "air",
-        "source": "linked-assembly"
+        "reference": 240,
+        "source": "episode1-exact"
       },
       "241": {
         "class": "air",
@@ -3040,10 +5102,45 @@
         "reference": 244,
         "source": "episode1-exact"
       },
+      "245": {
+        "class": "surface",
+        "reference": 245,
+        "source": "episode1-exact"
+      },
+      "246": {
+        "class": "surface",
+        "reference": 246,
+        "source": "episode1-exact"
+      },
+      "247": {
+        "class": "surface",
+        "reference": 247,
+        "source": "episode1-exact"
+      },
+      "248": {
+        "class": "surface",
+        "reference": 248,
+        "source": "episode1-exact"
+      },
+      "249": {
+        "class": "surface",
+        "reference": 249,
+        "source": "episode1-exact"
+      },
       "25": {
         "class": "air",
-        "observations": 14,
-        "source": "event-air-corroborated"
+        "reference": 25,
+        "source": "episode1-exact"
+      },
+      "250": {
+        "class": "surface",
+        "reference": 250,
+        "source": "episode1-exact"
+      },
+      "251": {
+        "class": "surface",
+        "reference": 251,
+        "source": "episode1-exact"
       },
       "252": {
         "class": "surface",
@@ -3052,11 +5149,13 @@
       },
       "253": {
         "class": "surface",
-        "source": "linked-assembly"
+        "reference": 253,
+        "source": "episode1-exact"
       },
       "254": {
         "class": "surface",
-        "source": "linked-assembly"
+        "reference": 254,
+        "source": "episode1-exact"
       },
       "255": {
         "class": "surface",
@@ -3065,15 +5164,18 @@
       },
       "256": {
         "class": "surface",
-        "source": "linked-assembly"
+        "reference": 256,
+        "source": "episode1-exact"
       },
       "257": {
         "class": "surface",
-        "source": "linked-assembly"
+        "reference": 257,
+        "source": "episode1-exact"
       },
       "258": {
         "class": "surface",
-        "source": "linked-assembly"
+        "reference": 251,
+        "source": "episode1-exact"
       },
       "259": {
         "class": "air",
@@ -3190,6 +5292,11 @@
         "reference": 279,
         "source": "episode1-exact"
       },
+      "28": {
+        "class": "air",
+        "reference": 28,
+        "source": "episode1-exact"
+      },
       "280": {
         "class": "surface",
         "reference": 280,
@@ -3228,6 +5335,16 @@
       "288": {
         "class": "surface",
         "reference": 288,
+        "source": "episode1-exact"
+      },
+      "29": {
+        "class": "air",
+        "reference": 29,
+        "source": "episode1-exact"
+      },
+      "3": {
+        "class": "air",
+        "reference": 3,
         "source": "episode1-exact"
       },
       "30": {
@@ -3331,9 +5448,9 @@
         "source": "episode1-exact"
       },
       "32": {
-        "class": "air",
-        "observations": 10,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 32,
+        "source": "episode1-exact"
       },
       "320": {
         "class": "air",
@@ -3386,9 +5503,9 @@
         "source": "episode1-exact"
       },
       "33": {
-        "class": "air",
-        "observations": 7,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 33,
+        "source": "episode1-exact"
       },
       "330": {
         "class": "surface",
@@ -3441,9 +5558,9 @@
         "source": "episode1-exact"
       },
       "34": {
-        "class": "air",
-        "observations": 10,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 34,
+        "source": "episode1-exact"
       },
       "340": {
         "class": "surface",
@@ -3496,9 +5613,9 @@
         "source": "episode1-exact"
       },
       "35": {
-        "class": "air",
-        "observations": 10,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 35,
+        "source": "episode1-exact"
       },
       "350": {
         "class": "air",
@@ -3551,9 +5668,9 @@
         "source": "episode1-exact"
       },
       "36": {
-        "class": "air",
-        "observations": 7,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 36,
+        "source": "episode1-exact"
       },
       "360": {
         "class": "air",
@@ -3586,39 +5703,74 @@
         "source": "episode1-exact"
       },
       "37": {
-        "class": "air",
-        "observations": 10,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 37,
+        "source": "episode1-exact"
       },
       "38": {
-        "class": "air",
-        "observations": 2,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 38,
+        "source": "episode1-exact"
       },
       "39": {
+        "class": "surface",
+        "reference": 39,
+        "source": "episode1-exact"
+      },
+      "390": {
         "class": "air",
-        "observations": 2,
-        "source": "event-top-only"
+        "reference": 390,
+        "source": "episode1-exact"
+      },
+      "391": {
+        "class": "surface",
+        "reference": 391,
+        "source": "episode1-exact"
+      },
+      "392": {
+        "class": "air",
+        "reference": 392,
+        "source": "episode1-exact"
+      },
+      "393": {
+        "class": "surface",
+        "reference": 393,
+        "source": "episode1-exact"
+      },
+      "394": {
+        "class": "air",
+        "reference": 394,
+        "source": "episode1-exact"
       },
       "395": {
+        "class": "surface",
+        "reference": 395,
+        "source": "episode1-exact"
+      },
+      "396": {
         "class": "air",
-        "observations": 7,
-        "source": "event-air-corroborated"
+        "reference": 396,
+        "source": "episode1-exact"
       },
       "397": {
         "class": "air",
-        "observations": 11,
-        "source": "event-air-corroborated"
+        "reference": 397,
+        "source": "episode1-exact"
+      },
+      "399": {
+        "class": "air",
+        "reference": 399,
+        "source": "episode1-exact"
       },
       "4": {
         "class": "air",
-        "observations": 64,
-        "source": "event-top-only"
+        "reference": 4,
+        "source": "episode1-exact"
       },
       "40": {
-        "class": "air",
-        "observations": 15,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 40,
+        "source": "episode1-exact"
       },
       "400": {
         "class": "air",
@@ -3671,9 +5823,9 @@
         "source": "episode1-exact"
       },
       "41": {
-        "class": "air",
-        "observations": 2,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 41,
+        "source": "episode1-exact"
       },
       "410": {
         "class": "air",
@@ -3686,14 +5838,14 @@
         "source": "episode1-exact"
       },
       "42": {
-        "class": "air",
-        "observations": 1,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 42,
+        "source": "episode1-exact"
       },
       "43": {
-        "class": "air",
-        "observations": 1,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 43,
+        "source": "episode1-exact"
       },
       "434": {
         "class": "air",
@@ -3726,74 +5878,404 @@
         "source": "event-air-corroborated"
       },
       "44": {
+        "class": "surface",
+        "reference": 44,
+        "source": "episode1-exact"
+      },
+      "440": {
+        "class": "surface",
+        "reference": 440,
+        "source": "episode1-exact"
+      },
+      "441": {
+        "class": "surface",
+        "reference": 441,
+        "source": "episode1-exact"
+      },
+      "442": {
+        "class": "surface",
+        "reference": 442,
+        "source": "episode1-exact"
+      },
+      "443": {
+        "class": "surface",
+        "reference": 443,
+        "source": "episode1-exact"
+      },
+      "444": {
         "class": "air",
-        "observations": 1,
-        "source": "event-top-only"
+        "reference": 444,
+        "source": "episode1-exact"
+      },
+      "445": {
+        "class": "air",
+        "reference": 445,
+        "source": "episode1-exact"
+      },
+      "446": {
+        "class": "air",
+        "reference": 446,
+        "source": "episode1-exact"
+      },
+      "447": {
+        "class": "air",
+        "reference": 447,
+        "source": "episode1-exact"
+      },
+      "448": {
+        "class": "air",
+        "reference": 448,
+        "source": "episode1-exact"
+      },
+      "449": {
+        "class": "air",
+        "reference": 449,
+        "source": "episode1-exact"
       },
       "45": {
-        "class": "air",
-        "observations": 1,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 45,
+        "source": "episode1-exact"
+      },
+      "450": {
+        "class": "surface",
+        "reference": 450,
+        "source": "episode1-exact"
+      },
+      "451": {
+        "class": "surface",
+        "reference": 451,
+        "source": "episode1-exact"
+      },
+      "452": {
+        "class": "surface",
+        "reference": 452,
+        "source": "episode1-exact"
+      },
+      "453": {
+        "class": "surface",
+        "reference": 453,
+        "source": "episode1-exact"
       },
       "456": {
         "class": "surface",
         "reference": 456,
         "source": "episode1-exact"
       },
+      "457": {
+        "class": "surface",
+        "reference": 457,
+        "source": "episode1-exact"
+      },
+      "459": {
+        "class": "surface",
+        "reference": 459,
+        "source": "episode1-exact"
+      },
       "46": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 46,
+        "source": "episode1-exact"
+      },
+      "461": {
+        "class": "air",
+        "reference": 461,
+        "source": "episode1-exact"
       },
       "462": {
         "class": "air",
         "reference": 462,
         "source": "episode1-exact"
       },
+      "464": {
+        "class": "surface",
+        "reference": 464,
+        "source": "episode1-exact"
+      },
+      "465": {
+        "class": "surface",
+        "reference": 465,
+        "source": "episode1-exact"
+      },
+      "466": {
+        "class": "surface",
+        "reference": 466,
+        "source": "episode1-exact"
+      },
+      "467": {
+        "class": "surface",
+        "reference": 467,
+        "source": "episode1-exact"
+      },
+      "468": {
+        "class": "air",
+        "reference": 468,
+        "source": "episode1-exact"
+      },
+      "469": {
+        "class": "air",
+        "reference": 469,
+        "source": "episode1-exact"
+      },
       "47": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 47,
+        "source": "episode1-exact"
+      },
+      "470": {
+        "class": "air",
+        "reference": 470,
+        "source": "episode1-exact"
+      },
+      "471": {
+        "class": "air",
+        "reference": 471,
+        "source": "episode1-exact"
+      },
+      "472": {
+        "class": "air",
+        "reference": 472,
+        "source": "episode1-exact"
+      },
+      "473": {
+        "class": "air",
+        "reference": 473,
+        "source": "episode1-exact"
+      },
+      "475": {
+        "class": "air",
+        "reference": 475,
+        "source": "episode1-exact"
+      },
+      "477": {
+        "class": "air",
+        "reference": 477,
+        "source": "episode1-exact"
+      },
+      "478": {
+        "class": "air",
+        "reference": 478,
+        "source": "episode1-exact"
       },
       "48": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 48,
+        "source": "episode1-exact"
+      },
+      "480": {
+        "class": "air",
+        "reference": 480,
+        "source": "episode1-exact"
+      },
+      "481": {
+        "class": "air",
+        "reference": 481,
+        "source": "episode1-exact"
+      },
+      "482": {
+        "class": "air",
+        "reference": 482,
+        "source": "episode1-exact"
+      },
+      "483": {
+        "class": "air",
+        "reference": 483,
+        "source": "episode1-exact"
+      },
+      "484": {
+        "class": "air",
+        "reference": 484,
+        "source": "episode1-exact"
+      },
+      "485": {
+        "class": "air",
+        "reference": 485,
+        "source": "episode1-exact"
+      },
+      "486": {
+        "class": "air",
+        "reference": 486,
+        "source": "episode1-exact"
+      },
+      "487": {
+        "class": "air",
+        "reference": 487,
+        "source": "episode1-exact"
+      },
+      "488": {
+        "class": "air",
+        "reference": 488,
+        "source": "episode1-exact"
+      },
+      "489": {
+        "class": "air",
+        "reference": 489,
+        "source": "episode1-exact"
       },
       "49": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 49,
+        "source": "episode1-exact"
+      },
+      "490": {
+        "class": "air",
+        "reference": 490,
+        "source": "episode1-exact"
+      },
+      "491": {
+        "class": "air",
+        "reference": 491,
+        "source": "episode1-exact"
+      },
+      "492": {
+        "class": "air",
+        "reference": 492,
+        "source": "episode1-exact"
+      },
+      "493": {
+        "class": "air",
+        "reference": 493,
+        "source": "episode1-exact"
+      },
+      "494": {
+        "class": "air",
+        "reference": 494,
+        "source": "episode1-exact"
+      },
+      "495": {
+        "class": "air",
+        "reference": 495,
+        "source": "episode1-exact"
+      },
+      "496": {
+        "class": "air",
+        "reference": 496,
+        "source": "episode1-exact"
+      },
+      "497": {
+        "class": "air",
+        "reference": 497,
+        "source": "episode1-exact"
+      },
+      "498": {
+        "class": "air",
+        "reference": 498,
+        "source": "episode1-exact"
+      },
+      "499": {
+        "class": "air",
+        "reference": 499,
+        "source": "episode1-exact"
       },
       "5": {
         "class": "air",
-        "observations": 15,
-        "source": "event-air-corroborated"
+        "reference": 5,
+        "source": "episode1-exact"
       },
       "50": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 50,
+        "source": "episode1-exact"
       },
       "500": {
         "class": "air",
         "reference": 500,
         "source": "episode1-exact"
       },
+      "503": {
+        "class": "air",
+        "reference": 503,
+        "source": "episode1-exact"
+      },
+      "505": {
+        "class": "air",
+        "reference": 505,
+        "source": "episode1-exact"
+      },
+      "506": {
+        "class": "air",
+        "reference": 506,
+        "source": "episode1-exact"
+      },
       "51": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 51,
+        "source": "episode1-exact"
       },
       "511": {
         "class": "air",
         "reference": 511,
         "source": "episode1-exact"
       },
+      "514": {
+        "class": "air",
+        "reference": 514,
+        "source": "episode1-exact"
+      },
+      "516": {
+        "class": "surface",
+        "reference": 516,
+        "source": "episode1-exact"
+      },
+      "517": {
+        "class": "surface",
+        "reference": 517,
+        "source": "episode1-exact"
+      },
+      "518": {
+        "class": "surface",
+        "reference": 518,
+        "source": "episode1-exact"
+      },
+      "519": {
+        "class": "surface",
+        "reference": 519,
+        "source": "episode1-exact"
+      },
       "52": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 52,
+        "source": "episode1-exact"
+      },
+      "520": {
+        "class": "surface",
+        "reference": 520,
+        "source": "episode1-exact"
+      },
+      "521": {
+        "class": "surface",
+        "reference": 521,
+        "source": "episode1-exact"
+      },
+      "522": {
+        "class": "surface",
+        "reference": 522,
+        "source": "episode1-exact"
+      },
+      "523": {
+        "class": "surface",
+        "reference": 523,
+        "source": "episode1-exact"
+      },
+      "524": {
+        "class": "surface",
+        "reference": 524,
+        "source": "episode1-exact"
+      },
+      "525": {
+        "class": "surface",
+        "reference": 525,
+        "source": "episode1-exact"
+      },
+      "526": {
+        "class": "surface",
+        "reference": 526,
+        "source": "episode1-exact"
+      },
+      "527": {
+        "class": "surface",
+        "reference": 527,
+        "source": "episode1-exact"
       },
       "528": {
         "class": "surface",
@@ -3807,38 +6289,83 @@
       },
       "53": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 53,
+        "source": "episode1-exact"
+      },
+      "531": {
+        "class": "air",
+        "reference": 531,
+        "source": "episode1-exact"
+      },
+      "536": {
+        "class": "surface",
+        "reference": 536,
+        "source": "episode1-exact"
+      },
+      "537": {
+        "class": "surface",
+        "reference": 537,
+        "source": "episode1-exact"
+      },
+      "538": {
+        "class": "surface",
+        "reference": 538,
+        "source": "episode1-exact"
+      },
+      "539": {
+        "class": "surface",
+        "reference": 539,
+        "source": "episode1-exact"
       },
       "54": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 54,
+        "source": "episode1-exact"
+      },
+      "540": {
+        "class": "surface",
+        "reference": 540,
+        "source": "episode1-exact"
+      },
+      "541": {
+        "class": "surface",
+        "reference": 541,
+        "source": "episode1-exact"
+      },
+      "542": {
+        "class": "surface",
+        "reference": 542,
+        "source": "episode1-exact"
+      },
+      "545": {
+        "class": "surface",
+        "reference": 545,
+        "source": "episode1-exact"
       },
       "546": {
-        "class": "surface",
+        "class": "air",
         "reference": 546,
         "source": "episode1-exact"
       },
       "547": {
-        "class": "surface",
+        "class": "air",
         "reference": 547,
         "source": "episode1-exact"
       },
       "548": {
-        "class": "surface",
+        "class": "air",
         "reference": 548,
         "source": "episode1-exact"
       },
       "549": {
-        "class": "surface",
+        "class": "air",
         "reference": 549,
         "source": "episode1-exact"
       },
       "55": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 55,
+        "source": "episode1-exact"
       },
       "550": {
         "class": "surface",
@@ -3855,6 +6382,16 @@
         "reference": 553,
         "source": "episode1-exact"
       },
+      "554": {
+        "class": "air",
+        "reference": 554,
+        "source": "episode1-exact"
+      },
+      "555": {
+        "class": "surface",
+        "reference": 555,
+        "source": "episode1-exact"
+      },
       "559": {
         "class": "surface",
         "reference": 559,
@@ -3862,13 +6399,33 @@
       },
       "56": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 56,
+        "source": "episode1-exact"
       },
       "562": {
         "class": "air",
         "observations": 5,
         "source": "event-air-corroborated"
+      },
+      "564": {
+        "class": "air",
+        "reference": 564,
+        "source": "episode1-exact"
+      },
+      "565": {
+        "class": "air",
+        "reference": 565,
+        "source": "episode1-exact"
+      },
+      "566": {
+        "class": "air",
+        "reference": 566,
+        "source": "episode1-exact"
+      },
+      "567": {
+        "class": "air",
+        "reference": 567,
+        "source": "episode1-exact"
       },
       "568": {
         "class": "air",
@@ -3882,8 +6439,8 @@
       },
       "57": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 57,
+        "source": "episode1-exact"
       },
       "570": {
         "class": "air",
@@ -3925,20 +6482,80 @@
         "reference": 577,
         "source": "episode1-exact"
       },
+      "578": {
+        "class": "air",
+        "reference": 578,
+        "source": "episode1-exact"
+      },
+      "579": {
+        "class": "air",
+        "reference": 579,
+        "source": "episode1-exact"
+      },
       "58": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 58,
+        "source": "episode1-exact"
+      },
+      "580": {
+        "class": "air",
+        "reference": 580,
+        "source": "episode1-exact"
+      },
+      "581": {
+        "class": "air",
+        "reference": 581,
+        "source": "episode1-exact"
+      },
+      "582": {
+        "class": "air",
+        "reference": 582,
+        "source": "episode1-exact"
+      },
+      "583": {
+        "class": "air",
+        "reference": 583,
+        "source": "episode1-exact"
+      },
+      "584": {
+        "class": "air",
+        "reference": 584,
+        "source": "episode1-exact"
+      },
+      "585": {
+        "class": "air",
+        "reference": 585,
+        "source": "episode1-exact"
+      },
+      "586": {
+        "class": "air",
+        "reference": 586,
+        "source": "episode1-exact"
+      },
+      "587": {
+        "class": "air",
+        "reference": 587,
+        "source": "episode1-exact"
+      },
+      "588": {
+        "class": "air",
+        "reference": 588,
+        "source": "episode1-exact"
+      },
+      "589": {
+        "class": "air",
+        "reference": 589,
+        "source": "episode1-exact"
       },
       "59": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 59,
+        "source": "episode1-exact"
       },
       "590": {
-        "class": "air",
-        "observations": 10,
-        "source": "event-air-corroborated"
+        "class": "surface",
+        "reference": 590,
+        "source": "episode1-exact"
       },
       "591": {
         "class": "surface",
@@ -3960,6 +6577,10 @@
         "observations": 135,
         "source": "event-air-corroborated"
       },
+      "597": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
       "6": {
         "class": "air",
         "reference": 6,
@@ -3967,8 +6588,8 @@
       },
       "60": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 60,
+        "source": "episode1-exact"
       },
       "600": {
         "class": "air",
@@ -3980,45 +6601,190 @@
         "observations": 20,
         "source": "event-air-corroborated"
       },
+      "602": {
+        "class": "air",
+        "reference": 602,
+        "source": "episode1-exact"
+      },
+      "603": {
+        "class": "air",
+        "reference": 603,
+        "source": "episode1-exact"
+      },
+      "604": {
+        "class": "air",
+        "reference": 604,
+        "source": "episode1-exact"
+      },
+      "605": {
+        "class": "air",
+        "reference": 605,
+        "source": "episode1-exact"
+      },
+      "606": {
+        "class": "air",
+        "reference": 606,
+        "source": "episode1-exact"
+      },
+      "607": {
+        "class": "air",
+        "reference": 607,
+        "source": "episode1-exact"
+      },
+      "608": {
+        "class": "air",
+        "reference": 608,
+        "source": "episode1-exact"
+      },
+      "609": {
+        "class": "air",
+        "reference": 609,
+        "source": "episode1-exact"
+      },
       "61": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 61,
+        "source": "episode1-exact"
+      },
+      "610": {
+        "class": "air",
+        "reference": 610,
+        "source": "episode1-exact"
+      },
+      "611": {
+        "class": "air",
+        "reference": 611,
+        "source": "episode1-exact"
+      },
+      "612": {
+        "class": "air",
+        "reference": 612,
+        "source": "episode1-exact"
+      },
+      "613": {
+        "class": "air",
+        "reference": 613,
+        "source": "episode1-exact"
+      },
+      "614": {
+        "class": "air",
+        "reference": 614,
+        "source": "episode1-exact"
+      },
+      "615": {
+        "class": "air",
+        "reference": 615,
+        "source": "episode1-exact"
+      },
+      "616": {
+        "class": "air",
+        "reference": 616,
+        "source": "episode1-exact"
+      },
+      "617": {
+        "class": "air",
+        "reference": 617,
+        "source": "episode1-exact"
+      },
+      "618": {
+        "class": "air",
+        "reference": 618,
+        "source": "episode1-exact"
+      },
+      "619": {
+        "class": "air",
+        "reference": 619,
+        "source": "episode1-exact"
       },
       "62": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 62,
+        "source": "episode1-exact"
+      },
+      "620": {
+        "class": "air",
+        "reference": 620,
+        "source": "episode1-exact"
+      },
+      "621": {
+        "class": "air",
+        "reference": 621,
+        "source": "episode1-exact"
+      },
+      "622": {
+        "class": "air",
+        "reference": 622,
+        "source": "episode1-exact"
+      },
+      "623": {
+        "class": "air",
+        "reference": 623,
+        "source": "episode1-exact"
+      },
+      "624": {
+        "class": "air",
+        "reference": 624,
+        "source": "episode1-exact"
+      },
+      "625": {
+        "class": "air",
+        "reference": 625,
+        "source": "episode1-exact"
+      },
+      "626": {
+        "class": "air",
+        "reference": 626,
+        "source": "episode1-exact"
+      },
+      "627": {
+        "class": "air",
+        "reference": 627,
+        "source": "episode1-exact"
+      },
+      "628": {
+        "class": "air",
+        "reference": 628,
+        "source": "episode1-exact"
+      },
+      "629": {
+        "class": "air",
+        "reference": 629,
+        "source": "episode1-exact"
       },
       "63": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 63,
+        "source": "episode1-exact"
       },
       "64": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 64,
+        "source": "episode1-exact"
       },
       "65": {
         "class": "air",
-        "observations": 1,
-        "source": "event-air-corroborated"
+        "reference": 65,
+        "source": "episode1-exact"
       },
       "66": {
-        "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 66,
+        "source": "episode1-exact"
       },
       "67": {
-        "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 67,
+        "source": "episode1-exact"
       },
       "68": {
+        "class": "surface",
+        "reference": 68,
+        "source": "episode1-exact"
+      },
+      "686": {
         "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "reference": 686,
+        "source": "episode1-exact"
       },
       "688": {
         "class": "surface",
@@ -4027,13 +6793,13 @@
       },
       "689": {
         "class": "air",
-        "observations": 14,
-        "source": "event-air-corroborated"
+        "reference": 689,
+        "source": "episode1-exact"
       },
       "69": {
-        "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 69,
+        "source": "episode1-exact"
       },
       "690": {
         "class": "surface",
@@ -4046,9 +6812,9 @@
         "source": "episode1-exact"
       },
       "70": {
-        "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 70,
+        "source": "episode1-exact"
       },
       "702": {
         "class": "air",
@@ -4076,14 +6842,14 @@
         "source": "event-air-corroborated"
       },
       "71": {
-        "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 71,
+        "source": "episode1-exact"
       },
       "72": {
-        "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 72,
+        "source": "episode1-exact"
       },
       "722": {
         "class": "air",
@@ -4126,9 +6892,9 @@
         "source": "event-air-corroborated"
       },
       "73": {
-        "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 73,
+        "source": "episode1-exact"
       },
       "730": {
         "class": "air",
@@ -4156,38 +6922,48 @@
         "source": "event-air-corroborated"
       },
       "74": {
-        "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 74,
+        "source": "episode1-exact"
       },
       "75": {
-        "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 75,
+        "source": "episode1-exact"
       },
       "76": {
-        "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 76,
+        "source": "episode1-exact"
       },
       "77": {
-        "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 77,
+        "source": "episode1-exact"
       },
       "78": {
+        "class": "surface",
+        "reference": 78,
+        "source": "episode1-exact"
+      },
+      "783": {
         "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "reference": 783,
+        "source": "episode1-exact"
       },
       "79": {
-        "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 79,
+        "source": "episode1-exact"
       },
       "8": {
         "class": "air",
         "reference": 8,
+        "source": "episode1-exact"
+      },
+      "822": {
+        "class": "air",
+        "reference": 822,
         "source": "episode1-exact"
       },
       "823": {
@@ -4195,14 +6971,59 @@
         "reference": 823,
         "source": "episode1-exact"
       },
+      "824": {
+        "class": "surface",
+        "reference": 824,
+        "source": "episode1-exact"
+      },
       "826": {
         "class": "air",
         "reference": 826,
         "source": "episode1-exact"
       },
+      "837": {
+        "class": "air",
+        "reference": 837,
+        "source": "episode1-exact"
+      },
+      "838": {
+        "class": "surface",
+        "reference": 838,
+        "source": "episode1-exact"
+      },
       "840": {
         "class": "surface",
         "reference": 840,
+        "source": "episode1-exact"
+      },
+      "842": {
+        "class": "surface",
+        "reference": 842,
+        "source": "episode1-exact"
+      },
+      "845": {
+        "class": "air",
+        "reference": 845,
+        "source": "episode1-exact"
+      },
+      "846": {
+        "class": "air",
+        "reference": 846,
+        "source": "episode1-exact"
+      },
+      "847": {
+        "class": "air",
+        "reference": 847,
+        "source": "episode1-exact"
+      },
+      "848": {
+        "class": "air",
+        "reference": 848,
+        "source": "episode1-exact"
+      },
+      "849": {
+        "class": "air",
+        "reference": 849,
         "source": "episode1-exact"
       },
       "9": {
@@ -4247,8 +7068,58 @@
       }
     },
     "4": {
-      "128": {
+      "10": {
         "class": "air",
+        "reference": 10,
+        "source": "episode1-exact"
+      },
+      "11": {
+        "class": "air",
+        "reference": 11,
+        "source": "episode1-exact"
+      },
+      "12": {
+        "class": "air",
+        "reference": 12,
+        "source": "episode1-exact"
+      },
+      "121": {
+        "class": "surface",
+        "reference": 121,
+        "source": "episode1-exact"
+      },
+      "122": {
+        "class": "surface",
+        "reference": 122,
+        "source": "episode1-exact"
+      },
+      "123": {
+        "class": "surface",
+        "reference": 123,
+        "source": "episode1-exact"
+      },
+      "124": {
+        "class": "surface",
+        "reference": 124,
+        "source": "episode1-exact"
+      },
+      "125": {
+        "class": "surface",
+        "reference": 125,
+        "source": "episode1-exact"
+      },
+      "126": {
+        "class": "surface",
+        "reference": 126,
+        "source": "episode1-exact"
+      },
+      "127": {
+        "class": "surface",
+        "reference": 127,
+        "source": "episode1-exact"
+      },
+      "128": {
+        "class": "surface",
         "reference": 128,
         "source": "episode1-exact"
       },
@@ -4297,24 +7168,49 @@
         "reference": 136,
         "source": "episode1-exact"
       },
+      "138": {
+        "class": "air",
+        "reference": 138,
+        "source": "episode1-exact"
+      },
+      "139": {
+        "class": "air",
+        "reference": 139,
+        "source": "episode1-exact"
+      },
       "14": {
         "class": "air",
         "reference": 14,
         "source": "episode1-exact"
       },
-      "142": {
+      "140": {
         "class": "air",
-        "observations": 20,
-        "source": "event-top-only"
+        "reference": 140,
+        "source": "episode1-exact"
+      },
+      "141": {
+        "class": "air",
+        "reference": 141,
+        "source": "episode1-exact"
+      },
+      "142": {
+        "class": "surface",
+        "reference": 142,
+        "source": "episode1-exact"
+      },
+      "143": {
+        "class": "surface",
+        "reference": 143,
+        "source": "episode1-exact"
       },
       "145": {
-        "class": "air",
+        "class": "surface",
         "reference": 145,
         "source": "episode1-exact"
       },
-      "149": {
-        "class": "air",
-        "reference": 149,
+      "146": {
+        "class": "surface",
+        "reference": 146,
         "source": "episode1-exact"
       },
       "15": {
@@ -4322,19 +7218,9 @@
         "reference": 15,
         "source": "episode1-exact"
       },
-      "150": {
+      "16": {
         "class": "air",
-        "reference": 150,
-        "source": "episode1-exact"
-      },
-      "151": {
-        "class": "air",
-        "reference": 151,
-        "source": "episode1-exact"
-      },
-      "152": {
-        "class": "air",
-        "reference": 152,
+        "reference": 16,
         "source": "episode1-exact"
       },
       "162": {
@@ -4358,12 +7244,12 @@
         "source": "episode1-exact"
       },
       "166": {
-        "class": "air",
+        "class": "surface",
         "reference": 166,
         "source": "episode1-exact"
       },
       "167": {
-        "class": "air",
+        "class": "surface",
         "reference": 167,
         "source": "episode1-exact"
       },
@@ -4375,6 +7261,11 @@
       "169": {
         "class": "air",
         "reference": 169,
+        "source": "episode1-exact"
+      },
+      "17": {
+        "class": "air",
+        "reference": 17,
         "source": "episode1-exact"
       },
       "170": {
@@ -4400,10 +7291,20 @@
         "reference": 162,
         "source": "episode-family"
       },
+      "18": {
+        "class": "air",
+        "reference": 18,
+        "source": "episode1-exact"
+      },
       "182": {
         "class": "air",
         "observations": 72,
         "source": "event-top-only"
+      },
+      "19": {
+        "class": "air",
+        "reference": 19,
+        "source": "episode1-exact"
       },
       "194": {
         "class": "surface",
@@ -4430,6 +7331,11 @@
         "observations": 48,
         "source": "event-air-corroborated"
       },
+      "21": {
+        "class": "air",
+        "reference": 21,
+        "source": "episode1-exact"
+      },
       "214": {
         "class": "air",
         "observations": 50,
@@ -4449,6 +7355,11 @@
         "class": "air",
         "observations": 48,
         "source": "event-top-only"
+      },
+      "22": {
+        "class": "air",
+        "reference": 22,
+        "source": "episode1-exact"
       },
       "220": {
         "class": "air",
@@ -4510,6 +7421,26 @@
         "reference": 237,
         "source": "episode1-exact"
       },
+      "238": {
+        "class": "air",
+        "reference": 238,
+        "source": "episode1-exact"
+      },
+      "239": {
+        "class": "air",
+        "reference": 239,
+        "source": "episode1-exact"
+      },
+      "24": {
+        "class": "air",
+        "reference": 24,
+        "source": "episode1-exact"
+      },
+      "240": {
+        "class": "air",
+        "reference": 240,
+        "source": "episode1-exact"
+      },
       "241": {
         "class": "air",
         "reference": 241,
@@ -4554,6 +7485,11 @@
         "class": "air",
         "observations": 4,
         "source": "event-top-only"
+      },
+      "25": {
+        "class": "air",
+        "reference": 25,
+        "source": "episode1-exact"
       },
       "250": {
         "class": "air",
@@ -4675,6 +7611,11 @@
         "reference": 279,
         "source": "episode1-exact"
       },
+      "28": {
+        "class": "air",
+        "reference": 28,
+        "source": "episode1-exact"
+      },
       "280": {
         "class": "surface",
         "reference": 280,
@@ -4720,6 +7661,11 @@
         "observations": 152,
         "source": "event-air-corroborated"
       },
+      "29": {
+        "class": "air",
+        "reference": 29,
+        "source": "episode1-exact"
+      },
       "290": {
         "class": "air",
         "observations": 152,
@@ -4749,6 +7695,11 @@
         "class": "air",
         "observations": 40,
         "source": "event-air-corroborated"
+      },
+      "3": {
+        "class": "air",
+        "reference": 3,
+        "source": "episode1-exact"
       },
       "30": {
         "class": "air",
@@ -5027,28 +7978,54 @@
       },
       "390": {
         "class": "air",
-        "observations": 1,
-        "source": "event-top-only"
+        "reference": 390,
+        "source": "episode1-exact"
       },
       "391": {
-        "class": "air",
-        "observations": 1,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 391,
+        "source": "episode1-exact"
       },
       "392": {
         "class": "air",
-        "observations": 1,
-        "source": "event-top-only"
+        "reference": 392,
+        "source": "episode1-exact"
       },
       "393": {
-        "class": "air",
-        "observations": 3,
-        "source": "event-top-only"
+        "class": "surface",
+        "reference": 393,
+        "source": "episode1-exact"
       },
       "394": {
         "class": "air",
-        "observations": 2,
-        "source": "event-top-only"
+        "reference": 394,
+        "source": "episode1-exact"
+      },
+      "395": {
+        "class": "surface",
+        "reference": 395,
+        "source": "episode1-exact"
+      },
+      "396": {
+        "class": "air",
+        "reference": 396,
+        "source": "episode1-exact"
+      },
+      "397": {
+        "class": "air",
+        "reference": 397,
+        "source": "episode1-exact"
+      },
+      "399": {
+        "class": "air",
+        "reference": 399,
+        "source": "episode1-exact"
+      },
+      "4": {
+        "class": "air",
+        "distance": 1.66,
+        "reference": 10,
+        "source": "episode-family"
       },
       "400": {
         "class": "air",
@@ -5135,15 +8112,206 @@
         "reference": 456,
         "source": "episode1-exact"
       },
+      "457": {
+        "class": "surface",
+        "reference": 457,
+        "source": "episode1-exact"
+      },
+      "459": {
+        "class": "surface",
+        "reference": 459,
+        "source": "episode1-exact"
+      },
+      "461": {
+        "class": "air",
+        "reference": 461,
+        "source": "episode1-exact"
+      },
       "462": {
         "class": "air",
         "reference": 462,
         "source": "episode1-exact"
       },
+      "464": {
+        "class": "surface",
+        "reference": 464,
+        "source": "episode1-exact"
+      },
+      "465": {
+        "class": "surface",
+        "reference": 465,
+        "source": "episode1-exact"
+      },
+      "466": {
+        "class": "surface",
+        "reference": 466,
+        "source": "episode1-exact"
+      },
+      "467": {
+        "class": "surface",
+        "reference": 467,
+        "source": "episode1-exact"
+      },
+      "468": {
+        "class": "air",
+        "reference": 468,
+        "source": "episode1-exact"
+      },
+      "469": {
+        "class": "air",
+        "reference": 469,
+        "source": "episode1-exact"
+      },
+      "470": {
+        "class": "air",
+        "reference": 470,
+        "source": "episode1-exact"
+      },
+      "471": {
+        "class": "air",
+        "reference": 471,
+        "source": "episode1-exact"
+      },
+      "472": {
+        "class": "air",
+        "reference": 472,
+        "source": "episode1-exact"
+      },
+      "473": {
+        "class": "air",
+        "reference": 473,
+        "source": "episode1-exact"
+      },
+      "475": {
+        "class": "air",
+        "reference": 475,
+        "source": "episode1-exact"
+      },
+      "477": {
+        "class": "air",
+        "reference": 477,
+        "source": "episode1-exact"
+      },
+      "478": {
+        "class": "air",
+        "reference": 478,
+        "source": "episode1-exact"
+      },
+      "480": {
+        "class": "air",
+        "reference": 480,
+        "source": "episode1-exact"
+      },
+      "481": {
+        "class": "air",
+        "reference": 481,
+        "source": "episode1-exact"
+      },
+      "482": {
+        "class": "air",
+        "reference": 482,
+        "source": "episode1-exact"
+      },
+      "483": {
+        "class": "air",
+        "reference": 483,
+        "source": "episode1-exact"
+      },
+      "484": {
+        "class": "air",
+        "reference": 484,
+        "source": "episode1-exact"
+      },
+      "485": {
+        "class": "air",
+        "reference": 485,
+        "source": "episode1-exact"
+      },
+      "486": {
+        "class": "air",
+        "reference": 486,
+        "source": "episode1-exact"
+      },
+      "487": {
+        "class": "air",
+        "reference": 487,
+        "source": "episode1-exact"
+      },
+      "488": {
+        "class": "air",
+        "distance": 0.11,
+        "reference": 487,
+        "source": "episode-family"
+      },
+      "489": {
+        "class": "air",
+        "distance": 0.11,
+        "reference": 490,
+        "source": "episode-family"
+      },
       "49": {
         "class": "air",
         "observations": 18,
         "source": "event-air-corroborated"
+      },
+      "490": {
+        "class": "air",
+        "reference": 490,
+        "source": "episode1-exact"
+      },
+      "491": {
+        "class": "air",
+        "reference": 491,
+        "source": "episode1-exact"
+      },
+      "492": {
+        "class": "air",
+        "distance": 1.46,
+        "reference": 491,
+        "source": "episode-family"
+      },
+      "493": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "494": {
+        "class": "air",
+        "distance": 1.68,
+        "reference": 491,
+        "source": "episode-family"
+      },
+      "495": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "496": {
+        "class": "air",
+        "distance": 1.9,
+        "reference": 491,
+        "source": "episode-family"
+      },
+      "497": {
+        "class": "air",
+        "distance": 3.51,
+        "reference": 491,
+        "source": "episode-family"
+      },
+      "498": {
+        "class": "air",
+        "distance": 3.62,
+        "reference": 491,
+        "source": "episode-family"
+      },
+      "499": {
+        "class": "air",
+        "distance": 3.73,
+        "reference": 491,
+        "source": "episode-family"
+      },
+      "5": {
+        "class": "air",
+        "reference": 5,
+        "source": "episode1-exact"
       },
       "50": {
         "class": "air",
@@ -5155,6 +8323,21 @@
         "reference": 500,
         "source": "episode1-exact"
       },
+      "503": {
+        "class": "air",
+        "reference": 503,
+        "source": "episode1-exact"
+      },
+      "505": {
+        "class": "air",
+        "reference": 505,
+        "source": "episode1-exact"
+      },
+      "506": {
+        "class": "air",
+        "reference": 506,
+        "source": "episode1-exact"
+      },
       "51": {
         "class": "air",
         "observations": 18,
@@ -5163,6 +8346,11 @@
       "511": {
         "class": "air",
         "reference": 511,
+        "source": "episode1-exact"
+      },
+      "514": {
+        "class": "air",
+        "reference": 514,
         "source": "episode1-exact"
       },
       "516": {
@@ -5200,6 +8388,11 @@
         "reference": 529,
         "source": "episode1-exact"
       },
+      "531": {
+        "class": "air",
+        "reference": 531,
+        "source": "episode1-exact"
+      },
       "533": {
         "class": "air",
         "observations": 3,
@@ -5210,23 +8403,33 @@
         "observations": 10,
         "source": "event-top-only"
       },
-      "546": {
+      "542": {
         "class": "surface",
+        "reference": 542,
+        "source": "episode1-exact"
+      },
+      "545": {
+        "class": "surface",
+        "reference": 545,
+        "source": "episode1-exact"
+      },
+      "546": {
+        "class": "air",
         "reference": 546,
         "source": "episode1-exact"
       },
       "547": {
-        "class": "surface",
+        "class": "air",
         "reference": 547,
         "source": "episode1-exact"
       },
       "548": {
-        "class": "surface",
+        "class": "air",
         "reference": 548,
         "source": "episode1-exact"
       },
       "549": {
-        "class": "surface",
+        "class": "air",
         "reference": 549,
         "source": "episode1-exact"
       },
@@ -5250,6 +8453,16 @@
         "reference": 553,
         "source": "episode1-exact"
       },
+      "554": {
+        "class": "air",
+        "reference": 554,
+        "source": "episode1-exact"
+      },
+      "555": {
+        "class": "surface",
+        "reference": 555,
+        "source": "episode1-exact"
+      },
       "559": {
         "class": "surface",
         "reference": 559,
@@ -5259,6 +8472,26 @@
         "class": "air",
         "observations": 15,
         "source": "event-air-corroborated"
+      },
+      "564": {
+        "class": "air",
+        "reference": 564,
+        "source": "episode1-exact"
+      },
+      "565": {
+        "class": "air",
+        "reference": 565,
+        "source": "episode1-exact"
+      },
+      "566": {
+        "class": "air",
+        "reference": 566,
+        "source": "episode1-exact"
+      },
+      "567": {
+        "class": "air",
+        "reference": 567,
+        "source": "episode1-exact"
       },
       "568": {
         "class": "air",
@@ -5315,6 +8548,71 @@
         "reference": 577,
         "source": "episode1-exact"
       },
+      "578": {
+        "class": "air",
+        "reference": 578,
+        "source": "episode1-exact"
+      },
+      "579": {
+        "class": "air",
+        "reference": 579,
+        "source": "episode1-exact"
+      },
+      "580": {
+        "class": "air",
+        "reference": 580,
+        "source": "episode1-exact"
+      },
+      "581": {
+        "class": "air",
+        "reference": 581,
+        "source": "episode1-exact"
+      },
+      "582": {
+        "class": "air",
+        "reference": 582,
+        "source": "episode1-exact"
+      },
+      "583": {
+        "class": "air",
+        "reference": 583,
+        "source": "episode1-exact"
+      },
+      "584": {
+        "class": "air",
+        "reference": 584,
+        "source": "episode1-exact"
+      },
+      "585": {
+        "class": "air",
+        "reference": 585,
+        "source": "episode1-exact"
+      },
+      "586": {
+        "class": "air",
+        "reference": 586,
+        "source": "episode1-exact"
+      },
+      "587": {
+        "class": "air",
+        "reference": 587,
+        "source": "episode1-exact"
+      },
+      "588": {
+        "class": "air",
+        "reference": 588,
+        "source": "episode1-exact"
+      },
+      "589": {
+        "class": "air",
+        "reference": 589,
+        "source": "episode1-exact"
+      },
+      "590": {
+        "class": "surface",
+        "reference": 590,
+        "source": "episode1-exact"
+      },
       "591": {
         "class": "surface",
         "reference": 577,
@@ -5328,6 +8626,161 @@
       "6": {
         "class": "air",
         "reference": 6,
+        "source": "episode1-exact"
+      },
+      "602": {
+        "class": "air",
+        "reference": 602,
+        "source": "episode1-exact"
+      },
+      "603": {
+        "class": "air",
+        "reference": 603,
+        "source": "episode1-exact"
+      },
+      "604": {
+        "class": "air",
+        "reference": 604,
+        "source": "episode1-exact"
+      },
+      "605": {
+        "class": "air",
+        "reference": 605,
+        "source": "episode1-exact"
+      },
+      "606": {
+        "class": "air",
+        "reference": 606,
+        "source": "episode1-exact"
+      },
+      "607": {
+        "class": "air",
+        "reference": 607,
+        "source": "episode1-exact"
+      },
+      "608": {
+        "class": "air",
+        "reference": 608,
+        "source": "episode1-exact"
+      },
+      "609": {
+        "class": "air",
+        "reference": 609,
+        "source": "episode1-exact"
+      },
+      "61": {
+        "class": "air",
+        "reference": 61,
+        "source": "episode1-exact"
+      },
+      "610": {
+        "class": "air",
+        "reference": 610,
+        "source": "episode1-exact"
+      },
+      "611": {
+        "class": "air",
+        "reference": 611,
+        "source": "episode1-exact"
+      },
+      "612": {
+        "class": "air",
+        "reference": 612,
+        "source": "episode1-exact"
+      },
+      "613": {
+        "class": "air",
+        "reference": 613,
+        "source": "episode1-exact"
+      },
+      "614": {
+        "class": "air",
+        "reference": 614,
+        "source": "episode1-exact"
+      },
+      "615": {
+        "class": "air",
+        "reference": 615,
+        "source": "episode1-exact"
+      },
+      "616": {
+        "class": "air",
+        "reference": 616,
+        "source": "episode1-exact"
+      },
+      "617": {
+        "class": "air",
+        "reference": 617,
+        "source": "episode1-exact"
+      },
+      "618": {
+        "class": "air",
+        "reference": 618,
+        "source": "episode1-exact"
+      },
+      "619": {
+        "class": "air",
+        "reference": 619,
+        "source": "episode1-exact"
+      },
+      "62": {
+        "class": "air",
+        "reference": 62,
+        "source": "episode1-exact"
+      },
+      "620": {
+        "class": "air",
+        "reference": 620,
+        "source": "episode1-exact"
+      },
+      "621": {
+        "class": "air",
+        "reference": 621,
+        "source": "episode1-exact"
+      },
+      "622": {
+        "class": "air",
+        "reference": 622,
+        "source": "episode1-exact"
+      },
+      "623": {
+        "class": "air",
+        "reference": 623,
+        "source": "episode1-exact"
+      },
+      "624": {
+        "class": "air",
+        "reference": 624,
+        "source": "episode1-exact"
+      },
+      "625": {
+        "class": "air",
+        "reference": 625,
+        "source": "episode1-exact"
+      },
+      "626": {
+        "class": "air",
+        "reference": 626,
+        "source": "episode1-exact"
+      },
+      "627": {
+        "class": "air",
+        "reference": 627,
+        "source": "episode1-exact"
+      },
+      "628": {
+        "class": "air",
+        "reference": 628,
+        "source": "episode1-exact"
+      },
+      "629": {
+        "class": "air",
+        "reference": 629,
+        "source": "episode1-exact"
+      },
+      "63": {
+        "class": "air",
+        "reference": 63,
         "source": "episode1-exact"
       },
       "630": {
@@ -5380,6 +8833,11 @@
         "observations": 1,
         "source": "event-top-only"
       },
+      "64": {
+        "class": "air",
+        "reference": 64,
+        "source": "episode1-exact"
+      },
       "641": {
         "class": "air",
         "observations": 4,
@@ -5414,6 +8872,11 @@
         "class": "air",
         "observations": 1,
         "source": "event-air-corroborated"
+      },
+      "65": {
+        "class": "air",
+        "reference": 65,
+        "source": "episode1-exact"
       },
       "650": {
         "class": "air",
@@ -5560,6 +9023,16 @@
         "observations": 55,
         "source": "event-top-only"
       },
+      "686": {
+        "class": "air",
+        "reference": 686,
+        "source": "episode1-exact"
+      },
+      "689": {
+        "class": "air",
+        "reference": 689,
+        "source": "episode1-exact"
+      },
       "69": {
         "class": "air",
         "observations": 55,
@@ -5632,6 +9105,21 @@
         "observations": 218,
         "source": "event-air-corroborated"
       },
+      "76": {
+        "class": "surface",
+        "reference": 76,
+        "source": "episode1-exact"
+      },
+      "77": {
+        "class": "surface",
+        "reference": 77,
+        "source": "episode1-exact"
+      },
+      "78": {
+        "class": "surface",
+        "reference": 78,
+        "source": "episode1-exact"
+      },
       "780": {
         "class": "air",
         "observations": 2,
@@ -5697,24 +9185,102 @@
         "reference": 8,
         "source": "episode1-exact"
       },
+      "802": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "803": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "804": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "805": {
+        "class": "air",
+        "reference": 783,
+        "source": "episode1-exact"
+      },
+      "806": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "807": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "808": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "809": {
+        "class": "air",
+        "source": "linked-assembly"
+      },
+      "822": {
+        "class": "air",
+        "reference": 822,
+        "source": "episode1-exact"
+      },
       "823": {
         "class": "surface",
         "reference": 823,
         "source": "episode1-exact"
       },
       "824": {
-        "class": "air",
-        "observations": 48,
-        "source": "event-air-corroborated"
+        "class": "surface",
+        "reference": 824,
+        "source": "episode1-exact"
       },
       "826": {
         "class": "air",
         "observations": 45,
         "source": "event-air-corroborated"
       },
+      "837": {
+        "class": "air",
+        "reference": 837,
+        "source": "episode1-exact"
+      },
+      "838": {
+        "class": "surface",
+        "reference": 838,
+        "source": "episode1-exact"
+      },
       "840": {
         "class": "surface",
         "reference": 840,
+        "source": "episode1-exact"
+      },
+      "842": {
+        "class": "surface",
+        "reference": 842,
+        "source": "episode1-exact"
+      },
+      "845": {
+        "class": "air",
+        "reference": 845,
+        "source": "episode1-exact"
+      },
+      "846": {
+        "class": "air",
+        "reference": 846,
+        "source": "episode1-exact"
+      },
+      "847": {
+        "class": "air",
+        "reference": 847,
+        "source": "episode1-exact"
+      },
+      "848": {
+        "class": "air",
+        "reference": 848,
+        "source": "episode1-exact"
+      },
+      "849": {
+        "class": "air",
+        "reference": 849,
         "source": "episode1-exact"
       },
       "9": {
@@ -5732,6 +9298,7 @@
     "generated_results_are_not_recursive_seeds": true,
     "graphic_delta_max": 8,
     "linked_assembly_requires_same_tick_and_nonzero_link": true,
+    "mixed_label_near_family_references_quarantined": 68,
     "type_delta_max": 16
   },
   "version": 1

@@ -24,6 +24,7 @@
 #include "game_input.h"
 #include "keyboard.h"
 #include "mainint.h"
+#include "nortsong.h"
 #include "palette.h"
 #include "player.h"
 #include "present_frame.h"
@@ -71,6 +72,9 @@ static void win32_keep_timer_resolution(void)
 #endif
 
 bool otyr_hosted = false;
+bool otyr_editor_section_jump_pending = false;
+SDL_atomic_t otyr_debug_invulnerable;
+Uint8 otyr_debug_next_episode = 0;
 
 /* ABI layout guards: a host reading these structs assumes exactly these
  * sizes (foundation rule: size asserts on both sides of the boundary). */
@@ -79,6 +83,7 @@ typedef char otyr_assert_bg_draw_size[sizeof(OtyrBackgroundDraw) == 16 ? 1 : -1]
 typedef char otyr_assert_snapshot_size[sizeof(OtyrSnapshot) == 40 + 1024 * 18 + 3 * 16 + 8 ? 1 : -1];  /* +4: v24 publication cursor */
 typedef char otyr_assert_sheet_size[sizeof(OtyrSpriteSheet) == 12 + 2 * 1024 * 12 * 14 ? 1 : -1];
 typedef char otyr_assert_frame_size[sizeof(OtyrFrame) == 16 + 320 * 200 + 1024 + 4 + 8 ? 1 : -1];  /* fixed through v27 */
+typedef char otyr_assert_input_size[sizeof(OtyrInputFrame) == 24 ? 1 : -1];
 typedef char otyr_assert_bg_map_size[sizeof(OtyrBackgroundMap) == 16 + 600 * 15 + 72 * 24 * 28 ? 1 : -1];
 typedef char otyr_assert_old_sprite_size[sizeof(OtyrOldSprite) == 8 + 2 * 64 * 64 ? 1 : -1];
 
@@ -121,6 +126,7 @@ static struct
 	uint8_t frame_effect_mask;       /* v27: all host-rendered effects */
 	uint8_t frame_lava_data;
 	uint16_t applied_debug_section;  /* edge detect for the v18 level jump */
+	uint8_t applied_debug_episode;
 	uint8_t pixels[OTYR_FRAME_WIDTH * OTYR_FRAME_HEIGHT];
 	uint32_t palette_argb[256];
 
@@ -136,6 +142,10 @@ static struct
 	uint8_t pending_target_speed;
 	int16_t pending_target_x;
 	int16_t pending_target_y;
+	uint8_t pending_debug_flags;
+	uint16_t pending_playback_rate_tenths;
+	uint16_t applied_playback_rate_tenths;
+	bool editor_suspended;
 
 	uint32_t level_tick;
 	char user_dir[260];
@@ -234,6 +244,8 @@ static int game_thread_main(void *data)
 		__android_log_print(ANDROID_LOG_ERROR, "OpenTyrianVR",
 		                    "native game thread returned %d: %s",
 		                    result, SDL_GetError());
+		#else
+		(void)result;
 		#endif
 		/* opentyrian_main only returns on early SDL_Init failure; normal
 		   shutdown longjmps from JE_tyrianHalt. */
@@ -624,9 +636,15 @@ int32_t otyr_session_create(const OtyrConfig *config, uint32_t config_size,
 	session.frame_number = 0;
 	session.pending_buttons = 0;
 	session.applied_buttons = 0;
+	session.pending_playback_rate_tenths = 10;
+	session.applied_playback_rate_tenths = 10;
+	session.editor_suspended = false;
 	session.level_tick = 0;
 	otyr_in_level = false;
 	otyr_tick_present = false;
+	otyr_editor_section_jump_pending = false;
+	SDL_AtomicSet(&otyr_debug_invulnerable, 0);
+	otyr_debug_next_episode = 0;
 	memset(&session.player_state, 0, sizeof(session.player_state));
 	session.player_state.struct_size = sizeof(OtyrPlayerState);
 
@@ -674,6 +692,11 @@ int32_t otyr_session_destroy(uint64_t handle)
 
 	if (session.state == SESSION_RUNNING)
 	{
+		/* Release an editor-suspended thread so it can consume SDL_QUIT. */
+		SDL_LockMutex(session.mutex);
+		session.editor_suspended = false;
+		SDL_CondBroadcast(session.frame_ready);
+		SDL_UnlockMutex(session.mutex);
 		/* Ask the game to quit as if the window were closed. */
 		SDL_Event quit_event = { .type = SDL_QUIT };
 		SDL_PushEvent(&quit_event);
@@ -710,6 +733,9 @@ int32_t otyr_session_destroy(uint64_t handle)
 	otyr_hosted = false;
 	otyr_in_level = false;
 	otyr_tick_present = false;
+	otyr_editor_section_jump_pending = false;
+	SDL_AtomicSet(&otyr_debug_invulnerable, 0);
+	otyr_debug_next_episode = 0;
 #ifdef _WIN32
 	timeEndPeriod(1);
 #endif
@@ -739,22 +765,64 @@ int32_t otyr_session_submit_input(uint64_t handle, const OtyrInputFrame *input,
 	session.pending_target_speed = input->target_speed;
 	session.pending_target_x = input->target_x;
 	session.pending_target_y = input->target_y;
+	session.pending_debug_flags = input->debug_flags;
+	SDL_AtomicSet(&otyr_debug_invulnerable,
+	              (input->debug_flags & OTYR_DEBUG_INVULNERABLE) != 0);
+	const bool debug_armed = SDL_getenv("OTYR_INVULN") != NULL ||
+	                         (input->debug_flags & OTYR_DEBUG_ENABLE) != 0;
 
 	/* debug_section (v18): jump the episode script mid-level.  A sim
 	   mutation, so it only arms alongside the OTYR_INVULN ghost mode
 	   (height-editor level select); edge-triggered on value change. */
 	if (input->debug_section != 0 &&
-	    input->debug_section != session.applied_debug_section &&
-	    SDL_getenv("OTYR_INVULN") != NULL && otyr_in_level)
+	    (input->debug_section != session.applied_debug_section ||
+	     input->debug_episode != session.applied_debug_episode) &&
+	    debug_armed && otyr_in_level)
 	{
-		mainLevel = input->debug_section;
-		saveLevel = input->debug_section;
+		/* JE_main's end-of-level path assigns mainLevel = nextLevel.  Put
+		   the requested destination there and suppress OTYR_LINEAR's usual
+		   one-level advance for this transition; writing mainLevel here made
+		   PageUp/PageDown land on the level after the selected one. */
+		nextLevel = input->debug_section - 1;
+		saveLevel = input->debug_section - 1;
+		if (input->debug_episode >= 1 && input->debug_episode <= 4 &&
+		    input->debug_episode != episodeNum)
+			otyr_debug_next_episode = input->debug_episode;
+		otyr_editor_section_jump_pending = true;
 		jumpSection = true;
 		reallyEndLevel = true;
 	}
 	session.applied_debug_section = input->debug_section;
+	session.applied_debug_episode = input->debug_episode;
 
 	apply_pending_input_locked();
+	SDL_UnlockMutex(session.mutex);
+	return OTYR_OK;
+}
+
+int32_t otyr_session_set_playback_rate(uint64_t handle, uint32_t rate_tenths)
+{
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE ||
+	    session.state == SESSION_POISONED)
+		return OTYR_INVALID_SESSION;
+	if (rate_tenths < 1 || rate_tenths > 100)
+		return OTYR_INVALID_ARGUMENT;
+
+	SDL_LockMutex(session.mutex);
+	session.pending_playback_rate_tenths = (uint16_t)rate_tenths;
+	SDL_UnlockMutex(session.mutex);
+	return OTYR_OK;
+}
+
+int32_t otyr_session_set_editor_suspended(uint64_t handle, uint8_t suspended)
+{
+	if (handle != SESSION_HANDLE || session.state == SESSION_NONE ||
+	    session.state == SESSION_POISONED)
+		return OTYR_INVALID_SESSION;
+
+	SDL_LockMutex(session.mutex);
+	session.editor_suspended = suspended != 0;
+	SDL_CondBroadcast(session.frame_ready);
 	SDL_UnlockMutex(session.mutex);
 	return OTYR_OK;
 }
@@ -978,7 +1046,8 @@ static void apply_pending_input_locked(void)
 	   A sim mutation, so it only arms alongside the OTYR_INVULN ghost
 	   mode; normal sessions ignore the bit entirely. */
 	if ((changed & pending & OTYR_BUTTON_DEBUG_SKIP) &&
-	    SDL_getenv("OTYR_INVULN") != NULL && otyr_in_level)
+	    (SDL_getenv("OTYR_INVULN") != NULL ||
+	     (session.pending_debug_flags & OTYR_DEBUG_ENABLE) != 0) && otyr_in_level)
 	{
 		levelTimer = true;
 		levelTimerCountdown = 0;
@@ -992,7 +1061,8 @@ static void apply_pending_input_locked(void)
 	   releases on the next tick without ending the level.  Same arming as
 	   DEBUG_SKIP. */
 	if ((changed & pending & OTYR_BUTTON_DEBUG_KILL) &&
-	    SDL_getenv("OTYR_INVULN") != NULL && otyr_in_level)
+	    (SDL_getenv("OTYR_INVULN") != NULL ||
+	     (session.pending_debug_flags & OTYR_DEBUG_ENABLE) != 0) && otyr_in_level)
 	{
 		for (unsigned int i = 0; i < COUNTOF(enemyAvail); ++i)
 			if (enemyAvail[i] == 0)
@@ -1029,6 +1099,11 @@ void otyr_host_present(SDL_Surface *screen)
 	last_present = now_present;
 
 	SDL_LockMutex(session.mutex);
+	if (session.pending_playback_rate_tenths != session.applied_playback_rate_tenths)
+	{
+		setHostedPlaybackRate(session.pending_playback_rate_tenths);
+		session.applied_playback_rate_tenths = session.pending_playback_rate_tenths;
+	}
 
 	const Uint8 *pixels = (const Uint8 *)screen->pixels;
 	for (int y = 0; y < (int)OTYR_FRAME_HEIGHT; ++y)
@@ -1189,7 +1264,30 @@ void otyr_host_present(SDL_Surface *screen)
 		out->drawn = in->drawn;
 		out->blend = in->blend;
 		out->over_mode = in->over;
-		out->reserved = 0;
+		/* v28-compatible use of the formerly reserved byte: exact scroll
+		 * numerator/denominator in its high/low nibbles. Slow legacy sections
+		 * move one pixel every N ticks; preserving 1/N exactly avoids the
+		 * periodic correction caused by approximating 1/3 as 5/16. */
+		unsigned int move, delay;
+		if (l == 0)
+		{
+			move = map1YDelayMax > 1 && backMove < 2 ? 1u : backMove;
+			delay = map1YDelayMax > 1 && backMove < 2 ? map1YDelayMax : 1u;
+		}
+		else if (l == 1)
+		{
+			move = map2YDelayMax > 1 && backMove2 < 2 ? 1u : backMove2;
+			delay = map2YDelayMax > 1 && backMove2 < 2 ? map2YDelayMax : 1u;
+		}
+		else
+		{
+			move = backMove3;
+			delay = 1u;
+		}
+		if (move > 15u) move = 15u;
+		if (delay < 1u) delay = 1u;
+		if (delay > 15u) delay = 15u;
+		out->scroll_rate_ratio = (uint8_t)((move << 4) | delay);
 		out->hash = in->hash;
 	}
 
@@ -1200,5 +1298,10 @@ void otyr_host_present(SDL_Surface *screen)
 	       sizeof(snapshot->layer_parallax));
 
 	SDL_CondBroadcast(session.frame_ready);
+	/* The height editor freezes only after this complete snapshot has become
+	 * visible. It can then traverse retained snapshots without invoking the
+	 * legacy pause UI or advancing the authoritative simulation. */
+	while (session.editor_suspended && session.state == SESSION_RUNNING)
+		SDL_CondWait(session.frame_ready, session.mutex);
 	SDL_UnlockMutex(session.mutex);
 }

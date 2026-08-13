@@ -78,6 +78,10 @@
   the lower section -- possibly genuine art transparency, visible only
   because the structure floats; folds into the Stage B height work).
   Menu text stays flat by design until the Phase 4 menu redesign.
+  ABI v30 adds a world-space headset debug menu with direct episode/level
+  warp, invulnerability, hostile kill, and level skip. Fully opaque layer-1
+  covers preserve native per-pixel paint-order occlusion of both ground enemy
+  bands.
   REGRESSION found and fixed: the player ship smeared/shredded --
   EXPLOSION slot ids recycle every 3-12 ticks, so a recycled slot
   paired a new burst with a dead one within the 16px radius and the
@@ -480,10 +484,10 @@
   MINES bumpers) get blue B-toggle halos (flag 128); ground class
   outranks the top-band platform floor AND surface-glues sim-truth
   statics (flag 32: never-latched; sparse art failed the opaque-cell
-  test and split DELIANI decorations -0.0008 vs +0.004).  KNOWN: 
-  SAVARA V (smoothies) renders flat by design -- host-side effect
-  port queued; next headset pass must re-verify multiview layering
-  (many transparent-order changes landed flat-only this round).
+  test and split DELIANI decorations -0.0008 vs +0.004).  SUPERSEDED:
+  SAVARA V's water smoothie now runs on the host background shader and
+  retains hybrid 3D; the keyed UI stays on the primary native framebuffer
+  when legacy filters are suppressed.
 - Round 10 (2026-07-12): the per-instance +/-1 sprite-vs-destroyed-art
   offsets are CONFIRMED AUTHENTIC LEGACY DATA (user eyeballed the same
   slivers in the legacy exe): event spawn positions quantize against
@@ -527,10 +531,10 @@
   order: UI 0.090 > over-top 0.075 (bg3over==1 foreground decks +
   topEnemyOver/skyEnemyOverAll variants + overflyers) > player/
   shots/pickups ~0.040 > flyers 0.032-0.038 (BELOW the player --
-  matches legacy default) > platform objects 0.0315 > platforms
-  0.030 > platform-under 0.0285 (under-platform spikes, legacy
+  matches legacy default) > raised platform objects 0.0315 > exact
+  platform-following 0.030 > platform-under 0.0285 (under-platform spikes, legacy
   ground-band records) > clouds 0.020/0.025 > mid-under 0.012
-  (underflying boss) > ground objects > ground.  Two signed-off
+  (underflying boss) > vehicles 0.0006 > exact surface-following ground.  Two signed-off
   deviations from legacy: flyers render above cloud decks (hazard
   visibility; per-type editor overrides can send atmospheric types
   beneath), and enemy shots share the player plane.  HEIGHT EDITOR
@@ -541,7 +545,10 @@
   OTYR_INVULN), S saves to hover_heights.json.  Both envs are sim
   mutations: never in normal sessions.  The editor now retains 30 seconds of
   complete snapshots plus palettes: [ and ] scrub by one second (Shift = one
-  35 Hz tick), Backspace returns live, and entering history automatically
+  35 Hz tick). The editor now plays that history continuously in reverse when
+  Backspace is pressed (and forward on the next press); +/- changes either
+  direction by 0.1x while native pacing provides matching live fast-forward.
+  Entering history automatically
   pauses the session so rapid objects remain pickable. History resets at map/
   atlas epoch boundaries and is absent from normal/Quest sessions. Shot bands moved 0.050 ->
   0.041 per the hierarchy.  Hash gate bit-identical (77,386 ticks,
@@ -634,15 +641,17 @@
   Unsupported fragments clip at transparent platform/cloud holes and the
   topmost elevated receiver wins overlaps without a CPU mask texture or new
   draw call. `tools/test_presentation.ps1` builds silently and runs addressed
-  hybrid/card-flip, native-storm, and complete legacy-fallback captures; it
+  hybrid/card-flip, water-only/native-storm, and complete legacy-fallback captures; it
   fails on shader/runtime errors, absent entity/map shadows or receiver layers,
-  missing captures, or wrong transitions. Desktop gate PASS; multiview and
+  missing captures, effectively black water/darkness frames, or wrong
+  transitions. Desktop gate PASS; multiview and
   subjective shadow strength/landing remain headset checks.
 - Native effects + checklist triage (0.1.18-0.1.19, ABI v27): dynamic type-zero
   spawns export their retained base graphic for conservative semantic height
-  placement. Lava, iced blur, motion blur, and darkness/searchlight now sample
-  each eye's completed 3D scene instead of forcing a flat frame; all six known
-  effects pass the deterministic hybrid regression together. The Quest
+  placement. Lava, iced blur, and motion blur sample each eye's 3D scene;
+  darkness/searchlight uses a late translucent mask so transparent terrain is
+  already present beneath it. All six known effects pass the deterministic
+  hybrid regression together. The Quest
   checklist reflects the native effect path and records pass, fail, and
   unchecked separately so an untested item cannot be mistaken for a failure.
 - Ship-safe crop + explicit elevated ordering (0.1.20): the horizontal crop is
@@ -651,6 +660,10 @@
   across legacy draw-order events. Transparent passes use an explicit ground,
   map-shadow, cloud, platform order so a floating platform cannot receive its
   own ground-projected multiply shadow.
+- Height-editor playback pacing (ABI v28): the hosted core exposes a
+  tenths-of-normal pacing control (0.1x-10.0x). The editor uses it for live
+  fast-forward/slow-motion, while reverse and forward replay traverse the
+  retained deterministic presentation history at the same signed rate.
 - Split terrain/sprite crop (0.1.21): terrain, backing, and map shadows stop at
   the reachable 0..264 surface. Entity and effect rendering retain the exact
   -25..288 ship envelope, so legal edge overhang remains visible without

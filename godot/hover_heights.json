@@ -4,11 +4,11 @@
     "air-high": 0.038,
     "air-low": 0.033,
     "air-mid": 0.0355,
-    "ground": 0.004,
+    "ground": -0.001,
     "mid-under": 0.012,
     "over-top": 0.075,
-    "platform": 0.03,
     "pickup": 0.04,
+    "platform": 0.03,
     "platform-under": 0.0285,
     "water-clouds": 0.0120000001043081
   },
@@ -190,7 +190,7 @@
       "class": "air-mid"
     },
     "15": {
-      "height": 0.033500000834465,
+      "height": 0.0315000005066395,
       "seen": "demo sheet=5 index=58 ticks=1037"
     },
     "150": {
@@ -262,8 +262,7 @@
       "review": "bank10 family split: 162 ground vs 163/165 air-mid"
     },
     "169": {
-      "class": "ground",
-      "review": "bank10 family split: 162 ground vs 163/165 air-mid",
+      "class": "air-mid",
       "seen": "demo sheet=5 index=98 ticks=125"
     },
     "17": {
@@ -353,7 +352,7 @@
       "class": "air-mid"
     },
     "194": {
-      "height": 0.0031999999191612
+      "height": 0.00060000002849847
     },
     "195": {
       "class": "air-mid"
@@ -362,11 +361,11 @@
       "class": "air-mid"
     },
     "197": {
-      "height": 0.00060000002849847
+      "class": "ground"
     },
     "198": {
       "auto": "2026-07-26 from type 197: art pair of 197 (bank20 gfx277/279, same armor)",
-      "height": 0.00060000002849847
+      "class": "ground"
     },
     "199": {
       "class": "air-mid"
@@ -637,7 +636,7 @@
       "seen": "demo sheet=5 index=70 ticks=155"
     },
     "270": {
-      "height": 0.00060000002849847
+      "class": "ground"
     },
     "271": {
       "height": 0.00600000005215406
@@ -814,7 +813,7 @@
       "class": "air-mid"
     },
     "32": {
-      "height": 0.0315000005066395,
+      "class": "platform",
       "seen": "demo sheet=5 index=292 ticks=1395"
     },
     "320": {
@@ -848,7 +847,7 @@
       "height": 0.0052000000141561
     },
     "33": {
-      "height": 0.0315000005066395,
+      "class": "platform",
       "seen": "demo sheet=5 index=294 ticks=735"
     },
     "330": {
@@ -888,7 +887,7 @@
       "height": 0.0031999999191612
     },
     "34": {
-      "height": 0.0315000005066395,
+      "class": "platform",
       "seen": "demo sheet=5 index=296 ticks=1300"
     },
     "340": {
@@ -923,7 +922,7 @@
       "seen": "demo sheet=6 index=30 ticks=83"
     },
     "35": {
-      "height": 0.0315000005066395,
+      "class": "platform",
       "seen": "demo sheet=5 index=298 ticks=1524"
     },
     "350": {
@@ -967,7 +966,7 @@
       "seen": "demo sheet=6 index=134 ticks=208"
     },
     "36": {
-      "height": 0.0315000005066395,
+      "class": "platform",
       "seen": "demo sheet=5 index=300 ticks=895"
     },
     "360": {
@@ -1007,7 +1006,7 @@
       "class": "air-mid"
     },
     "37": {
-      "height": 0.0315000005066395,
+      "class": "platform",
       "seen": "demo sheet=5 index=302 ticks=1328"
     },
     "370": {
@@ -1041,7 +1040,7 @@
       "class": "air-mid"
     },
     "38": {
-      "height": 0.0315000005066395,
+      "class": "platform",
       "seen": "demo sheet=5 index=264 ticks=368"
     },
     "380": {
@@ -1075,7 +1074,7 @@
       "class": "air-mid"
     },
     "39": {
-      "height": 0.0315000005066395,
+      "class": "platform",
       "seen": "demo sheet=5 index=226 ticks=217"
     },
     "390": {
@@ -1117,7 +1116,7 @@
       "seen": "demo sheet=5 index=180 ticks=2611"
     },
     "40": {
-      "height": 0.0315000005066395,
+      "class": "platform",
       "seen": "demo sheet=5 index=172 ticks=1993"
     },
     "400": {
@@ -1151,7 +1150,7 @@
       "class": "air-mid"
     },
     "41": {
-      "height": 0.0315000005066395,
+      "class": "platform",
       "seen": "demo sheet=5 index=188 ticks=415"
     },
     "410": {
@@ -1185,8 +1184,7 @@
       "class": "air-mid"
     },
     "42": {
-      "auto": "2026-07-26 from type 41: bank1 gnd=0 family, user set 32-41 all this height",
-      "height": 0.0315000005066395
+      "class": "platform"
     },
     "420": {
       "class": "air-mid"
@@ -1219,8 +1217,7 @@
       "class": "air-mid"
     },
     "43": {
-      "auto": "2026-07-26 from type 41: bank1 gnd=0 family, user set 32-41 all this height",
-      "height": 0.0315000005066395
+      "class": "platform"
     },
     "430": {
       "class": "air-mid"
@@ -1253,8 +1250,7 @@
       "class": "air-mid"
     },
     "44": {
-      "auto": "2026-07-26 from type 41: bank1 gnd=0 family, user set 32-41 all this height",
-      "height": 0.0315000005066395
+      "class": "platform"
     },
     "440": {
       "auto": "2026-07-26 from type 288: bank8 armor16 matches user-set 288 (ground junk)",
@@ -1291,24 +1287,23 @@
       "class": "air-mid"
     },
     "45": {
-      "auto": "2026-07-26 from type 41: bank1 gnd=0 family, user set 32-41 all this height",
-      "height": 0.0315000005066395
+      "class": "platform"
     },
     "450": {
       "auto": "2026-07-26 from type 456: bank8 big-rock region, nearest user-set 456; REVIEW armor differs",
-      "height": 0.00060000002849847
+      "class": "ground"
     },
     "451": {
       "auto": "2026-07-26 from type 456: bank8 big-rock region; REVIEW as 450",
-      "height": 0.00060000002849847
+      "class": "ground"
     },
     "452": {
       "auto": "2026-07-26 from type 456: bank8 big-rock region; REVIEW as 450",
-      "height": 0.00060000002849847
+      "class": "ground"
     },
     "453": {
       "auto": "2026-07-26 from type 456: bank8 big-rock region; REVIEW as 450",
-      "height": 0.00060000002849847
+      "class": "ground"
     },
     "454": {
       "class": "air-mid"
@@ -1317,7 +1312,7 @@
       "class": "air-mid"
     },
     "456": {
-      "height": 0.00060000002849847
+      "class": "ground"
     },
     "457": {
       "class": "ground"
@@ -1642,22 +1637,22 @@
       "class": "ground"
     },
     "546": {
-      "height": 0.0052000000141561
+      "class": "mid-under"
     },
     "547": {
-      "height": 0.0052000000141561
+      "class": "mid-under"
     },
     "548": {
-      "height": 0.0052000000141561
+      "class": "mid-under"
     },
     "549": {
-      "height": 0.0052000000141561
+      "class": "mid-under"
     },
     "55": {
       "class": "air-low"
     },
     "550": {
-      "height": 0.00800000037997961
+      "height": 0.0199999995529652
     },
     "551": {
       "class": "air-mid"

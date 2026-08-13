@@ -32,6 +32,8 @@ tools\editor.ps1 -ListSections    # print the section table
 Episode 1: 4 TYRIAN, 6 ASTEROID1, 7 ASTEROID2, 11 SAVARA, 14 MINES,
 17 BUBBLES, 20 DELIANI, 22 ASTEROID?, 24 MINEMAZE, 26 BONUS, 29 HOLES,
 30 SAVARA, 32 SOH JIN, 34 WINDY, 37 ASSASSIN, 39 SAVARA V, 42 ** ALE **.
+These are the human-facing `-ListSections` ids; the launcher and PageUp/PageDown
+translate them to Tyrian's zero-based internal script marker automatically.
 
 Raw envs, if launching manually:
 
@@ -49,21 +51,30 @@ or fires while the level plays itself. Then:
   every live instance of the type moves together)
 - **Up/Down** nudge height ±0.002 (**Shift** = ±0.01), visible immediately,
   even while paused
-- **1–8** assign classes: ground / pickup / air-low / air-mid / air-high /
-  platform-under / platform / mid-under / over-top ("ground" resolves against the
-  surface beneath from the next tick)
+- **1** assigns exact surface-following, **2** is the low vehicle plane,
+  **3** is mid-under, **4/5** are the cloud bands, **6** is platform-under,
+  **7** is exact platform-following, and **8** is the raised platform-object
+  plane. Authored ground/platform classes override broad automatic semantics.
 - **P** pauses the game (the scene stays up for selection); **N** skips the
   level past progress blockers like end bosses
+- **+/-** changes playback speed by 0.1x per press, from 0.1x to 10.0x.
+  This changes the native simulation rate, so it can be used to traverse long
+  stretches of a level quickly rather than merely accelerating the renderer.
+- **Backspace** switches to 1.0x reverse playback; press it again to play
+  forward at 1.0x. While reversing, **+/-** changes reverse speed by the same
+  0.1x increments. Forward playback rejoins the live simulation automatically.
 - **[** rewinds one second and **]** moves one second forward; hold **Shift**
   for single-simulation-tick steps. The editor pauses automatically while the
   retained frame is displayed, so a rapid object can be selected and edited.
-  **Backspace** returns to live play.
 - **S** saves all pending edits back to hover_heights.json
 
-The timeline retains up to 30 seconds of complete native presentation
-snapshots and their palettes. It resets at level boundaries and sprite-bank
-changes because the native asset API exposes only the current map/atlas epoch.
-Rewind is editor-only and does not alter the normal or Quest simulation path.
+The timeline retains up to 120 seconds of complete native presentation
+snapshots and their palettes. Enemy atlas epochs are cached by the editor, so
+rewind can cross mid-level sprite-bank changes; it resets only at level
+boundaries.
+Reverse playback and timeline scrubbing are editor-only and do not alter the
+normal or Quest simulation path. Reverse is limited to the retained window;
+at its oldest frame it waits until playback is switched forward.
 
 Entries carrying a `review` key are unresolved propagation cases. Every live
 instance gets a pulsing green editor marker and the selection label shows

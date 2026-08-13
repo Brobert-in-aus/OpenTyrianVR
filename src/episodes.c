@@ -342,18 +342,17 @@ static void otyr_dump_level_events(int section, int lvlnum)
 }
 
 /* OTYR_LINEAR support: the next script section AFTER current that contains
-   a playable level ("]L"), counted exactly like the interpreter's seek so
-   the result feeds mainLevel directly.  Returns 0 when none remain (episode
-   end -- the caller keeps the authentic route).  Editor ghost runs use this
-   to advance strictly level-by-level, covering bonuses and secrets that are
-   normally pickup- or difficulty-gated. */
+   a playable level ("]L"), counted exactly like the interpreter's zero-based
+   seek so the result feeds mainLevel directly.  Returns 0 when none remain
+   (episode end -- the caller keeps the authentic route).  Editor ghost runs
+   use this to cover bonuses and secrets that authentic routing can skip. */
 int otyr_linear_next_section(int current)
 {
 	FILE *f = dir_fopen_die(data_dir(), episode_file, "rb");
-	/* Count from 1, exactly like otyr_dump_sections: those labels are the
-	   empirically validated OTYR_START_SECTION / debug-jump coordinates
-	   (verified across eight editor sessions), and mainLevel speaks them. */
-	int section = 1;
+	/* JE_loadMap's internal section counter starts at zero.  The editor and
+	   dump use human-facing ids one greater than this; return the internal
+	   target because the result feeds mainLevel directly. */
+	int section = 0;
 	int found = 0;
 	for (;;)
 	{

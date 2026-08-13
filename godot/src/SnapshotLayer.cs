@@ -64,8 +64,17 @@ public unsafe partial class SnapshotLayer : Node3D
     // (user-hit both directions on the object-30 ship column).  Y spread is
     // 0.0008 max over 200 px (inside the tightest 0.0015 band gap); the
     // record tiebreak stays under one Y-pixel step (4e-6).
-    private static float EnemyOrderBias(float screenY, long index)
-        => (screenY * 4f + (index & 255) * 0.002f) * 0.000001f;
+    private static float EnemyOrderBias(ushort entityType, float screenY, long index,
+                                        int spawnOrder = 0)
+    {
+        // E1 type 30 arrives as a downward vertical chain. Its newest
+        // member must paint over earlier members. Screen position is not a
+        // reliable age proxy once the chain overlaps, so use its tracked
+        // spawn cohort and leave a depth-safe separation between members.
+        if (entityType == 30 && spawnOrder > 0)
+            return spawnOrder * 0.00005f;
+        return (screenY * 4f + (index & 255) * 0.002f) * 0.000001f;
+    }
 
     // Height-editor sessions render flat/single-view, where the in-shader
     // decal depth bias is reliable and the VR geometric lift only adds
@@ -89,6 +98,8 @@ public unsafe partial class SnapshotLayer : Node3D
 
     public int CellCount => _cellCount;
     public int VisibleInstanceCount { get; private set; }
+    public byte CurrentEpisode => _snapshot.Episode;
+    public int OpaqueCoverHiddenCellCount { get; private set; }
     public uint LastTickGap { get; private set; } = 1;
     public uint MaxTickGap { get; private set; } = 1;
     public ulong SkippedTicksTotal { get; private set; }
@@ -98,14 +109,16 @@ public unsafe partial class SnapshotLayer : Node3D
 
     // Height-editor presentation history. The native simulation remains the
     // authority; complete published snapshots are cheap enough to retain for
-    // a short scrub timeline. Main pauses the game while this is active, so
+    // a two-minute scrub timeline. Main pauses the game while this is active, so
     // the selected historical object remains available for picking/editing.
     private sealed class EditorHistoryFrame
     {
         public OtyrNative.Snapshot Snapshot;
         public uint[] Palette = null!;
     }
-    private const int EditorHistoryCapacity = 35 * 30;
+    // Two minutes of simulation ticks. Fast-forward changes how quickly this
+    // fills in wall time, but never changes how much game time can be revisited.
+    private const int EditorHistoryCapacity = 35 * 120;
     private readonly System.Collections.Generic.List<EditorHistoryFrame> _editorHistory = new(EditorHistoryCapacity);
     private int _editorHistoryCursor = -1;  // -1 = live
     public bool EditorHistoryActive => _editorHistoryCursor >= 0;
@@ -136,6 +149,9 @@ public unsafe partial class SnapshotLayer : Node3D
 
     private readonly MultiMesh[] _multiMesh = new MultiMesh[LayerCount];
     private readonly ImageTexture[] _atlas = new ImageTexture[OtyrNative.SheetCount];
+    // Enemy banks can change several times inside one level. Retain each
+    // managed atlas epoch so history can cross those changes safely.
+    private readonly System.Collections.Generic.Dictionary<uint, Image?[]> _atlasEpochImages = new();
     private ImageTexture _oldAtlas = null!;
     private OtyrNative.OldSprite _oldSprite;  // fetch scratch
     private readonly Vector2I[] _oldSize = new Vector2I[OldAtlasSlots];
@@ -192,6 +208,11 @@ public unsafe partial class SnapshotLayer : Node3D
                 uniform sampler2D palette : source_color, filter_nearest;
                 uniform mat4 world_to_playfield;
                 uniform vec4 clip_rect_px; // left, top, right, bottom
+                uniform sampler2D occluder_tilemap : filter_nearest;
+                uniform sampler2D occluder_atlas : filter_nearest;
+                uniform ivec2 occluder_map_size;
+                uniform vec2 occluder_origin;
+                uniform int occluder_enabled = 0;
 
                 // FLAT: per-instance integers must arrive bit-exact.
                 // Smooth varyings interpolate (a*w0+b*w1+c*w2) even when all
@@ -204,6 +225,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 varying flat float v_flags;
                 varying flat float v_filter;
                 varying flat float v_decal;
+                varying flat float v_ground;
                 varying vec2 v_play_px;
 
                 void vertex() {
@@ -211,6 +233,7 @@ public unsafe partial class SnapshotLayer : Node3D
                     v_flags = INSTANCE_CUSTOM.y;
                     v_filter = INSTANCE_CUSTOM.z;
                     v_decal = INSTANCE_CUSTOM.w;
+                    v_ground = mod(floor(v_flags / 512.0), 2.0);
                     // Host-only flag 256 marks a joined composite. Expand
                     // half a pixel total for conservative stereo coverage.
                     bool seam = floor(v_flags / 256.0) >= 1.0;
@@ -227,6 +250,21 @@ public unsafe partial class SnapshotLayer : Node3D
                     if (v_play_px.x < clip_rect_px.x || v_play_px.x >= clip_rect_px.z ||
                         v_play_px.y < clip_rect_px.y || v_play_px.y >= clip_rect_px.w)
                         discard;
+                    if (v_ground > 0.5 && occluder_enabled != 0) {
+                        ivec2 mp = ivec2(floor(v_play_px - occluder_origin));
+                        ivec2 tile = ivec2(mp.x / 24, mp.y / 28);
+                        ivec2 pixel = ivec2(mp.x - tile.x * 24, mp.y - tile.y * 28);
+                        if (mp.x >= 0 && mp.y >= 0 && tile.x < occluder_map_size.x &&
+                            tile.y < occluder_map_size.y) {
+                            int shape = int(texelFetch(occluder_tilemap, tile, 0).r * 255.0 + 0.5);
+                            if (shape != 255) {
+                                ivec2 ap = ivec2((shape % 8) * 24 + pixel.x,
+                                                (shape / 8) * 28 + pixel.y);
+                                if (int(texelFetch(occluder_atlas, ap, 0).r * 255.0 + 0.5) != 0)
+                                    discard;
+                            }
+                        }
+                    }
                     // Terrain decals sit at EXACTLY the tile plane (zero
                     // head parallax, so transparent art pixels composite
                     // the baked tiles beneath); a depth-only bias encodes
@@ -302,6 +340,7 @@ public unsafe partial class SnapshotLayer : Node3D
             // 2, clouds 3, platforms 4, entity shadows 5, in-play text 6.
             var material = new ShaderMaterial { Shader = shader, RenderPriority = 2 };
             material.SetShaderParameter("atlas", _atlas[id]);
+            _background?.RegisterGroundOcclusionMaterial(material);
             material.SetShaderParameter("palette", _paletteTexture);
             RegisterClipMaterial(material);
 
@@ -471,8 +510,6 @@ public unsafe partial class SnapshotLayer : Node3D
                 bool receiver_covered_1(vec2 frame_px) {
                     if (receiver_drawn_1 == 0)
                         return false;
-                    if (frame_px.x < 0.0) frame_px.x = -frame_px.x - 1.0;
-                    else if (frame_px.x >= 264.0) frame_px.x = 527.0 - frame_px.x;
                     ivec2 mp = ivec2(floor(frame_px - receiver_origin_1));
                     if (mp.x < 0 || mp.y < 0)
                         return false;
@@ -490,8 +527,6 @@ public unsafe partial class SnapshotLayer : Node3D
                 bool receiver_covered_2(vec2 frame_px) {
                     if (receiver_drawn_2 == 0)
                         return false;
-                    if (frame_px.x < 0.0) frame_px.x = -frame_px.x - 1.0;
-                    else if (frame_px.x >= 264.0) frame_px.x = 527.0 - frame_px.x;
                     ivec2 mp = ivec2(floor(frame_px - receiver_origin_2));
                     if (mp.x < 0 || mp.y < 0)
                         return false;
@@ -783,13 +818,15 @@ public unsafe partial class SnapshotLayer : Node3D
         if (_editorHistory.Count > 0)
         {
             OtyrNative.Snapshot previous = _editorHistory[^1].Snapshot;
-            // Never scrub across a level reset or sprite-bank epoch: the
-            // native atlas/map API exposes only the current epoch's assets.
-            if (snapshot.Episode != previous.Episode || snapshot.LevelTick < previous.LevelTick ||
-                snapshot.SheetEpoch != previous.SheetEpoch)
+            // Never scrub across a level reset. Sprite-bank epochs are safe:
+            // their managed atlas images are retained alongside this history.
+            if (snapshot.Episode != previous.Episode || snapshot.LevelTick < previous.LevelTick)
             {
                 _editorHistory.Clear();
                 _editorHistoryCursor = -1;
+                _atlasEpochImages.Clear();
+                _type30SpawnOrders.Clear();
+                _nextType30SpawnOrder = 0;
             }
         }
         _editorHistory.Add(new EditorHistoryFrame
@@ -813,7 +850,8 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             _sheetEpoch = _snapshot.SheetEpoch;
             _loggedRigidPlanes.Clear();
-            FetchAtlases(session);
+            if (!RestoreAtlasEpoch(_sheetEpoch))
+                FetchAtlases(session);
         }
         UpdatePalette(paletteArgb);
         foreach (ushort t in _editorGroundTemp)
@@ -828,8 +866,8 @@ public unsafe partial class SnapshotLayer : Node3D
             _snapshotArrivalUsec = 0;
             _snapshotArrivalLevelTick = 0;
         }
-        BuildSprites();
         _background?.OnSnapshot(session, in _snapshot);
+        BuildSprites();
     }
 
     /// <summary>Move the editor timeline by simulation ticks. Negative enters
@@ -886,6 +924,7 @@ public unsafe partial class SnapshotLayer : Node3D
         int atlasW = AtlasCellsPerRow * OtyrNative.SheetCellW;
         int atlasH = AtlasCellsPerRow * OtyrNative.SheetCellH;
         var pixels = new byte[atlasW * atlasH * 2];  // rg: index, opacity
+        var epochImages = new Image?[OtyrNative.SheetCount];
 
         for (uint id = 0; id < OtyrNative.SheetCount; id++)
         {
@@ -918,13 +957,26 @@ public unsafe partial class SnapshotLayer : Node3D
 
             var image = Image.CreateFromData(atlasW, atlasH, false, Image.Format.Rg8, pixels);
             _atlas[id].Update(image);
+            epochImages[id] = image;
 
             if (DumpAtlases)
                 image.SavePng($"user://atlas_{id}_epoch{_sheetEpoch}.png");
         }
 
+        _atlasEpochImages[_sheetEpoch] = epochImages;
         FetchOldAtlas(session);
         GD.Print($"OpenTyrianVR: sprite atlases refreshed (epoch {_sheetEpoch})");
+    }
+
+    private bool RestoreAtlasEpoch(uint epoch)
+    {
+        if (!_atlasEpochImages.TryGetValue(epoch, out Image?[]? images))
+            return false;
+        for (int id = 0; id < images.Length; id++)
+            if (images[id] != null)
+                _atlas[id].Update(images[id]!);
+        GD.Print($"OpenTyrianVR: sprite atlases restored from editor history (epoch {epoch})");
+        return true;
     }
 
     private void FetchOldAtlas(ulong session)
@@ -1006,6 +1058,7 @@ public unsafe partial class SnapshotLayer : Node3D
         public byte Category;
         public int CastFrom;       // >=0: virtual-sun shadow of this cell
         public bool SeamGuard;     // connected composite: conservative shared edge
+        public int SpawnOrder;     // type 30: newer event cohort paints on top
     }
 
     private RenderCell[] _cells = new RenderCell[OtyrNative.SnapshotSpriteMax * 4];
@@ -1025,6 +1078,8 @@ public unsafe partial class SnapshotLayer : Node3D
     private readonly float[] _assemblyMotionY = new float[OtyrNative.SnapshotSpriteMax * 4];
     private readonly System.Collections.Generic.HashSet<int> _loggedRigidPlanes = new();
     private readonly System.Collections.Generic.Dictionary<ushort, (int Start, int Count)> _prevRuns = new();
+    private readonly System.Collections.Generic.Dictionary<int, int> _type30SpawnOrders = new();
+    private int _nextType30SpawnOrder;
 
     private const float PairRadiusPx = 16f;
     private const float RigidPairRadiusPerTickPx = 32f;
@@ -1061,6 +1116,7 @@ public unsafe partial class SnapshotLayer : Node3D
         _prevCellCount = _cellCount;
         _cellCount = 0;
         _textOrder = 0;
+        OpaqueCoverHiddenCellCount = 0;
 
         // Same-source cells are emitted contiguously; index the runs.
         _pairRunSource = OtyrNative.NoSource;
@@ -1162,6 +1218,16 @@ public unsafe partial class SnapshotLayer : Node3D
             for (uint i = 0; i < snapshot->SpriteCount; i++)
             {
                 var sprite = sprites[i];
+
+                // background2over==1 is drawn after the two legacy ground
+                // enemy bands. A completely opaque, non-blended layer thus
+                // hides those sprites regardless of their authored VR height.
+                // TIME WAR exposed them because semantic height placement
+                // otherwise resurrected records the original had overwritten.
+                bool groundBand = sprite.Category == (byte)OtyrNative.Category.EnemyGroundA ||
+                                  sprite.Category == (byte)OtyrNative.Category.EnemyGroundB;
+                if (groundBand && (_background?.OpaqueLayer1CoversGroundEnemies ?? false))
+                    ++OpaqueCoverHiddenCellCount;
 
                 if (sprite.Kind == 3)  // PIXEL_GLOW: palette-colored debris quad
                 {
@@ -1282,6 +1348,14 @@ public unsafe partial class SnapshotLayer : Node3D
 
         bool Joined(int a, int b)
         {
+            // These six E1 records are one authored boss even after their
+            // independent native slots have drifted farther apart than the
+            // generic spatial-link tolerance by the time they enter view.
+            bool smallBossPair = _snapshot.Episode == 1 &&
+                _cells[a].EntityType >= 468 && _cells[a].EntityType <= 473 &&
+                _cells[b].EntityType >= 468 && _cells[b].EntityType <= 473;
+            if (smallBossPair)
+                return true;
             Vector2 half = (CellSizePx(in _cells[a]) + CellSizePx(in _cells[b])) * 0.5f;
             float dx = Mathf.Abs(_cells[a].CurrPx.X - _cells[b].CurrPx.X);
             float dy = Mathf.Abs(_cells[a].CurrPx.Y - _cells[b].CurrPx.Y);
@@ -1338,6 +1412,7 @@ public unsafe partial class SnapshotLayer : Node3D
             bool dynamic = true;
             bool allAir = true;
             bool linkedSlots = false;
+            int smallBossMask = 0, smallBossCount = 0;
             ushort firstSource = OtyrNative.NoSource;
             float minZ = float.PositiveInfinity, maxZ = float.NegativeInfinity, sumZ = 0f;
             for (int i = 0; i < _cellCount; i++)
@@ -1345,6 +1420,22 @@ public unsafe partial class SnapshotLayer : Node3D
                 if (_assemblyComponent[i] != root)
                     continue;
                 members++;
+                // E1's small boss is six independently simulated 24x28
+                // enemies authored as a 3x2 mosaic (468-470 over 471-473).
+                // Capture the implied grid origin for each member. Merely
+                // sharing interpolation motion preserves native slot drift
+                // after it has already opened the large row gap.
+                if (_snapshot.Episode == 1 && _cells[i].EntityType >= 468 &&
+                    _cells[i].EntityType <= 473)
+                {
+                    int part = _cells[i].EntityType - 468;
+                    float gridX = (part % 3) * 24f;
+                    float gridY = (part / 3) * 24f;
+                    _assemblyMotionX[smallBossCount] = _cells[i].CurrPx.X - gridX;
+                    _assemblyMotionY[smallBossCount] = _cells[i].CurrPx.Y - gridY;
+                    smallBossMask |= 1 << part;
+                    smallBossCount++;
+                }
                 dynamic &= _cells[i].DecalOrder <= 0f;
                 allAir &= _cells[i].EntityType != 0 &&
                     SemanticFor(_snapshot.Episode, _cells[i].EntityType) == HeightSemantic.Air;
@@ -1355,16 +1446,39 @@ public unsafe partial class SnapshotLayer : Node3D
                 minZ = Math.Min(minZ, _cells[i].Z);
                 maxZ = Math.Max(maxZ, _cells[i].Z);
                 sumZ += _cells[i].Z;
-                if (_cells[i].HasPrev)
+            }
+            if (members < 2)
+                continue;
+
+            // Reconstruct the exact authored grid from the median inferred
+            // origin. This is presentation-only: collision and boss logic
+            // continue to use the untouched native enemy coordinates.
+            if (members == 6 && smallBossCount == 6 && smallBossMask == 0x3f)
+            {
+                Array.Sort(_assemblyMotionX, 0, smallBossCount);
+                Array.Sort(_assemblyMotionY, 0, smallBossCount);
+                float originX = (_assemblyMotionX[2] + _assemblyMotionX[3]) * 0.5f;
+                float originY = (_assemblyMotionY[2] + _assemblyMotionY[3]) * 0.5f;
+                for (int i = 0; i < _cellCount; i++)
+                    if (_assemblyComponent[i] == root)
+                    {
+                        int part = _cells[i].EntityType - 468;
+                        _cells[i].CurrPx = new Vector2(
+                            originX + (part % 3) * 24f,
+                            originY + (part / 3) * 24f);
+                    }
+            }
+
+            // Measure motion after any rigid-coordinate correction so every
+            // member interpolates from the same component translation.
+            for (int i = 0; i < _cellCount; i++)
+                if (_assemblyComponent[i] == root && _cells[i].HasPrev)
                 {
                     Vector2 motion = _cells[i].CurrPx - _cells[i].PrevPx;
                     _assemblyMotionX[motionCount] = motion.X;
                     _assemblyMotionY[motionCount] = motion.Y;
                     motionCount++;
                 }
-            }
-            if (members < 2)
-                continue;
 
             RigidAssemblyCount++;
             SeamGuardCellCount += members;
@@ -1521,6 +1635,10 @@ public unsafe partial class SnapshotLayer : Node3D
     // the air classes are absolute lane heights; unlisted types keep the
     // legacy category band.  Loaded once; classes resolve to heights here.
     private readonly System.Collections.Generic.Dictionary<ushort, float> _typeHeights = new();
+    // Preserve authored class intent separately from its resolved numeric
+    // height. Broad semantic automation must not turn an explicit platform,
+    // platform-under, or air class back into a surface-following ground type.
+    private readonly System.Collections.Generic.Dictionary<ushort, string> _typeClasses = new();
     // Explicit numeric heights are deliberate refinements/exceptions. Keep
     // their provenance so low grounded values can become offsets from an
     // assembly's sampled surface without flattening high flying exceptions.
@@ -1602,6 +1720,7 @@ public unsafe partial class SnapshotLayer : Node3D
                     continue;
                 }
                 string cls = classValue.AsString();
+                _typeClasses[type] = cls;
                 if (cls == "ground")
                     _typeHeights[type] = float.NegativeInfinity;  // marker: surface + offset
                 else if (_classHeights.TryGetValue(cls, out float classHeight))
@@ -1991,6 +2110,8 @@ public unsafe partial class SnapshotLayer : Node3D
     {
         _editorHeights[entityType] = height;
         _typeHeights[entityType] = height;
+        _typeClasses.Remove(entityType);
+        _explicitHeightTypes.Add(entityType);
         _editorPending[entityType] = height.ToString("0.####", System.Globalization.CultureInfo.InvariantCulture);
     }
 
@@ -2004,6 +2125,8 @@ public unsafe partial class SnapshotLayer : Node3D
     /// classes table; "ground" surface-resolves per instance).</summary>
     public void EditorSetClass(ushort entityType, string cls, float classHeight)
     {
+        _typeClasses[entityType] = cls;
+        _explicitHeightTypes.Remove(entityType);
         if (cls == "ground")
         {
             _typeHeights[entityType] = float.NegativeInfinity;
@@ -2015,7 +2138,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 if (_cells[i].EntityType != entityType)
                     continue;
                 float surface = _background?.SurfaceZAt(_cells[i].CurrPx - new Vector2(24f, 0f)) ?? 0f;
-                _editorHeights[entityType] = surface + 0.0012f;
+                _editorHeights[entityType] = surface > 0f ? surface : BackgroundLayer.GroundZ;
                 _editorGroundTemp.Add(entityType);
                 break;
             }
@@ -2323,6 +2446,16 @@ public unsafe partial class SnapshotLayer : Node3D
         bool dynamicSemantic = (sprite.EntityType & 0x8000) != 0;
         cell.EntityType = isEnemy && !dynamicSemantic ? sprite.EntityType : (ushort)0;
         cell.AssemblyId = isEnemy ? sprite.AssemblyId : (byte)0;
+        cell.SpawnOrder = 0;
+        if (_snapshot.Episode == 1 && cell.EntityType == 30)
+        {
+            int spawnKey = (sprite.SourceId << 8) | sprite.AssemblyId;
+            if (!_type30SpawnOrders.TryGetValue(spawnKey, out cell.SpawnOrder))
+            {
+                cell.SpawnOrder = ++_nextType30SpawnOrder;
+                _type30SpawnOrders[spawnKey] = cell.SpawnOrder;
+            }
+        }
         float band;
         float decalOrder = 0f;
         float authored = 0f;
@@ -2333,16 +2466,22 @@ public unsafe partial class SnapshotLayer : Node3D
             _typeHeights.TryGetValue(sprite.EntityType, out authored);
         bool explicitHeight = isEnemy && episodeOne &&
             _explicitHeightTypes.Contains(sprite.EntityType);
+        string? authoredClass = null;
+        bool authoredClassAssigned = isEnemy && episodeOne &&
+            _typeClasses.TryGetValue(sprite.EntityType, out authoredClass);
+        bool authoredGroundClass = authoredClassAssigned && authoredClass == "ground";
+        bool authoredPlatformClass = authoredClassAssigned && authoredClass == "platform";
+        bool authoredNonGroundClass = authoredClassAssigned && !authoredGroundClass;
         HeightSemantic semantic = isEnemy
             ? SemanticFor(_snapshot.Episode, sprite.EntityType)
             : HeightSemantic.Unknown;
-        if (semantic == HeightSemantic.Surface &&
+        if (semantic == HeightSemantic.Surface && !authoredNonGroundClass &&
             !(explicitHeight && hasAuthored && !float.IsNegativeInfinity(authored) && authored < 0.015f))
         {
             authored = float.NegativeInfinity;
             hasAuthored = true;
         }
-        else if (semantic == HeightSemantic.Air &&
+        else if (semantic == HeightSemantic.Air && !authoredClassAssigned &&
                  (!hasAuthored || float.IsNegativeInfinity(authored)))
         {
             authored = _classHeights.TryGetValue("air-mid", out float airMid) ? airMid : 0.0355f;
@@ -2351,7 +2490,7 @@ public unsafe partial class SnapshotLayer : Node3D
         bool weakGroundSignal = isEnemy &&
             (sprite.Aux == 3 || _groundAssemblySources.Contains(sprite.SourceId));
         bool authoredSurface = hasAuthored && float.IsNegativeInfinity(authored);
-        bool semanticGround = semantic == HeightSemantic.Surface ||
+        bool semanticGround = authoredGroundClass || semantic == HeightSemantic.Surface ||
             (semantic == HeightSemantic.Unknown && weakGroundSignal && authoredSurface);
         // Low explicit values are hand-tuned offsets above the original
         // ground plane.  Preserve that offset when the same building/tank
@@ -2365,7 +2504,15 @@ public unsafe partial class SnapshotLayer : Node3D
         bool automaticSemanticSurface = semanticGround &&
             (!explicitHeight || authoredSurface || surfaceRelativeExplicit);
         bool staticEnemy = isEnemy && (sprite.Flags & 32) != 0;
-        if (hasAuthored && !float.IsNegativeInfinity(authored) && !automaticSemanticSurface)
+        if (authoredPlatformClass)
+        {
+            // Platform-following is the platform analogue of ground:
+            // geometrically coplanar and depth-ordered as a static decal.
+            band = BackgroundLayer.PlatformZ;
+            if (staticEnemy)
+                decalOrder = (recordIndex + 1f) / OtyrNative.SnapshotSpriteMax;
+        }
+        else if (hasAuthored && !float.IsNegativeInfinity(authored) && !automaticSemanticSurface)
         {
             // Authored hover height (Stage B): an explicit table/class
             // height wins EVEN over decal banding -- the under-platform
@@ -2379,7 +2526,7 @@ public unsafe partial class SnapshotLayer : Node3D
         {
             float below = SurfaceForEntity(sprite.SourceId, centerX, centerY);
             float surface = below > 0f ? below : BackgroundLayer.GroundZ;
-            if (staticEnemy)
+            if (authoredGroundClass || staticEnemy)
                 band = surface;
             else if (surfaceRelativeExplicit)
                 band = surface + (authored - BackgroundLayer.GroundZ);
@@ -2437,7 +2584,7 @@ public unsafe partial class SnapshotLayer : Node3D
             band = BandHeight[Math.Min(sprite.Category, (byte)(BandHeight.Length - 1))];
         }
         cell.Z = band + (decalOrder > 0f ? 0f
-            : cell.EntityType != 0 ? EnemyOrderBias(centerY, recordIndex)
+            : cell.EntityType != 0 ? EnemyOrderBias(cell.EntityType, centerY, recordIndex, cell.SpawnOrder)
             : recordIndex * OrderBias);
         cell.DecalOrder = decalOrder;
         cell.CurrPx = new Vector2(centerX, centerY);
@@ -2506,6 +2653,9 @@ public unsafe partial class SnapshotLayer : Node3D
         for (int i = 0; i < _cellCount; i++)
         {
             ref readonly RenderCell cell = ref _cells[i];
+            if (HiddenBehindLegacyHud(in cell) ||
+                (cell.CastFrom >= 0 && HiddenBehindLegacyHud(in _cells[cell.CastFrom])))
+                continue;
 
             Vector2 px = cell.HasPrev ? cell.PrevPx.Lerp(cell.CurrPx, t) : cell.CurrPx;
             float castShadowZ = 0f;
@@ -2576,7 +2726,22 @@ public unsafe partial class SnapshotLayer : Node3D
             bool overridden = cell.EntityType != 0 &&
                 _editorHeights.TryGetValue(cell.EntityType, out editH);
             if (overridden)
-                z = editH + EnemyOrderBias(cell.CurrPx.Y, i);
+            {
+                // Static buildings are decals whose saved height is already
+                // their complete geometric separation from the receiver.
+                // Adding mover painter-order bias here made pressing a key
+                // visibly move an object that was already at that height.
+                bool followingClass = _typeClasses.TryGetValue(cell.EntityType, out string? cls) &&
+                    (cls == "ground" || cls == "platform");
+                z = editH + (cell.DecalOrder > 0f || followingClass ? 0f
+                    : EnemyOrderBias(cell.EntityType, cell.CurrPx.Y, i, cell.SpawnOrder));
+            }
+            // The upper row of E1's six-part small boss deliberately paints
+            // over the lower row where their 24x28 cells overlap. Keep this
+            // after editor overrides so equal mid-under heights cannot
+            // reintroduce z-fighting.
+            if (_snapshot.Episode == 1 && cell.EntityType is >= 468 and <= 470)
+                z += 0.0002f;
             int instance = _instanceCount[id]++;
             if (instance >= _multiMesh[id].InstanceCount)
             {
@@ -2597,7 +2762,9 @@ public unsafe partial class SnapshotLayer : Node3D
             _multiMesh[id].SetInstanceCustomData(instance,
                 id == TextLayer || id == TextShadowLayer
                     ? new Color(cell.CellIndex, cell.Flags + cell.FilterColor * 65f, cell.Aux0, cell.Aux1)
-                    : new Color(cell.CellIndex, cell.Flags + (cell.SeamGuard ? 256f : 0f),
+                    : new Color(cell.CellIndex, cell.Flags + (cell.SeamGuard ? 256f : 0f) +
+                                (cell.Category is (byte)OtyrNative.Category.EnemyGroundA or
+                                                  (byte)OtyrNative.Category.EnemyGroundB ? 512f : 0f),
                                 cell.FilterColor, cell.CastFrom >= 0
                                     ? -2f - castShadowReceiver : cell.DecalOrder));
 
@@ -2608,6 +2775,14 @@ public unsafe partial class SnapshotLayer : Node3D
         VisibleInstanceCount = 0;
         for (int id = 0; id < LayerCount; id++)
             VisibleInstanceCount += _instanceCount[id];
+    }
+
+    private bool HiddenBehindLegacyHud(in RenderCell cell)
+    {
+        // TYRIAN's 522-527 wall is authored as a 3x2 grid at x
+        // 258/282/306. The x=306 column lived wholly behind the legacy HUD;
+        // widening terrain exposed only a misleading clipped strip.
+        return _snapshot.Episode == 1 && cell.EntityType is 524 or 527;
     }
 
     private bool ProjectVirtualSunShadow(Vector2 casterPx, float casterZ,

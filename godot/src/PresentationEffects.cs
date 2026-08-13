@@ -4,12 +4,14 @@ namespace OpenTyrianVR;
 
 /// <summary>
 /// Post-composites Tyrian's legacy full-playfield filters over the finished
-/// 3D scene. Sampling the screen texture here keeps the result stereo-correct:
-/// each eye distorts and shades its own already-rendered geometry.
+/// 3D scene. Color filters sample each eye's screen texture; darkness uses a
+/// late translucent mask so transparent playfield materials are included.
 /// </summary>
 public partial class PresentationEffects : MeshInstance3D
 {
     private readonly ShaderMaterial _material;
+    private readonly MeshInstance3D _darkness;
+    private readonly ShaderMaterial _darknessMaterial;
 
     public PresentationEffects()
     {
@@ -53,6 +55,11 @@ public partial class PresentationEffects : MeshInstance3D
                     }
 
                     void fragment() {
+                        // Water uses the map shader and darkness uses a
+                        // separate alpha mask. With neither remaining this
+                        // screen-copy pass must contribute nothing.
+                        if (effect_mask == 0)
+                            discard;
                         vec2 sample_uv = SCREEN_UV;
 
                         // Lava: a deterministic heat shimmer plus the legacy
@@ -79,16 +86,6 @@ public partial class PresentationEffects : MeshInstance3D
                             color = mix(color, vec3(value * 0.32, value * 0.68, value), 0.58);
                         }
 
-                        // Special code 2: the original upward Manhattan cone,
-                        // with a five-pixel feather and quarter brightness
-                        // outside it. player_px is in the cropped frame space.
-                        if ((effect_mask & 32) != 0) {
-                            vec2 p = mix(play_rect_px.xy, play_rect_px.zw, play_uv);
-                            float cone = (player_px.y - p.y) - abs(p.x - player_px.x);
-                            float light = smoothstep(-5.0, 0.0, cone);
-                            color *= mix(0.25, 1.0, light);
-                        }
-
                         ALBEDO = color;
                         ALPHA = 1.0;
                     }
@@ -100,18 +97,64 @@ public partial class PresentationEffects : MeshInstance3D
             PlayfieldGeometry.MinX, PlayfieldGeometry.MinY,
             PlayfieldGeometry.MaxX, PlayfieldGeometry.MaxY));
         MaterialOverride = _material;
+
+        // The playfield's terrain and sprites are alpha materials. Godot's
+        // hint_screen_texture is copied before those transparent draws, so a
+        // screen-sampling darkness pass saw only the black world background.
+        // Darkness only needs to attenuate the finished scene: draw a black
+        // alpha mask after it instead, leaving the cone fully transparent.
+        _darknessMaterial = new ShaderMaterial
+        {
+            Shader = new Shader
+            {
+                Code = """
+                    shader_type spatial;
+                    render_mode unshaded, cull_disabled, depth_test_disabled, depth_draw_never, blend_mix;
+
+                    uniform vec2 player_px = vec2(132.0, 140.0);
+                    uniform vec4 play_rect_px;
+
+                    void fragment() {
+                        vec2 p = mix(play_rect_px.xy, play_rect_px.zw, UV);
+                        float cone = (player_px.y - p.y) - abs(p.x - player_px.x);
+                        float light = smoothstep(-5.0, 0.0, cone);
+                        ALBEDO = vec3(0.0);
+                        ALPHA = mix(0.75, 0.0, light);
+                    }
+                    """,
+            },
+            RenderPriority = 121,
+        };
+        _darknessMaterial.SetShaderParameter("play_rect_px", new Vector4(
+            PlayfieldGeometry.MinX, PlayfieldGeometry.MinY,
+            PlayfieldGeometry.MaxX, PlayfieldGeometry.MaxY));
+        _darkness = new MeshInstance3D
+        {
+            Name = "DarknessMask",
+            Mesh = new QuadMesh { Size = new Vector2(width, height) },
+            MaterialOverride = _darknessMaterial,
+            Position = new Vector3(0f, 0f, 0.001f),
+            Visible = false,
+        };
+        AddChild(_darkness);
         Visible = false;
     }
 
     public void Update(byte effectMask, uint levelTick, int playerX, int playerY, bool show)
     {
-        // Water has its dedicated background ripple and needs no full-scene
-        // screen copy when it is the only active effect.
-        Visible = show && (effectMask & ~(byte)OtyrNative.Effects.Water) != 0;
+        // Water has its map ripple; darkness has the alpha mask above. Only
+        // the remaining filters use the screen-copy material.
+        byte postMask = (byte)(effectMask &
+            ~((byte)OtyrNative.Effects.Water | (byte)OtyrNative.Effects.Darkness));
+        bool darkness = show && (effectMask & (byte)OtyrNative.Effects.Darkness) != 0;
+        Visible = show && (postMask != 0 || darkness);
         if (!Visible)
             return;
-        _material.SetShaderParameter("effect_mask", (int)effectMask);
+        _material.SetShaderParameter("effect_mask", (int)postMask);
         _material.SetShaderParameter("effect_time", levelTick / 35f);
-        _material.SetShaderParameter("player_px", new Vector2(playerX - 17f, playerY + 12f));
+        Vector2 playerPx = new(playerX - 17f, playerY + 12f);
+        _material.SetShaderParameter("player_px", playerPx);
+        _darknessMaterial.SetShaderParameter("player_px", playerPx);
+        _darkness.Visible = darkness;
     }
 }

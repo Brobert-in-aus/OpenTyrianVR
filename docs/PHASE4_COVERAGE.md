@@ -14,9 +14,9 @@ Static audit of **53,338 events** in all **62 playable Episode 1-4 level records
 | 6: darkness/searchlight | host per-eye post effect | 5 | 5 | 2 |
 | 9: vertical mirror | host card-flip presentation | 2 | 2 | 2 |
 
-All known effects preserve the 3D scene. Full-playfield filters sample each eye's
-already-rendered scene, so shimmer, blur, ice tint, and the player searchlight remain
-stereo-correct. Menus, cinematics, story prompts, pause, and unknown future effect
+All known effects preserve the 3D scene. Color filters sample each eye's rendered
+scene; the player searchlight is a late per-eye alpha mask so transparent terrain
+cannot disappear from its input. Menus, cinematics, story prompts, pause, and unknown future effect
 combinations retain the complete legacy-surface safety path.
 
 ## Generic coverage
@@ -40,8 +40,3 @@ Regenerate with:
 ```powershell
 python tools/audit_phase4_coverage.py --write
 ```
-
-The runtime half of this gate is `tools/test_presentation.ps1`. It performs
-silent, self-terminating hybrid/card-flip, all-native-effects, and unknown-code
-legacy-fallback runs and validates addressed captures plus presentation/shadow
-telemetry.

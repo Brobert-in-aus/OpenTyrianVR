@@ -67,9 +67,9 @@ def main() -> int:
         )
     lines += [
         "",
-        "All known effects preserve the 3D scene. Full-playfield filters sample each eye's",
-        "already-rendered scene, so shimmer, blur, ice tint, and the player searchlight remain",
-        "stereo-correct. Menus, cinematics, story prompts, pause, and unknown future effect",
+        "All known effects preserve the 3D scene. Color filters sample each eye's rendered",
+        "scene; the player searchlight is a late per-eye alpha mask so transparent terrain",
+        "cannot disappear from its input. Menus, cinematics, story prompts, pause, and unknown future effect",
         "combinations retain the complete legacy-surface safety path.",
         "",
         "## Generic coverage",

@@ -14,11 +14,20 @@ import subprocess
 from collections import Counter
 from pathlib import Path
 
+from sweep_height_events import spawned_types
+
 
 MANUAL_SAVES = (
     ("9a69241^", "9a69241", "level 1, asteroids, SAVARA start"),
     ("2ab9a7d", "98ca9a3", "later Episode 1 editor session"),
 )
+
+# User-verified Episode 1 levels, inclusive through WINDY. These are script
+# section ids rather than level ordinals; secret/branch levels have their own
+# sections between the main path entries.
+VERIFIED_EPISODE1_SECTIONS = {
+    4, 6, 7, 11, 14, 17, 20, 22, 24, 26, 29, 30, 32, 34,
+}
 
 
 def git_json(revision: str) -> dict:
@@ -30,9 +39,9 @@ def git_json(revision: str) -> dict:
 
 def manual_semantic(entry: dict) -> str | None:
     cls = entry.get("class")
-    if cls in {"ground", "mid-under", "platform-under"}:
+    if cls in {"ground", "platform", "platform-under"}:
         return "surface"
-    if cls in {"air-low", "air-mid", "air-high", "over-top"}:
+    if cls in {"mid-under", "pickup", "air-low", "air-mid", "air-high", "over-top"}:
         return "air"
     height = entry.get("height")
     if isinstance(height, (int, float)):
@@ -41,6 +50,31 @@ def manual_semantic(entry: dict) -> str | None:
         if height >= 0.028:
             return "air"
     return None
+
+
+def completed_level_references(events_path: Path, hover_path: Path) -> dict[int, tuple[str, str]]:
+    """Trusted labels from user-verified Episode 1 levels through WINDY.
+
+    The current height table is authoritative for every stable type spawned in
+    these levels; generated descendants remain non-recursive seeds in callers.
+    """
+    hover = json.loads(hover_path.read_text(encoding="utf-8"))["types"]
+    level_types: set[int] = set()
+    with events_path.open(newline="", encoding="utf-8") as handle:
+        for row in csv.DictReader(handle):
+            if (int(row["episode"]) != 1 or
+                    int(row["section"]) not in VERIFIED_EPISODE1_SECTIONS):
+                continue
+            level_types.update(
+                enemy_type for enemy_type, _label in spawned_types(row)
+                if 0 <= enemy_type <= 850
+            )
+    trusted: dict[int, tuple[str, str]] = {}
+    for enemy_type in level_types:
+        semantic = manual_semantic(hover.get(str(enemy_type), {}))
+        if semantic is not None:
+            trusted[enemy_type] = (semantic, "verified Episode 1 through WINDY")
+    return trusted
 
 
 MOTION_FIELDS = (
@@ -70,9 +104,26 @@ def same_family(a: dict, b: dict) -> bool:
     )
 
 
+def conflicted_family_references(
+    labels: dict[int, tuple[str, str]], rows: dict[int, dict]
+) -> set[int]:
+    """References too close to an opposite label to seed family inference."""
+    conflicted: set[int] = set()
+    types = sorted(labels)
+    for index, a in enumerate(types):
+        for b in types[index + 1:]:
+            if labels[a][0] == labels[b][0]:
+                continue
+            if same_family(rows[a], rows[b]) and family_distance(rows[a], rows[b]) <= 10:
+                conflicted.update((a, b))
+    return conflicted
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--edat", type=Path, default=Path("captures/edat_dump.csv"))
+    parser.add_argument("--events", type=Path, default=Path("captures/level_events_all_episodes.csv"))
+    parser.add_argument("--hover", type=Path, default=Path("godot/hover_heights.json"))
     parser.add_argument("--report", type=Path)
     parser.add_argument("--csv", type=Path)
     args = parser.parse_args()
@@ -96,6 +147,9 @@ def main() -> int:
                 labels[int(key)] = (semantic, name)
                 accepted += 1
         batch_counts.append((name, accepted))
+    completed = completed_level_references(args.events, args.hover)
+    labels.update(completed)
+    batch_counts.append(("verified Episode 1 through WINDY", len(completed)))
 
     confusion: Counter[tuple[str, str]] = Counter()
     disagreements: list[tuple[int, str, str, str]] = []
@@ -118,6 +172,7 @@ def main() -> int:
     # Family-aware leave-one-out audit.  Sprite bank is a hard boundary;
     # graphics/type adjacency and identical movement metadata identify the
     # component/animation family.  Distant matches are review-only.
+    conflicted_refs = conflicted_family_references(labels, by_type)
     family_total = family_correct = 0
     family_misses: list[tuple[int, str, str, float]] = []
     for enemy_type, (manual, _source) in sorted(labels.items()):
@@ -125,6 +180,7 @@ def main() -> int:
         candidates = [
             other for other in labels
             if other != enemy_type
+            and other not in conflicted_refs
             and same_family(row, by_type[other])
         ]
         if not candidates:
@@ -146,7 +202,8 @@ def main() -> int:
             continue
         candidates = [
             other for other in labels
-            if same_family(row, by_type[other])
+            if other not in conflicted_refs
+            and same_family(row, by_type[other])
         ]
         if not candidates:
             proposal_counts["review"] += 1
@@ -185,6 +242,8 @@ def main() -> int:
         f"{proposal_counts['surface']} additional surface and "
         f"{proposal_counts['air']} additional air types, and leaves "
         f"{proposal_counts['review']} review-only.",
+        f"{len(conflicted_refs)} trusted references sit in mixed-label near "
+        "families and are retained as overrides but quarantined from family propagation.",
         "",
         "Manual samples by save:",
         "",

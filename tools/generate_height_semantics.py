@@ -11,6 +11,8 @@ from pathlib import Path
 
 from analyze_height_semantics import (
     MANUAL_SAVES,
+    completed_level_references,
+    conflicted_family_references,
     family_distance,
     git_json,
     manual_semantic,
@@ -30,7 +32,7 @@ def load_rows(path: Path) -> dict[tuple[int, int], dict]:
     return rows
 
 
-def manual_references() -> dict[int, tuple[str, str]]:
+def manual_references(events: Path, hover: Path) -> dict[int, tuple[str, str]]:
     labels: dict[int, tuple[str, str]] = {}
     for before_rev, after_rev, name in MANUAL_SAVES:
         before = git_json(before_rev)["types"]
@@ -41,6 +43,10 @@ def manual_references() -> dict[int, tuple[str, str]]:
             semantic = manual_semantic(after.get(key, {}))
             if semantic is not None:
                 labels[int(key)] = (semantic, name)
+    # The user has verified Episode 1 from TYRIAN through WINDY. Current
+    # assignments for every stable type used by those levels override older
+    # save-history labels and become trusted, non-recursive classifier seeds.
+    labels.update(completed_level_references(events, hover))
     return labels
 
 
@@ -91,6 +97,7 @@ def main() -> int:
         "--events", type=Path, default=Path("captures/level_events_all_episodes.csv")
     )
     parser.add_argument("--output", type=Path, default=Path("godot/height_semantics.json"))
+    parser.add_argument("--hover", type=Path, default=Path("godot/hover_heights.json"))
     parser.add_argument("--write", action="store_true")
     args = parser.parse_args()
 
@@ -99,7 +106,9 @@ def main() -> int:
     if episodes != [1, 2, 3, 4]:
         raise SystemExit(f"expected data episodes 1..4, found {episodes}")
 
-    manual = manual_references()
+    manual = manual_references(args.events, args.hover)
+    episode1_rows = {enemy_type: rows[(1, enemy_type)] for enemy_type in range(851)}
+    conflicted_manual = conflicted_family_references(manual, episode1_rows)
     generated: dict[int, dict[int, dict]] = {episode: {} for episode in episodes}
     for enemy_type, (semantic, source) in manual.items():
         generated[1][enemy_type] = {
@@ -116,7 +125,8 @@ def main() -> int:
         row = rows[(1, enemy_type)]
         references = [
             other for other in manual
-            if same_family(row, rows[(1, other)])
+            if other not in conflicted_manual
+            and same_family(row, rows[(1, other)])
         ]
         if not references:
             continue
@@ -158,7 +168,7 @@ def main() -> int:
                 "reference": reference,
             }
             if any(
-                generated[1][ref]["source"] == "manual"
+                ref not in conflicted_manual and generated[1][ref]["source"] == "manual"
                 for ref, label in matches if label == next(iter(labels))
             ):
                 seedable_exact.add(enemy_type)
@@ -283,6 +293,7 @@ def main() -> int:
             "type_delta_max": 16,
             "graphic_delta_max": 8,
             "generated_results_are_not_recursive_seeds": True,
+            "mixed_label_near_family_references_quarantined": len(conflicted_manual),
             "linked_assembly_requires_same_tick_and_nonzero_link": True,
             "event_top_only_manual_validation": "16/16",
             "event_air_requires_static_air_bit": True,

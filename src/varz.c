@@ -1248,7 +1248,7 @@ JE_byte JE_playerDamage(JE_byte temp,
 	static int otyr_invuln = -1;
 	if (otyr_invuln < 0)
 		otyr_invuln = SDL_getenv("OTYR_INVULN") != NULL ? 1 : 0;
-	if (otyr_invuln)
+	if (otyr_invuln || SDL_AtomicGet(&otyr_debug_invulnerable))
 		return 0;
 
 	/* Death-schedule clamp: lethal demo damage leaves 1 armor (min HP 1)

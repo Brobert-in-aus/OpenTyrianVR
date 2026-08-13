@@ -52,6 +52,10 @@ if ($Section -gt 0) {
     Remove-Item Env:OTYR_START_SECTION -ErrorAction SilentlyContinue
     Remove-Item Env:OTYR_START_EPISODE -ErrorAction SilentlyContinue
 }
+# Godot executes the Debug assembly. Build it explicitly so an existing
+# editor cache can never launch code older than the source being validated.
+& dotnet build "$repo\godot\OpenTyrianVR.csproj" -c Debug -warnaserror
+if ($LASTEXITCODE -ne 0) { throw "Height-editor managed build failed ($LASTEXITCODE)" }
 & "D:\Projects\games-xr\_tools\godot\Godot_v4.7-stable_mono_win64\Godot_v4.7-stable_mono_win64_console.exe" `
     --path "$repo\godot" --xr-mode off --audio-driver Dummy
 } finally {

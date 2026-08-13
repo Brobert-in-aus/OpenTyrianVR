@@ -137,6 +137,11 @@ instead of estimating their period from render-thread receipt times. At 90 Hz,
 receipt-time sampling aliases into alternating intervals and can create a
 persistent terrain sawtooth even when no native snapshot is skipped. The fixed
 period removes that source of judder without changing simulation or adding work.
-The same build restores the authored -24..288 side lanes by mirroring the
-adjacent playable terrain phase, so it does not depend on the discontinuous
-legacy tile hidden behind the original HUD.
+The same build restores the authored -24..288 side lanes using the actual map
+terrain outside the former crop.
+
+Delayed legacy terrain scroll is presented at its exact fractional rate. The
+native background record packs a pixels/ticks ratio (for example 1/3) into its
+formerly reserved byte; the renderer distributes that motion continuously.
+Keeping the exact ratio avoids the periodic re-anchor that occurred when 1/3
+was approximated as 5/16.

@@ -91,18 +91,35 @@ public unsafe partial class BackgroundLayer : Node3D
     private readonly ShaderMaterial[] _materials = new ShaderMaterial[OtyrNative.BgLayerCount];
     private readonly MeshInstance3D[] _castShadowQuads = new MeshInstance3D[OtyrNative.BgLayerCount];
     private readonly ShaderMaterial[] _castShadowMaterials = new ShaderMaterial[OtyrNative.BgLayerCount];
+    private MeshInstance3D _platformCloudShadowQuad = null!;
+    private ShaderMaterial _platformCloudShadowMaterial = null!;
     private readonly ImageTexture[] _tilemapTex = new ImageTexture[OtyrNative.BgLayerCount];
     private readonly ImageTexture[] _atlasTex = new ImageTexture[OtyrNative.BgLayerCount];
     private readonly Vector2I[] _mapSize = new Vector2I[OtyrNative.BgLayerCount];
     private readonly byte[][] _tilesCpu = new byte[OtyrNative.BgLayerCount][];
     private readonly byte[][] _atlasCpu = new byte[OtyrNative.BgLayerCount][];
+    // True only when every map cell is present and every pixel of every
+    // referenced shape is opaque. The legacy renderer composites its layers
+    // into one framebuffer; a non-blended opaque later layer therefore
+    // replaces the earlier one completely, regardless of its semantic 3D
+    // height. Keeping both exposed otherwise-unused base art in ALE/TIME WAR.
+    private readonly bool[] _fullyOpaqueMap = new bool[OtyrNative.BgLayerCount];
+    private readonly bool[][] _opaqueShape = new bool[OtyrNative.BgLayerCount][];
     // Entity-shadow materials use the same live map data to reject fragments
     // whose selected receiving plane is transparent at that pixel. This keeps
     // a shadow centred on a platform from floating across its holes.
     private readonly List<ShaderMaterial> _shadowReceiverMaterials = new();
+    private readonly List<ShaderMaterial> _groundOcclusionMaterials = new();
 
     private readonly OtyrNative.BackgroundDraw[] _currDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
     private readonly OtyrNative.BackgroundDraw[] _prevDraw = new OtyrNative.BackgroundDraw[OtyrNative.BgLayerCount];
+    // Continuous presentation anchors for legacy delayed scroll. A section
+    // can intentionally advance one pixel every N simulation ticks; drawing
+    // the literal 0,0,1 sequence is a visible judder in a 90 Hz headset.
+    private readonly float[] _scrollRate = new float[OtyrNative.BgLayerCount];
+    private readonly Vector2[] _scrollAnchor = new Vector2[OtyrNative.BgLayerCount];
+    private readonly uint[] _scrollAnchorTick = new uint[OtyrNative.BgLayerCount];
+    private uint _renderTick;
     // Cloud identity belongs to the map art, not its current legacy draw
     // order. Events can change OverMode while retaining the same map epoch;
     // once a layer is observed in a cloud role, keep its translucent treatment
@@ -143,6 +160,10 @@ public unsafe partial class BackgroundLayer : Node3D
     private const float VirtualShadowLift = 0.00035f;
     public int CastShadowLayerCount { get; private set; }
     public int ElevatedReceiverLayerCount { get; private set; }
+    /// <summary>The legacy over=1 pass paints layer 1 after both ground-enemy
+    /// bands. When that pass is a solid non-blended cover, those records must
+    /// not be reintroduced by the host at authored 3D heights.</summary>
+    public bool OpaqueLayer1CoversGroundEnemies { get; private set; }
 
     public BackgroundLayer(ImageTexture palette)
     {
@@ -180,16 +201,6 @@ public unsafe partial class BackgroundLayer : Node3D
                 // cascade).  0 = off.
                 uniform int storm_hue = -1;
                 uniform float storm_time = 0.0;
-
-                // The twelfth legacy map tile sat behind the HUD and is not
-                // authored as a guaranteed continuation. Mirror the playable
-                // edge into each restored side lane so their boundary pixel
-                // is exact while side-lane structures retain terrain backing.
-                float terrain_x(float x) {
-                    if (x < 0.0) return -x - 1.0;
-                    if (x >= 264.0) return 527.0 - x;
-                    return x;
-                }
 
                 // Palette index at one integer map pixel; -1 = transparent.
                 int map_index(ivec2 mp) {
@@ -232,7 +243,7 @@ public unsafe partial class BackgroundLayer : Node3D
 
                 void fragment() {
                     vec2 frame_px = quad_px0 + UV * quad_size_px;
-                    vec2 mpf = vec2(terrain_x(frame_px.x), frame_px.y) - origin_px;
+                    vec2 mpf = frame_px - origin_px;
 
                     // Anti-aliased point sampling: snap to texel centers except
                     // in a fwidth-wide band at texel seams (the lane shader's
@@ -277,12 +288,11 @@ public unsafe partial class BackgroundLayer : Node3D
                 uniform vec2 shadow_offset_px;
                 uniform vec4 clip_rect_px;
                 uniform float strength = 0.78;
-
-                float terrain_x(float x) {
-                    if (x < 0.0) return -x - 1.0;
-                    if (x >= 264.0) return 527.0 - x;
-                    return x;
-                }
+                uniform sampler2D receiver_tilemap : filter_nearest;
+                uniform sampler2D receiver_atlas : filter_nearest;
+                uniform ivec2 receiver_map_size;
+                uniform vec2 receiver_origin_px;
+                uniform int receiver_required = 0;
 
                 bool covered(ivec2 mp) {
                     if (mp.x < 0 || mp.y < 0)
@@ -298,6 +308,21 @@ public unsafe partial class BackgroundLayer : Node3D
                     return int(texelFetch(atlas, ap, 0).r * 255.0 + 0.5) != 0;
                 }
 
+                bool receiver_covered(vec2 frame_px) {
+                    ivec2 mp = ivec2(floor(frame_px - receiver_origin_px));
+                    if (mp.x < 0 || mp.y < 0)
+                        return false;
+                    ivec2 tile = mp / ivec2(24, 28);
+                    if (tile.x >= receiver_map_size.x || tile.y >= receiver_map_size.y)
+                        return false;
+                    int idx = int(texelFetch(receiver_tilemap, tile, 0).r * 255.0 + 0.5);
+                    if (idx > 200)
+                        return false;
+                    ivec2 ap = ivec2((idx % 8) * 24, (idx / 8) * 28) +
+                                (mp - tile * ivec2(24, 28));
+                    return int(texelFetch(receiver_atlas, ap, 0).r * 255.0 + 0.5) != 0;
+                }
+
                 void fragment() {
                     // The quad covers the RECEIVER area. Sample the caster
                     // backwards through the sun offset so map art that is
@@ -308,8 +333,9 @@ public unsafe partial class BackgroundLayer : Node3D
                         projected_px.y < clip_rect_px.y || projected_px.y >= clip_rect_px.w)
                         discard;
                     vec2 caster_px = projected_px - shadow_offset_px;
-                    caster_px.x = terrain_x(caster_px.x);
                     if (!covered(ivec2(floor(caster_px - origin_px))))
+                        discard;
+                    if (receiver_required != 0 && !receiver_covered(projected_px))
                         discard;
                     ALBEDO = vec3(strength);
                 }
@@ -371,6 +397,30 @@ public unsafe partial class BackgroundLayer : Node3D
             AddChild(_castShadowQuads[l]);
         }
 
+        // A second platform-shadow pass lands only on opaque cloud pixels.
+        // The normal layer-2 pass remains on the ground, while this one sits
+        // just above the cloud plane and is masked by layer 1's live map art.
+        _platformCloudShadowMaterial = new ShaderMaterial
+        {
+            Shader = castShadowShader,
+            RenderPriority = 4,
+        };
+        _platformCloudShadowMaterial.SetShaderParameter("quad_px0", new Vector2(CanvasX0, CanvasY0));
+        _platformCloudShadowMaterial.SetShaderParameter("quad_size_px", new Vector2(CanvasW, CanvasH));
+        _platformCloudShadowMaterial.SetShaderParameter("clip_rect_px",
+            new Vector4(CanvasX0, CanvasY0, CanvasX0 + CanvasW, CanvasY0 + CanvasH));
+        _platformCloudShadowMaterial.SetShaderParameter("receiver_required", 1);
+        _platformCloudShadowMaterial.SetShaderParameter("strength", 0.74f);
+        _platformCloudShadowQuad = new MeshInstance3D
+        {
+            Name = "PlatformCloudShadow",
+            Mesh = LayerMesh(2),
+            MaterialOverride = _platformCloudShadowMaterial,
+            Position = new Vector3(LayerCenterX(2), centerY, WaterCloudHeight + VirtualShadowLift),
+            Visible = false,
+        };
+        AddChild(_platformCloudShadowQuad);
+
         // Water-cloud pass: when a level's COPLANAR layer 1 is dominantly
         // cloud art (SAVARA: clouds baked over the water/land, legacy-drawn
         // under every entity), this quad re-renders that whole layer at
@@ -418,16 +468,11 @@ public unsafe partial class BackgroundLayer : Node3D
         if (snapshot.SheetEpoch != _mapEpoch)
         {
             _mapEpoch = snapshot.SheetEpoch;
+            Array.Clear(_scrollAnchorTick);
             FetchMaps(session);
         }
         _stormTick = snapshot.LevelTick;
-        // Ground scroll rate this tick (px, +y down-screen): apron ghosts
-        // ride it when their own cell never paired a velocity (statics).
-        if (_currDraw[0].Drawn != 0 && snapshot.Background(0).Drawn != 0)
-        {
-            float dy = Origin(0, snapshot.Background(0)).Y - Origin(0, _currDraw[0]).Y;
-            GroundScrollDy = dy > -0.5f && dy < 6f ? Mathf.Max(dy, 0f) : GroundScrollDy;
-        }
+        _renderTick = snapshot.LevelTick;
         // E2 de-parallax: rebase each layer's origin to its fixed offset.
         // Deltas are PER TICK and pair with that tick's draw record: every
         // layer lerps prev->curr origins per render frame, and
@@ -448,6 +493,30 @@ public unsafe partial class BackgroundLayer : Node3D
                          $"tick={snapshot.LevelTick} over={_currDraw[l].OverMode}");
             _quads[l].Visible = _currDraw[l].Drawn != 0;
 
+            int rateNumerator = _currDraw[l].ScrollRateRatio >> 4;
+            int rateDenominator = Math.Max(_currDraw[l].ScrollRateRatio & 0x0f, 1);
+            float rate = rateNumerator / (float)rateDenominator;
+            Vector2 rawOrigin = Origin(l, _currDraw[l]);
+            bool resetScroll = _scrollAnchorTick[l] == 0 ||
+                snapshot.LevelTick < _scrollAnchorTick[l] || _prevDraw[l].Drawn == 0 ||
+                Mathf.Abs(rate - _scrollRate[l]) > 0.001f;
+            if (!resetScroll && rate > 0f)
+            {
+                float expectedY = _scrollAnchor[l].Y +
+                    (snapshot.LevelTick - _scrollAnchorTick[l]) * rate;
+                // Events/map jumps may replace the underlying map position.
+                // Quantized delayed motion itself stays within one pixel.
+                resetScroll = Mathf.Abs(rawOrigin.Y - expectedY) > 1.1f;
+            }
+            if (resetScroll)
+            {
+                _scrollAnchor[l] = rawOrigin;
+                _scrollAnchorTick[l] = snapshot.LevelTick;
+            }
+            _scrollRate[l] = rate;
+            if (l == 0 && rate > 0f)
+                GroundScrollDy = rate;
+
             float rawZ = RawLayerHeight(l, _currDraw[l].OverMode);
             // Cloud-height layers get an extra transparency nudge on top of
             // the legacy blend flag (user-tuned, 2026-07-12: the kept
@@ -467,7 +536,11 @@ public unsafe partial class BackgroundLayer : Node3D
                          $"(epoch {_mapEpoch}, over {_currDraw[l].OverMode})");
             }
             float z = LayerHeight(l, _currDraw[l].OverMode);
-            float alpha = (_currDraw[l].Blend != 0 ? 0.55f : 1.0f) * (_cloudLayer[l] ? 0.82f : 1.0f);
+            // Authored fully opaque covers are not translucent merely because
+            // their legacy draw order maps to the cloud-height band. TIME WAR
+            // uses over=1 for a solid blue cover, not for see-through clouds.
+            bool translucentCloud = _cloudLayer[l] && !_fullyOpaqueMap[l];
+            float alpha = (_currDraw[l].Blend != 0 ? 0.55f : 1.0f) * (translucentCloud ? 0.82f : 1.0f);
             _materials[l].SetShaderParameter("alpha_mul", alpha);
             Vector3 position = _quads[l].Position;
             if (position.Z != z)
@@ -497,6 +570,17 @@ public unsafe partial class BackgroundLayer : Node3D
         // until the real directional-sun shadow pass.
         if (_cloudActive)
             _quads[1].Visible = false;
+
+        // Preserve the legacy framebuffer result for opaque overlays. ALE is
+        // authored with a green layer 0 beneath a solid blue layer 1; TIME WAR
+        // similarly has unused structures beneath its elevated solid cover.
+        // A legacy blend still needs the lower layer and is explicitly exempt.
+        bool opaqueCover = _currDraw[1].Drawn != 0 && _currDraw[1].Blend == 0 &&
+            (_fullyOpaqueMap[1] || CoversTerrainOpaque(1));
+        if (opaqueCover)
+            _quads[0].Visible = false;
+        OpaqueLayer1CoversGroundEnemies = _currDraw[1].Drawn != 0 &&
+            _currDraw[1].Blend == 0 && _currDraw[1].OverMode == 1;
     }
 
     // Classify layer 0's atlas pixels: cloud art is bright and desaturated,
@@ -614,6 +698,7 @@ public unsafe partial class BackgroundLayer : Node3D
 
         CastShadowLayerCount = 0;
         ElevatedReceiverLayerCount = 0;
+        _platformCloudShadowQuad.Visible = false;
         for (int l = 0; l < OtyrNative.BgLayerCount; l++)
         {
             _subTickPx[l] = Vector2.Zero;
@@ -625,7 +710,15 @@ public unsafe partial class BackgroundLayer : Node3D
 
             Vector2 curr = Origin(l, _currDraw[l]);
             Vector2 origin = curr;
-            if (_prevDraw[l].Drawn != 0)
+            if (_scrollRate[l] > 0f && _scrollAnchorTick[l] != 0)
+            {
+                // Present the interval ending at this snapshot, matching the
+                // entity prev->curr interpolation latency.
+                float steps = _renderTick > _scrollAnchorTick[l]
+                    ? _renderTick - _scrollAnchorTick[l] - 1f + t : 0f;
+                origin.Y = _scrollAnchor[l].Y + Mathf.Max(steps, 0f) * _scrollRate[l];
+            }
+            else if (_prevDraw[l].Drawn != 0)
             {
                 Vector2 prev = Origin(l, _prevDraw[l], prev: true);
                 if (prev.DistanceTo(curr) <= TeleportGuardPx)
@@ -661,6 +754,29 @@ public unsafe partial class BackgroundLayer : Node3D
                 _castShadowMaterials[l].SetShaderParameter("strength", cloudCaster ? 0.84f : 0.74f);
             }
             _subTickPx[l] = origin - curr;
+        }
+
+        float cloudZ = PresentedHeight(1);
+        float platformZ = PresentedHeight(2);
+        bool platformOverCloud = _currDraw[1].Drawn != 0 && _currDraw[2].Drawn != 0 &&
+            cloudZ > GroundZ + 0.002f &&
+            platformZ > cloudZ + 0.002f &&
+            Mathf.Abs(platformZ - PlatformZ) <= 0.0005f;
+        _platformCloudShadowQuad.Visible = platformOverCloud;
+        if (platformOverCloud)
+        {
+            CastShadowLayerCount++;
+            Vector2 casterOrigin = Origin(2, _currDraw[2]) + _subTickPx[2];
+            Vector2 receiverOrigin = Origin(1, _currDraw[1]) + _subTickPx[1];
+            float gap = platformZ - cloudZ;
+            _platformCloudShadowMaterial.SetShaderParameter("origin_px", casterOrigin);
+            _platformCloudShadowMaterial.SetShaderParameter("receiver_origin_px", receiverOrigin);
+            _platformCloudShadowMaterial.SetShaderParameter("shadow_offset_px", new Vector2(
+                gap * VirtualSunShadowXPerMeter,
+                gap * VirtualSunShadowYPerMeter));
+            Vector3 receiverPosition = _quads[1].Position;
+            _platformCloudShadowQuad.Position = new Vector3(
+                receiverPosition.X, receiverPosition.Y, cloudZ + VirtualShadowLift);
         }
     }
 
@@ -752,12 +868,37 @@ public unsafe partial class BackgroundLayer : Node3D
         }
     }
 
+    /// <summary>Connect a ground-entity material to layer 1's exact opacity
+    /// mask. Native background2over=1 paints this map after both ground enemy
+    /// bands, so the host must discard only the covered sprite fragments.</summary>
+    public void RegisterGroundOcclusionMaterial(ShaderMaterial material)
+    {
+        _groundOcclusionMaterials.Add(material);
+        if (_tilemapTex[1] != null)
+            material.SetShaderParameter("occluder_tilemap", _tilemapTex[1]);
+        if (_atlasTex[1] != null)
+            material.SetShaderParameter("occluder_atlas", _atlasTex[1]);
+        material.SetShaderParameter("occluder_map_size", _mapSize[1]);
+        UpdateGroundOcclusionMaterial(material);
+    }
+
+    private void UpdateGroundOcclusionMaterial(ShaderMaterial material)
+    {
+        bool enabled = _currDraw[1].Drawn != 0 && _currDraw[1].Blend == 0 &&
+            _currDraw[1].OverMode == 1;
+        material.SetShaderParameter("occluder_enabled", enabled ? 1 : 0);
+        material.SetShaderParameter("occluder_origin", enabled
+            ? Origin(1, _currDraw[1]) + _subTickPx[1] : Vector2.Zero);
+    }
+
     private void UpdateShadowReceiverState()
     {
         foreach (ShaderMaterial material in _shadowReceiverMaterials)
             for (int l = 1; l < OtyrNative.BgLayerCount; l++)
                 material.SetShaderParameter($"receiver_drawn_{l}",
                     _currDraw[l].Drawn != 0 && PresentedHeight(l) > 0.001f ? 1 : 0);
+        foreach (ShaderMaterial material in _groundOcclusionMaterials)
+            UpdateGroundOcclusionMaterial(material);
     }
 
     // Pixel-granular art test: a PLACED tile can still be transparent at
@@ -768,7 +909,6 @@ public unsafe partial class BackgroundLayer : Node3D
     {
         if (_tilesCpu[l] == null)
             return false;
-        framePx.X = MirrorTerrainX(framePx.X);
         Vector2 mp = framePx - Origin(l, _currDraw[l]);
         int tx = (int)Mathf.Floor(mp.X / OtyrNative.BgTileW);
         int ty = (int)Mathf.Floor(mp.Y / OtyrNative.BgTileH);
@@ -786,12 +926,36 @@ public unsafe partial class BackgroundLayer : Node3D
         return _atlasCpu[l][ay * AtlasCols * OtyrNative.BgTileW + ax] != 0;
     }
 
-    private static float MirrorTerrainX(float x) => x switch
+    // A map can contain transparent cells outside the current draw while its
+    // complete visible window is nevertheless a solid cover (TIME WAR). Use
+    // whole-shape opacity over the terrain crop, avoiding a 57k-pixel scan on
+    // every snapshot while remaining conservative at partial edge tiles.
+    private bool CoversTerrainOpaque(int layer)
     {
-        < 0f => -x - 1f,
-        >= 264f => 527f - x,
-        _ => x,
-    };
+        byte[]? tiles = _tilesCpu[layer];
+        bool[]? shapes = _opaqueShape[layer];
+        int width = _mapSize[layer].X;
+        int height = _mapSize[layer].Y;
+        if (tiles == null || shapes == null || width <= 0 || height <= 0)
+            return false;
+
+        Vector2 origin = Origin(layer, _currDraw[layer]);
+        int minTx = (int)Mathf.Floor((PlayfieldGeometry.TerrainMinX - origin.X) / OtyrNative.BgTileW);
+        int maxTx = (int)Mathf.Floor((PlayfieldGeometry.TerrainMaxX - 0.001f - origin.X) / OtyrNative.BgTileW);
+        int minTy = (int)Mathf.Floor((PlayfieldGeometry.MinY - origin.Y) / OtyrNative.BgTileH);
+        int maxTy = (int)Mathf.Floor((PlayfieldGeometry.MaxY - 0.001f - origin.Y) / OtyrNative.BgTileH);
+        if (minTx < 0 || minTy < 0 || maxTx >= width || maxTy >= height)
+            return false;
+
+        for (int ty = minTy; ty <= maxTy; ++ty)
+            for (int tx = minTx; tx <= maxTx; ++tx)
+            {
+                byte shape = tiles[ty * width + tx];
+                if (shape == OtyrNative.BgTileEmpty || shape >= shapes.Length || !shapes[shape])
+                    return false;
+            }
+        return true;
+    }
 
     /// <summary>Editor: pick the topmost layer whose art is opaque where
     /// the (local-space) ray crosses its plane.  Returns the layer index
@@ -911,8 +1075,15 @@ public unsafe partial class BackgroundLayer : Node3D
             _mapSize[l] = new Vector2I(_map.Width, _map.Height);
             _materials[l].SetShaderParameter("map_size", _mapSize[l]);
             _castShadowMaterials[l].SetShaderParameter("map_size", _mapSize[l]);
+            if (l == 2)
+                _platformCloudShadowMaterial.SetShaderParameter("map_size", _mapSize[l]);
+            else if (l == 1)
+                _platformCloudShadowMaterial.SetShaderParameter("receiver_map_size", _mapSize[l]);
             foreach (ShaderMaterial material in _shadowReceiverMaterials)
                 material.SetShaderParameter($"receiver_map_size_{l}", _mapSize[l]);
+            if (l == 1)
+                foreach (ShaderMaterial material in _groundOcclusionMaterials)
+                    material.SetShaderParameter("occluder_map_size", _mapSize[l]);
 
             var tiles = new byte[_map.Width * _map.Height];
             fixed (OtyrNative.BackgroundMap* map = &_map)
@@ -925,8 +1096,15 @@ public unsafe partial class BackgroundLayer : Node3D
             _tilemapTex[l] = ImageTexture.CreateFromImage(tilemapImage);
             _materials[l].SetShaderParameter("tilemap", _tilemapTex[l]);
             _castShadowMaterials[l].SetShaderParameter("tilemap", _tilemapTex[l]);
+            if (l == 2)
+                _platformCloudShadowMaterial.SetShaderParameter("tilemap", _tilemapTex[l]);
+            else if (l == 1)
+                _platformCloudShadowMaterial.SetShaderParameter("receiver_tilemap", _tilemapTex[l]);
             foreach (ShaderMaterial material in _shadowReceiverMaterials)
                 material.SetShaderParameter($"receiver_tilemap_{l}", _tilemapTex[l]);
+            if (l == 1)
+                foreach (ShaderMaterial material in _groundOcclusionMaterials)
+                    material.SetShaderParameter("occluder_tilemap", _tilemapTex[l]);
 
             int atlasRows = (OtyrNative.BgShapeMax + AtlasCols - 1) / AtlasCols;
             int atlasW = AtlasCols * OtyrNative.BgTileW;
@@ -945,12 +1123,47 @@ public unsafe partial class BackgroundLayer : Node3D
                 }
             }
             _atlasCpu[l] = atlas;  // kept for pixel-granular surface queries
+
+            // A full-map test is deliberately conservative: if any cell or
+            // any referenced shape pixel is transparent, retain the lower
+            // plane. This cannot hide authored detail on partially overlaid
+            // maps, while recognizing ALE's uniform opaque blue cover.
+            var opaqueShape = new bool[_map.ShapeCount];
+            Array.Fill(opaqueShape, true);
+            for (int s = 0; s < _map.ShapeCount; s++)
+            {
+                int originX = (s % AtlasCols) * OtyrNative.BgTileW;
+                int originY = (s / AtlasCols) * OtyrNative.BgTileH;
+                for (int y = 0; y < OtyrNative.BgTileH && opaqueShape[s]; y++)
+                    for (int x = 0; x < OtyrNative.BgTileW; x++)
+                        if (atlas[(originY + y) * atlasW + originX + x] == 0)
+                        {
+                            opaqueShape[s] = false;
+                            break;
+                        }
+            }
+            _opaqueShape[l] = opaqueShape;
+            bool fullyOpaque = tiles.Length != 0;
+            foreach (byte tile in tiles)
+                if (tile == OtyrNative.BgTileEmpty || tile >= opaqueShape.Length || !opaqueShape[tile])
+                {
+                    fullyOpaque = false;
+                    break;
+                }
+            _fullyOpaqueMap[l] = fullyOpaque;
             var atlasImage = Image.CreateFromData(atlasW, atlasH, false, Image.Format.R8, atlas);
             _atlasTex[l] = ImageTexture.CreateFromImage(atlasImage);
             _materials[l].SetShaderParameter("atlas", _atlasTex[l]);
             _castShadowMaterials[l].SetShaderParameter("atlas", _atlasTex[l]);
+            if (l == 2)
+                _platformCloudShadowMaterial.SetShaderParameter("atlas", _atlasTex[l]);
+            else if (l == 1)
+                _platformCloudShadowMaterial.SetShaderParameter("receiver_atlas", _atlasTex[l]);
             foreach (ShaderMaterial material in _shadowReceiverMaterials)
                 material.SetShaderParameter($"receiver_atlas_{l}", _atlasTex[l]);
+            if (l == 1)
+                foreach (ShaderMaterial material in _groundOcclusionMaterials)
+                    material.SetShaderParameter("occluder_atlas", _atlasTex[l]);
         }
         // New level art: re-decide the water-cloud split against it.
         _cloudMaskPending = true;

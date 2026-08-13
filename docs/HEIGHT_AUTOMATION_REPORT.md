@@ -1,105 +1,117 @@
-# Episode-aware height automation audit
+# Episode 1 height automation audit
 
-The broad classifier separates `surface` objects (ground or the aerial
-platform actually beneath an instance) from `air` objects. Fine height within
-those groups remains in `godot/hover_heights.json`.
+The automatic broad-layer rule is Tyrian's authored enemy-ground bit: a zero low explosion-type bit means surface-attached; one means flying. Ground/building instances then sample the terrain or aerial platform beneath them. Explicit numeric heights remain manual refinements.
 
-## Result
+The raw ground-bit baseline agrees with **291/371 (78.4%)** binary manual placements recovered from the two saved Episode 1 editing batches. It is useful evidence, but not reliable enough by itself.
 
-Two saved Episode 1 editor batches provide 129 binary manual references:
+| Manual | Auto surface | Auto air |
+|---|---:|---:|
+| Surface | 119 | 37 |
+| Air | 43 | 172 |
 
-| Classifier | Covered | Correct | Result |
-|---|---:|---:|---:|
-| Tyrian ground/explosion bit alone | 129 | 98 | 76.0% |
-| High-confidence art family, leave-one-out | 101 | 101 | 100.0% |
+The family-aware classifier uses only references from the same sprite bank and auto-applies only at distance <= 10. In leave-one-out testing it covers **260/371** manual placements and agrees on **260/260 (100.0%)**. More distant types are sent to review rather than guessed.
 
-The ground bit is evidence, not a decision by itself. Tyrian assigns the
-ground explosion palette to several flying multi-part families. The reliable
-automation therefore requires a reference in the same sprite bank, close
-graphic/type identity, and matching movement/size metadata. A family distance
-above 10 is left for review instead of guessed; candidates must also be within
-16 type ids or 8 graphic ids of their reference. This conservative threshold
-covered 78% of the manual sample with no disagreement in leave-one-out testing.
-Across the complete 851-type Episode 1 table, it retains 129 manual references
-and confidently proposes another 24 surface and 30 air types before the level
-event sweep described below.
+Across the full 851-type Episode 1 table this retains 371 manual references, proposes 13 additional surface and 39 additional air types, and leaves 428 review-only.
+68 trusted references sit in mixed-label near families and are retained as overrides but quarantined from family propagation.
 
-## Episodes 2-4 and unedited levels
+Manual samples by save:
 
-Enemy type ids are episode-local. ABI v27 exports the active episode with each
-snapshot, and `godot/height_semantics.json` keeps separate type maps. The
-cross-episode pass accepts only a complete static-data signature match to a
-validated Episode 1 placement. It may then make one non-recursive local family
-hop under the same strict threshold:
+- level 1, asteroids, SAVARA start: 69
+- later Episode 1 editor session: 63
+- verified Episode 1 through WINDY: 356
 
-| Episode | Stable classified | Stable review | Dynamic graphics classified / observed |
-|---|---:|---:|---:|
-| 1 | 275 | 576 | 0 / 0 |
-| 2 | 241 | 610 | 10 / 50 |
-| 3 | 307 | 544 | 3 / 47 |
-| 4 | 294 | 557 | 0 / 11 |
+Disagreements requiring a retained override:
 
-Episodes 2 and 3 have identical static enemy tables to Episode 1. Episode 4
-changes 378 of 851 same-index definitions, so only exact/family-supported
-placements transfer. Episode 5 is not present in this Tyrian data build.
+- Type 15: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 20: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 23: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 66: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 67: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 68: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 69: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 70: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 71: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 72: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 73: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 74: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 75: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 76: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 77: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 78: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 79: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 166: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 167: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 228: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 229: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 230: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 231: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 232: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 233: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 234: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 235: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 237: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 238: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 239: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 240: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 241: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 242: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 243: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 244: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 394: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 395: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 396: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 400: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 401: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 402: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 403: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 404: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 405: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 406: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 407: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 408: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 409: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 410: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 411: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 440: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 441: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 442: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 443: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 450: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 451: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 452: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 453: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 459: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 464: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 465: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 466: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 467: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 475: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 546: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 547: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 548: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 549: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 552: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 553: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 555: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 568: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 569: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 570: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 571: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 572: manual `air`, automatic `surface` (verified Episode 1 through WINDY)
+- Type 577: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 590: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 593: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
+- Type 824: manual `surface`, automatic `air` (verified Episode 1 through WINDY)
 
-## Complete level-event sweep
+High-confidence family-classifier misses:
 
-The event scanner reads every event in all 62 playable episode/section/level
-records, including secret and conditionally selected levels: 53,338 events in
-total. It observes 1,424 stable episode-local enemy types. A further 1,775
-custom spawns construct temporary type-zero definitions from 108 episode-local
-graphic ids.
+- None
 
-Tyrian's event names are not semantic height labels. `Ground Enemy`, `Sky
-Enemy`, and `Top Enemy` select legacy scrolling/draw slots. Treating the first
-two names as surface/air classifications agrees with only 69 of 97 covered
-manual Episode 1 placements (71.1%). The generated map therefore does not use
-that tempting but unsafe rule. It accepts two narrower intersections checked
-against every applicable manual reference: top-only types are air (16/16), and
-direct-air evidence must also carry the static enemy-data air bit. These rules
-add coverage without treating an event channel name as sufficient evidence.
+Stacked-component policy:
 
-One event relationship is reliable: multiple types spawned on the same tick
-with the same nonzero link id are components of one authored assembly.
-Leave-one-out comparison covers 88 manual placements and agrees on all 88.
-The generator uses this relationship for one non-recursive pass, only where
-all existing seeds agree; reused, contradictory, single-component, and
-unseeded links remain review-only. This adds 22 Episode 1 and 14 Episode 3
-component types without turning event-channel names into guessed heights.
+- A nonzero native link number defines an assembly for the current tick.
+- If any component is authored as ground, the whole assembly uses one topmost sampled surface, preventing tank bodies and turrets from splitting.
+- Low explicit component heights are treated as offsets from that shared surface, preserving the hand-authored stack. High explicit heights remain flying exceptions.
+- Unlinked flying enemies remain at their authored/default air height.
 
-Dynamic events 49-52 retain their base graphic on each live instance. ABI v27
-exports that graphic as a semantic-only high-bit key. The generator classifies
-it only when every event-band use agrees and every validated stable type using
-the exact same art agrees with that class. This resolves 13 of 108 observed
-dynamic graphics; conflicting or reused art remains on its runtime band and is
-never written as an editor type.
-
-Run the reproducible, non-destructive audit with:
-
-```powershell
-python tools/analyze_height_semantics.py
-python tools/analyze_height_semantics.py --csv artifacts/height-semantics.csv
-python tools/sweep_height_events.py
-python tools/generate_height_semantics.py --write
-```
-
-## Runtime placement
-
-- A surface-class instance samples the terrain or aerial-platform art beneath
-  it. The type says what an object is; the current map position says which
-  surface it belongs to.
-- Explicit numeric heights remain manual refinements and exceptions. Low
-  explicit heights on grounded assemblies are offsets from the shared surface;
-  high explicit heights stay absolute flying placements.
-- A nonzero native link number identifies a stacked assembly for the tick. If
-  it is grounded, all components use one topmost sampled surface, while their
-  individual offsets preserve the stack. This prevents tank-boss bodies and
-  turrets from splitting when different components overlap different map art.
-- Clouds are geometrically capped below the platform plane and render before
-  platform material. Level 1's cloud layer therefore cannot cross its aerial
-  platform layer.
-
-The generator does not rewrite the hand-authored Episode 1 fine-height table.
-Low-confidence and contradictory families remain unclassified for manual
-review and fall back to their runtime draw band.
+The audit is intentionally non-destructive; it does not rewrite `godot/hover_heights.json`.

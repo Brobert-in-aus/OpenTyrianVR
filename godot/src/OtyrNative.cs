@@ -11,7 +11,15 @@ namespace OpenTyrianVR;
 /// </summary>
 public static unsafe class OtyrNative
 {
-    public const uint AbiVersion = 27;
+    public const uint AbiVersion = 30;
+
+    [Flags]
+    public enum DebugFlags : byte
+    {
+        None = 0,
+        Enable = 1 << 0,
+        Invulnerable = 1 << 1,
+    }
 
     [Flags]
     public enum Effects : byte
@@ -130,7 +138,7 @@ public static unsafe class OtyrNative
         public byte OverMode;    // draw position relative to entities (v10): layer 1
                                  // (background2over): 0/3 under ground enemies, 1 over
                                  // them; layer 2 (background3over): 0 over sky, 2 under
-        public byte Reserved;
+        public byte ScrollRateRatio; // high nibble pixels / low nibble ticks
         public uint Hash;        // only filled under ConfigFlags.BackgroundHashes
     }
 
@@ -278,6 +286,9 @@ public static unsafe class OtyrNative
         public ushort DebugSection;  // nonzero: jump the episode script to
                                      // this section (editor level select;
                                      // native ignores without OTYR_INVULN) (v18)
+        public DebugFlags DebugMode; // runtime debug-menu authorization/state (v30)
+        public byte DebugEpisode;    // 1..4 with DebugSection; 0 = current (v30)
+        public ushort Reserved;
 
         public static InputFrame Create(Buttons buttons) => new()
         {
@@ -354,6 +365,12 @@ public static unsafe class OtyrNative
 
     [DllImport(Dll, EntryPoint = "otyr_session_submit_input")]
     public static extern int SubmitInput(ulong session, in InputFrame input, uint inputSize);
+
+    [DllImport(Dll, EntryPoint = "otyr_session_set_playback_rate")]
+    public static extern int SetPlaybackRate(ulong session, uint rateTenths);
+
+    [DllImport(Dll, EntryPoint = "otyr_session_set_editor_suspended")]
+    public static extern int SetEditorSuspended(ulong session, byte suspended);
 
     [DllImport(Dll, EntryPoint = "otyr_session_acquire_frame")]
     public static extern int AcquireFrame(ulong session, Frame* frame, uint frameSize, uint timeoutMs);

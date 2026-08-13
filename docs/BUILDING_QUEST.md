@@ -60,8 +60,8 @@ head-motion distortion. A sustained 0.1.5 pass validated pause/resume,
 in-game-menu transitions, platform-rider stability, 4x MSAA, and ample
 performance headroom; review-marker halos are editor-only.
 
-Version 0.1.26 (code 27) is the current validation build. It requests 90 Hz,
-renders continuous mirrored terrain side lanes from -24..288 while retaining
+Version 0.1.27 (code 28) is the current validation build. It requests 90 Hz,
+renders the actual terrain side lanes from -24..288 while retaining
 the ship-safe -25..288 sprite envelope, keeps the
 vertical crop at 0..184, render-interpolates all terrain layers, stabilizes
 linked composite enemies across authored transparent gaps, and keeps known
@@ -101,6 +101,12 @@ The in-headset checklist is the authoritative pass/fail gate:
 - music and sound effects play at the headset volume;
 - motion remains smooth at the selected 90 Hz refresh rate.
 
+The in-headset debug menu opens and closes by pressing both stick buttons
+together. Use the right stick to choose a row or change the selected episode
+and level, A to activate, and B to close. It can warp directly to any playable
+level, toggle invulnerability, kill current hostiles, or skip the current
+level. F1, arrow keys, Enter, and Escape provide equivalent desktop controls.
+
 The check control cycles each entry through pass, fail, and unchecked; the
 navigation control advances separately. Unchecked therefore means untested,
 not failed. Quest automation remains install-and-report only: do not launch the
@@ -110,6 +116,9 @@ The 0.1.23 sweep also keeps the darkness/searchlight effect aligned with the
 ship-safe -25..288 sprite crop and corrects SDL's input/output device direction
 for Android route changes. Editor and regression launchers force dummy/muted
 audio and restore their caller's directory and environment when they finish.
+The current darkness pass is a late translucent mask rather than a screen-copy
+filter; this keeps transparent terrain visible, and the regression includes a
+darkness-only capture that rejects an effectively black playfield.
 
 Version 0.1.24 normalizes snapshot-arrival timing by the actual native tick
 gap, so the one-off shader compilation when floating platforms first appear
@@ -124,9 +133,15 @@ authored height offsets and all surface/tank assemblies.
 
 Version 0.1.26 corrects the actual zero-link six-part boss (types 468-473) by
 carrying a presentation-only same-event spawn cohort, restores side terrain as
-one -24..288 quad with mirrored edge-continuous backing, and uses a fixed 35 Hz
+one -24..288 quad with the uncropped map backing, and uses a fixed 35 Hz
 interpolation clock. Explicit depth/transparent ordering puts ground objects
 behind clouds and key-6 objects below platforms; type 559 moves to the new
 key-7 platform class while 66-79 remain platform-under. Map shadows now sample
 off-screen caster pixels into the visible top edge. The proud keyed lane keeps
 PAUSED text and boss HP primitives above all terrain geometry.
+
+Version 0.1.27 adds the in-headset level-warp/debug menu and runtime-authorized
+invulnerability, hostile-kill, and level-skip controls. Layer-1 covers that
+paint over the ground in the native renderer now occlude the ground entity
+bands per pixel in the 3D presentation, retaining entities through transparent
+parts of ALE, TIME WAR, and other maps using the same authored paint mode.

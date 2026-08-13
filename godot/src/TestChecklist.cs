@@ -21,12 +21,14 @@ public partial class TestChecklist : Node3D
         "LAYERING: ground objects stay behind clouds; layer 6 below and layer 7 on platforms",
         "TANK BOSS: linked body/turret stack stays together at correct offsets",
         "E2-E4: no Episode-1 height leakage; classified objects use right planes",
+        "OVERLAY COVERS: ALE/TIME WAR layers occlude ground entities per pixel",
         "CAST SHADOWS: visible from top edge before their off-screen caster enters",
         "SHADOW LAYERS: shadows land on the intended surface without floating over holes",
         "EFFECTS: storm/flip/lava/iced/blur/searchlight stay stereo-correct 3D",
         "LIFECYCLE UI: pause text and boss HP bar stay above platforms; all screens readable",
         "AUDIO: music and sound effects play at the headset volume",
         "90 HZ: motion stays smooth without recurring judder",
+        "DEBUG MENU: both stick clicks opens; warp, invulnerability, kill and skip work",
     };
 
     private enum Result : byte { Unchecked, Pass, Fail }

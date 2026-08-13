@@ -36,6 +36,8 @@ extern const JE_word fxPlayVol;
 extern JE_word tempVolume;
 
 void setFrameSpeed(Uint16 speed);
+/* Hosted editor pacing. 10 = normal speed; values are tenths of normal. */
+void setHostedPlaybackRate(Uint16 rate_tenths);
 void setFrameCount(JE_word frameCount);
 void setFrameCount2(JE_word frameCount2);
 Uint32 getFrameCountTicks(void);

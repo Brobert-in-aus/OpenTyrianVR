@@ -45,9 +45,10 @@ JE_word tempVolume;
 // decremented `frameCount`.
 
 static Uint16 frameSpeed = 0x4300;
+static Uint16 hostedPlaybackRateTenths = 10;
 
 // Fixed point UQ6.10 in milliseconds.
-static Uint16 framePeriod = ((Uint64)0x4300 << 10) * 1000 * 88 * 3 / 315000000;
+static Sint32 framePeriod = ((Uint64)0x4300 << 10) * 1000 * 88 * 3 / 315000000;
 
 // Fixed point UQ22.10 in milliseconds.
 static Uint32 frameCountEnd = 0;
@@ -56,10 +57,29 @@ static Uint32 frameCount2End = 0;
 void setFrameSpeed(Uint16 speed)  // FKA NortSong.speed and NortSong.setTimerInt
 {
 	frameSpeed = speed;
-	framePeriod = ((Uint64)speed << 10) * 1000 * 88 * 3 / 315000000;
+	framePeriod = (Sint32)(((Uint64)speed << 10) * 1000 * 88 * 3 * 10 /
+	                       ((Uint64)315000000 * hostedPlaybackRateTenths));
 
 	Uint32 now = SDL_GetTicks() << 10;
 	frameCountEnd = now;
+}
+
+void setHostedPlaybackRate(Uint16 rate_tenths)
+{
+	if (rate_tenths < 1)
+		rate_tenths = 1;
+	if (rate_tenths > 100)
+		rate_tenths = 100;
+	hostedPlaybackRateTenths = rate_tenths;
+	framePeriod = (Sint32)(((Uint64)frameSpeed << 10) * 1000 * 88 * 3 * 10 /
+	                       ((Uint64)315000000 * hostedPlaybackRateTenths));
+
+	/* A rate change starts a fresh pacing interval. Keeping an old deadline
+	 * can otherwise cause one long stall when slowing down, or a catch-up
+	 * burst when speeding up. */
+	Uint32 now = SDL_GetTicks() << 10;
+	frameCountEnd = now;
+	frameCount2End = now;
 }
 
 void setFrameCount(JE_word frameCount)  // FKA NortSong.frameCount
