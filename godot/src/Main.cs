@@ -82,6 +82,12 @@ public partial class Main : Node3D
     private Node3D _controlRect = null!;
     private MeshInstance3D _handMarker = null!;
     private MeshInstance3D _targetReticle = null!;
+    private StandardMaterial3D _controlRectMaterial = null!;
+    private StandardMaterial3D _handMarkerMaterial = null!;
+    private StandardMaterial3D _targetReticleMaterial = null!;
+    private FirstRunTutorial _tutorial = null!;
+    private bool _suppressTutorialMenuUntilReleased;
+    private bool _suppressTutorialCancelUntilReleased;
     private TestChecklist _checklist = null!;
     private DebugMenu _debugMenu = null!;
     private bool _lastCheckPressed, _lastSkipPressed;
@@ -402,6 +408,14 @@ public partial class Main : Node3D
 
         BuildHandSteering();
 
+        _tutorial = new FirstRunTutorial
+        {
+            Name = "FirstRunTutorial",
+            Position = new Vector3(0f, 1.43f, -0.72f),
+            RotationDegrees = new Vector3(-12f, 0f, 0f),
+        };
+        AddChild(_tutorial);
+
         _snapshotLayer = new SnapshotLayer { Name = "SnapshotLayer", EnableBackground = Render3DBackground };
         _flipRoot.AddChild(_snapshotLayer);
         _presentationEffects = new PresentationEffects();
@@ -491,44 +505,54 @@ public partial class Main : Node3D
         _controlRect.RotationDegrees = new Vector3(-42f, 0f, 0f);
         AddChild(_controlRect);
 
+        _controlRectMaterial = new StandardMaterial3D
+        {
+            AlbedoColor = new Color(0.3f, 0.6f, 1.0f, 0.08f),
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+            NoDepthTest = true,
+            RenderPriority = 100,
+        };
         var rectVisual = new MeshInstance3D
         {
             Name = "Bounds",
             Mesh = new QuadMesh { Size = new Vector2(ControlRectWidth, ControlRectHeight) },
-            MaterialOverride = new StandardMaterial3D
-            {
-                AlbedoColor = new Color(0.3f, 0.6f, 1.0f, 0.08f),
-                Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
-                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-                CullMode = BaseMaterial3D.CullModeEnum.Disabled,
-            },
+            MaterialOverride = _controlRectMaterial,
         };
         _controlRect.AddChild(rectVisual);
 
+        _handMarkerMaterial = new StandardMaterial3D
+        {
+            AlbedoColor = new Color(0.2f, 0.5f, 1.0f),
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            NoDepthTest = true,
+            RenderPriority = 101,
+        };
         _handMarker = new MeshInstance3D
         {
             Name = "HandMarker",
             Mesh = new SphereMesh { Radius = 0.012f, Height = 0.024f },
-            MaterialOverride = new StandardMaterial3D
-            {
-                AlbedoColor = new Color(0.2f, 0.5f, 1.0f),
-                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-            },
+            MaterialOverride = _handMarkerMaterial,
         };
         _controlRect.AddChild(_handMarker);
 
         // Where the ship is being told to go, shown on the lane itself.
+        _targetReticleMaterial = new StandardMaterial3D
+        {
+            AlbedoColor = new Color(0.2f, 0.8f, 1.0f, 0.65f),
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            NoDepthTest = true,
+            RenderPriority = 102,
+        };
         _targetReticle = new MeshInstance3D
         {
             Name = "TargetReticle",
             Mesh = new QuadMesh { Size = new Vector2(0.025f, 0.025f) },
             Position = new Vector3(0f, 0f, 0.006f),
-            MaterialOverride = new StandardMaterial3D
-            {
-                AlbedoColor = new Color(0.2f, 0.8f, 1.0f, 0.65f),
-                Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
-                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-            },
+            MaterialOverride = _targetReticleMaterial,
         };
         _flipRoot.AddChild(_targetReticle);  // mirrors with the play content
 
@@ -1161,6 +1185,7 @@ public partial class Main : Node3D
                 EditorJumpLevel(-1);
         }
         UpdateDebugAndChecklistInput();
+        UpdateFirstRunTutorial(delta);
         SubmitInput();
         UpdateDiagnostics(delta);
         RecordPerformance(hostWorkStartUsec, delta);
@@ -1680,6 +1705,29 @@ public partial class Main : Node3D
         _inGameplay = _lastLevelTickMs != 0 && now - _lastLevelTickMs < 250;
     }
 
+    private void UpdateFirstRunTutorial(double delta)
+    {
+        bool tracking = _xrActive && _leftHand != null && _leftHand.GetHasTrackingData();
+        bool menu = _xrActive && _leftHand != null && _leftHand.IsButtonPressed("menu_button");
+        bool cancel = _xrActive && _rightHand != null && _rightHand.IsButtonPressed("by_button");
+        bool mainWeapon = _xrActive && _leftHand != null && _rightHand != null &&
+            Math.Max(_rightHand.GetFloat("trigger"), _leftHand.GetFloat("trigger")) > 0.55f;
+        bool secondaryWeapon = _xrActive && _leftHand != null && _rightHand != null &&
+            Math.Max(_rightHand.GetFloat("grip"), _leftHand.GetFloat("grip")) > 0.6f;
+        Vector3 handLocal = tracking ? _controlRect.ToLocal(_leftHand!.GlobalPosition) : Vector3.Zero;
+
+        _tutorial.Update(delta, _xrActive, _inGameplay, tracking, menu, cancel,
+                         handLocal, mainWeapon, secondaryWeapon);
+        if (_tutorial.ConsumeMenuThisFrame)
+            _suppressTutorialMenuUntilReleased = true;
+        if (_tutorial.ConsumeCancelThisFrame)
+            _suppressTutorialCancelUntilReleased = true;
+        if (!menu)
+            _suppressTutorialMenuUntilReleased = false;
+        if (!cancel)
+            _suppressTutorialCancelUntilReleased = false;
+    }
+
     private unsafe void PollFrame()
     {
         int rc;
@@ -1837,14 +1885,16 @@ public partial class Main : Node3D
             if (_leftHand.GetFloat("grip") > 0.6f) buttons |= OtyrNative.Buttons.LeftSidekick;
 
             if (_rightHand.IsButtonPressed("ax_button")) buttons |= OtyrNative.Buttons.UiConfirm;
-            if (_rightHand.IsButtonPressed("by_button")) buttons |= OtyrNative.Buttons.UiCancel;
+            if (_rightHand.IsButtonPressed("by_button") && !_suppressTutorialCancelUntilReleased)
+                buttons |= OtyrNative.Buttons.UiCancel;
             if (_leftHand.IsButtonPressed("ax_button")) buttons |= OtyrNative.Buttons.UiSpace;
             if (_leftHand.IsButtonPressed("by_button")) buttons |= OtyrNative.Buttons.ChangeFire;
 
             // Left menu button: recenter, and pause the game.
             if (_leftHand.IsButtonPressed("menu_button"))
             {
-                buttons |= OtyrNative.Buttons.UiPause;
+                if (!_suppressTutorialMenuUntilReleased)
+                    buttons |= OtyrNative.Buttons.UiPause;
                 XRServer.CenterOnHmd(XRServer.RotationMode.ResetButKeepTilt, true);
                 _xrStereoLogCountdown = 2;
             }
@@ -1912,12 +1962,22 @@ public partial class Main : Node3D
     /// </summary>
     private void HandSteering()
     {
-        // The rectangle stays visible whenever the hand tracks (TODO in plan:
-        // user setting to hide it or fade it out after level start); the lane
-        // reticle and steering only engage during gameplay.
+        // Steering remains active for the whole level, but its teaching aids
+        // fade from 8 to 10 seconds of simulation time. The first-run coach
+        // holds them visible until its controls lesson is complete.
         bool tracking = _leftHand != null && _leftHand.GetHasTrackingData();
-        _controlRect.Visible = tracking;
-        _targetReticle.Visible = tracking && _inGameplay;
+        const float fadeStartTick = 8f * 35f;
+        const float fadeEndTick = 10f * 35f;
+        float guideAlpha = !_inGameplay ? 0f :
+            Mathf.Clamp((fadeEndTick - _frame.LevelTick) / (fadeEndTick - fadeStartTick), 0f, 1f);
+        if (_tutorial.NeedsHandGuide)
+            guideAlpha = 1f;
+        bool showGuide = tracking && _inGameplay && guideAlpha > 0.005f;
+        _controlRect.Visible = showGuide;
+        _targetReticle.Visible = showGuide;
+        _controlRectMaterial.AlbedoColor = new Color(0.3f, 0.6f, 1.0f, 0.08f * guideAlpha);
+        _handMarkerMaterial.AlbedoColor = new Color(0.2f, 0.5f, 1.0f, guideAlpha);
+        _targetReticleMaterial.AlbedoColor = new Color(0.2f, 0.8f, 1.0f, 0.65f * guideAlpha);
         _handTargetActive = false;
         if (!tracking)
             return;

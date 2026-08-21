@@ -27,7 +27,13 @@ Compare the package against its adjacent `.sha256` file before installing.
 
 ## Controls
 
+- On the first playable level, a four-step in-headset tutorial teaches
+  recentering, hand steering, main fire, and sidekick fire. Right B skips it;
+  completion is remembered. Set `OTYR_TUTORIAL=1` before a PCVR launch to
+  replay it for testing.
 - Move the left hand inside the floating blue rectangle to steer directly.
+  The rectangle, hand marker, and lane reticle fade between 8 and 10 seconds
+  into each level; hand steering remains active after they disappear.
 - Either thumbstick also moves the ship.
 - Either trigger fires.
 - Left and right grip activate the corresponding sidekick.
