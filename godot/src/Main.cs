@@ -86,8 +86,7 @@ public partial class Main : Node3D
     private StandardMaterial3D _handMarkerMaterial = null!;
     private StandardMaterial3D _targetReticleMaterial = null!;
     private FirstRunTutorial _tutorial = null!;
-    private bool _suppressTutorialMenuUntilReleased;
-    private bool _suppressTutorialCancelUntilReleased;
+    private bool _tutorialGateActive;
     private TestChecklist _checklist = null!;
     private DebugMenu _debugMenu = null!;
     private bool _lastCheckPressed, _lastSkipPressed;
@@ -141,7 +140,9 @@ public partial class Main : Node3D
         MoveWindowToSideMonitor();
         InitXr();
         BuildScene();
-        StartGame();
+        _tutorialGateActive = _tutorial.Begin(_xrActive);
+        if (!_tutorialGateActive)
+            StartGame();
     }
 
     // Park the desktop window on the rightmost monitor (the tester's side
@@ -411,8 +412,6 @@ public partial class Main : Node3D
         _tutorial = new FirstRunTutorial
         {
             Name = "FirstRunTutorial",
-            Position = new Vector3(0f, 1.43f, -0.72f),
-            RotationDegrees = new Vector3(-12f, 0f, 0f),
         };
         AddChild(_tutorial);
 
@@ -1073,6 +1072,12 @@ public partial class Main : Node3D
         if (_xrStereoLogCountdown > 0 && --_xrStereoLogCountdown == 0)
             LogXrStereo("recentered");
 
+        if (_tutorialGateActive)
+        {
+            UpdatePreGameTutorial(delta);
+            return;
+        }
+
         if (!_sessionLive)
             return;
 
@@ -1185,7 +1190,6 @@ public partial class Main : Node3D
                 EditorJumpLevel(-1);
         }
         UpdateDebugAndChecklistInput();
-        UpdateFirstRunTutorial(delta);
         SubmitInput();
         UpdateDiagnostics(delta);
         RecordPerformance(hostWorkStartUsec, delta);
@@ -1705,27 +1709,45 @@ public partial class Main : Node3D
         _inGameplay = _lastLevelTickMs != 0 && now - _lastLevelTickMs < 250;
     }
 
-    private void UpdateFirstRunTutorial(double delta)
+    private void UpdatePreGameTutorial(double delta)
     {
-        bool tracking = _xrActive && _leftHand != null && _leftHand.GetHasTrackingData();
-        bool menu = _xrActive && _leftHand != null && _leftHand.IsButtonPressed("menu_button");
-        bool cancel = _xrActive && _rightHand != null && _rightHand.IsButtonPressed("by_button");
-        bool mainWeapon = _xrActive && _leftHand != null && _rightHand != null &&
-            Math.Max(_rightHand.GetFloat("trigger"), _leftHand.GetFloat("trigger")) > 0.55f;
-        bool secondaryWeapon = _xrActive && _leftHand != null && _rightHand != null &&
-            Math.Max(_rightHand.GetFloat("grip"), _leftHand.GetFloat("grip")) > 0.6f;
-        Vector3 handLocal = tracking ? _controlRect.ToLocal(_leftHand!.GlobalPosition) : Vector3.Zero;
+        bool leftTracking = _leftHand != null && _leftHand.GetHasTrackingData();
+        bool rightTracking = _rightHand != null && _rightHand.GetHasTrackingData();
+        bool menu = leftTracking && _leftHand!.IsButtonPressed("menu_button");
+        if (menu)
+        {
+            XRServer.CenterOnHmd(XRServer.RotationMode.ResetButKeepTilt, true);
+            _xrStereoLogCountdown = 2;
+        }
 
-        _tutorial.Update(delta, _xrActive, _inGameplay, tracking, menu, cancel,
-                         handLocal, mainWeapon, secondaryWeapon);
-        if (_tutorial.ConsumeMenuThisFrame)
-            _suppressTutorialMenuUntilReleased = true;
-        if (_tutorial.ConsumeCancelThisFrame)
-            _suppressTutorialCancelUntilReleased = true;
-        if (!menu)
-            _suppressTutorialMenuUntilReleased = false;
-        if (!cancel)
-            _suppressTutorialCancelUntilReleased = false;
+        Vector3 handLocal = leftTracking
+            ? _controlRect.ToLocal(_leftHand!.GlobalPosition) : Vector3.Zero;
+        var handNormalized = new Vector2(
+            Mathf.Clamp(handLocal.X / (ControlRectWidth * 0.5f), -1f, 1f),
+            Mathf.Clamp(handLocal.Y / (ControlRectHeight * 0.5f), -1f, 1f));
+
+        bool showGuide = _tutorial.NeedsHandGuide && leftTracking;
+        _controlRect.Visible = showGuide;
+        _targetReticle.Visible = false;
+        if (showGuide)
+        {
+            float lx = handNormalized.X * ControlRectWidth * 0.5f;
+            float ly = handNormalized.Y * ControlRectHeight * 0.5f;
+            _handMarker.Position = new Vector3(lx, ly, 0.002f);
+            _controlRectMaterial.AlbedoColor = new Color(0.3f, 0.6f, 1f, 0.12f);
+            _handMarkerMaterial.AlbedoColor = new Color(0.2f, 0.65f, 1f, 1f);
+        }
+
+        FirstRunTutorial.Result result = _tutorial.UpdatePreGame(
+            delta, _leftHand, leftTracking, _rightHand, rightTracking,
+            handNormalized, menu);
+        if (result == FirstRunTutorial.Result.LaunchGame)
+        {
+            _tutorialGateActive = false;
+            _controlRect.Visible = false;
+            _tutorial.Visible = false;
+            StartGame();
+        }
     }
 
     private unsafe void PollFrame()
@@ -1885,7 +1907,7 @@ public partial class Main : Node3D
             if (_leftHand.GetFloat("grip") > 0.6f) buttons |= OtyrNative.Buttons.LeftSidekick;
 
             if (_rightHand.IsButtonPressed("ax_button")) buttons |= OtyrNative.Buttons.UiConfirm;
-            if (_rightHand.IsButtonPressed("by_button") && !_suppressTutorialCancelUntilReleased)
+            if (_rightHand.IsButtonPressed("by_button"))
                 buttons |= OtyrNative.Buttons.UiCancel;
             if (_leftHand.IsButtonPressed("ax_button")) buttons |= OtyrNative.Buttons.UiSpace;
             if (_leftHand.IsButtonPressed("by_button")) buttons |= OtyrNative.Buttons.ChangeFire;
@@ -1893,8 +1915,7 @@ public partial class Main : Node3D
             // Left menu button: recenter, and pause the game.
             if (_leftHand.IsButtonPressed("menu_button"))
             {
-                if (!_suppressTutorialMenuUntilReleased)
-                    buttons |= OtyrNative.Buttons.UiPause;
+                buttons |= OtyrNative.Buttons.UiPause;
                 XRServer.CenterOnHmd(XRServer.RotationMode.ResetButKeepTilt, true);
                 _xrStereoLogCountdown = 2;
             }

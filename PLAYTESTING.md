@@ -27,10 +27,15 @@ Compare the package against its adjacent `.sha256` file before installing.
 
 ## Controls
 
-- On the first playable level, a four-step in-headset tutorial teaches
-  recentering, hand steering, main fire, and sidekick fire. Right B skips it;
-  completion is remembered. Set `OTYR_TUTORIAL=1` before a PCVR launch to
-  replay it for testing.
+- Before the game starts for the first time, an in-headset menu explains the
+  training and how to recenter. Point either controller laser at **Start
+  Tutorial** or **Skip**, then squeeze that controller's trigger. Completion or
+  skipping is remembered. Set `OTYR_TUTORIAL=1` before a PCVR launch to replay
+  it for testing.
+- Training runs in a safe practice scene. Move the left hand to all four corners
+  of the blue rectangle, then demonstrate main fire, sidekick fire, and collect
+  the falling gold item. A missed item respawns from the top until collected;
+  sleeping controller tracking pauses progression rather than failing the step.
 - Move the left hand inside the floating blue rectangle to steer directly.
   The rectangle, hand marker, and lane reticle fade between 8 and 10 seconds
   into each level; hand steering remains active after they disappear.

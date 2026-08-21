@@ -25,8 +25,11 @@ and bug-report information.
 
 - Full campaign and original game rules/timing.
 - Direct left-hand steering plus thumbstick controls.
-- Brief first-run tutorial for recentering, movement, main fire, and sidekick
-  fire; steering aids fade after ten seconds without disabling hand control.
+- A first-run laser-pointer menu appears before the game starts, with recenter
+  guidance and Start/Skip choices. Its safe practice level verifies full-range
+  hand movement, main fire, sidekick fire, and item collection; missed practice
+  pickups keep respawning. Steering aids fade after ten seconds in normal play
+  without disabling hand control.
 - Stereoscopic terrain, enemies, shots, platforms, clouds, and shadows.
 - Stereo-safe storm, flip, lava, blur, ice, and searchlight effects.
 - Working audio, pause/recenter, saves, menus, story, death, and end-level flows.

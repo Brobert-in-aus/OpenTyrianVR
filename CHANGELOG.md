@@ -13,7 +13,9 @@ First public playtest candidate.
   effects.
 - Left-hand direct steering, conventional thumbstick controls, OpenXR recenter,
   music, sound effects, pause, menus, saves, and lifecycle screens.
-- First-run in-headset controls tutorial plus per-level fading steering aids.
+- Pre-game first-run menu with controller lasers, recenter guidance, and an
+  interactive practice level covering full-range hand steering, main/sidekick
+  fire, and retry-until-collected pickups; per-level steering aids still fade.
 - Standalone Meta Quest 2/3/3S/Pro package and Windows x64 PCVR package.
 - Legacy-frame fallback for menus, cinematics, and unknown presentation effects.
 

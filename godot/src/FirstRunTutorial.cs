@@ -1,171 +1,381 @@
 using Godot;
 using System;
+using System.Collections.Generic;
 
 namespace OpenTyrianVR;
 
-/// <summary>A small, non-blocking first-run coach. It teaches one control at
-/// a time in the first playable level and persists completion in user://.</summary>
+/// <summary>First-run onboarding that runs before the native game session.
+/// It owns a frozen practice scene, controller-ray menu, demonstrated control
+/// steps, and a retry-until-collected pickup.</summary>
 public partial class FirstRunTutorial : Node3D
 {
-    private enum Step { Recenter, Move, MainWeapon, SecondaryWeapon, Complete }
+    public enum Result { Continue, LaunchGame }
+    private enum Step { Intro, Corners, MainWeapon, SecondaryWeapon, Pickup, Complete }
+    private const string CompletionPath = "user://first_run_tutorial_v2.complete";
+    private const float TriggerThreshold = 0.55f, GripThreshold = 0.60f;
 
-    private const string CompletionPath = "user://first_run_tutorial_v1.complete";
+    private sealed class RayButton
+    {
+        public required Vector2 Center, Size;
+        public required Label3D Label;
+        public required StandardMaterial3D Material;
+    }
+
     private Step _step;
-    private Label3D _label = null!;
-    private bool _started;
-    private bool _lastMenu;
-    private bool _lastCancel;
-    private bool _haveHandOrigin;
-    private Vector3 _handOrigin;
-    private double _successRemaining;
+    private Node3D _introPanel = null!, _popup = null!, _practiceBoard = null!;
+    private Label3D _introBody = null!, _popupText = null!;
+    private RayButton _startButton = null!, _skipButton = null!;
+    private MeshInstance3D _ship = null!, _pickup = null!, _laserVisual = null!;
+    private ImmediateMesh _laserMesh = null!;
+    private readonly List<(MeshInstance3D Mesh, Vector2 Velocity, double Life)> _shots = new();
+    private byte _corners;
+    private bool _lastLeftTrigger, _lastRightTrigger, _lastGrip, _lastMenu, _launchPending;
+    private double _completeDelay;
+    private int _pickupAttempt;
+    private Vector2 _playerPosition, _pickupPosition;
 
-    public bool Active => _started && _step != Step.Complete;
-    public bool NeedsHandGuide => Active;
-    public bool ConsumeMenuThisFrame { get; private set; }
-    public bool ConsumeCancelThisFrame { get; private set; }
+    public bool NeedsHandGuide => _step is Step.Corners or Step.MainWeapon or
+        Step.SecondaryWeapon or Step.Pickup;
 
     public override void _Ready()
     {
-        var backing = new StandardMaterial3D
-        {
-            AlbedoColor = new Color(0.015f, 0.025f, 0.06f, 0.92f),
-            Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
-            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-            NoDepthTest = true,
-            RenderPriority = 118,
-        };
-        AddChild(new MeshInstance3D
-        {
-            Name = "Backing",
-            Mesh = new QuadMesh { Size = new Vector2(0.70f, 0.20f) },
-            Position = new Vector3(0f, 0f, -0.002f),
-            MaterialOverride = backing,
-        });
-        _label = new Label3D
-        {
-            Name = "TutorialText",
-            PixelSize = 0.00065f,
-            FontSize = 34,
-            OutlineSize = 8,
-            HorizontalAlignment = HorizontalAlignment.Center,
-            VerticalAlignment = VerticalAlignment.Center,
-            Modulate = new Color(0.88f, 0.94f, 1f),
-            DoubleSided = true,
-            NoDepthTest = true,
-            RenderPriority = 119,
-        };
-        AddChild(_label);
+        BuildIntro();
+        BuildPracticeScene();
+        BuildLasers();
         Visible = false;
     }
 
-    public void Update(double delta, bool xrActive, bool inGameplay, bool tracking,
-                       bool menuPressed, bool cancelPressed, Vector3 handLocal,
-                       bool mainWeaponPressed, bool secondaryWeaponPressed)
+    /// <returns>True when startup must wait for onboarding.</returns>
+    public bool Begin(bool xrActive)
     {
-        ConsumeMenuThisFrame = false;
-        ConsumeCancelThisFrame = false;
-
         bool force = System.Environment.GetEnvironmentVariable("OTYR_TUTORIAL") == "1";
         bool disabled = System.Environment.GetEnvironmentVariable("OTYR_TUTORIAL") == "0";
-        if (!_started && xrActive && inGameplay && !disabled &&
-            (force || !Godot.FileAccess.FileExists(CompletionPath)))
-        {
-            _started = true;
-            _step = Step.Recenter;
-            Refresh(tracking);
-            GD.Print("OpenTyrianVR: first-run controls tutorial started");
-        }
-
-        if (!_started)
-            return;
-
-        bool menuEdge = menuPressed && !_lastMenu;
-        bool cancelEdge = cancelPressed && !_lastCancel;
-        _lastMenu = menuPressed;
-        _lastCancel = cancelPressed;
-
-        if (_step == Step.Complete)
-        {
-            _successRemaining -= delta;
-            Visible = _successRemaining > 0 && inGameplay;
-            return;
-        }
-
-        Visible = inGameplay;
-        if (!inGameplay)
-            return;
-
-        if (cancelEdge)
-        {
-            ConsumeCancelThisFrame = true;
-            Finish(skipped: true);
-            return;
-        }
-
-        switch (_step)
-        {
-            case Step.Recenter when menuEdge:
-                ConsumeMenuThisFrame = true;
-                Advance(Step.Move, tracking);
-                break;
-            case Step.Move:
-                if (!_haveHandOrigin && tracking)
-                {
-                    _handOrigin = handLocal;
-                    _haveHandOrigin = true;
-                }
-                else if (tracking && handLocal.DistanceTo(_handOrigin) >= 0.035f)
-                {
-                    Advance(Step.MainWeapon, tracking);
-                }
-                break;
-            case Step.MainWeapon when mainWeaponPressed:
-                Advance(Step.SecondaryWeapon, tracking);
-                break;
-            case Step.SecondaryWeapon when secondaryWeaponPressed:
-                Finish(skipped: false);
-                break;
-        }
-
-        Refresh(tracking);
+        if (!xrActive || disabled || (!force && Godot.FileAccess.FileExists(CompletionPath)))
+            return false;
+        _step = Step.Intro;
+        Visible = true;
+        _introPanel.Visible = true;
+        _popup.Visible = false;
+        _practiceBoard.Visible = false;
+        _laserVisual.Visible = true;
+        GD.Print("OpenTyrianVR: pre-game first-run tutorial menu opened");
+        return true;
     }
 
-    private void Advance(Step next, bool tracking)
+    public Result UpdatePreGame(double delta,
+        XRController3D? left, bool leftTracking, XRController3D? right, bool rightTracking,
+        Vector2 handNormalized, bool menuPressed)
     {
-        _step = next;
-        _haveHandOrigin = false;
-        Refresh(tracking);
-        GD.Print($"OpenTyrianVR: tutorial -> {_step}");
+        bool leftTrigger = leftTracking && left != null && left.GetFloat("trigger") > TriggerThreshold;
+        bool rightTrigger = rightTracking && right != null && right.GetFloat("trigger") > TriggerThreshold;
+        bool grip = (leftTracking && left != null && left.GetFloat("grip") > GripThreshold) ||
+                    (rightTracking && right != null && right.GetFloat("grip") > GripThreshold);
+        bool leftTriggerEdge = leftTrigger && !_lastLeftTrigger;
+        bool rightTriggerEdge = rightTrigger && !_lastRightTrigger;
+        bool triggerEdge = leftTriggerEdge || rightTriggerEdge;
+        bool gripEdge = grip && !_lastGrip;
+        bool menuEdge = menuPressed && !_lastMenu;
+        _lastLeftTrigger = leftTrigger;
+        _lastRightTrigger = rightTrigger;
+        _lastGrip = grip;
+        _lastMenu = menuPressed;
+
+        if (_step == Step.Intro)
+        {
+            UpdateLasers(left, leftTracking, right, rightTracking,
+                         out RayButton? leftHovered, out RayButton? rightHovered);
+            SetHover(_startButton, leftHovered == _startButton || rightHovered == _startButton);
+            SetHover(_skipButton, leftHovered == _skipButton || rightHovered == _skipButton);
+            if (menuEdge)
+                _introBody.Text = IntroCopy("View recentered. Point at a button and squeeze Trigger.");
+            RayButton? selected = leftTriggerEdge ? leftHovered :
+                                  rightTriggerEdge ? rightHovered : null;
+            if (selected == _startButton) StartPractice();
+            else if (selected == _skipButton) Finish(skipped: true);
+        }
+        else
+        {
+            _laserVisual.Visible = false;
+            UpdatePractice(delta, handNormalized, leftTracking, triggerEdge, gripEdge);
+        }
+
+        if (_launchPending && (_completeDelay -= delta) <= 0)
+        {
+            _launchPending = false;
+            return Result.LaunchGame;
+        }
+        return Result.Continue;
+    }
+
+    private void BuildIntro()
+    {
+        _introPanel = new Node3D
+        {
+            Name = "FirstRunMenu", Position = new Vector3(0f, 1.43f, -0.72f),
+            RotationDegrees = new Vector3(-8f, 0f, 0f),
+        };
+        AddChild(_introPanel);
+        _introPanel.AddChild(PanelQuad("Backing", new Vector2(0.82f, 0.50f),
+            new Color(0.012f, 0.022f, 0.055f, 0.97f), -0.004f, 110));
+        var title = MakeLabel("FIRST FLIGHT TRAINING", 42, new Vector3(0f, 0.175f, 0f));
+        title.Modulate = new Color(0.35f, 0.78f, 1f);
+        _introPanel.AddChild(title);
+        _introBody = MakeLabel(IntroCopy(""), 25, new Vector3(0f, 0.035f, 0f));
+        _introPanel.AddChild(_introBody);
+        _startButton = BuildButton("START TUTORIAL", new Vector2(-0.19f, -0.165f),
+            new Color(0.08f, 0.38f, 0.64f, 1f));
+        _skipButton = BuildButton("SKIP", new Vector2(0.19f, -0.165f),
+            new Color(0.16f, 0.19f, 0.25f, 1f));
+    }
+
+    private static string IntroCopy(string status) =>
+        "Learn hand steering, main and secondary fire,\nand collecting items in a safe practice level.\n\n" +
+        "If the view is off-centre: face forward, then\npress the LEFT controller Menu button to recenter.\n\n" +
+        (status.Length == 0 ? "Point either controller and squeeze Trigger to choose." : status);
+
+    private RayButton BuildButton(string text, Vector2 center, Color color)
+    {
+        var material = UiMaterial(color, 114);
+        _introPanel.AddChild(new MeshInstance3D
+        {
+            Name = text.Replace(" ", ""), Mesh = new QuadMesh { Size = new Vector2(0.30f, 0.075f) },
+            Position = new Vector3(center.X, center.Y, -0.001f), MaterialOverride = material,
+        });
+        var label = MakeLabel(text, 26, new Vector3(center.X, center.Y, 0.001f));
+        _introPanel.AddChild(label);
+        return new RayButton { Center = center, Size = new Vector2(0.30f, 0.075f), Label = label, Material = material };
+    }
+
+    private void BuildPracticeScene()
+    {
+        _popup = new Node3D
+        {
+            Name = "TutorialPopup", Position = new Vector3(0f, 1.28f, -0.52f),
+            RotationDegrees = new Vector3(-10f, 0f, 0f),
+        };
+        AddChild(_popup);
+        _popup.AddChild(PanelQuad("PopupBacking", new Vector2(0.72f, 0.19f),
+            new Color(0.012f, 0.025f, 0.065f, 0.96f), -0.003f, 116));
+        _popupText = MakeLabel("", 28, Vector3.Zero);
+        _popupText.RenderPriority = 117;
+        _popup.AddChild(_popupText);
+
+        _practiceBoard = new Node3D
+        {
+            Name = "TutorialLevel", Position = new Vector3(0f, 1.05f, -0.90f),
+            RotationDegrees = new Vector3(-42f, 0f, 0f),
+        };
+        AddChild(_practiceBoard);
+        _practiceBoard.AddChild(PanelQuad("PracticeSpace", new Vector2(0.66f, 0.42f),
+            new Color(0.025f, 0.055f, 0.10f, 1f), -0.010f, 104));
+        AddBoardLine(-0.31f); AddBoardLine(0.31f);
+        _ship = SpriteQuad("PracticeShip", new Vector2(0.048f, 0.052f), new Color(0.20f, 0.82f, 1f), 107);
+        _practiceBoard.AddChild(_ship);
+        _pickup = SpriteQuad("PracticePickup", new Vector2(0.038f, 0.038f), new Color(1f, 0.82f, 0.18f), 108);
+        _practiceBoard.AddChild(_pickup);
+        _practiceBoard.Visible = false;
+        _popup.Visible = false;
+    }
+
+    private void AddBoardLine(float x)
+    {
+        var line = new ImmediateMesh();
+        line.SurfaceBegin(Mesh.PrimitiveType.Lines, UiMaterial(new Color(0.12f, 0.35f, 0.52f), 105));
+        line.SurfaceAddVertex(new Vector3(x, -0.18f, 0f));
+        line.SurfaceAddVertex(new Vector3(x, 0.18f, 0f));
+        line.SurfaceEnd();
+        _practiceBoard.AddChild(new MeshInstance3D { Mesh = line });
+    }
+
+    private void BuildLasers()
+    {
+        _laserMesh = new ImmediateMesh();
+        _laserVisual = new MeshInstance3D { Name = "TutorialLasers", Mesh = _laserMesh };
+        AddChild(_laserVisual);
+    }
+
+    private void UpdateLasers(XRController3D? left, bool leftTracking,
+                              XRController3D? right, bool rightTracking,
+                              out RayButton? leftHovered, out RayButton? rightHovered)
+    {
+        _laserMesh.ClearSurfaces();
+        leftHovered = null;
+        rightHovered = null;
+        if (!leftTracking && !rightTracking)
+            return;
+        _laserMesh.SurfaceBegin(Mesh.PrimitiveType.Lines, UiMaterial(new Color(0.22f, 0.78f, 1f), 120));
+        DrawControllerRay(left, leftTracking, ref leftHovered);
+        DrawControllerRay(right, rightTracking, ref rightHovered);
+        _laserMesh.SurfaceEnd();
+    }
+
+    private void DrawControllerRay(XRController3D? controller, bool tracking, ref RayButton? hovered)
+    {
+        if (!tracking || controller == null) return;
+        Vector3 origin = controller.GlobalPosition;
+        Vector3 direction = -(controller.GlobalTransform.Basis.Z).Normalized();
+        Vector3 localOrigin = _introPanel.ToLocal(origin);
+        Vector3 localDirection = (_introPanel.GlobalTransform.Basis.Inverse() * direction).Normalized();
+        Vector3 end = origin + direction * 1.5f;
+        if (Mathf.Abs(localDirection.Z) > 0.0001f)
+        {
+            float t = -localOrigin.Z / localDirection.Z;
+            if (t > 0f && t < 2.5f)
+            {
+                Vector3 hit = localOrigin + localDirection * t;
+                end = _introPanel.ToGlobal(hit);
+                if (Contains(_startButton, hit.X, hit.Y)) hovered = _startButton;
+                else if (Contains(_skipButton, hit.X, hit.Y)) hovered = _skipButton;
+            }
+        }
+        _laserMesh.SurfaceAddVertex(ToLocal(origin));
+        _laserMesh.SurfaceAddVertex(ToLocal(end));
+    }
+
+    private static bool Contains(RayButton b, float x, float y) =>
+        Mathf.Abs(x - b.Center.X) <= b.Size.X * 0.5f && Mathf.Abs(y - b.Center.Y) <= b.Size.Y * 0.5f;
+
+    private static void SetHover(RayButton b, bool hover)
+    {
+        b.Material.EmissionEnabled = hover;
+        b.Material.Emission = new Color(0.25f, 0.72f, 1f);
+        b.Material.EmissionEnergyMultiplier = hover ? 1.4f : 0f;
+        b.Label.Modulate = hover ? Colors.White : new Color(0.86f, 0.92f, 1f);
+    }
+
+    private void StartPractice()
+    {
+        _step = Step.Corners;
+        _introPanel.Visible = false; _laserVisual.Visible = false;
+        _popup.Visible = true; _practiceBoard.Visible = true; _pickup.Visible = false;
+        _corners = 0;
+        RefreshPopup();
+        GD.Print("OpenTyrianVR: tutorial -> Corners");
+    }
+
+    private void UpdatePractice(double delta, Vector2 hand, bool tracking, bool triggerEdge, bool gripEdge)
+    {
+        _playerPosition = new Vector2(hand.X * 0.27f, hand.Y * 0.14f - 0.015f);
+        _ship.Position = new Vector3(_playerPosition.X, _playerPosition.Y, 0.004f);
+        UpdateShots(delta);
+        if (!tracking)
+        {
+            _popupText.Text = "WAKE YOUR LEFT CONTROLLER\nTraining resumes when hand tracking returns.";
+            return;
+        }
+        switch (_step)
+        {
+            case Step.Corners:
+                if (Mathf.Abs(hand.X) >= 0.78f && Mathf.Abs(hand.Y) >= 0.72f)
+                {
+                    int corner = (hand.X > 0 ? 1 : 0) | (hand.Y > 0 ? 2 : 0);
+                    byte before = _corners;
+                    _corners |= (byte)(1 << corner);
+                    if (_corners != before) RefreshPopup();
+                    if (_corners == 0x0f) Advance(Step.MainWeapon);
+                }
+                break;
+            case Step.MainWeapon when triggerEdge:
+                SpawnShot(_playerPosition, new Vector2(0f, 0.48f), new Color(0.35f, 0.9f, 1f));
+                Advance(Step.SecondaryWeapon);
+                break;
+            case Step.SecondaryWeapon when gripEdge:
+                SpawnShot(_playerPosition + new Vector2(-0.035f, 0f), new Vector2(-0.08f, 0.42f), new Color(1f, 0.45f, 0.20f));
+                SpawnShot(_playerPosition + new Vector2(0.035f, 0f), new Vector2(0.08f, 0.42f), new Color(1f, 0.45f, 0.20f));
+                Advance(Step.Pickup); RespawnPickup();
+                break;
+            case Step.Pickup:
+                _pickupPosition.Y -= (float)delta * 0.105f;
+                _pickup.Position = new Vector3(_pickupPosition.X, _pickupPosition.Y, 0.006f);
+                if (_pickupPosition.DistanceTo(_playerPosition) < 0.055f) Finish(skipped: false);
+                else if (_pickupPosition.Y < -0.19f) RespawnPickup();
+                break;
+        }
+    }
+
+    private void Advance(Step next) { _step = next; RefreshPopup(); GD.Print($"OpenTyrianVR: tutorial -> {_step}"); }
+
+    private void RefreshPopup() => _popupText.Text = _step switch
+    {
+        Step.Corners => $"1 / 4   HAND STEERING\nMove the blue hand marker to all four corners.   {BitCount(_corners)} / 4",
+        Step.MainWeapon => "2 / 4   MAIN WEAPON\nSqueeze either Trigger to fire.",
+        Step.SecondaryWeapon => "3 / 4   SECONDARY FIRE\nSqueeze either Grip to fire that sidekick.",
+        Step.Pickup => "4 / 4   COLLECT THE ITEM\nMove into the falling gold pickup. It retries until collected.",
+        Step.Complete => "TRAINING COMPLETE\nLaunching OpenTyrianVR…",
+        _ => _popupText.Text,
+    };
+
+    private static int BitCount(byte value)
+    {
+        int count = 0;
+        for (; value != 0; value >>= 1) count += value & 1;
+        return count;
+    }
+
+    private void RespawnPickup()
+    {
+        float[] lanes = { -0.19f, 0.17f, -0.06f, 0.08f, 0f };
+        _pickupPosition = new Vector2(lanes[_pickupAttempt++ % lanes.Length], 0.18f);
+        _pickup.Position = new Vector3(_pickupPosition.X, _pickupPosition.Y, 0.006f);
+        _pickup.Visible = true;
+        GD.Print($"OpenTyrianVR: tutorial pickup attempt {_pickupAttempt}");
+    }
+
+    private void SpawnShot(Vector2 position, Vector2 velocity, Color color)
+    {
+        var mesh = SpriteQuad("TutorialShot", new Vector2(0.012f, 0.035f), color, 109);
+        mesh.Position = new Vector3(position.X, position.Y, 0.008f);
+        _practiceBoard.AddChild(mesh);
+        _shots.Add((mesh, velocity, 1.2));
+    }
+
+    private void UpdateShots(double delta)
+    {
+        for (int i = _shots.Count - 1; i >= 0; --i)
+        {
+            var shot = _shots[i];
+            shot.Life -= delta;
+            Vector3 p = shot.Mesh.Position;
+            p.X += shot.Velocity.X * (float)delta; p.Y += shot.Velocity.Y * (float)delta;
+            shot.Mesh.Position = p;
+            if (shot.Life <= 0) { shot.Mesh.QueueFree(); _shots.RemoveAt(i); }
+            else _shots[i] = shot;
+        }
     }
 
     private void Finish(bool skipped)
     {
-        _step = Step.Complete;
-        _successRemaining = skipped ? 0 : 2.0;
-        _label.Text = "YOU'RE READY\nThe steering guide will fade as you play.";
-        Visible = !skipped;
         using var file = Godot.FileAccess.Open(CompletionPath, Godot.FileAccess.ModeFlags.Write);
-        if (file == null)
-            GD.PushWarning($"OpenTyrianVR: could not persist tutorial completion ({Godot.FileAccess.GetOpenError()})");
-        else
-            file.StoreString(skipped ? "skipped\n" : "complete\n");
-        GD.Print($"OpenTyrianVR: first-run tutorial {(skipped ? "skipped" : "complete")}");
+        if (file == null) GD.PushWarning($"OpenTyrianVR: could not persist tutorial completion ({Godot.FileAccess.GetOpenError()})");
+        else file.StoreString(skipped ? "skipped\n" : "complete\n");
+        _step = Step.Complete;
+        _introPanel.Visible = false; _laserVisual.Visible = false;
+        if (skipped) { _popup.Visible = false; _practiceBoard.Visible = false; _completeDelay = 0.05; }
+        else { _pickup.Visible = false; _popup.Visible = true; RefreshPopup(); _completeDelay = 1.8; }
+        _launchPending = true;
+        GD.Print($"OpenTyrianVR: pre-game tutorial {(skipped ? "skipped" : "complete")}");
     }
 
-    private void Refresh(bool tracking)
+    private static MeshInstance3D PanelQuad(string name, Vector2 size, Color color, float z, int priority) => new()
     {
-        if (!tracking && _step == Step.Move)
-        {
-            _label.Text = "WAKE YOUR LEFT CONTROLLER\nThe tutorial will continue when tracking returns.\n\nB  Skip tutorial";
-            return;
-        }
-        _label.Text = _step switch
-        {
-            Step.Recenter => "1 / 4   RECENTER YOUR VIEW\nFace the board, then press ☰ on the left controller.\n\nB  Skip tutorial",
-            Step.Move => "2 / 4   MOVE THE SHIP\nMove your left controller inside the blue guide.\nThumbsticks also steer.\n\nB  Skip tutorial",
-            Step.MainWeapon => "3 / 4   FIRE MAIN WEAPON\nSqueeze either trigger.\n\nB  Skip tutorial",
-            Step.SecondaryWeapon => "4 / 4   FIRE SECONDARY WEAPONS\nSqueeze either grip to fire that sidekick.\n\nB  Skip tutorial",
-            _ => _label.Text,
-        };
-    }
+        Name = name, Mesh = new QuadMesh { Size = size }, Position = new Vector3(0f, 0f, z),
+        MaterialOverride = UiMaterial(color, priority),
+    };
+    private static MeshInstance3D SpriteQuad(string name, Vector2 size, Color color, int priority) => new()
+    {
+        Name = name, Mesh = new QuadMesh { Size = size }, MaterialOverride = UiMaterial(color, priority),
+    };
+    private static StandardMaterial3D UiMaterial(Color color, int priority) => new()
+    {
+        AlbedoColor = color,
+        Transparency = color.A < 0.999f ? BaseMaterial3D.TransparencyEnum.Alpha : BaseMaterial3D.TransparencyEnum.Disabled,
+        ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded, CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+        NoDepthTest = true, RenderPriority = priority,
+    };
+    private static Label3D MakeLabel(string text, int fontSize, Vector3 position) => new()
+    {
+        Text = text, Position = position, PixelSize = 0.00062f, FontSize = fontSize, OutlineSize = 7,
+        HorizontalAlignment = HorizontalAlignment.Center, VerticalAlignment = VerticalAlignment.Center,
+        Modulate = new Color(0.86f, 0.92f, 1f), DoubleSided = true, NoDepthTest = true, RenderPriority = 119,
+    };
 }

@@ -43,6 +43,9 @@ guidance, logs, and useful bug-report details.
 - Hand steering: your left hand moves in a floating control rectangle that
   maps 1:1 onto the playfield; the ship pursues that target inside the
   simulation tick, so it is latency-immune and never overshoots.
+- First-run onboarding happens before the native game starts: controller lasers
+  select Start or Skip, and a safe practice scene teaches recentering, full-range
+  steering, both weapon controls, and item collection.
 
 ## Playing / building
 
