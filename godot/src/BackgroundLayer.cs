@@ -868,9 +868,8 @@ public unsafe partial class BackgroundLayer : Node3D
         }
     }
 
-    /// <summary>Connect a ground-entity material to layer 1's exact opacity
-    /// mask. Native background2over=1 paints this map after both ground enemy
-    /// bands, so the host must discard only the covered sprite fragments.</summary>
+    /// <summary>Connect an entity material to exact opacity masks for maps
+    /// that legacy draw order paints above ground and platform-under art.</summary>
     public void RegisterGroundOcclusionMaterial(ShaderMaterial material)
     {
         _groundOcclusionMaterials.Add(material);
@@ -879,6 +878,11 @@ public unsafe partial class BackgroundLayer : Node3D
         if (_atlasTex[1] != null)
             material.SetShaderParameter("occluder_atlas", _atlasTex[1]);
         material.SetShaderParameter("occluder_map_size", _mapSize[1]);
+        if (_tilemapTex[2] != null)
+            material.SetShaderParameter("platform_occluder_tilemap", _tilemapTex[2]);
+        if (_atlasTex[2] != null)
+            material.SetShaderParameter("platform_occluder_atlas", _atlasTex[2]);
+        material.SetShaderParameter("platform_occluder_map_size", _mapSize[2]);
         UpdateGroundOcclusionMaterial(material);
     }
 
@@ -889,6 +893,11 @@ public unsafe partial class BackgroundLayer : Node3D
         material.SetShaderParameter("occluder_enabled", enabled ? 1 : 0);
         material.SetShaderParameter("occluder_origin", enabled
             ? Origin(1, _currDraw[1]) + _subTickPx[1] : Vector2.Zero);
+        bool platformEnabled = _currDraw[2].Drawn != 0 && _currDraw[2].Blend == 0 &&
+            Mathf.Abs(PresentedHeight(2) - PlatformZ) <= 0.0005f;
+        material.SetShaderParameter("platform_occluder_enabled", platformEnabled ? 1 : 0);
+        material.SetShaderParameter("platform_occluder_origin", platformEnabled
+            ? Origin(2, _currDraw[2]) + _subTickPx[2] : Vector2.Zero);
     }
 
     private void UpdateShadowReceiverState()
@@ -1084,6 +1093,9 @@ public unsafe partial class BackgroundLayer : Node3D
             if (l == 1)
                 foreach (ShaderMaterial material in _groundOcclusionMaterials)
                     material.SetShaderParameter("occluder_map_size", _mapSize[l]);
+            else if (l == 2)
+                foreach (ShaderMaterial material in _groundOcclusionMaterials)
+                    material.SetShaderParameter("platform_occluder_map_size", _mapSize[l]);
 
             var tiles = new byte[_map.Width * _map.Height];
             fixed (OtyrNative.BackgroundMap* map = &_map)
@@ -1105,6 +1117,9 @@ public unsafe partial class BackgroundLayer : Node3D
             if (l == 1)
                 foreach (ShaderMaterial material in _groundOcclusionMaterials)
                     material.SetShaderParameter("occluder_tilemap", _tilemapTex[l]);
+            else if (l == 2)
+                foreach (ShaderMaterial material in _groundOcclusionMaterials)
+                    material.SetShaderParameter("platform_occluder_tilemap", _tilemapTex[l]);
 
             int atlasRows = (OtyrNative.BgShapeMax + AtlasCols - 1) / AtlasCols;
             int atlasW = AtlasCols * OtyrNative.BgTileW;
@@ -1164,6 +1179,9 @@ public unsafe partial class BackgroundLayer : Node3D
             if (l == 1)
                 foreach (ShaderMaterial material in _groundOcclusionMaterials)
                     material.SetShaderParameter("occluder_atlas", _atlasTex[l]);
+            else if (l == 2)
+                foreach (ShaderMaterial material in _groundOcclusionMaterials)
+                    material.SetShaderParameter("platform_occluder_atlas", _atlasTex[l]);
         }
         // New level art: re-decide the water-cloud split against it.
         _cloudMaskPending = true;

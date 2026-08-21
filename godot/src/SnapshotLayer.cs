@@ -213,6 +213,11 @@ public unsafe partial class SnapshotLayer : Node3D
                 uniform ivec2 occluder_map_size;
                 uniform vec2 occluder_origin;
                 uniform int occluder_enabled = 0;
+                uniform sampler2D platform_occluder_tilemap : filter_nearest;
+                uniform sampler2D platform_occluder_atlas : filter_nearest;
+                uniform ivec2 platform_occluder_map_size;
+                uniform vec2 platform_occluder_origin;
+                uniform int platform_occluder_enabled = 0;
 
                 // FLAT: per-instance integers must arrive bit-exact.
                 // Smooth varyings interpolate (a*w0+b*w1+c*w2) even when all
@@ -226,6 +231,7 @@ public unsafe partial class SnapshotLayer : Node3D
                 varying flat float v_filter;
                 varying flat float v_decal;
                 varying flat float v_ground;
+                varying flat float v_platform_under;
                 varying vec2 v_play_px;
 
                 void vertex() {
@@ -234,9 +240,10 @@ public unsafe partial class SnapshotLayer : Node3D
                     v_filter = INSTANCE_CUSTOM.z;
                     v_decal = INSTANCE_CUSTOM.w;
                     v_ground = mod(floor(v_flags / 512.0), 2.0);
+                    v_platform_under = mod(floor(v_flags / 1024.0), 2.0);
                     // Host-only flag 256 marks a joined composite. Expand
                     // half a pixel total for conservative stereo coverage.
-                    bool seam = floor(v_flags / 256.0) >= 1.0;
+                    bool seam = mod(floor(v_flags / 256.0), 2.0) >= 1.0;
                     bool big = mod(floor(v_flags / 8.0), 2.0) >= 1.0;
                     if (seam) {
                         vec2 size_px = big ? vec2(24.0, 28.0) : vec2(12.0, 14.0);
@@ -265,6 +272,25 @@ public unsafe partial class SnapshotLayer : Node3D
                             }
                         }
                     }
+                    // Authored platform-under art is deliberately just below
+                    // the platform plane. Transparent-pass depth ordering is
+                    // not stable enough on every multiview backend, so reject
+                    // only the fragments covered by opaque platform pixels.
+                    if (v_platform_under > 0.5 && platform_occluder_enabled != 0) {
+                        ivec2 mp = ivec2(floor(v_play_px - platform_occluder_origin));
+                        ivec2 tile = ivec2(mp.x / 24, mp.y / 28);
+                        ivec2 pixel = ivec2(mp.x - tile.x * 24, mp.y - tile.y * 28);
+                        if (mp.x >= 0 && mp.y >= 0 && tile.x < platform_occluder_map_size.x &&
+                            tile.y < platform_occluder_map_size.y) {
+                            int shape = int(texelFetch(platform_occluder_tilemap, tile, 0).r * 255.0 + 0.5);
+                            if (shape != 255) {
+                                ivec2 ap = ivec2((shape % 8) * 24 + pixel.x,
+                                                (shape / 8) * 28 + pixel.y);
+                                if (int(texelFetch(platform_occluder_atlas, ap, 0).r * 255.0 + 0.5) != 0)
+                                    discard;
+                            }
+                        }
+                    }
                     // Terrain decals sit at EXACTLY the tile plane (zero
                     // head parallax, so transparent art pixels composite
                     // the baked tiles beneath); a depth-only bias encodes
@@ -278,7 +304,7 @@ public unsafe partial class SnapshotLayer : Node3D
                     // arrive a hair under the integer and wrap the atlas
                     // origin at column boundaries.
                     float cid = floor(cell + 0.5);
-                    bool seam = floor(v_flags / 256.0) >= 1.0;
+                    bool seam = mod(floor(v_flags / 256.0), 2.0) >= 1.0;
                     bool dbg_big = mod(floor(v_flags / 8.0), 2.0) >= 1.0;
                     vec2 size_px = dbg_big ? vec2(24.0, 28.0) : vec2(12.0, 14.0);
                     // Preserve the original pixel scale. Only the expanded
@@ -2764,7 +2790,10 @@ public unsafe partial class SnapshotLayer : Node3D
                     ? new Color(cell.CellIndex, cell.Flags + cell.FilterColor * 65f, cell.Aux0, cell.Aux1)
                     : new Color(cell.CellIndex, cell.Flags + (cell.SeamGuard ? 256f : 0f) +
                                 (cell.Category is (byte)OtyrNative.Category.EnemyGroundA or
-                                                  (byte)OtyrNative.Category.EnemyGroundB ? 512f : 0f),
+                                                  (byte)OtyrNative.Category.EnemyGroundB ? 512f : 0f) +
+                                (_snapshot.Episode == 1 &&
+                                 _typeClasses.TryGetValue(cell.EntityType, out string? heightClass) &&
+                                 heightClass == "platform-under" ? 1024f : 0f),
                                 cell.FilterColor, cell.CastFrom >= 0
                                     ? -2f - castShadowReceiver : cell.DecalOrder));
 
