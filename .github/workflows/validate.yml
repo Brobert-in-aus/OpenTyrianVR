@@ -1,0 +1,37 @@
+name: Validate source
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  managed-and-assets:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+      - name: Validate JSON assets and PowerShell syntax
+        shell: pwsh
+        run: |
+          Get-Content godot/height_semantics.json -Raw | ConvertFrom-Json | Out-Null
+          Get-Content godot/hover_heights.json -Raw | ConvertFrom-Json | Out-Null
+          $failed = $false
+          Get-ChildItem tools,tests -Filter *.ps1 -File | ForEach-Object {
+            $tokens = $null
+            $errors = $null
+            [Management.Automation.Language.Parser]::ParseFile($_.FullName, [ref]$tokens, [ref]$errors) | Out-Null
+            if ($errors.Count) {
+              $errors | ForEach-Object { Write-Error "$($_.Extent.File): $($_.Message)" }
+              $failed = $true
+            }
+          }
+          if ($failed) { exit 1 }
+      - name: Compile managed host
+        shell: pwsh
+        run: |
+          New-Item -ItemType File opentyrian-core-x64-Release.dll | Out-Null
+          New-Item -ItemType File SDL2.dll | Out-Null
+          New-Item -ItemType File SDL2_net.dll | Out-Null
+          dotnet build godot/OpenTyrianVR.csproj -c Release

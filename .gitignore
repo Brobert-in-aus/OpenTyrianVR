@@ -16,6 +16,7 @@
 
 # Signed packages and test/deployment diagnostics
 /artifacts/
+/Videos/
 
 # Test harness build output
 /tests/*.exe
@@ -31,6 +32,9 @@
 /godot/addons/godotopenxrvendors/
 /godot/.vs/
 /godot/OpenTyrianVR.sln
+/godot/COPYING
+/godot/THIRD_PARTY_NOTICES.md
+/godot/icon.svg.import
 
 # Core DLL build output
 /opentyrian-core-*.dll

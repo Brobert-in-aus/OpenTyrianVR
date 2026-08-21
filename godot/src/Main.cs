@@ -88,6 +88,7 @@ public partial class Main : Node3D
     private bool _lastDebugChord, _lastDebugUp, _lastDebugDown, _lastDebugLeft,
                  _lastDebugRight, _lastDebugActivate, _lastDebugBack;
     private bool _debugOwnsSuspension;
+    private bool _suppressNativeInputUntilDebugControlsReleased;
     private bool _debugInvulnerable;
     private OtyrNative.Buttons _debugPulseButtons;
     private OtyrNative.DebugFlags _lastDebugFlags;
@@ -438,6 +439,7 @@ public partial class Main : Node3D
         _diagnostics = new Label3D
         {
             Name = "Diagnostics",
+            Visible = DeveloperTools,
             Text = "starting...",
             PixelSize = 0.0008f,
             // Below the relocated bottom bar (E1 HUD split).
@@ -452,6 +454,7 @@ public partial class Main : Node3D
         _checklist = new TestChecklist
         {
             Name = "TestChecklist",
+            Visible = DeveloperTools,
             Position = new Vector3(-0.85f, 1.35f, -0.25f),
             RotationDegrees = new Vector3(0f, 90f, 0f),
         };
@@ -463,6 +466,7 @@ public partial class Main : Node3D
         _debugMenu = new DebugMenu
         {
             Name = "DebugMenu",
+            Visible = false,
             Position = new Vector3(0f, 1.48f, -0.62f),
         };
         AddChild(_debugMenu);
@@ -540,7 +544,7 @@ public partial class Main : Node3D
 
         string dataDir = OS.GetName() == "Android"
             ? ExtractAndroidData()
-            : Path.GetFullPath(Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "tyrian21"));
+            : FindDesktopData();
         string userDir = ProjectSettings.GlobalizePath("user://");
         // E2-full is the VR product's sim: pinned offsets (hitbox truth),
         // full-width travel, wide active windows.
@@ -583,29 +587,22 @@ public partial class Main : Node3D
         }
     }
 
+    private static string FindDesktopData()
+    {
+        string projectRoot = ProjectSettings.GlobalizePath("res://");
+        // Packaged PCVR builds place the freeware data beside the executable;
+        // editor/developer runs retain the repository-root tyrian21 directory.
+        string packaged = Path.GetFullPath(Path.Combine(projectRoot, "tyrian21"));
+        if (Directory.Exists(packaged))
+            return packaged;
+        return Path.GetFullPath(Path.Combine(projectRoot, "..", "tyrian21"));
+    }
+
     private void ConfigureQuestRefresh(string phase)
     {
         if (_openXr == null || !_openXr.HasMethod("set_display_refresh_rate"))
         {
             GD.Print($"OpenTyrianVR: XR refresh {phase}: runtime extension unavailable; target=90Hz");
-            return;
-        }
-
-        // The host debug panel owns input while open. Keep the native game at
-        // a neutral state and publish invulnerability changes even though its
-        // simulation thread is suspended at a complete presentation point.
-        if (_debugMenu.IsOpen)
-        {
-            OtyrNative.DebugFlags debugFlags = DebugState(authorize: true);
-            if (_lastButtons == OtyrNative.Buttons.None &&
-                _lastDebugFlags == debugFlags && !_lastTargetActive)
-                return;
-            _lastButtons = OtyrNative.Buttons.None;
-            _lastDebugFlags = debugFlags;
-            _lastTargetActive = false;
-            var neutral = OtyrNative.InputFrame.Create(OtyrNative.Buttons.None);
-            neutral.DebugMode = debugFlags;
-            OtyrNative.SubmitInput(_session, in neutral, neutral.StructSize);
             return;
         }
 
@@ -717,6 +714,11 @@ public partial class Main : Node3D
     // the same OTYR_INVULN the native side requires for them.
     private static readonly bool InvulnSession =
         System.Environment.GetEnvironmentVariable("OTYR_INVULN") == "1";
+    // Exported release packages are player-facing. Validation overlays and the
+    // level-warp menu remain available in editor/debug exports, or explicitly
+    // for a trusted tester using OTYR_DEV_TOOLS=1 on PCVR.
+    private static bool DeveloperTools => OS.IsDebugBuild() ||
+        System.Environment.GetEnvironmentVariable("OTYR_DEV_TOOLS") == "1";
     // The unified band table drives the legend, the assignment keys, and
     // assignment keys. Cls != null assigns a JSON class ("ground" =
     // surface-following); otherwise the band's height is set explicitly.
@@ -1271,6 +1273,10 @@ public partial class Main : Node3D
             }
             GD.Print("OpenTyrianVR: debug menu closed");
         }
+        // Do not let the chord, stick direction, or A/B press used by the
+        // host-side panel become native game input on the close frame. Keep
+        // suppressing until those controls have physically returned neutral.
+        _suppressNativeInputUntilDebugControlsReleased = true;
         _lastButtons = (OtyrNative.Buttons)uint.MaxValue; // force a neutral/native update
     }
 
@@ -1327,6 +1333,9 @@ public partial class Main : Node3D
 
     private void UpdateDebugAndChecklistInput()
     {
+        if (!DeveloperTools)
+            return;
+
         bool rightClick = _xrActive && _rightHand != null &&
                           _rightHand.IsButtonPressed("primary_click");
         bool leftClick = _xrActive && _leftHand != null &&
@@ -1362,6 +1371,19 @@ public partial class Main : Node3D
 
         _lastDebugUp = _lastDebugDown = _lastDebugLeft = _lastDebugRight = false;
         _lastDebugActivate = _lastDebugBack = false;
+
+        if (_suppressNativeInputUntilDebugControlsReleased)
+        {
+            Vector2 debugStick = _xrActive && _rightHand != null
+                ? _rightHand.GetVector2("primary") : Vector2.Zero;
+            bool activate = Input.IsKeyPressed(Key.Enter) ||
+                (_xrActive && _rightHand != null && _rightHand.IsButtonPressed("ax_button"));
+            bool back = Input.IsKeyPressed(Key.Escape) ||
+                (_xrActive && _rightHand != null && _rightHand.IsButtonPressed("by_button"));
+            if (!chord && Math.Abs(debugStick.X) <= 0.65f && Math.Abs(debugStick.Y) <= 0.65f &&
+                !activate && !back)
+                _suppressNativeInputUntilDebugControlsReleased = false;
+        }
 
         // Single stick clicks retain the checklist controls. The two-click
         // chord above is consumed so opening debug cannot alter a result.
@@ -1728,6 +1750,26 @@ public partial class Main : Node3D
 
     private void SubmitInput()
     {
+        // The host debug panel owns input while open. Keep the native game at
+        // a neutral state and publish invulnerability changes even though its
+        // simulation thread is suspended. The release latch also consumes the
+        // controls that closed the panel, preventing a queued A/B/stick action.
+        if (_debugMenu.IsOpen || _suppressNativeInputUntilDebugControlsReleased)
+        {
+            OtyrNative.DebugFlags debugFlags = DebugState(authorize: true);
+            if (_lastButtons == OtyrNative.Buttons.None &&
+                _lastDebugFlags == debugFlags && !_lastTargetActive)
+                return;
+            _lastButtons = OtyrNative.Buttons.None;
+            _lastDebugFlags = debugFlags;
+            _lastTargetActive = false;
+            _handTargetActive = false;
+            var neutral = OtyrNative.InputFrame.Create(OtyrNative.Buttons.None);
+            neutral.DebugMode = debugFlags;
+            OtyrNative.SubmitInput(_session, in neutral, neutral.StructSize);
+            return;
+        }
+
         var buttons = OtyrNative.Buttons.None;
 
         if (HeightEditor)

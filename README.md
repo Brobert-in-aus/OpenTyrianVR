@@ -10,9 +10,25 @@ The original 320x200 simulation stays fully authoritative — same rules, same
 timing, same levels, verified tick-for-tick against the unmodified game with
 per-tick state hashes.  Depth is presentation metadata layered on top.
 
-**Status:** in development, not yet playable end-to-end.  See
-[docs/VR_CONVERSION_PLAN.md](docs/VR_CONVERSION_PLAN.md) for the plan and
-current progress.
+**Status:** 0.1 alpha playtest candidate. The full campaign is available, but
+the VR presentation is early and needs broad headset, comfort, and level
+coverage testing. Start with [PLAYTESTING.md](PLAYTESTING.md); development
+progress remains in [docs/VR_CONVERSION_PLAN.md](docs/VR_CONVERSION_PLAN.md).
+
+## Download and play
+
+GitHub prereleases provide two self-contained builds:
+
+- **Meta Quest:** sideload the versioned APK, then start OpenTyrianVR from the
+  headset's app library. Quest 2, Quest 3/3S, and Quest Pro are supported.
+- **Windows PCVR:** unzip the x64 archive, select your headset software as the
+  active OpenXR runtime, and run `OpenTyrianVR.exe`. Keep the extracted folder
+  intact.
+
+Each binary has an adjacent SHA-256 file. The packages already contain the
+freeware Tyrian 2.1 data; no separate game installation is required. See
+[PLAYTESTING.md](PLAYTESTING.md) for controls, known limitations, comfort
+guidance, logs, and useful bug-report details.
 
 ## How it works
 
@@ -30,14 +46,15 @@ current progress.
 
 ## Playing / building
 
-You need the freeware Tyrian 2.1 data files:
-<https://camanis.net/tyrian/tyrian21.zip>
+Source builders need the freeware Tyrian 2.1 data files from
+<https://camanis.net/tyrian/tyrian21.zip>.
 
-Building on Windows is documented in
-[docs/BUILDING_WINDOWS.md](docs/BUILDING_WINDOWS.md).  PC VR headsets via
-OpenXR (developed against Virtual Desktop / VDXR) and standalone Quest builds
-are supported; see [docs/BUILDING_QUEST.md](docs/BUILDING_QUEST.md). Quest
-deployment installs and reports the version but never launches the app.
+Windows PCVR building and packaging is documented in
+[docs/BUILDING_WINDOWS.md](docs/BUILDING_WINDOWS.md). PCVR uses the active
+OpenXR runtime; standalone Quest packaging is covered by
+[docs/BUILDING_QUEST.md](docs/BUILDING_QUEST.md). Release gates are listed in
+[docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md), and the exact GitHub
+tag/release workflow is in [docs/RELEASING.md](docs/RELEASING.md).
 
 ## Free, forever
 
@@ -52,3 +69,6 @@ paywalled.  If you want to support development:
   Development Team — the port this fork tracks.
 - Tyrian by Eclipse Software, published by Epic MegaGames; data files released
   as freeware in 2004.
+
+See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for bundled engine,
+library, and data notices.

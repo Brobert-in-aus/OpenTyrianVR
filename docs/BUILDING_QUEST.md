@@ -12,6 +12,7 @@ The Quest build is a Godot 4.7 Mono/OpenXR Android application targeting
 - SDL 2.32.10 source in `deps/SDL2-source-2.32.10/`
 - Tyrian 2.1 data files in `tyrian21/`
 - The standard Android debug keystore at `%USERPROFILE%\.android\debug.keystore`
+  for local builds, or a persistent project keystore for distributed builds
 
 The generated Android template, vendor plugin, SDL source, staged data, and
 native build outputs are intentionally ignored by git.
@@ -25,15 +26,47 @@ powershell -ExecutionPolicy Bypass -File tools\build_quest.ps1
 ```
 
 The script builds SDL and the OpenTyrian core for `arm64-v8a`, exports the
-Godot C# project, applies 16 KiB ELF/APK alignment, signs with the debug
-keystore, and verifies the required managed, native, OpenXR, and data payloads.
+Godot C# project, applies 16 KiB ELF/APK alignment, signs with the debug key by
+default (or the configured release key), and verifies the required managed,
+native, OpenXR, and data payloads.
 It sets `OTYR_MUTE=1` for Godot tooling and never launches or installs the game.
 The exporter runs with redirected logs and a five-minute bound. Godot 4.7 can
 remain alive after Gradle has closed a complete APK; the helper verifies the
 ZIP central directory and managed payload before stopping only that idle export
 process and continuing with alignment and signing.
 
-Output: `artifacts/OpenTyrianVR.quest.apk`
+Local/debug output:
+
+- `artifacts/OpenTyrianVR-0.1.0-alpha.1-quest.apk`
+- `artifacts/OpenTyrianVR-0.1.0-alpha.1-quest.apk.sha256`
+- `artifacts/OpenTyrianVR-0.1.0-alpha.1-quest.apk.build.txt`
+
+For a distributed playtest, use the persistent project key so later APKs can
+upgrade the same installation. This workstation keeps the key at
+`%USERPROFILE%\.android\OpenTyrianVR-release.jks` and its alias/password in a
+Windows DPAPI-protected credential file at
+`%USERPROFILE%\.android\OpenTyrianVR-release-signing.xml`. The credential can
+only be decrypted by the same Windows account on this machine, so the normal
+release command needs no plaintext password:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\build_quest.ps1 -ReleaseSigning
+```
+
+Back up the keystore and its password separately in durable secure storage.
+Losing either one prevents future APKs from upgrading existing installations.
+For another build machine, supply explicit environment variables instead:
+
+```powershell
+$env:OTYR_ANDROID_KEYSTORE = 'D:\secure\opentyrianvr-release.jks'
+$env:OTYR_ANDROID_KEY_ALIAS = 'opentyrianvr'
+$env:OTYR_ANDROID_KEYSTORE_PASSWORD = '<secret>'
+powershell -ExecutionPolicy Bypass -File tools\build_quest.ps1 -ReleaseSigning
+```
+
+Godot requires the key password and keystore password to match. Never commit
+the keystore, credential file, or password. The build record includes the Git
+commit, signing mode, build time, and APK SHA-256.
 
 ## Install (never launch)
 
@@ -60,7 +93,7 @@ head-motion distortion. A sustained 0.1.5 pass validated pause/resume,
 in-game-menu transitions, platform-rider stability, 4x MSAA, and ample
 performance headroom; review-marker halos are editor-only.
 
-Version 0.1.27 (code 28) is the current validation build. It requests 90 Hz,
+Version 0.1.0-alpha.1 (code 28, native ABI v30) is the current candidate. It requests 90 Hz,
 renders the actual terrain side lanes from -24..288 while retaining
 the ship-safe -25..288 sprite envelope, keeps the
 vertical crop at 0..184, render-interpolates all terrain layers, stabilizes
@@ -69,7 +102,7 @@ cloud layers translucent when level events change their draw order. Clouds
 retain their elevated plane across those order changes and paint after ground
 shadows but before aerial platforms; surface objects select ground versus
 platform per instance; connected boss components share one surface while
-retaining their authored stack offsets. ABI v27 also carries episode identity
+retaining their authored stack offsets. The native ABI also carries episode identity
 so Episode 1 type heights cannot leak into Episodes 2-4; conservative
 episode-local semantics cover only exact or validated close-family matches.
 Dynamic type-zero spawns use conservatively validated graphic semantics.
@@ -140,8 +173,10 @@ key-7 platform class while 66-79 remain platform-under. Map shadows now sample
 off-screen caster pixels into the visible top edge. The proud keyed lane keeps
 PAUSED text and boss HP primitives above all terrain geometry.
 
-Version 0.1.27 adds the in-headset level-warp/debug menu and runtime-authorized
-invulnerability, hostile-kill, and level-skip controls. Layer-1 covers that
+Development builds include an in-headset level-warp/debug menu and
+runtime-authorized invulnerability, hostile-kill, and level-skip controls.
+Godot release exports hide these developer tools unless `OTYR_DEV_TOOLS=1` is
+explicitly set; distributed builds must not set it. Layer-1 covers that
 paint over the ground in the native renderer now occlude the ground entity
 bands per pixel in the 3D presentation, retaining entities through transparent
 parts of ALE, TIME WAR, and other maps using the same authored paint mode.

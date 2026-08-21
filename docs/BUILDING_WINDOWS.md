@@ -1,14 +1,37 @@
-# Building on Windows (reproducible baseline)
+# Building on Windows
 
-This is the Phase 0 reference build (see [VR_CONVERSION_PLAN.md](VR_CONVERSION_PLAN.md)).
+The supported playtest output is a packaged Godot/OpenXR PCVR build. The
+original SDL executable remains available as the deterministic reference.
 
 ## Prerequisites
 
 - Visual Studio 2026 (v18) Community or later with the C++ desktop workload
+- Godot 4.7 stable Mono plus its matching Windows export template
+- .NET 9 SDK
 - PowerShell 5.1+
 - Tyrian 2.1 data files in `tyrian21/` at the repo root (freeware; not in git)
 
-## Steps
+## Package PCVR
+
+From the repository root:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\build_pcvr.ps1
+```
+
+Pass `-Godot` if the helper cannot find the Godot Mono console executable in
+the sibling `_tools\godot` directory. The script builds the native and managed
+hosts, exports the `Windows Desktop` Godot preset, stages native libraries and
+game data, and produces:
+
+- `artifacts\OpenTyrianVR-0.1.0-alpha.1-pcvr-win-x64.zip`
+- `artifacts\OpenTyrianVR-0.1.0-alpha.1-pcvr-win-x64.zip.sha256`
+
+The package contains `BUILD.txt` with the source commit. Unzip it, select the
+desired headset software as the active OpenXR runtime, and run
+`OpenTyrianVR.exe`.
+
+## Build the flat reference
 
 ```powershell
 # 1. Fetch pinned SDL2 dev libraries (SDL2 2.32.10, SDL2_net 2.2.0) into deps/
@@ -20,7 +43,7 @@ $msbuild = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere
     -latest -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe
 & $msbuild visualc\opentyrian.sln /p:Configuration=Release /p:Platform=x64 /m
 
-# 3. Run:
+# 3. Run the original SDL reference (not the PCVR host):
 .\opentyrian-x64-Release.exe --data=tyrian21
 ```
 
