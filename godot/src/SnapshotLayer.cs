@@ -94,6 +94,9 @@ public unsafe partial class SnapshotLayer : Node3D
     // the oscillation becomes conspicuous when platforms first appear.
     private const double SnapshotPeriod = 1.0 / 35.0;
     private uint _cellLevelTick;
+    private uint _cellSheetEpoch;
+    private byte _cellEpisode;
+    private bool _haveCellFrame;
     private uint _pairTickGap = 1;
 
     public int CellCount => _cellCount;
@@ -1128,6 +1131,30 @@ public unsafe partial class SnapshotLayer : Node3D
         // large stall, snap the complete object instead of risking a recycled
         // source id stretching across the scene.
         uint nextTick = _snapshot.LevelTick;
+        bool presentationReset = _haveCellFrame &&
+            (_snapshot.SheetEpoch != _cellSheetEpoch ||
+             _snapshot.Episode != _cellEpisode ||
+             nextTick < _cellLevelTick);
+        if (presentationReset)
+        {
+            // A new level/mode must not inherit interpolation candidates or
+            // apron ghosts from the previous sprite bank.  UpdateApronGhosts
+            // clears its retained list on an epoch change, but without also
+            // dropping the previous-cell buffer it could immediately seed a
+            // fresh set from the last arcade/level frame.  Those stale cells
+            // then appeared at the lower playfield edge on the first story
+            // frame, sometimes sampling art from the prior level's bank.
+            _cellCount = 0;
+            _prevCellCount = 0;
+            _ghosts.Clear();
+            _prevRuns.Clear();
+            _pairRunSource = OtyrNative.NoSource;
+            _pairRunOrdinal = 0;
+            GD.Print($"OpenTyrianVR: presentation history reset " +
+                     $"epoch={_cellSheetEpoch}->{_snapshot.SheetEpoch} " +
+                     $"episode={_cellEpisode}->{_snapshot.Episode} " +
+                     $"tick={_cellLevelTick}->{nextTick}");
+        }
         _pairTickGap = _cellLevelTick != 0 && nextTick > _cellLevelTick
             ? nextTick - _cellLevelTick : 1;
         LastTickGap = _pairTickGap;
@@ -1135,6 +1162,9 @@ public unsafe partial class SnapshotLayer : Node3D
         if (_pairTickGap > 1)
             SkippedTicksTotal += _pairTickGap - 1;
         _cellLevelTick = nextTick;
+        _cellSheetEpoch = _snapshot.SheetEpoch;
+        _cellEpisode = _snapshot.Episode;
+        _haveCellFrame = true;
 
         // Rotate current -> previous.
         (_prevCells, _cells) = (_cells, _prevCells);
