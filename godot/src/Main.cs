@@ -12,6 +12,8 @@ namespace OpenTyrianVR;
 /// </summary>
 public partial class Main : Node3D
 {
+    private const string NormalSpeedMigrationMarker = "normal_speed_default_v1.complete";
+
     private bool _xrActive;
     private bool _xrStartupCentered;
     private int _xrStartupFrames;
@@ -571,6 +573,7 @@ public partial class Main : Node3D
             ? ExtractAndroidData()
             : FindDesktopData();
         string userDir = ProjectSettings.GlobalizePath("user://");
+        ApplyNormalSpeedDefault(userDir);
         // E2-full is the VR product's sim: pinned offsets (hitbox truth),
         // full-width travel, wide active windows.
         var flags = OtyrNative.ConfigFlags.SuppressEntityDraw | OtyrNative.ConfigFlags.SimDeparallax;
@@ -609,6 +612,40 @@ public partial class Main : Node3D
                 if (file.StartsWith("cap_f") && file.EndsWith(".jpg"))
                     dir.Remove(file);
             GD.Print("OpenTyrianVR: run capture on (every 2 s, named by frame)");
+        }
+    }
+
+    // Early playtest builds could leave Turbo selected in the shared config.
+    // Reset that value once for upgrades as well as clean installs, then leave
+    // subsequent player speed choices alone. The native default is already 4.
+    private static void ApplyNormalSpeedDefault(string userDir)
+    {
+        string marker = Path.Combine(userDir, NormalSpeedMigrationMarker);
+        if (File.Exists(marker))
+            return;
+
+        try
+        {
+            string configPath = Path.Combine(userDir, "tyrian.cfg");
+            if (File.Exists(configPath))
+            {
+                byte[] config = File.ReadAllBytes(configPath);
+                if (config.Length == 28 && config[1] == 5)
+                {
+                    config[1] = 4; // gameSpeed: Normal
+                    File.WriteAllBytes(configPath, config);
+                    GD.Print("OpenTyrianVR: migrated default game speed from Turbo to Normal");
+                }
+            }
+
+            File.WriteAllText(marker, "OpenTyrianVR 0.1 default: Normal\n");
+        }
+        catch (Exception ex)
+        {
+            // A read-only or temporarily unavailable config must not prevent
+            // the game from starting; the native loader still supplies Normal
+            // for a missing configuration.
+            GD.PushWarning($"OpenTyrianVR: could not apply Normal speed default: {ex.Message}");
         }
     }
 

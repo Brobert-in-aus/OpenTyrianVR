@@ -20,15 +20,17 @@ progress remains in [docs/VR_CONVERSION_PLAN.md](docs/VR_CONVERSION_PLAN.md).
 GitHub prereleases provide two self-contained builds:
 
 - **Meta Quest:** sideload the versioned APK, then start OpenTyrianVR from the
-  headset's app library. Quest 2, Quest 3/3S, and Quest Pro are supported.
+  headset's unknown-sources/developer library. Quest 2, Quest 3/3S, and Quest
+  Pro are supported.
 - **Windows PCVR:** unzip the x64 archive, select your headset software as the
   active OpenXR runtime, and run `OpenTyrianVR.exe`. Keep the extracted folder
   intact.
 
 Each binary has an adjacent SHA-256 file. The packages already contain the
-freeware Tyrian 2.1 data; no separate game installation is required. See
-[PLAYTESTING.md](PLAYTESTING.md) for controls, known limitations, comfort
-guidance, logs, and useful bug-report details.
+freeware Tyrian 2.1 data; no separate game installation is required. Follow
+[INSTALLING.md](INSTALLING.md) for SideQuest, manual ADB, PCVR, upgrade, and
+troubleshooting steps. See [PLAYTESTING.md](PLAYTESTING.md) for controls, known
+limitations, comfort guidance, logs, and useful bug-report details.
 
 ## How it works
 

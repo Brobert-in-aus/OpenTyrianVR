@@ -27,8 +27,9 @@ game data, and produces:
 - `artifacts\OpenTyrianVR-0.1.0-alpha.1-pcvr-win-x64.zip`
 - `artifacts\OpenTyrianVR-0.1.0-alpha.1-pcvr-win-x64.zip.sha256`
 
-The package contains `BUILD.txt` with the source commit. Unzip it, select the
-desired headset software as the active OpenXR runtime, and run
+The package contains `BUILD.txt` with the source commit plus the public README,
+installation, playtesting, licence, and third-party-notice files. Unzip it,
+select the desired headset software as the active OpenXR runtime, and run
 `OpenTyrianVR.exe`.
 
 ## Build the flat reference

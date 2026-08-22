@@ -89,6 +89,7 @@ foreach ($native in @('opentyrian-core-x64-Release.dll', 'SDL2.dll', 'SDL2_net.d
 Copy-Item -LiteralPath $DataSource -Destination (Join-Path $outputDir 'tyrian21') -Recurse
 Copy-Item -LiteralPath (Join-Path $repo 'COPYING') -Destination $outputDir
 Copy-Item -LiteralPath (Join-Path $repo 'README.md') -Destination $outputDir
+Copy-Item -LiteralPath (Join-Path $repo 'INSTALLING.md') -Destination $outputDir
 Copy-Item -LiteralPath (Join-Path $repo 'PLAYTESTING.md') -Destination $outputDir
 Copy-Item -LiteralPath (Join-Path $repo 'THIRD_PARTY_NOTICES.md') -Destination $outputDir
 $commit = (& git -C $repo rev-parse HEAD).Trim()

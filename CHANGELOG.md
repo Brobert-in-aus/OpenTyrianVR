@@ -16,6 +16,8 @@ First public playtest candidate.
 - Pre-game first-run menu with controller lasers, recenter guidance, and an
   interactive practice level covering full-range hand steering, main/sidekick
   fire, and retry-until-collected pickups; per-level steering aids still fade.
+- Normal game speed is the default on both Quest and PCVR, including a one-time
+  correction for Turbo settings left by earlier playtest builds.
 - Standalone Meta Quest 2/3/3S/Pro package and Windows x64 PCVR package.
 - Legacy-frame fallback for menus, cinematics, and unknown presentation effects.
 

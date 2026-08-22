@@ -7,6 +7,9 @@ care about before upgrading.
 
 ## Install and start
 
+Detailed checksum, SideQuest, manual ADB, PCVR runtime, upgrade, and
+troubleshooting instructions are in [INSTALLING.md](INSTALLING.md).
+
 ### Meta Quest
 
 Install the supplied `OpenTyrianVR-0.1.0-alpha.1-quest.apk` with SideQuest or the
@@ -35,8 +38,8 @@ Compare the package against its adjacent `.sha256` file before installing.
 - Training runs in a safe practice scene. Move the left hand to all four corners
   of the blue rectangle while the real player ship visibly catches up to the
   blue target, then demonstrate main fire, sidekick fire, and collect the
-  falling powerup. The practice scene uses original Tyrian ship, enemy, powerup,
-  and terrain art. A missed item respawns from the top until collected; sleeping
+  falling powerup. The practice scene uses original Tyrian ship, powerup, and
+  terrain art. A missed item respawns from the top until collected; sleeping
   controller tracking pauses progression rather than failing the step.
 - Move the left hand inside the floating blue rectangle to steer directly.
   The rectangle, hand marker, and lane reticle fade between 8 and 10 seconds

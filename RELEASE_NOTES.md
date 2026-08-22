@@ -17,14 +17,16 @@ Quest 2, Quest 3/3S, and Quest Pro are the current standalone targets. Windows
 PCVR uses the active OpenXR runtime and has primarily been tested with Virtual
 Desktop/VDXR.
 
-Read the [playtesting guide](https://github.com/Brobert-in-aus/OpenTyrianVR/blob/v0.1.0-alpha.1/PLAYTESTING.md)
-before playing for installation, controls, known limitations, comfort guidance,
-and bug-report information.
+Read the [installation guide](https://github.com/Brobert-in-aus/OpenTyrianVR/blob/v0.1.0-alpha.1/INSTALLING.md)
+and [playtesting guide](https://github.com/Brobert-in-aus/OpenTyrianVR/blob/v0.1.0-alpha.1/PLAYTESTING.md)
+before playing for setup, controls, known limitations, comfort guidance, and
+bug-report information.
 
 ## Highlights
 
 - Full campaign and original game rules/timing.
 - Direct left-hand steering plus thumbstick controls.
+- Normal game speed by default on both standalone Quest and PCVR.
 - A first-run laser-pointer menu appears before the game starts, with recenter
   guidance and Start/Skip choices. Its safe practice level verifies full-range
   hand movement, main fire, sidekick fire, and item collection; missed practice
