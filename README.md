@@ -61,8 +61,9 @@ tag/release workflow is in [docs/RELEASING.md](docs/RELEASING.md).
 
 This project is free and open source under the
 [GPL-2.0](COPYING), like the OpenTyrian port it builds on.  It will never be
-paywalled.  If you want to support development:
-[ko-fi.com/brobert_m](https://ko-fi.com/brobert_m).
+paywalled. If you want to support development:
+
+[![Support me on Ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/brobert_m)
 
 ## Credits
 
