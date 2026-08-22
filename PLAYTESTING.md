@@ -44,9 +44,6 @@ Compare the package against its adjacent `.sha256` file before installing.
 - Move the left hand inside the floating blue rectangle to steer directly.
   The rectangle, hand marker, and lane reticle fade between 8 and 10 seconds
   into each level; hand steering remains active after they disappear.
-- Either thumbstick also moves the ship. In menus, left/right changes a setting
-  only when the stick is within a 60-degree cone centred on horizontal; diagonal
-  scrolling therefore remains up/down.
 - Either trigger fires.
 - Left and right grip activate the corresponding sidekick.
 - Right A confirms; right B cancels.
@@ -54,9 +51,6 @@ Compare the package against its adjacent `.sha256` file before installing.
 - The left controller menu button pauses and recenters the board.
 - On a PC keyboard: arrows move, Space fires, Enter confirms, Escape cancels,
   Ctrl/Alt activate sidekicks, and P pauses.
-
-Play seated or standing in a clear space. Stop immediately if the scrolling,
-tilted board causes nausea, eye strain, dizziness, or loss of balance.
 
 ## Known 0.1 limitations
 

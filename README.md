@@ -2,13 +2,9 @@
 
 A VR conversion of [OpenTyrian](https://github.com/opentyrian/opentyrian), the
 open-source port of the classic DOS shoot-em-up **Tyrian** — rebuilt as a
-tilted-lane diorama you look down on, Guitar-Hero style: the level streams
-toward you, airborne enemies and shots float above the terrain at real heights,
-and the ship is steered by hand position.
-
-The original 320x200 simulation stays fully authoritative — same rules, same
-timing, same levels, verified tick-for-tick against the unmodified game with
-per-tick state hashes.  Depth is presentation metadata layered on top.
+tilted-lane diorama positioned in front of you: the level streams toward you,
+airborne enemies and shots float above the terrain at real heights, and the ship
+is steered by hand position.
 
 **Status:** 0.1 alpha playtest candidate. The full campaign is available, but
 the VR presentation is early and needs broad headset, comfort, and level
@@ -34,8 +30,8 @@ limitations, comfort guidance, logs, and useful bug-report details.
 
 ## How it works
 
-- The game core builds as a native library and runs unmodified on its own
-  thread inside a [Godot 4](https://godotengine.org/) .NET host with OpenXR.
+- The game core builds as a native library and runs on its own thread inside a
+  [Godot 4](https://godotengine.org/) .NET host with OpenXR.
 - Each gameplay tick exports a presentation snapshot (every sprite the legacy
   renderer drew, with semantic categories), the background tile maps with
   scroll state, and the 320x200 frame itself.
