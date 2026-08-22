@@ -10,10 +10,27 @@ internal static class TutorialAssets
 {
     private const string DataRoot = "res://tyrian21/";
 
-    public static Texture2D PlayerShip() => DecodeTyrianComposite(arrayNumber: 9, baseIndex: 191);
+    public static Texture2D PlayerShip() => DecodeArcadeShip();
     public static Texture2D Powerup() => DecodeTyrianComposite(arrayNumber: 10, baseIndex: 7);
     public static Texture2D EnemyShip() => DecodeSpriteComposite("newsh2.shp", baseIndex: 76);
-    public static Texture2D Terrain() => DecodeTerrainPatch("shapesx.dat");
+    public static Texture2D Terrain() => DecodeFirstLevelTerrain();
+
+    private static Texture2D DecodeArcadeShip()
+    {
+        byte[] file = Read("tyrian.shp");
+        int count = U16(file, 0);
+        const int arrayNumber = 9;
+        int start = I32(file, 2 + (arrayNumber - 1) * 4);
+        int end = arrayNumber < count ? I32(file, 2 + arrayNumber * 4) : file.Length;
+        ReadOnlySpan<byte> data = file.AsSpan(start, end - start);
+
+        // Arcade shipGr == 1 is the game's canonical two-part craft. The
+        // simulation draws its left and right 24x28 blocks at x-17 and x+7.
+        byte[] rgba = new byte[48 * 28 * 4];
+        CopyComposite(data, 220, rgba, 48, 0);
+        CopyComposite(data, 222, rgba, 48, 24);
+        return Texture(rgba, 48, 28);
+    }
 
     private static Texture2D DecodeTyrianComposite(int arrayNumber, int baseIndex)
     {
@@ -30,15 +47,21 @@ internal static class TutorialAssets
     private static Texture2D DecodeComposite(ReadOnlySpan<byte> data, int baseIndex)
     {
         byte[] rgba = new byte[24 * 28 * 4];
-        CopyCell(data, baseIndex, rgba, 0, 0);
-        CopyCell(data, baseIndex + 1, rgba, 12, 0);
-        CopyCell(data, baseIndex + 19, rgba, 0, 14);
-        CopyCell(data, baseIndex + 20, rgba, 12, 14);
+        CopyComposite(data, baseIndex, rgba, 24, 0);
         return Texture(rgba, 24, 28);
     }
 
+    private static void CopyComposite(ReadOnlySpan<byte> data, int baseIndex,
+                                      byte[] rgba, int outputWidth, int outX)
+    {
+        CopyCell(data, baseIndex, rgba, outputWidth, outX, 0);
+        CopyCell(data, baseIndex + 1, rgba, outputWidth, outX + 12, 0);
+        CopyCell(data, baseIndex + 19, rgba, outputWidth, outX, 14);
+        CopyCell(data, baseIndex + 20, rgba, outputWidth, outX + 12, 14);
+    }
+
     private static void CopyCell(ReadOnlySpan<byte> data, int oneBasedIndex,
-                                 byte[] rgba, int outX, int outY)
+                                 byte[] rgba, int outputWidth, int outX, int outY)
     {
         int offset = U16(data, (oneBasedIndex - 1) * 2);
         int x = 0, y = 0;
@@ -53,36 +76,39 @@ internal static class TutorialAssets
             {
                 byte index = data[offset++];
                 if (x < 12 && y < 14)
-                    PutPalettePixel(rgba, 24, outX + x, outY + y, index, 255);
+                    PutPalettePixel(rgba, outputWidth, outX + x, outY + y, index, 255);
             }
         }
     }
 
-    private static Texture2D DecodeTerrainPatch(string fileName)
+    private static Texture2D DecodeFirstLevelTerrain()
     {
-        byte[] file = Read(fileName);
-        byte[][] shapes = new byte[60][];
+        byte[] file = Read("shapesz.dat");
+        byte[] terrain = new byte[24 * 28];
         int offset = 0;
-        for (int i = 0; i < shapes.Length && offset < file.Length; ++i)
+        // TYRIAN's first level uses the Z shapeset. Shape 100 (zero-based)
+        // is its seamless dark-cobble ground fill, visible beneath the paths,
+        // ice, cliffs, and structures in the real level.
+        for (int i = 0; i <= 100 && offset < file.Length; ++i)
         {
             bool blank = file[offset++] != 0;
-            shapes[i] = blank ? new byte[24 * 28] : file.AsSpan(offset, 24 * 28).ToArray();
-            if (!blank) offset += 24 * 28;
+            if (!blank)
+            {
+                if (i == 100)
+                    file.AsSpan(offset, 24 * 28).CopyTo(terrain);
+                offset += 24 * 28;
+            }
         }
 
         const int width = 264, height = 168;
         byte[] rgba = new byte[width * height * 4];
-        // A contiguous, authored metal/rock strip from the TYRIAN shapeset.
-        // Offset each row so the patch reads like scrolling terrain instead
-        // of a repeated checkerboard.
         for (int tileY = 0; tileY < 6; ++tileY)
         for (int tileX = 0; tileX < 11; ++tileX)
         {
-            byte[] shape = shapes[45 + (tileX + tileY * 3) % 15];
             for (int y = 0; y < 28; ++y)
             for (int x = 0; x < 24; ++x)
                 PutPalettePixel(rgba, width, tileX * 24 + x, tileY * 28 + y,
-                                shape[y * 24 + x], 255);
+                                terrain[y * 24 + x], 255);
         }
         return Texture(rgba, width, height);
     }

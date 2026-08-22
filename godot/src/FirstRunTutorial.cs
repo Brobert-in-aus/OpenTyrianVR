@@ -11,7 +11,7 @@ public partial class FirstRunTutorial : Node3D
 {
     public enum Result { Continue, LaunchGame }
     private enum Step { Intro, Corners, MainWeapon, SecondaryWeapon, Pickup, Complete }
-    private const string CompletionPath = "user://first_run_tutorial_v3.complete";
+    private const string CompletionPath = "user://first_run_tutorial_v4.complete";
     private const float TriggerThreshold = 0.55f, GripThreshold = 0.60f;
 
     private sealed class RayButton
@@ -175,7 +175,7 @@ public partial class FirstRunTutorial : Node3D
         AddBoardLine(-0.31f); AddBoardLine(0.31f);
         _target = SpriteQuad("SteeringTarget", new Vector2(0.027f, 0.027f), new Color(0.15f, 0.68f, 1f, 0.82f), 106);
         _practiceBoard.AddChild(_target);
-        _ship = TexturedSprite("PracticeShip", new Vector2(0.060f, 0.070f), TutorialAssets.PlayerShip(), 107);
+        _ship = TexturedSprite("PracticeShip", new Vector2(0.105f, 0.061f), TutorialAssets.PlayerShip(), 107);
         _practiceBoard.AddChild(_ship);
         _enemy = TexturedSprite("PracticeEnemy", new Vector2(0.060f, 0.070f), TutorialAssets.EnemyShip(), 107);
         _enemy.Position = new Vector3(0.12f, 0.12f, 0.005f);
