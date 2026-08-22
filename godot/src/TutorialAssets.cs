@@ -12,10 +12,6 @@ internal static class TutorialAssets
 
     public static Texture2D PlayerShip() => DecodeArcadeShip();
     public static Texture2D Powerup() => DecodeTyrianComposite(arrayNumber: 10, baseIndex: 7);
-    // First-level blue flyer: a valid 2x2 base at 85. Index 76 is terrain
-    // artwork in the same mixed bank and was the stray ground fragment seen
-    // in the tutorial.
-    public static Texture2D EnemyShip() => DecodeSpriteComposite("newsh2.shp", baseIndex: 85);
     public static Texture2D Terrain() => DecodeFirstLevelTerrain();
 
     private static Texture2D DecodeArcadeShip()
@@ -43,9 +39,6 @@ internal static class TutorialAssets
         int end = arrayNumber < count ? I32(file, 2 + arrayNumber * 4) : file.Length;
         return DecodeComposite(file.AsSpan(start, end - start), baseIndex);
     }
-
-    private static Texture2D DecodeSpriteComposite(string fileName, int baseIndex) =>
-        DecodeComposite(Read(fileName), baseIndex);
 
     private static Texture2D DecodeComposite(ReadOnlySpan<byte> data, int baseIndex)
     {

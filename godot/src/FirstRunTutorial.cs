@@ -25,7 +25,7 @@ public partial class FirstRunTutorial : Node3D
     private Node3D _introPanel = null!, _popup = null!, _practiceBoard = null!;
     private Label3D _introBody = null!, _popupText = null!;
     private RayButton _startButton = null!, _skipButton = null!;
-    private MeshInstance3D _ship = null!, _target = null!, _enemy = null!, _pickup = null!, _laserVisual = null!;
+    private MeshInstance3D _ship = null!, _target = null!, _pickup = null!, _laserVisual = null!;
     private ImmediateMesh _laserMesh = null!;
     private readonly List<(MeshInstance3D Mesh, Vector2 Velocity, double Life)> _shots = new();
     private byte _corners;
@@ -177,9 +177,6 @@ public partial class FirstRunTutorial : Node3D
         _practiceBoard.AddChild(_target);
         _ship = TexturedSprite("PracticeShip", new Vector2(0.105f, 0.061f), TutorialAssets.PlayerShip(), 107);
         _practiceBoard.AddChild(_ship);
-        _enemy = TexturedSprite("PracticeEnemy", new Vector2(0.060f, 0.070f), TutorialAssets.EnemyShip(), 107);
-        _enemy.Position = new Vector3(0.12f, 0.12f, 0.005f);
-        _practiceBoard.AddChild(_enemy);
         _pickup = TexturedSprite("PracticePickup", new Vector2(0.050f, 0.058f), TutorialAssets.Powerup(), 108);
         _practiceBoard.AddChild(_pickup);
         _practiceBoard.Visible = false;
