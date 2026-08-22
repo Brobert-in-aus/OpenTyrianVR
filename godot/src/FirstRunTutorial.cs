@@ -11,7 +11,7 @@ public partial class FirstRunTutorial : Node3D
 {
     public enum Result { Continue, LaunchGame }
     private enum Step { Intro, Corners, MainWeapon, SecondaryWeapon, Pickup, Complete }
-    private const string CompletionPath = "user://first_run_tutorial_v4.complete";
+    private const string CompletionPath = "user://first_run_tutorial_v5.complete";
     private const float TriggerThreshold = 0.55f, GripThreshold = 0.60f;
 
     private sealed class RayButton
