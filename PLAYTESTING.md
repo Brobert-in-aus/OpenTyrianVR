@@ -33,13 +33,17 @@ Compare the package against its adjacent `.sha256` file before installing.
   skipping is remembered. Set `OTYR_TUTORIAL=1` before a PCVR launch to replay
   it for testing.
 - Training runs in a safe practice scene. Move the left hand to all four corners
-  of the blue rectangle, then demonstrate main fire, sidekick fire, and collect
-  the falling gold item. A missed item respawns from the top until collected;
-  sleeping controller tracking pauses progression rather than failing the step.
+  of the blue rectangle while the real player ship visibly catches up to the
+  blue target, then demonstrate main fire, sidekick fire, and collect the
+  falling powerup. The practice scene uses original Tyrian ship, enemy, powerup,
+  and terrain art. A missed item respawns from the top until collected; sleeping
+  controller tracking pauses progression rather than failing the step.
 - Move the left hand inside the floating blue rectangle to steer directly.
   The rectangle, hand marker, and lane reticle fade between 8 and 10 seconds
   into each level; hand steering remains active after they disappear.
-- Either thumbstick also moves the ship.
+- Either thumbstick also moves the ship. In menus, left/right changes a setting
+  only when the stick is within a 60-degree cone centred on horizontal; diagonal
+  scrolling therefore remains up/down.
 - Either trigger fires.
 - Left and right grip activate the corresponding sidekick.
 - Right A confirms; right B cancels.

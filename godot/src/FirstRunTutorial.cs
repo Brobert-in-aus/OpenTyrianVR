@@ -11,7 +11,7 @@ public partial class FirstRunTutorial : Node3D
 {
     public enum Result { Continue, LaunchGame }
     private enum Step { Intro, Corners, MainWeapon, SecondaryWeapon, Pickup, Complete }
-    private const string CompletionPath = "user://first_run_tutorial_v2.complete";
+    private const string CompletionPath = "user://first_run_tutorial_v3.complete";
     private const float TriggerThreshold = 0.55f, GripThreshold = 0.60f;
 
     private sealed class RayButton
@@ -25,14 +25,16 @@ public partial class FirstRunTutorial : Node3D
     private Node3D _introPanel = null!, _popup = null!, _practiceBoard = null!;
     private Label3D _introBody = null!, _popupText = null!;
     private RayButton _startButton = null!, _skipButton = null!;
-    private MeshInstance3D _ship = null!, _pickup = null!, _laserVisual = null!;
+    private MeshInstance3D _ship = null!, _target = null!, _enemy = null!, _pickup = null!, _laserVisual = null!;
     private ImmediateMesh _laserMesh = null!;
     private readonly List<(MeshInstance3D Mesh, Vector2 Velocity, double Life)> _shots = new();
     private byte _corners;
     private bool _lastLeftTrigger, _lastRightTrigger, _lastGrip, _lastMenu, _launchPending;
     private double _completeDelay;
     private int _pickupAttempt;
-    private Vector2 _playerPosition, _pickupPosition;
+    private Vector2 _playerPosition, _pickupPosition, _playerSim, _targetSim;
+    private int _targetRampX, _targetRampY;
+    private double _pursuitAccumulator;
 
     public bool NeedsHandGuide => _step is Step.Corners or Step.MainWeapon or
         Step.SecondaryWeapon or Step.Pickup;
@@ -111,8 +113,8 @@ public partial class FirstRunTutorial : Node3D
     {
         _introPanel = new Node3D
         {
-            Name = "FirstRunMenu", Position = new Vector3(0f, 1.43f, -0.72f),
-            RotationDegrees = new Vector3(-8f, 0f, 0f),
+            Name = "FirstRunMenu", Position = new Vector3(0f, 1.08f, -0.65f),
+            RotationDegrees = new Vector3(-4f, 0f, 0f),
         };
         AddChild(_introPanel);
         _introPanel.AddChild(PanelQuad("Backing", new Vector2(0.82f, 0.50f),
@@ -166,12 +168,19 @@ public partial class FirstRunTutorial : Node3D
             RotationDegrees = new Vector3(-42f, 0f, 0f),
         };
         AddChild(_practiceBoard);
-        _practiceBoard.AddChild(PanelQuad("PracticeSpace", new Vector2(0.66f, 0.42f),
-            new Color(0.025f, 0.055f, 0.10f, 1f), -0.010f, 104));
+        var terrain = PanelQuad("PracticeSpace", new Vector2(0.66f, 0.42f),
+            Colors.White, -0.010f, 104);
+        terrain.MaterialOverride = SpriteMaterial(TutorialAssets.Terrain(), 104);
+        _practiceBoard.AddChild(terrain);
         AddBoardLine(-0.31f); AddBoardLine(0.31f);
-        _ship = SpriteQuad("PracticeShip", new Vector2(0.048f, 0.052f), new Color(0.20f, 0.82f, 1f), 107);
+        _target = SpriteQuad("SteeringTarget", new Vector2(0.027f, 0.027f), new Color(0.15f, 0.68f, 1f, 0.82f), 106);
+        _practiceBoard.AddChild(_target);
+        _ship = TexturedSprite("PracticeShip", new Vector2(0.060f, 0.070f), TutorialAssets.PlayerShip(), 107);
         _practiceBoard.AddChild(_ship);
-        _pickup = SpriteQuad("PracticePickup", new Vector2(0.038f, 0.038f), new Color(1f, 0.82f, 0.18f), 108);
+        _enemy = TexturedSprite("PracticeEnemy", new Vector2(0.060f, 0.070f), TutorialAssets.EnemyShip(), 107);
+        _enemy.Position = new Vector3(0.12f, 0.12f, 0.005f);
+        _practiceBoard.AddChild(_enemy);
+        _pickup = TexturedSprite("PracticePickup", new Vector2(0.050f, 0.058f), TutorialAssets.Powerup(), 108);
         _practiceBoard.AddChild(_pickup);
         _practiceBoard.Visible = false;
         _popup.Visible = false;
@@ -249,13 +258,27 @@ public partial class FirstRunTutorial : Node3D
         _introPanel.Visible = false; _laserVisual.Visible = false;
         _popup.Visible = true; _practiceBoard.Visible = true; _pickup.Visible = false;
         _corners = 0;
+        _playerSim = _targetSim = new Vector2(148f, 85f);
+        _targetRampX = _targetRampY = 0;
+        _pursuitAccumulator = 0;
         RefreshPopup();
         GD.Print("OpenTyrianVR: tutorial -> Corners");
     }
 
     private void UpdatePractice(double delta, Vector2 hand, bool tracking, bool triggerEdge, bool gripEdge)
     {
-        _playerPosition = new Vector2(hand.X * 0.27f, hand.Y * 0.14f - 0.015f);
+        _targetSim = new Vector2(Mathf.Remap(hand.X, -1f, 1f, 16f, 280f),
+                                 Mathf.Remap(hand.Y, -1f, 1f, 160f, 10f));
+        _pursuitAccumulator += delta;
+        while (_pursuitAccumulator >= 1.0 / 35.0)
+        {
+            _pursuitAccumulator -= 1.0 / 35.0;
+            _playerSim.X += TargetEaseStep(Mathf.RoundToInt(_targetSim.X - _playerSim.X), ref _targetRampX);
+            _playerSim.Y += TargetEaseStep(Mathf.RoundToInt(_targetSim.Y - _playerSim.Y), ref _targetRampY);
+        }
+        _playerPosition = SimToBoard(_playerSim);
+        Vector2 targetPosition = SimToBoard(_targetSim);
+        _target.Position = new Vector3(targetPosition.X, targetPosition.Y, 0.004f);
         _ship.Position = new Vector3(_playerPosition.X, _playerPosition.Y, 0.004f);
         UpdateShots(delta);
         if (!tracking)
@@ -291,6 +314,26 @@ public partial class FirstRunTutorial : Node3D
                 else if (_pickupPosition.Y < -0.19f) RespawnPickup();
                 break;
         }
+    }
+
+    private static Vector2 SimToBoard(Vector2 sim) => new(
+        Mathf.Remap(sim.X, 16f, 280f, -0.27f, 0.27f),
+        Mathf.Remap(sim.Y, 160f, 10f, -0.15f, 0.15f));
+
+    // Matches mainint.c target_ease_step: 1 px/tick acceleration, distance-
+    // based slow arrival, and the game's default 5 px/tick maximum.
+    private static int TargetEaseStep(int distance, ref int ramp)
+    {
+        if (distance == 0) { ramp = 0; return 0; }
+        int direction = distance > 0 ? 1 : -1;
+        int remaining = Math.Abs(distance);
+        int desired = Math.Min((remaining + 2) / 3, 5);
+        int speed = ramp * direction;
+        if (speed < 0) speed = 0;
+        speed = Math.Min(speed + 1, desired);
+        int step = Math.Min(speed, remaining);
+        ramp = direction * speed;
+        return direction * step;
     }
 
     private void Advance(Step next) { _step = next; RefreshPopup(); GD.Print($"OpenTyrianVR: tutorial -> {_step}"); }
@@ -364,6 +407,17 @@ public partial class FirstRunTutorial : Node3D
     private static MeshInstance3D SpriteQuad(string name, Vector2 size, Color color, int priority) => new()
     {
         Name = name, Mesh = new QuadMesh { Size = size }, MaterialOverride = UiMaterial(color, priority),
+    };
+    private static MeshInstance3D TexturedSprite(string name, Vector2 size, Texture2D texture, int priority) => new()
+    {
+        Name = name, Mesh = new QuadMesh { Size = size }, MaterialOverride = SpriteMaterial(texture, priority),
+    };
+    private static StandardMaterial3D SpriteMaterial(Texture2D texture, int priority) => new()
+    {
+        AlbedoTexture = texture, Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+        TextureFilter = BaseMaterial3D.TextureFilterEnum.Nearest,
+        ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+        CullMode = BaseMaterial3D.CullModeEnum.Disabled, NoDepthTest = true, RenderPriority = priority,
     };
     private static StandardMaterial3D UiMaterial(Color color, int priority) => new()
     {

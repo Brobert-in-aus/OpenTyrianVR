@@ -101,6 +101,8 @@ public partial class Main : Node3D
     private uint _lastLevelTick;
     private ulong _lastLevelTickMs;
     private bool _inGameplay;
+    private bool _guideLevelActive;
+    private uint _guideLevelStartTick, _guideLastTick;
 
     private const float ControlRectWidth = 0.36f;
     // Preserve the playable simulation area's 264:150 aspect ratio so one
@@ -511,7 +513,7 @@ public partial class Main : Node3D
             ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
             CullMode = BaseMaterial3D.CullModeEnum.Disabled,
             NoDepthTest = true,
-            RenderPriority = 100,
+            RenderPriority = 125,
         };
         var rectVisual = new MeshInstance3D
         {
@@ -527,7 +529,7 @@ public partial class Main : Node3D
             Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
             ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
             NoDepthTest = true,
-            RenderPriority = 101,
+            RenderPriority = 126,
         };
         _handMarker = new MeshInstance3D
         {
@@ -544,7 +546,7 @@ public partial class Main : Node3D
             Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
             ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
             NoDepthTest = true,
-            RenderPriority = 102,
+            RenderPriority = 127,
         };
         _targetReticle = new MeshInstance3D
         {
@@ -1896,10 +1898,23 @@ public partial class Main : Node3D
             // Either stick moves, either trigger fires.
             Vector2 stick = _leftHand.GetVector2("primary") + _rightHand.GetVector2("primary");
             const float deadzone = 0.4f;
-            if (stick.Y > deadzone) buttons |= OtyrNative.Buttons.Up;
-            if (stick.Y < -deadzone) buttons |= OtyrNative.Buttons.Down;
-            if (stick.X < -deadzone) buttons |= OtyrNative.Buttons.Left;
-            if (stick.X > deadzone) buttons |= OtyrNative.Buttons.Right;
+            bool menuNavigation = _frame.InLevel == 0 || _frame.MenuPresent != 0;
+            const float horizontalConeSlope = 0.57735027f; // tan(30°): 60° total cone
+            bool horizontalMenuIntent = menuNavigation && Mathf.Abs(stick.X) > deadzone &&
+                Mathf.Abs(stick.Y) <= Mathf.Abs(stick.X) * horizontalConeSlope;
+            if (horizontalMenuIntent)
+            {
+                if (stick.X < 0f) buttons |= OtyrNative.Buttons.Left;
+                else buttons |= OtyrNative.Buttons.Right;
+            }
+            else
+            {
+                if (stick.Y > deadzone) buttons |= OtyrNative.Buttons.Up;
+                if (stick.Y < -deadzone) buttons |= OtyrNative.Buttons.Down;
+                // Preserve unrestricted diagonals during gameplay.
+                if (!menuNavigation && stick.X < -deadzone) buttons |= OtyrNative.Buttons.Left;
+                if (!menuNavigation && stick.X > deadzone) buttons |= OtyrNative.Buttons.Right;
+            }
 
             if (Math.Max(_rightHand.GetFloat("trigger"), _leftHand.GetFloat("trigger")) > 0.55f)
                 buttons |= OtyrNative.Buttons.Fire;
@@ -1989,14 +2004,23 @@ public partial class Main : Node3D
         bool tracking = _leftHand != null && _leftHand.GetHasTrackingData();
         const float fadeStartTick = 8f * 35f;
         const float fadeEndTick = 10f * 35f;
-        float guideAlpha = !_inGameplay ? 0f :
-            Mathf.Clamp((fadeEndTick - _frame.LevelTick) / (fadeEndTick - fadeStartTick), 0f, 1f);
+        if (_frame.InLevel == 0)
+            _guideLevelActive = false;
+        else if (!_guideLevelActive || _frame.LevelTick < _guideLastTick)
+        {
+            _guideLevelActive = true;
+            _guideLevelStartTick = _frame.LevelTick;
+        }
+        _guideLastTick = _frame.LevelTick;
+        uint guideElapsedTicks = _guideLevelActive ? _frame.LevelTick - _guideLevelStartTick : 0;
+        float guideAlpha = !_inGameplay || !_guideLevelActive ? 0f :
+            Mathf.Clamp((fadeEndTick - guideElapsedTicks) / (fadeEndTick - fadeStartTick), 0f, 1f);
         if (_tutorial.NeedsHandGuide)
             guideAlpha = 1f;
         bool showGuide = tracking && _inGameplay && guideAlpha > 0.005f;
         _controlRect.Visible = showGuide;
         _targetReticle.Visible = showGuide;
-        _controlRectMaterial.AlbedoColor = new Color(0.3f, 0.6f, 1.0f, 0.08f * guideAlpha);
+        _controlRectMaterial.AlbedoColor = new Color(0.3f, 0.6f, 1.0f, 0.14f * guideAlpha);
         _handMarkerMaterial.AlbedoColor = new Color(0.2f, 0.5f, 1.0f, guideAlpha);
         _targetReticleMaterial.AlbedoColor = new Color(0.2f, 0.8f, 1.0f, 0.65f * guideAlpha);
         _handTargetActive = false;
