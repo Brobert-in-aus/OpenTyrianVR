@@ -12,6 +12,7 @@ The Quest build is a Godot 4.7 Mono/OpenXR Android application targeting
 - SDL 2.32.10 source in `deps/SDL2-source-2.32.10/`
 - Tyrian 2.1 data files in `tyrian21/`
 - The standard Android debug keystore at `%USERPROFILE%\.android\debug.keystore`
+  for local builds, or a persistent project keystore for distributed builds
 
 The generated Android template, vendor plugin, SDL source, staged data, and
 native build outputs are intentionally ignored by git.
@@ -25,11 +26,47 @@ powershell -ExecutionPolicy Bypass -File tools\build_quest.ps1
 ```
 
 The script builds SDL and the OpenTyrian core for `arm64-v8a`, exports the
-Godot C# project, applies 16 KiB ELF/APK alignment, signs with the debug
-keystore, and verifies the required managed, native, OpenXR, and data payloads.
+Godot C# project, applies 16 KiB ELF/APK alignment, signs with the debug key by
+default (or the configured release key), and verifies the required managed,
+native, OpenXR, and data payloads.
 It sets `OTYR_MUTE=1` for Godot tooling and never launches or installs the game.
+The exporter runs with redirected logs and a five-minute bound. Godot 4.7 can
+remain alive after Gradle has closed a complete APK; the helper verifies the
+ZIP central directory and managed payload before stopping only that idle export
+process and continuing with alignment and signing.
 
-Output: `artifacts/OpenTyrianVR.quest.apk`
+Local/debug output:
+
+- `artifacts/OpenTyrianVR-0.1.0-alpha.1-quest.apk`
+- `artifacts/OpenTyrianVR-0.1.0-alpha.1-quest.apk.sha256`
+- `artifacts/OpenTyrianVR-0.1.0-alpha.1-quest.apk.build.txt`
+
+For a distributed playtest, use the persistent project key so later APKs can
+upgrade the same installation. This workstation keeps the key at
+`%USERPROFILE%\.android\OpenTyrianVR-release.jks` and its alias/password in a
+Windows DPAPI-protected credential file at
+`%USERPROFILE%\.android\OpenTyrianVR-release-signing.xml`. The credential can
+only be decrypted by the same Windows account on this machine, so the normal
+release command needs no plaintext password:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File tools\build_quest.ps1 -ReleaseSigning
+```
+
+Back up the keystore and its password separately in durable secure storage.
+Losing either one prevents future APKs from upgrading existing installations.
+For another build machine, supply explicit environment variables instead:
+
+```powershell
+$env:OTYR_ANDROID_KEYSTORE = 'D:\secure\opentyrianvr-release.jks'
+$env:OTYR_ANDROID_KEY_ALIAS = 'opentyrianvr'
+$env:OTYR_ANDROID_KEYSTORE_PASSWORD = '<secret>'
+powershell -ExecutionPolicy Bypass -File tools\build_quest.ps1 -ReleaseSigning
+```
+
+Godot requires the key password and keystore password to match. Never commit
+the keystore, credential file, or password. The build record includes the Git
+commit, signing mode, build time, and APK SHA-256.
 
 ## Install (never launch)
 
@@ -56,17 +93,90 @@ head-motion distortion. A sustained 0.1.5 pass validated pause/resume,
 in-game-menu transitions, platform-rider stability, 4x MSAA, and ample
 performance headroom; review-marker halos are editor-only.
 
-Version 0.1.12 (code 13) is the current installed validation build. It requests
-90 Hz, crops presentation to the actual 264x184 playfield, render-interpolates
-all terrain layers, and stabilizes linked composite enemies across authored
-transparent gaps. The in-headset checklist is the authoritative pass/fail gate:
+Version 0.1.0-alpha.1 (code 28, native ABI v30) is the current candidate. It requests 90 Hz,
+renders the actual terrain side lanes from -24..288 while retaining
+the ship-safe -25..288 sprite envelope, keeps the
+vertical crop at 0..184, render-interpolates all terrain layers, stabilizes
+linked composite enemies across authored transparent gaps, and keeps known
+cloud layers translucent when level events change their draw order. Clouds
+retain their elevated plane across those order changes and paint after ground
+shadows but before aerial platforms; surface objects select ground versus
+platform per instance; connected boss components share one surface while
+retaining their authored stack offsets. The native ABI also carries episode identity
+so Episode 1 type heights cannot leak into Episodes 2-4; conservative
+episode-local semantics cover only exact or validated close-family matches.
+Dynamic type-zero spawns use conservatively validated graphic semantics.
+Entity shadows now mask each fragment against the live elevated receiver art,
+clipping unsupported portions at cloud/platform holes; the deterministic
+desktop presentation suite covers all six native effects together and the
+unknown-effect legacy safety path.
+The in-headset checklist is the authoritative pass/fail gate:
 
-- the ship reaches both cropped horizontal edges;
-- enemies cross the hard playfield edges cleanly, with no fade or side strips;
+- both 24 px side lanes remain visible without a seam at x=0/264, and the ship
+  reaches both horizontal limits;
+- enemies cross the hard vertical playfield edges cleanly, with no fade;
 - terrain below floating platforms scrolls without judder;
-- fast stacks and the small level-1 boss remain welded;
+- fast stacks and small boss types 468-473 remain welded;
+- clouds remain translucent and below level-1 aerial platforms;
+- ground objects blend behind clouds; layer-6 objects stay under platforms,
+  layer-7 objects share the platform plane, and flying enemies use air planes;
+- the stacked tank boss keeps its body/turret offsets on one shared surface;
+- Episodes 2-4 show no Episode 1 height leakage, and classified later-episode
+  objects occupy the intended surface/air planes;
+- top-edge shadows appear before their off-screen casters, height-driven
+  entity shadows move farther from higher casters, and elevated
+  clouds/platforms cast stable silhouettes without floating across transparent
+  holes;
+- storm, flip, lava, blur, iced, and searchlight effects remain stereo-correct
+  in the hybrid 3D scene;
+- HUD, death, end-level, and story/lifecycle screens remain complete; PAUSED
+  text and boss HP bars remain above aerial platforms;
+- music and sound effects play at the headset volume;
 - motion remains smooth at the selected 90 Hz refresh rate.
 
-Unchecked checklist entries count as failures. Quest automation remains
-install-and-report only: do not launch the application from build or deployment
-scripts.
+The in-headset debug menu opens and closes by pressing both stick buttons
+together. Use the right stick to choose a row or change the selected episode
+and level, A to activate, and B to close. It can warp directly to any playable
+level, toggle invulnerability, kill current hostiles, or skip the current
+level. F1, arrow keys, Enter, and Escape provide equivalent desktop controls.
+
+The check control cycles each entry through pass, fail, and unchecked; the
+navigation control advances separately. Unchecked therefore means untested,
+not failed. Quest automation remains install-and-report only: do not launch the
+application from build or deployment scripts.
+
+The 0.1.23 sweep also keeps the darkness/searchlight effect aligned with the
+ship-safe -25..288 sprite crop and corrects SDL's input/output device direction
+for Android route changes. Editor and regression launchers force dummy/muted
+audio and restore their caller's directory and environment when they finish.
+The current darkness pass is a late translucent mask rather than a screen-copy
+filter; this keeps transparent terrain visible, and the regression includes a
+darkness-only capture that rejects an effectively black playfield.
+
+Version 0.1.24 normalizes snapshot-arrival timing by the actual native tick
+gap, so the one-off shader compilation when floating platforms first appear
+cannot poison ground interpolation. Stationary surface-class buildings now use
+the exact ground or platform plane; a depth-only bias preserves paint order
+without introducing head-parallax from a geometric lift.
+
+Version 0.1.25 makes connected, near-coplanar flying boss sections share one
+exact render plane. This removes the headset-only horizontal split between the
+upper and lower rows of the small Episode 1 boss while preserving meaningful
+authored height offsets and all surface/tank assemblies.
+
+Version 0.1.26 corrects the actual zero-link six-part boss (types 468-473) by
+carrying a presentation-only same-event spawn cohort, restores side terrain as
+one -24..288 quad with the uncropped map backing, and uses a fixed 35 Hz
+interpolation clock. Explicit depth/transparent ordering puts ground objects
+behind clouds and key-6 objects below platforms; type 559 moves to the new
+key-7 platform class while 66-79 remain platform-under. Map shadows now sample
+off-screen caster pixels into the visible top edge. The proud keyed lane keeps
+PAUSED text and boss HP primitives above all terrain geometry.
+
+Development builds include an in-headset level-warp/debug menu and
+runtime-authorized invulnerability, hostile-kill, and level-skip controls.
+Godot release exports hide these developer tools unless `OTYR_DEV_TOOLS=1` is
+explicitly set; distributed builds must not set it. Layer-1 covers that
+paint over the ground in the native renderer now occlude the ground entity
+bands per pixel in the 3D presentation, retaining entities through transparent
+parts of ALE, TIME WAR, and other maps using the same authored paint mode.

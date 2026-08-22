@@ -776,6 +776,11 @@ int opentyrian_main(int argc, char *argv[])
 	xmas = xmas_time();  // arg handler may override
 
 	JE_paramCheck(argc, argv);
+	/* Hosted presentation verification: enter the deterministic attract
+	   sequence without synthesizing title/menu input. Never affects normal
+	   sessions and remains silent when paired with OTYR_MUTE/--no-sound. */
+	if (otyr_hosted && SDL_getenv("OTYR_PLAY_DEMO") != NULL)
+		start_with_demo = true;
 
 	JE_scanForEpisodes();
 
@@ -842,11 +847,6 @@ int opentyrian_main(int argc, char *argv[])
 #endif
 	}
 
-#ifdef NDEBUG
-	if (!isNetworkGame && !start_with_demo)
-		intro_logos();
-#endif
-
 	/* OTYR_START_SECTION=<n> (+OTYR_START_EPISODE=<e>, default 1): boot
 	   straight into episode script section n, bypassing the title screen
 	   once -- the height editor's level select (secret levels have their
@@ -854,6 +854,11 @@ int opentyrian_main(int argc, char *argv[])
 	   tooling only. */
 	bool otyr_start_jump = SDL_getenv("OTYR_START_SECTION") != NULL &&
 	                       atoi(SDL_getenv("OTYR_START_SECTION")) > 0;
+
+#ifdef NDEBUG
+	if (!isNetworkGame && !start_with_demo && !otyr_start_jump)
+		intro_logos();
+#endif
 
 	for (; ; )
 	{
@@ -873,7 +878,10 @@ int opentyrian_main(int argc, char *argv[])
 			JE_initEpisode(ep != NULL && atoi(ep) > 0 ? (JE_byte)atoi(ep) : 1);
 			difficultyLevel = initialDifficulty = DIFFICULTY_NORMAL;
 			player[0].cash = 0;
-			mainLevel = saveLevel = (JE_word)atoi(SDL_getenv("OTYR_START_SECTION"));
+			/* The editor exposes the 1-based section ids printed by
+			   OTYR_DUMP_SECTIONS.  JE_loadMap's marker counter starts at zero,
+			   so its internal seek target is one lower. */
+			mainLevel = saveLevel = (JE_word)(atoi(SDL_getenv("OTYR_START_SECTION")) - 1);
 			gameLoaded = true;
 		}
 #ifdef WITH_NETWORK

@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="space" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#11152d"/>
+      <stop offset="1" stop-color="#050711"/>
+    </linearGradient>
+    <linearGradient id="ship" x1="0" y1="0" x2="0" y2="1">
+      <stop stop-color="#8ff8ff"/>
+      <stop offset="1" stop-color="#3187db"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="92" fill="url(#space)"/>
+  <path d="M90 390 170 104h172l80 286-74-40-35-112-57 72-57-72-35 112z"
+        fill="none" stroke="#ed5ae5" stroke-width="22" stroke-linejoin="round"/>
+  <path d="m256 116 58 190-58 82-58-82z" fill="url(#ship)"/>
+  <path d="m256 196 24 96-24 34-24-34z" fill="#f5feff"/>
+  <circle cx="118" cy="130" r="8" fill="#8ff8ff"/>
+  <circle cx="394" cy="168" r="6" fill="#ed5ae5"/>
+  <circle cx="400" cy="334" r="9" fill="#8ff8ff"/>
+</svg>

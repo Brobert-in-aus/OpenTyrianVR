@@ -14,7 +14,15 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $repo = Split-Path $PSScriptRoot -Parent
-Set-Location $repo
+Push-Location $repo
+$savedEnvironment = @{}
+foreach ($name in @('OTYR_MUTE','SDL_AUDIODRIVER','OTYR_FLAT','OTYR_HEIGHT_EDITOR',
+                     'OTYR_INVULN','OTYR_LINEAR','OTYR_DUMP_SECTIONS',
+                     'OTYR_START_SECTION','OTYR_START_EPISODE')) {
+    $item = Get-Item "Env:$name" -ErrorAction SilentlyContinue
+    $savedEnvironment[$name] = if ($null -ne $item) { $item.Value } else { $null }
+}
+try {
 
 if ($ListSections) {
     $env:OTYR_DUMP_SECTIONS = '1'
@@ -26,9 +34,11 @@ if ($ListSections) {
     Start-Sleep 8
     Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
     Get-Content "$env:TEMP\otyr_sections.log" | Select-String "section|episode"
-    exit
+    return
 }
 
+$env:OTYR_MUTE = '1'
+$env:SDL_AUDIODRIVER = 'dummy'
 $env:OTYR_FLAT = '1'
 $env:OTYR_HEIGHT_EDITOR = '1'
 $env:OTYR_INVULN = '1'
@@ -42,5 +52,16 @@ if ($Section -gt 0) {
     Remove-Item Env:OTYR_START_SECTION -ErrorAction SilentlyContinue
     Remove-Item Env:OTYR_START_EPISODE -ErrorAction SilentlyContinue
 }
+# Godot executes the Debug assembly. Build it explicitly so an existing
+# editor cache can never launch code older than the source being validated.
+& dotnet build "$repo\godot\OpenTyrianVR.csproj" -c Debug -warnaserror
+if ($LASTEXITCODE -ne 0) { throw "Height-editor managed build failed ($LASTEXITCODE)" }
 & "D:\Projects\games-xr\_tools\godot\Godot_v4.7-stable_mono_win64\Godot_v4.7-stable_mono_win64_console.exe" `
-    --path "$repo\godot" --xr-mode off
+    --path "$repo\godot" --xr-mode off --audio-driver Dummy
+} finally {
+    foreach ($name in $savedEnvironment.Keys) {
+        if ($null -eq $savedEnvironment[$name]) { Remove-Item "Env:$name" -ErrorAction SilentlyContinue }
+        else { Set-Item "Env:$name" $savedEnvironment[$name] }
+    }
+    Pop-Location
+}

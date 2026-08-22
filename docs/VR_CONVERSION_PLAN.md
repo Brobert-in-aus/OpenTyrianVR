@@ -78,6 +78,10 @@
   the lower section -- possibly genuine art transparency, visible only
   because the structure floats; folds into the Stage B height work).
   Menu text stays flat by design until the Phase 4 menu redesign.
+  ABI v30 adds a world-space headset debug menu with direct episode/level
+  warp, invulnerability, hostile kill, and level skip. Fully opaque layer-1
+  covers preserve native per-pixel paint-order occlusion of both ground enemy
+  bands.
   REGRESSION found and fixed: the player ship smeared/shredded --
   EXPLOSION slot ids recycle every 3-12 ticks, so a recycled slot
   paired a new burst with a dead one within the 16px radius and the
@@ -480,10 +484,10 @@
   MINES bumpers) get blue B-toggle halos (flag 128); ground class
   outranks the top-band platform floor AND surface-glues sim-truth
   statics (flag 32: never-latched; sparse art failed the opaque-cell
-  test and split DELIANI decorations -0.0008 vs +0.004).  KNOWN: 
-  SAVARA V (smoothies) renders flat by design -- host-side effect
-  port queued; next headset pass must re-verify multiview layering
-  (many transparent-order changes landed flat-only this round).
+  test and split DELIANI decorations -0.0008 vs +0.004).  SUPERSEDED:
+  SAVARA V's water smoothie now runs on the host background shader and
+  retains hybrid 3D; the keyed UI stays on the primary native framebuffer
+  when legacy filters are suppressed.
 - Round 10 (2026-07-12): the per-instance +/-1 sprite-vs-destroyed-art
   offsets are CONFIRMED AUTHENTIC LEGACY DATA (user eyeballed the same
   slivers in the legacy exe): event spawn positions quantize against
@@ -527,10 +531,10 @@
   order: UI 0.090 > over-top 0.075 (bg3over==1 foreground decks +
   topEnemyOver/skyEnemyOverAll variants + overflyers) > player/
   shots/pickups ~0.040 > flyers 0.032-0.038 (BELOW the player --
-  matches legacy default) > platform objects 0.0315 > platforms
-  0.030 > platform-under 0.0285 (under-platform spikes, legacy
+  matches legacy default) > raised platform objects 0.0315 > exact
+  platform-following 0.030 > platform-under 0.0285 (under-platform spikes, legacy
   ground-band records) > clouds 0.020/0.025 > mid-under 0.012
-  (underflying boss) > ground objects > ground.  Two signed-off
+  (underflying boss) > vehicles 0.0006 > exact surface-following ground.  Two signed-off
   deviations from legacy: flyers render above cloud decks (hazard
   visibility; per-type editor overrides can send atmospheric types
   beneath), and enemy shots share the player plane.  HEIGHT EDITOR
@@ -539,7 +543,14 @@
   nudge (Shift coarse), 1-8 class keys, live even while paused, P
   pause, N=DEBUG_SKIP past bosses (native, armed only with
   OTYR_INVULN), S saves to hover_heights.json.  Both envs are sim
-  mutations: never in normal sessions.  Shot bands moved 0.050 ->
+  mutations: never in normal sessions.  The editor now retains 30 seconds of
+  complete snapshots plus palettes: [ and ] scrub by one second (Shift = one
+  35 Hz tick). The editor now plays that history continuously in reverse when
+  Backspace is pressed (and forward on the next press); +/- changes either
+  direction by 0.1x while native pacing provides matching live fast-forward.
+  Entering history automatically
+  pauses the session so rapid objects remain pickable. History resets at map/
+  atlas epoch boundaries and is absent from normal/Quest sessions. Shot bands moved 0.050 ->
   0.041 per the hierarchy.  Hash gate bit-identical (77,386 ticks,
   solo rerun -- two more concurrent-run false alarms reinforced the
   rule: NEVER run the gate while another game instance is active).  NEW (confirmed in code): statics
@@ -602,6 +613,92 @@
   edge-sample extension on each side of joined quads. This covers intrinsic
   2x2s, linked multi-slot bosses/stacks, and same-source multi-quad ships
   without merging unrelated wave members that merely share a link number.
+- Episode-aware height semantics (0.1.15, ABI v26): snapshots export the active
+  episode because enemy type ids are episode-local. The generated broad-layer
+  table transfers validated Episode 1 surface/air placements only through exact
+  static-data matches and one bounded local-family hop; uncertain later-episode
+  types keep their runtime category band instead of inheriting an E1 guess.
+  A complete 53,338-event sweep over all 62 playable Episode 1-4 level records
+  adds one non-recursive same-tick/same-link assembly pass (88/88 manual
+  leave-one-out agreement), classifying 22 more E1 and 14 more E3 boss/stack
+  components. Legacy ground/sky event slots scored only 69/97 and are not
+  misused as semantic heights.
+- Virtual-sun shadows + Phase 4 coverage (0.1.16): the host no longer renders
+  Tyrian's fixed 10-pixel player/projectile shadow records. Sprite silhouettes
+  project down/right in proportion to their authored height and re-sample the
+  receiving ground/cloud/platform surface; elevated cloud/platform map art
+  casts a matching multiplicative silhouette onto the ground. Palette art
+  remains unlit. The campaign event audit covers all 53,338 events in 62
+  playable E1-E4 level records: water storm and vertical mirror remain native
+  hybrid-3D effects; composited lava/blur/iced/searchlight filters switch the
+  complete tick to the retained legacy frame. All observed effect ids
+  (1,2,3,4,5,6,9) are covered and unknown ids fail the audit. Presentation-mode
+  transitions now log at runtime. Headset gates remain shadow landing through
+  transparency holes, multiview consistency, effect transitions, and 90 Hz.
+- Receiver-masked shadows + deterministic presentation gate (0.1.17): each
+  generated entity-shadow fragment checks the live, scroll-interpolated
+  layer-1/layer-2 tile silhouettes against its centre-selected receiving plane.
+  Unsupported fragments clip at transparent platform/cloud holes and the
+  topmost elevated receiver wins overlaps without a CPU mask texture or new
+  draw call. `tools/test_presentation.ps1` builds silently and runs addressed
+  hybrid/card-flip, water-only/native-storm, and complete legacy-fallback captures; it
+  fails on shader/runtime errors, absent entity/map shadows or receiver layers,
+  missing captures, effectively black water/darkness frames, or wrong
+  transitions. Desktop gate PASS; multiview and
+  subjective shadow strength/landing remain headset checks.
+- Native effects + checklist triage (0.1.18-0.1.19, ABI v27): dynamic type-zero
+  spawns export their retained base graphic for conservative semantic height
+  placement. Lava, iced blur, and motion blur sample each eye's 3D scene;
+  darkness/searchlight uses a late translucent mask so transparent terrain is
+  already present beneath it. All six known effects pass the deterministic
+  hybrid regression together. The Quest
+  checklist reflects the native effect path and records pass, fail, and
+  unchecked separately so an untested item cannot be mistaken for a failure.
+- Ship-safe crop + explicit elevated ordering (0.1.20): the horizontal crop is
+  -25..288, the exact full-quad envelope of every ship variant at the legal
+  16/280 centres. Cloud identity now retains height as well as translucency
+  across legacy draw-order events. Transparent passes use an explicit ground,
+  map-shadow, cloud, platform order so a floating platform cannot receive its
+  own ground-projected multiply shadow.
+- Height-editor playback pacing (ABI v28): the hosted core exposes a
+  tenths-of-normal pacing control (0.1x-10.0x). The editor uses it for live
+  fast-forward/slow-motion, while reverse and forward replay traverse the
+  retained deterministic presentation history at the same signed rate.
+- Split terrain/sprite crop (0.1.21): terrain, backing, and map shadows stop at
+  the reachable 0..264 surface. Entity and effect rendering retain the exact
+  -25..288 ship envelope, so legal edge overhang remains visible without
+  exposing the unpathable authored side columns.
+- Quest audio bridge (0.1.22): the Godot activity packages SDL's Java audio
+  manager and the native host registers only its playback callbacks. Android
+  now enables the original music and sound mixer without adopting SDLActivity;
+  `OTYR_MUTE=1` remains the mandatory silent path for automated test/export
+  processes. The in-headset checklist verifies both music and effects.
+- Comprehensive regression sweep (0.1.23): the full host replay, 62-level
+  effect audit, warning-as-error managed build, and deterministic presentation
+  suite pass silently. Darkness now derives its mapping from the authoritative
+  -25..288 crop; Quest packaging corrects SDL's reversed input/output hot-plug
+  routes; the ABI-v26 ground observation mask is refreshed; and PowerShell
+  development tools no longer leak their working directory or audio settings.
+- Platform-arrival interpolation + coplanar buildings (0.1.24): snapshot
+  arrival smoothing divides wall time by the actual skipped-tick gap. A
+  one-off platform/shadow shader compilation therefore cannot stretch the
+  nominal 35 Hz interpolation period and turn ground scrolling into a
+  sawtooth. Stationary surface objects use the exact sampled ground/platform
+  Z; stronger depth-only ordering replaces their former geometric lift.
+- Flying composite plane lock (0.1.25): connected enemy slots with one nonzero
+  assembly id, air semantics, and only the tiny painter-order Z spread are
+  collapsed onto one exact plane. This closes the horizontal headset seam
+  between the small Episode 1 boss's upper and lower rows without flattening
+  meaningful authored stacks or the surface-based tank boss.
+- Side-lane/layer/composite correction (0.1.26): terrain is again one
+  -24..288 quad, but each unauthored HUD-side tile is a screen-space mirror of
+  its playable edge so x=0/264 is continuous. Zero-link enemies spawned by
+  consecutive records at one event time receive a presentation-only cohort;
+  spatial contact then welds the real six-part E1 boss (types 468-473).
+  Explicit color/cloud/platform/shadow/text ordering preserves translucent
+  clouds over ground objects, key 6 below platforms, and proud pause/boss-bar
+  UI. Back-projected map-shadow sampling includes off-screen top casters, and
+  the interpolation period is fixed to the native 35 Hz clock.
 - Quest refresh follow-up (0.1.9): Android OpenXR requests 90 Hz at startup,
   reapplies the request after the first tracked frames, and logs available,
   requested, and actual refresh rates. XR performance telemetry now treats
@@ -631,6 +728,14 @@
   supporting layer. Aligned sections with one nonzero link id may bridge up to
   a 32 px transparent authored gap before rigid-motion stabilization, covering
   the small level-1 boss without merging diagonal/unrelated wave members.
+- Width/cloud correction (0.1.13): the simulation still intentionally clamps
+  de-parallax player travel to 16..280, so presentation returns to -24..288 on
+  X while retaining the 0..184 vertical crop. One shared geometry definition
+  now drives terrain, entity clipping/culling, picking, and detached-sidebar
+  placement. Cloud identity is latched for each map epoch: later legacy
+  draw-order changes retain alpha 0.82 instead of making the same art opaque,
+  and baked-water-cloud classification remains pending while layer 1 is
+  temporarily elevated.
 
 ## 1. Product direction
 

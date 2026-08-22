@@ -1,10 +1,12 @@
 param(
-    [string]$Apk = 'artifacts\OpenTyrianVR.quest.apk',
+    [string]$Apk,
     [string]$Device
 )
 
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
+$version = (Get-Content -LiteralPath (Join-Path $repo 'VERSION') -Raw).Trim()
+if (!$Apk) { $Apk = "artifacts\OpenTyrianVR-$version-quest.apk" }
 $sdk = if ($env:ANDROID_SDK_ROOT) { $env:ANDROID_SDK_ROOT } elseif ($env:ANDROID_HOME) { $env:ANDROID_HOME } else { Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
 $adb = Join-Path $sdk 'platform-tools\adb.exe'
 $buildTools = Get-ChildItem (Join-Path $sdk 'build-tools') -Directory |

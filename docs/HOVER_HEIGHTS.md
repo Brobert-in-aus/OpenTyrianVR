@@ -5,6 +5,19 @@ classes. The host applies it to MOVING enemies (statics/riders already sit on
 their surfaces via the decal path). Unlisted types keep the legacy category
 band, so partial edits are always safe.
 
+Broad semantic automation and its Episode 1 comparison are documented in
+[`HEIGHT_AUTOMATION_REPORT.md`](HEIGHT_AUTOMATION_REPORT.md). The classifier is
+intentionally conservative: it propagates a manual surface/air decision only
+within a close sprite family and sends distant matches to review. At runtime,
+surface-class instances choose ground versus floating platform from the map art
+beneath them; linked boss components share that surface decision.
+`godot/height_semantics.json` is the generated episode-aware broad-layer map;
+`hover_heights.json` remains the hand-authored Episode 1 fine-height map.
+Temporary type-zero enemies use their retained base graphic as a semantic-only
+key. They are auto-placed only when event use and validated stable reuse of the
+same art unanimously agree, and are intentionally not exposed as editable type
+zero entries.
+
 ## The height editor (preferred workflow)
 
 Launch via the wrapper (level select included):
@@ -19,6 +32,8 @@ tools\editor.ps1 -ListSections    # print the section table
 Episode 1: 4 TYRIAN, 6 ASTEROID1, 7 ASTEROID2, 11 SAVARA, 14 MINES,
 17 BUBBLES, 20 DELIANI, 22 ASTEROID?, 24 MINEMAZE, 26 BONUS, 29 HOLES,
 30 SAVARA, 32 SOH JIN, 34 WINDY, 37 ASSASSIN, 39 SAVARA V, 42 ** ALE **.
+These are the human-facing `-ListSections` ids; the launcher and PageUp/PageDown
+translate them to Tyrian's zero-based internal script marker automatically.
 
 Raw envs, if launching manually:
 
@@ -36,12 +51,30 @@ or fires while the level plays itself. Then:
   every live instance of the type moves together)
 - **Up/Down** nudge height ±0.002 (**Shift** = ±0.01), visible immediately,
   even while paused
-- **1–8** assign classes: ground / pickup / air-low / air-mid / air-high /
-  platform-under / mid-under / over-top ("ground" resolves against the
-  surface beneath from the next tick)
+- **1** assigns exact surface-following, **2** is the low vehicle plane,
+  **3** is mid-under, **4/5** are the cloud bands, **6** is platform-under,
+  **7** is exact platform-following, and **8** is the raised platform-object
+  plane. Authored ground/platform classes override broad automatic semantics.
 - **P** pauses the game (the scene stays up for selection); **N** skips the
   level past progress blockers like end bosses
+- **+/-** changes playback speed by 0.1x per press, from 0.1x to 10.0x.
+  This changes the native simulation rate, so it can be used to traverse long
+  stretches of a level quickly rather than merely accelerating the renderer.
+- **Backspace** switches to 1.0x reverse playback; press it again to play
+  forward at 1.0x. While reversing, **+/-** changes reverse speed by the same
+  0.1x increments. Forward playback rejoins the live simulation automatically.
+- **[** rewinds one second and **]** moves one second forward; hold **Shift**
+  for single-simulation-tick steps. The editor pauses automatically while the
+  retained frame is displayed, so a rapid object can be selected and edited.
 - **S** saves all pending edits back to hover_heights.json
+
+The timeline retains up to 120 seconds of complete native presentation
+snapshots and their palettes. Enemy atlas epochs are cached by the editor, so
+rewind can cross mid-level sprite-bank changes; it resets only at level
+boundaries.
+Reverse playback and timeline scrubbing are editor-only and do not alter the
+normal or Quest simulation path. Reverse is limited to the retained window;
+at its oldest frame it waits until playback is switched forward.
 
 Entries carrying a `review` key are unresolved propagation cases. Every live
 instance gets a pulsing green editor marker and the selection label shows
@@ -79,10 +112,16 @@ set for normal sessions (the hash gate only holds without them).
 ## The first pass (generated 2026-07-12)
 
 `tools/classify_heights.ps1` generated the current file from:
-- `captures/edat_dump.csv` — static enemy data (run anything with
-  `OTYR_DUMP_EDAT=captures\edat_dump.csv`; appends per episode, currently
-  episode 1 only — play a later-episode level with the env set to collect
-  more, then re-run the classifier).
+- `captures/edat_dump.csv` — the historical Episode 1 static enemy data.
+- `captures/edat_all_episodes.csv` — normalized Episodes 1-4 static data used
+  by `tools/generate_height_semantics.py`. Episode 5 is absent from this data
+  build. Set `OTYR_DUMP_EDAT=<path>` to refresh raw episode captures.
+- `captures/level_events_all_episodes.csv` — all 53,338 raw events in the 62
+  playable Episode 1-4 section/level records. Regenerate it with
+  `OTYR_DUMP_EVENT_CSV=<path>` and `OTYR_DUMP_SECTIONS=1`.
+- `captures/etype_event_observed.csv` — per-episode type usage summary from
+  `tools/sweep_height_events.py`; legacy ground/sky/top channels are evidence,
+  not assumed 3D heights.
 - `captures/etype_observed.csv` — demo observations (harness with
   `OTYR_BG_SWEEP=300`): which types actually appear, their band/aux/motion.
 
@@ -99,3 +138,15 @@ Rules used: legacy ground flag → `ground`; indestructible score items →
 3. Judge in-headset with the type visible, tweak the class or give an exact
    `height`, relaunch.
 4. Types you never see can stay on the generated guess.
+
+## Episode-aware generated pass
+
+`tools/generate_height_semantics.py --write` regenerates
+`godot/height_semantics.json`. It never treats an episode-local type id as a
+global identity: E2-E4 transfers require a complete static-data signature
+match, followed by at most one close local-family hop. Generated results do not
+seed another hop. One non-recursive same-tick/same-link assembly pass then
+classifies only components whose existing seeds all agree. Unclassified and
+conflicting types retain their runtime category band. Two validated event
+intersections extend stable coverage (top-only and statically corroborated
+air), while dynamic graphics require unanimous event and exact-art agreement.

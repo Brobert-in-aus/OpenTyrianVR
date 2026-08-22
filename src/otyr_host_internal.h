@@ -46,6 +46,16 @@ void otyr_host_level_tick(void);
 void otyr_host_level_end(void);
 extern bool otyr_in_level;
 
+/* A height-editor level jump ends the current level only as transport to an
+ * explicitly selected script section.  The normal linear-play progression
+ * must not advance that target a second time. */
+extern bool otyr_editor_section_jump_pending;
+
+/* Runtime debug-menu state. Damage reads the atomic flag on the game thread;
+ * cross-episode warps apply only after the old level has shut down. */
+extern SDL_atomic_t otyr_debug_invulnerable;
+extern Uint8 otyr_debug_next_episode;
+
 /* Called on the game thread after a level's sprite sheets are loaded;
  * rasterizes all sheets into the session cache and bumps the epoch. */
 void otyr_host_capture_sheets(void);

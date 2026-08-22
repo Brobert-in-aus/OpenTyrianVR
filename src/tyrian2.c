@@ -111,7 +111,7 @@ void JE_starShowVGA(void)
 				src -= game_screen->pitch;
 			}
 		}
-		else if (starShowVGASpecialCode == 2 && processorType >= 2)
+		else if (starShowVGASpecialCode == 2 && processorType >= 2 && !present_suppress_background)
 		{
 			lighty = 172 - player[0].y;
 			lightx = 281 - player[0].x;
@@ -177,6 +177,13 @@ static PresentCategory enemy_band_category;
  * host's publish-time reclassification pass reads it too. */
 Uint8 otyr_enemy_moved[100];
 
+/* Presentation-only spawn cohort. Legacy linknum is gameplay state and many
+ * multi-slot art assemblies legitimately leave it zero (E1 types 468-473).
+ * Consecutive event records at one event time share this byte; the managed
+ * renderer still requires spatial contact before welding them, so unrelated
+ * same-tick formations remain separate. */
+static Uint8 otyr_enemy_present_assembly[100];
+
 inline static void record_enemy_blit(unsigned int i, signed int x_offset,
                                      signed int y_offset, signed int sprite_offset,
                                      bool two_by_two)
@@ -216,7 +223,13 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset,
 		otyr_enemy_moved[i] = 1;
 	}
 
-	Uint8 terrain_art = enemy[i].enemyground ? 1 : 0;
+	/* Preserve the authored ground-EXPLOSION signal separately from the
+	   visual opaque-cell fallback. Value 3 is corroborating evidence only:
+	   several flying multipart families deliberately use this palette, so
+	   the host combines it with episode-local semantic metadata. Value 1
+	   remains "looks like terrain" for otherwise static art, and value 2
+	   remains the runtime surface-rider inference. */
+	Uint8 terrain_art = enemy[i].enemyground ? 3 : 0;
 	if (!terrain_art && !otyr_enemy_moved[i])
 	{
 		if (enemy[i].size == 1)
@@ -283,8 +296,14 @@ inline static void record_enemy_blit(unsigned int i, signed int x_offset,
 	                  cell_index);
 	if (rec < PRESENT_SPRITE_MAX)
 	{
-		present_sprites[rec].entity_type = enemy[i].enemytype;
-		present_sprites[rec].assembly_id = enemy[i].linknum;
+		/* Temporary event enemies use table slot zero, but each instance keeps
+		   its original base graphic in egr[0]. Reserve the high bit for a
+		   semantic-only dynamic-graphic key so the host can place repeated
+		   custom buildings/flyers without pretending they share one type. */
+		present_sprites[rec].entity_type = enemy[i].enemytype != 0
+			? enemy[i].enemytype : (Uint16)(0x8000u | (enemy[i].egr[0] & 0x7fffu));
+		present_sprites[rec].assembly_id = enemy[i].linknum != 0
+			? enemy[i].linknum : otyr_enemy_present_assembly[i];
 	}
 }
 
@@ -827,17 +846,33 @@ static enum LevelTickResult JE_levelTick(void)
 	if (otyr_hosted)
 		otyr_host_level_tick();
 
-	/* Debug (OTYR_FORCE_SMOOTHIE env): force the water smoothie so the
-	   legacy-fallback presentation path can be exercised on any level.
+	/* Debug (OTYR_FORCE_SMOOTHIE=<id[,id...]>): force smoothies so native and
+	   complete-frame fallback presentation paths can be exercised on any
+	   level. Invalid ids are ignored.
 	   Changes frame content -- never set during hash gates. */
 	{
-		static int force_smoothie = -1;
-		if (force_smoothie < 0)
-			force_smoothie = SDL_getenv("OTYR_FORCE_SMOOTHIE") != NULL;
-		if (force_smoothie)
+		static int forced_smoothies = -1;
+		if (forced_smoothies < 0)
 		{
-			smoothies[2-1] = true;
-			smoothie_data[2-1] = 3;  /* SAVARA V's real hue row (blue) */
+			const char *forced = SDL_getenv("OTYR_FORCE_SMOOTHIE");
+			forced_smoothies = 0;
+			while (forced != NULL && *forced != '\0')
+			{
+				int id = atoi(forced);
+				if (id >= 1 && id <= 9)
+					forced_smoothies |= 1 << (id - 1);
+				forced = strchr(forced, ',');
+				if (forced != NULL)
+					++forced;
+			}
+		}
+		for (int id = 1; id <= 9; ++id)
+		{
+			if ((forced_smoothies & (1 << (id - 1))) == 0)
+				continue;
+			smoothies[id-1] = true;
+			if (id == 2)
+				smoothie_data[2-1] = 3;  /* SAVARA V's real hue row (blue) */
 		}
 		/* OTYR_FORCE_FLIP: force the vertical-mirror special code so the
 		   host card-flip can be exercised on any level (no ep1 level uses
@@ -847,6 +882,25 @@ static enum LevelTickResult JE_levelTick(void)
 			force_flip = SDL_getenv("OTYR_FORCE_FLIP") != NULL;
 		if (force_flip)
 			smoothies[9-1] = true;
+		/* Unknown special-code regression: values above 2 deliberately use
+		   the complete legacy safety path. */
+		static int force_special_code = -1;
+		if (force_special_code < 0)
+		{
+			const char *forced = SDL_getenv("OTYR_FORCE_SPECIAL_CODE");
+			force_special_code = forced != NULL ? atoi(forced) : 0;
+		}
+		if (force_special_code > 0)
+		{
+			starShowVGASpecialCode = (JE_byte)force_special_code;
+			if (force_special_code == 2)
+				smoothies[6-1] = true;
+			else if (force_special_code == 3)
+			{
+				smoothies[9-1] = true;
+				smoothies[6-1] = true;
+			}
+		}
 	}
 
 	present_frame_reset();
@@ -1030,7 +1084,12 @@ static enum LevelTickResult JE_levelTick(void)
 
 	/* SMOOTHIES! */
 	JE_checkSmoothies();
-	if (anySmoothies)
+	/* The legacy smoothie filters render through VGAScreen2 and then copy
+	   their result back to game_screen.  Hybrid presentation skips those
+	   filters and implements them in Godot; switching buffers in that mode
+	   stranded the keyed UI on VGAScreen2 while JE_starShowVGA published the
+	   untouched black game_screen (most visibly on SAVARA V). */
+	if (anySmoothies && !present_suppress_background)
 		VGAScreen = VGAScreen2;  // this makes things complicated, but we do it anyway :(
 
 	/* --- BACKGROUNDS --- */
@@ -1068,7 +1127,7 @@ static enum LevelTickResult JE_levelTick(void)
 	if (starActive || astralDuration > 0)
 		update_and_draw_starfield(VGAScreen, starfield_speed);
 
-	if (processorType > 1 && smoothies[5-1])
+	if (processorType > 1 && smoothies[5-1] && !present_suppress_background)
 	{
 		iced_blur_filter(game_screen, VGAScreen);
 		VGAScreen = game_screen;
@@ -1093,7 +1152,7 @@ static enum LevelTickResult JE_levelTick(void)
 		}
 	}
 
-	if (smoothies[0] && processorType > 2 && smoothie_data[0] == 0)
+	if (smoothies[0] && processorType > 2 && smoothie_data[0] == 0 && !present_suppress_background)
 	{
 		lava_filter(game_screen, VGAScreen);
 		VGAScreen = game_screen;
@@ -1122,7 +1181,7 @@ static enum LevelTickResult JE_levelTick(void)
 			stopBackgroundNum = 9;
 	}
 
-	if (smoothies[0] && processorType > 2 && smoothie_data[0] > 0)
+	if (smoothies[0] && processorType > 2 && smoothie_data[0] > 0 && !present_suppress_background)
 	{
 		lava_filter(game_screen, VGAScreen);
 		VGAScreen = game_screen;
@@ -1166,12 +1225,12 @@ static enum LevelTickResult JE_levelTick(void)
 		b = JE_newEnemy(0, tempW, 0);
 	}
 
-	if (processorType > 1 && smoothies[3-1])
+	if (processorType > 1 && smoothies[3-1] && !present_suppress_background)
 	{
 		iced_blur_filter(game_screen, VGAScreen);
 		VGAScreen = game_screen;
 	}
-	if (processorType > 1 && smoothies[4-1])
+	if (processorType > 1 && smoothies[4-1] && !present_suppress_background)
 	{
 		blur_filter(game_screen, VGAScreen);
 		VGAScreen = game_screen;
@@ -2268,7 +2327,7 @@ start_level:
 			static int otyr_linear = -1;
 			if (otyr_linear < 0)
 				otyr_linear = SDL_getenv("OTYR_LINEAR") != NULL ? 1 : 0;
-			if (otyr_linear)
+			if (otyr_linear && !otyr_editor_section_jump_pending)
 			{
 				int linear_next = otyr_linear_next_section(mainLevel);
 				if (linear_next > 0)
@@ -2276,6 +2335,7 @@ start_level:
 			}
 
 			mainLevel = nextLevel;
+			otyr_editor_section_jump_pending = false;
 			JE_endLevelAni();
 
 			fade_song();
@@ -2304,6 +2364,14 @@ start_level:
 		return;
 
 start_level_first:
+	/* A runtime debug warp changes episode data only after the old level has
+	   fully shut down. Applying JE_initEpisode from the host input thread would
+	   replace enemy/map tables while the simulation could still read them. */
+	if (otyr_debug_next_episode != 0)
+	{
+		JE_initEpisode(otyr_debug_next_episode);
+		otyr_debug_next_episode = 0;
+	}
 
 	set_volume(tyrMusicVolume, fxVolume);
 
@@ -4128,6 +4196,7 @@ Sint16 JE_newEnemy(int enemyOffset, Uint16 eDatI, Sint16 uniqueShapeTableI)
 		{
 			enemyAvail[i] = JE_makeEnemy(&enemy[i], eDatI, uniqueShapeTableI);
 			otyr_enemy_moved[i] = 0;  /* fresh slot: may classify as static */
+			otyr_enemy_present_assembly[i] = 0;
 			return i + 1;
 		}
 	}
@@ -4483,6 +4552,11 @@ void JE_createNewEventEnemy(JE_byte enemyTypeOfs, JE_word enemyOffset, Sint16 un
 	enemy[b-1].ey += eventRec[eventLoc-1].eventdat5;
 	enemy[b-1].eyc += eventRec[eventLoc-1].eventdat3;
 	enemy[b-1].linknum = eventRec[eventLoc-1].eventdat4;
+	/* A nonzero legacy link remains authoritative. For zero-link event art,
+	 * retain a stable presentation cohort so adjacent records created by the
+	 * same event time (notably the 3x2 small boss) move as one object. */
+	otyr_enemy_present_assembly[b-1] = enemy[b-1].linknum != 0 ? 0
+		: (Uint8)(eventRec[eventLoc-1].eventtime % 255 + 1);
 	enemy[b-1].fixedmovey = eventRec[eventLoc-1].eventdat6;
 }
 

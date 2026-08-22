@@ -288,9 +288,28 @@ void JE_loadItemDat(void)
 
 /* OTYR_DUMP_EVENTS companion: scan one level record's event table straight
    from the .lvl file (layout mirrors JE_loadMap) and print the smoothie
-   requests -- the host storm port needs to know what each level asks for. */
+   requests -- the host storm port needs to know what each level asks for.
+   OTYR_DUMP_EVENT_CSV additionally records every raw event for offline,
+   episode-aware semantic analysis. */
 static void otyr_dump_level_events(int section, int lvlnum)
 {
+	const char *csv_path = getenv("OTYR_DUMP_EVENT_CSV");
+	FILE *csv = NULL;
+	if (csv_path != NULL && csv_path[0] != '\0')
+	{
+		csv = fopen(csv_path, "ab+");
+		if (csv == NULL)
+		{
+			fprintf(stderr, "warning: cannot open OTYR_DUMP_EVENT_CSV '%s'\n", csv_path);
+		}
+		else
+		{
+			fseek(csv, 0, SEEK_END);
+			if (ftell(csv) == 0)
+				fprintf(csv, "episode,section,level,time,event_type,d1,d2,d3,d4,d5,d6\n");
+		}
+	}
+
 	FILE *f = dir_fopen_die(data_dir(), levelFile, "rb");
 	fseek(f, lvlPos[(lvlnum - 1) * 2], SEEK_SET);
 	fseek(f, 2 + 6, SEEK_CUR);  /* map/shape file chars + mapX/X2/X3 */
@@ -309,26 +328,31 @@ static void otyr_dump_level_events(int section, int lvlnum)
 		fread_s8_die(&d5, 1, f);
 		fread_s8_die(&d6, 1, f);
 		fread_u8_die(&d4, 1, f);
+		if (csv != NULL)
+			fprintf(csv, "%u,%d,%d,%u,%u,%d,%d,%d,%u,%d,%d\n",
+			        episodeNum, section, lvlnum, time, type,
+			        d1, d2, d3, d4, d5, d6);
 		if (type == 64)
 			printf("    section %3d smoothie: time=%5u num=%d on=%d data=%d\n",
 			       section, time, d1, d2, d3);
 	}
 	fclose(f);
+	if (csv != NULL)
+		fclose(csv);
 }
 
 /* OTYR_LINEAR support: the next script section AFTER current that contains
-   a playable level ("]L"), counted exactly like the interpreter's seek so
-   the result feeds mainLevel directly.  Returns 0 when none remain (episode
-   end -- the caller keeps the authentic route).  Editor ghost runs use this
-   to advance strictly level-by-level, covering bonuses and secrets that are
-   normally pickup- or difficulty-gated. */
+   a playable level ("]L"), counted exactly like the interpreter's zero-based
+   seek so the result feeds mainLevel directly.  Returns 0 when none remain
+   (episode end -- the caller keeps the authentic route).  Editor ghost runs
+   use this to cover bonuses and secrets that authentic routing can skip. */
 int otyr_linear_next_section(int current)
 {
 	FILE *f = dir_fopen_die(data_dir(), episode_file, "rb");
-	/* Count from 1, exactly like otyr_dump_sections: those labels are the
-	   empirically validated OTYR_START_SECTION / debug-jump coordinates
-	   (verified across eight editor sessions), and mainLevel speaks them. */
-	int section = 1;
+	/* JE_loadMap's internal section counter starts at zero.  The editor and
+	   dump use human-facing ids one greater than this; return the internal
+	   target because the result feeds mainLevel directly. */
+	int section = 0;
 	int found = 0;
 	for (;;)
 	{
@@ -379,7 +403,7 @@ static void otyr_dump_sections(void)
 		{
 			printf("  section %3d: level '%.9s' (lvl file %d)\n",
 			       section, buffer + 13, atoi(buffer + 25));
-			if (getenv("OTYR_DUMP_EVENTS") != NULL)
+			if (getenv("OTYR_DUMP_EVENTS") != NULL || getenv("OTYR_DUMP_EVENT_CSV") != NULL)
 				otyr_dump_level_events(section, atoi(buffer + 25));
 		}
 		/* OTYR_DUMP_SCRIPT=1: every decrypted script line, section-tagged

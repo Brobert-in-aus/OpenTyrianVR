@@ -41,7 +41,7 @@ Version 0.1.5 logs a `PERF` line every five seconds containing:
   allowing a small margin over the 90 Hz 11.11 ms interval);
 - draw calls, visible objects/primitives, video and managed memory;
 - snapshot cell/visible-instance counts;
-- detected rigid-assembly group/seam-guard cell counts;
+- detected rigid-assembly group/seam-guard/plane-locked cell counts;
 - last/maximum simulation-tick gap and cumulative skipped ticks.
 
 The decisive test is two or more minutes of representative Quest gameplay. If
@@ -100,8 +100,48 @@ draws, meshes, or per-cell searches. Linked boss sections may bridge a maximum
 32 px transparent authored gap when aligned, then reuse the existing median
 component motion pass.
 
-The 0.1.12 APK is installed for the next manual headset pass but has deliberately
-not been launched by automation. That pass must validate the hard crop, smooth
-ground motion below floating platforms, linked-boss integrity, and sustained
-90 Hz motion. Unchecked in-headset checklist items are failures, not skipped
-tests.
+The 0.1.12 APK was installed but deliberately not launched by automation.
+Review of its simulation clamp prompted the 0.1.13 horizontal-width correction.
+The next headset pass must validate the revised boundary, smooth ground motion
+below floating platforms, linked-boss integrity, cloud transparency, and
+sustained 90 Hz motion. Unchecked in-headset checklist items are failures, not
+skipped tests.
+
+Version 0.1.13 restores the -24..288 horizontal presentation required by the
+simulation's de-parallax 16..280 player clamp while retaining the 0..184
+vertical crop. The bounds are now defined once and shared by terrain, entity
+clipping/culling, picking, and HUD placement. Cloud identity is latched per map
+epoch, so draw-order events cannot switch known cloud art from alpha 0.82 back
+to opaque alpha 1.0. This adds no draw calls or per-frame searches.
+
+Version 0.1.16 adds height-driven virtual-sun silhouettes. Entity shadows reuse
+the nine existing per-sheet multiplicative MultiMeshes, adding instances but no
+new entity draw calls. Elevated map geometry adds two active multiplicative
+draws in the representative Episode 1 demo. The deterministic desktop capture
+showed 7-16 candidate entity casters and 21 total draws; hidden-window timing is
+intentionally throttled and is not a performance baseline. Quest telemetry must
+confirm the two added map draws and extra instances remain inside the 90 Hz
+budget.
+
+Version 0.1.17 validates every generated entity-shadow fragment against the
+two live elevated map tile/atlas pairs. Receiver origins use the visible
+layers' interpolated scroll phase, so unsupported portions clip over
+transparent cloud/platform holes and the higher receiver wins overlaps. This
+adds no draw calls or CPU-built mask texture; only generated-shadow fragments
+perform the extra nearest-neighbour coverage reads. The silent desktop gate
+observed five entity shadows, two elevated map-shadow passes, both elevated
+receiver layers, native flip/storm presentation, and complete legacy fallback.
+
+Version 0.1.26 presents snapshots on the native fixed 35 Hz simulation period
+instead of estimating their period from render-thread receipt times. At 90 Hz,
+receipt-time sampling aliases into alternating intervals and can create a
+persistent terrain sawtooth even when no native snapshot is skipped. The fixed
+period removes that source of judder without changing simulation or adding work.
+The same build restores the authored -24..288 side lanes using the actual map
+terrain outside the former crop.
+
+Delayed legacy terrain scroll is presented at its exact fractional rate. The
+native background record packs a pixels/ticks ratio (for example 1/3) into its
+formerly reserved byte; the renderer distributes that motion continuously.
+Keeping the exact ratio avoids the periodic re-anchor that occurred when 1/3
+was approximated as 5/16.

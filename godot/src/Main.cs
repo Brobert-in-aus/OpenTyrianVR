@@ -12,6 +12,8 @@ namespace OpenTyrianVR;
 /// </summary>
 public partial class Main : Node3D
 {
+    private const string NormalSpeedMigrationMarker = "normal_speed_default_v1.complete";
+
     private bool _xrActive;
     private bool _xrStartupCentered;
     private int _xrStartupFrames;
@@ -37,9 +39,24 @@ public partial class Main : Node3D
     private float _flipScale = 1f;  // animated +1 (normal) .. -1 (mirrored)
     private OtyrNative.Frame _frame;
     private bool _loggedFirstFrame;
+    private bool _loggedPresentationMode;
+    private bool _lastLegacyFallback;
+    private int _presentationTransitions;
+    private bool _regressionHybridSeen;
+    private bool _regressionLegacySeen;
+    private bool _regressionFlipSeen;
+    private bool _regressionStormSeen;
+    private int _regressionMaxShadows;
+    private int _regressionMaxMapShadows;
+    private int _regressionMaxReceiverLayers;
+    private int _regressionMaxCells;
+    private int _regressionMaxOpaqueHidden;
+    private bool _regressionFinished;
     private readonly byte[] _rgba = new byte[OtyrNative.FrameWidth * OtyrNative.FrameHeight * 4];
     private readonly uint[] _palette = new uint[256];
     private SnapshotLayer _snapshotLayer = null!;
+    private PresentationEffects _presentationEffects = null!;
+    private byte _regressionEffectsSeen;
 
     private OtyrNative.Buttons _lastButtons;
     private double _statusAccumulator;
@@ -67,12 +84,27 @@ public partial class Main : Node3D
     private Node3D _controlRect = null!;
     private MeshInstance3D _handMarker = null!;
     private MeshInstance3D _targetReticle = null!;
+    private StandardMaterial3D _controlRectMaterial = null!;
+    private StandardMaterial3D _handMarkerMaterial = null!;
+    private StandardMaterial3D _targetReticleMaterial = null!;
+    private FirstRunTutorial _tutorial = null!;
+    private bool _tutorialGateActive;
     private TestChecklist _checklist = null!;
+    private DebugMenu _debugMenu = null!;
     private bool _lastCheckPressed, _lastSkipPressed;
+    private bool _lastDebugChord, _lastDebugUp, _lastDebugDown, _lastDebugLeft,
+                 _lastDebugRight, _lastDebugActivate, _lastDebugBack;
+    private bool _debugOwnsSuspension;
+    private bool _suppressNativeInputUntilDebugControlsReleased;
+    private bool _debugInvulnerable;
+    private OtyrNative.Buttons _debugPulseButtons;
+    private OtyrNative.DebugFlags _lastDebugFlags;
     private OtyrNative.PlayerState _playerState;
     private uint _lastLevelTick;
     private ulong _lastLevelTickMs;
     private bool _inGameplay;
+    private bool _guideLevelActive;
+    private uint _guideLevelStartTick, _guideLastTick;
 
     private const float ControlRectWidth = 0.36f;
     // Preserve the playable simulation area's 264:150 aspect ratio so one
@@ -112,7 +144,9 @@ public partial class Main : Node3D
         MoveWindowToSideMonitor();
         InitXr();
         BuildScene();
-        StartGame();
+        _tutorialGateActive = _tutorial.Begin(_xrActive);
+        if (!_tutorialGateActive)
+            StartGame();
     }
 
     // Park the desktop window on the rightmost monitor (the tester's side
@@ -282,7 +316,7 @@ public partial class Main : Node3D
                 HorizontalAlignment = HorizontalAlignment.Left,
             };
             _playfieldRoot.AddChild(_editorLegend);
-            GD.Print("OpenTyrianVR: HEIGHT EDITOR (ctrl+click select, drag orbit, RMB-drag pan, wheel zoom, Up/Down nudge, Shift coarse, 1..= bands, numpad +/- step, S save, P pause, N skip)");
+            GD.Print("OpenTyrianVR: HEIGHT EDITOR (ctrl+click select, drag orbit, RMB-drag pan, wheel zoom, Up/Down nudge, Shift coarse, 1..0 bands, +/- playback speed, Backspace reverse/forward, [/] scrub, S save, P pause, N skip)");
         }
 
         _image = Image.CreateEmpty(OtyrNative.FrameWidth, OtyrNative.FrameHeight, true, Image.Format.Rgba8);
@@ -297,7 +331,7 @@ public partial class Main : Node3D
                 shader_type spatial;
                 render_mode unshaded, depth_prepass_alpha;
 
-                uniform sampler2D frame : source_color, filter_linear_mipmap_anisotropic;
+                uniform sampler2D frame : source_color, filter_linear_mipmap_anisotropic, repeat_disable;
                 // UV sub-rect of the frame this quad shows (the HUD split
                 // renders sidebar/bottom-bar regions on their own quads).
                 uniform vec2 uv0 = vec2(0.0, 0.0);
@@ -313,6 +347,15 @@ public partial class Main : Node3D
                     vec2 dudv = fwidth(pixel);
                     pixel = seam + clamp((pixel - seam) / dudv, -0.5, 0.5);
                     vec4 c = texture(frame, pixel / size);
+                    // Native full-screen effects occasionally touch the
+                    // outermost key-fill pixel. In hybrid play that creates
+                    // a one-pixel rectangle at the legacy overlay boundary.
+                    // Nothing authored in the keyed overlay owns this rim;
+                    // entities and terrain are independent 3D layers.
+                    if (hud_split == 1 &&
+                        (pixel.x < 1.0 || pixel.x >= 263.0 ||
+                         pixel.y < 1.0 || pixel.y >= 183.0))
+                        discard;
                     // HUD split: alpha-zero (NOT discard) so the depth
                     // prepass also skips these texels and the tile canvas
                     // shows through where the sidebar/bottom bar sat.
@@ -327,7 +370,10 @@ public partial class Main : Node3D
                 }
                 """,
         };
-        var material = new ShaderMaterial { Shader = shader };
+        // This keyed texture now contains only legacy UI overlays during
+        // hybrid play. Draw it last and without scene depth so pause text,
+        // boss bars, and HUD primitives cannot be covered by 3D geometry.
+        var material = new ShaderMaterial { Shader = shader, RenderPriority = 7 };
         material.SetShaderParameter("frame", _texture);
         _laneMaterial = material;
 
@@ -344,16 +390,22 @@ public partial class Main : Node3D
             Name = "Lane",
             Mesh = new QuadMesh { Size = new Vector2(LaneWidth, LaneHeight) },  // 320:200
             MaterialOverride = material,
+            // The keyed lane contains only proud legacy overlays during
+            // hybrid play (pause text, boss bars, HUD primitives). Keep
+            // those at the UI plane so platforms cannot cover them.
+            Position = new Vector3(0f, 0f, 0.09f),
         };
         _flipRoot.AddChild(lane);
 
         // E1 HUD split: the sidebar (frame x 264..320) and bottom bar
         // (y 184..200 under the play area) render on their own quads,
-        // floated clear of the cropped playfield; the lane discards those
+        // floated clear of the widened diorama; the lane discards those
         // regions while the split is live (in-level, 3D showing).
         _hudSidebar = BuildHudQuad(shader, "HudSidebar",
             new Vector2(264f / 320f, 0f), new Vector2(1f, 1f),
-            56f, 200f, frameCenterX: 292f, frameCenterY: 100f, yawDeg: -18f);
+            PlayfieldGeometry.HudSidebarWidth, 200f,
+            frameCenterX: PlayfieldGeometry.HudSidebarCenterX,
+            frameCenterY: 100f, yawDeg: -18f);
         // Bottom bar returns directly beneath the original y=184 play edge.
         _hudBottomBar = BuildHudQuad(shader, "HudBottomBar",
             new Vector2(0f, 184f / 200f), new Vector2(264f / 320f, 1f),
@@ -361,14 +413,22 @@ public partial class Main : Node3D
 
         BuildHandSteering();
 
+        _tutorial = new FirstRunTutorial
+        {
+            Name = "FirstRunTutorial",
+        };
+        AddChild(_tutorial);
+
         _snapshotLayer = new SnapshotLayer { Name = "SnapshotLayer", EnableBackground = Render3DBackground };
         _flipRoot.AddChild(_snapshotLayer);
+        _presentationEffects = new PresentationEffects();
+        _flipRoot.AddChild(_presentationEffects);
 
         MeshInstance3D BuildHudQuad(Shader laneShader, string name, Vector2 uv0, Vector2 uv1,
                                     float widthPx, float heightPx,
                                     float frameCenterX, float frameCenterY, float yawDeg)
         {
-            var m = new ShaderMaterial { Shader = laneShader };
+            var m = new ShaderMaterial { Shader = laneShader, RenderPriority = 7 };
             m.SetShaderParameter("frame", _texture);
             m.SetShaderParameter("uv0", uv0);
             m.SetShaderParameter("uv1", uv1);
@@ -396,6 +456,7 @@ public partial class Main : Node3D
         _diagnostics = new Label3D
         {
             Name = "Diagnostics",
+            Visible = DeveloperTools,
             Text = "starting...",
             PixelSize = 0.0008f,
             // Below the relocated bottom bar (E1 HUD split).
@@ -410,10 +471,22 @@ public partial class Main : Node3D
         _checklist = new TestChecklist
         {
             Name = "TestChecklist",
+            Visible = DeveloperTools,
             Position = new Vector3(-0.85f, 1.35f, -0.25f),
             RotationDegrees = new Vector3(0f, 90f, 0f),
         };
         AddChild(_checklist);
+
+        // Hidden during normal play. Both stick clicks open a host-side panel
+        // directly in front of the player; the native tick is suspended while
+        // choosing a level so gameplay cannot continue behind it.
+        _debugMenu = new DebugMenu
+        {
+            Name = "DebugMenu",
+            Visible = false,
+            Position = new Vector3(0f, 1.48f, -0.62f),
+        };
+        AddChild(_debugMenu);
 
         var environment = new WorldEnvironment
         {
@@ -435,44 +508,54 @@ public partial class Main : Node3D
         _controlRect.RotationDegrees = new Vector3(-42f, 0f, 0f);
         AddChild(_controlRect);
 
+        _controlRectMaterial = new StandardMaterial3D
+        {
+            AlbedoColor = new Color(0.3f, 0.6f, 1.0f, 0.08f),
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            CullMode = BaseMaterial3D.CullModeEnum.Disabled,
+            NoDepthTest = true,
+            RenderPriority = 125,
+        };
         var rectVisual = new MeshInstance3D
         {
             Name = "Bounds",
             Mesh = new QuadMesh { Size = new Vector2(ControlRectWidth, ControlRectHeight) },
-            MaterialOverride = new StandardMaterial3D
-            {
-                AlbedoColor = new Color(0.3f, 0.6f, 1.0f, 0.08f),
-                Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
-                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-                CullMode = BaseMaterial3D.CullModeEnum.Disabled,
-            },
+            MaterialOverride = _controlRectMaterial,
         };
         _controlRect.AddChild(rectVisual);
 
+        _handMarkerMaterial = new StandardMaterial3D
+        {
+            AlbedoColor = new Color(0.2f, 0.5f, 1.0f),
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            NoDepthTest = true,
+            RenderPriority = 126,
+        };
         _handMarker = new MeshInstance3D
         {
             Name = "HandMarker",
             Mesh = new SphereMesh { Radius = 0.012f, Height = 0.024f },
-            MaterialOverride = new StandardMaterial3D
-            {
-                AlbedoColor = new Color(0.2f, 0.5f, 1.0f),
-                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-            },
+            MaterialOverride = _handMarkerMaterial,
         };
         _controlRect.AddChild(_handMarker);
 
         // Where the ship is being told to go, shown on the lane itself.
+        _targetReticleMaterial = new StandardMaterial3D
+        {
+            AlbedoColor = new Color(0.2f, 0.8f, 1.0f, 0.65f),
+            Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
+            ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
+            NoDepthTest = true,
+            RenderPriority = 127,
+        };
         _targetReticle = new MeshInstance3D
         {
             Name = "TargetReticle",
             Mesh = new QuadMesh { Size = new Vector2(0.025f, 0.025f) },
             Position = new Vector3(0f, 0f, 0.006f),
-            MaterialOverride = new StandardMaterial3D
-            {
-                AlbedoColor = new Color(0.2f, 0.8f, 1.0f, 0.65f),
-                Transparency = BaseMaterial3D.TransparencyEnum.Alpha,
-                ShadingMode = BaseMaterial3D.ShadingModeEnum.Unshaded,
-            },
+            MaterialOverride = _targetReticleMaterial,
         };
         _flipRoot.AddChild(_targetReticle);  // mirrors with the play content
 
@@ -488,22 +571,25 @@ public partial class Main : Node3D
 
         string dataDir = OS.GetName() == "Android"
             ? ExtractAndroidData()
-            : Path.GetFullPath(Path.Combine(ProjectSettings.GlobalizePath("res://"), "..", "tyrian21"));
+            : FindDesktopData();
         string userDir = ProjectSettings.GlobalizePath("user://");
+        ApplyNormalSpeedDefault(userDir);
         // E2-full is the VR product's sim: pinned offsets (hitbox truth),
         // full-width travel, wide active windows.
         var flags = OtyrNative.ConfigFlags.SuppressEntityDraw | OtyrNative.ConfigFlags.SimDeparallax;
-        // The hosted SDL2 build does not ship SDLActivity's Java audio bridge.
-        // Keep Quest silent until audio is routed through Godot; enabling SDL's
-        // Android backend here aborts inside AudioTrack during startup.
-        if (OS.GetName() != "Android")
-            flags |= OtyrNative.ConfigFlags.EnableAudio;
+        // Quest supplies SDL's audio-manager callbacks through the Godot host
+        // activity; SDLActivity itself remains unnecessary.
+        flags |= OtyrNative.ConfigFlags.EnableAudio;
         // OTYR_MUTE=1: no game audio (solo test runs; the attract demo is
         // loud and the tester may be doing something else entirely).
         if (System.Environment.GetEnvironmentVariable("OTYR_MUTE") == "1")
         {
             GD.Print("OpenTyrianVR: OTYR_MUTE=1, audio disabled");
             flags &= ~OtyrNative.ConfigFlags.EnableAudio;
+        }
+        else
+        {
+            GD.Print($"OpenTyrianVR: audio enabled ({OS.GetName()})");
         }
         if (Render3DBackground)
             flags |= OtyrNative.ConfigFlags.SuppressBackground;
@@ -527,6 +613,51 @@ public partial class Main : Node3D
                     dir.Remove(file);
             GD.Print("OpenTyrianVR: run capture on (every 2 s, named by frame)");
         }
+    }
+
+    // Early playtest builds could leave Turbo selected in the shared config.
+    // Reset that value once for upgrades as well as clean installs, then leave
+    // subsequent player speed choices alone. The native default is already 4.
+    private static void ApplyNormalSpeedDefault(string userDir)
+    {
+        string marker = Path.Combine(userDir, NormalSpeedMigrationMarker);
+        if (File.Exists(marker))
+            return;
+
+        try
+        {
+            string configPath = Path.Combine(userDir, "tyrian.cfg");
+            if (File.Exists(configPath))
+            {
+                byte[] config = File.ReadAllBytes(configPath);
+                if (config.Length == 28 && config[1] == 5)
+                {
+                    config[1] = 4; // gameSpeed: Normal
+                    File.WriteAllBytes(configPath, config);
+                    GD.Print("OpenTyrianVR: migrated default game speed from Turbo to Normal");
+                }
+            }
+
+            File.WriteAllText(marker, "OpenTyrianVR 0.1 default: Normal\n");
+        }
+        catch (Exception ex)
+        {
+            // A read-only or temporarily unavailable config must not prevent
+            // the game from starting; the native loader still supplies Normal
+            // for a missing configuration.
+            GD.PushWarning($"OpenTyrianVR: could not apply Normal speed default: {ex.Message}");
+        }
+    }
+
+    private static string FindDesktopData()
+    {
+        string projectRoot = ProjectSettings.GlobalizePath("res://");
+        // Packaged PCVR builds place the freeware data beside the executable;
+        // editor/developer runs retain the repository-root tyrian21 directory.
+        string packaged = Path.GetFullPath(Path.Combine(projectRoot, "tyrian21"));
+        if (Directory.Exists(packaged))
+            return packaged;
+        return Path.GetFullPath(Path.Combine(projectRoot, "..", "tyrian21"));
     }
 
     private void ConfigureQuestRefresh(string phase)
@@ -604,6 +735,9 @@ public partial class Main : Node3D
     // self-service visual verification -- window capture is unreliable on
     // multi-monitor setups and XR grabs the window entirely.
     private static readonly int CaptureCount = ParseCaptureCount();
+    private static readonly uint RegressionFrameLimit = ParseUnsignedEnvironment("OTYR_TEST_FRAMES");
+    private static readonly string CaptureDirectory =
+        System.Environment.GetEnvironmentVariable("OTYR_CAPTURE_DIR")?.Trim() ?? "";
     private double _captureAccumulator;
     private int _captureIndex;
 
@@ -631,7 +765,9 @@ public partial class Main : Node3D
     // OTYR_HEIGHT_EDITOR=1: flat leaned-camera hover-height editor.  Click an
     // enemy to select its type; Up/Down nudge height (Shift = coarse), 1-5
     // assign classes (ground/pickup/air-low/air-mid/air-high), S saves to
-    // hover_heights.json, P pauses the game, N skips the level.  Pair with
+    // hover_heights.json, [/] scrub the retained timeline (Shift = one tick),
+    // +/- adjust playback by 0.1x and Backspace reverses/forwards at 1x.
+    // P pauses the game, N skips the level. Pair with
     // OTYR_INVULN=1 so the parked ghost player survives the level.
     private static readonly bool HeightEditor =
         System.Environment.GetEnvironmentVariable("OTYR_HEIGHT_EDITOR") == "1";
@@ -640,11 +776,16 @@ public partial class Main : Node3D
     // the same OTYR_INVULN the native side requires for them.
     private static readonly bool InvulnSession =
         System.Environment.GetEnvironmentVariable("OTYR_INVULN") == "1";
+    // Exported release packages are player-facing. Validation overlays and the
+    // level-warp menu remain available in editor/debug exports, or explicitly
+    // for a trusted tester using OTYR_DEV_TOOLS=1 on PCVR.
+    private static bool DeveloperTools => OS.IsDebugBuild() ||
+        System.Environment.GetEnvironmentVariable("OTYR_DEV_TOOLS") == "1";
     // The unified band table drives the legend, the assignment keys, and
-    // numpad +/- stepping.  Cls != null assigns a JSON class ("ground" =
+    // assignment keys. Cls != null assigns a JSON class ("ground" =
     // surface-following); otherwise the band's height is set explicitly.
-    // Key != '\0' binds the band to the 1..= row (12 keys); key-less bands
-    // (air-low/high, UI/text) are reachable via numpad +/- stepping.
+    // Key != '\0' binds the band to the 1..0 row; key-less bands are retained
+    // in the reference legend until the replacement height workflow lands.
     private struct EditorBand
     {
         public float Z; public string? Cls; public string Label; public char Key;
@@ -658,20 +799,20 @@ public partial class Main : Node3D
         return new[]
         {
             new EditorBand { Z = -0.005f, Label = "below ground (probe)", Key = '\0' },
-            new EditorBand { Z = float.NaN, Cls = "ground", Label = "ground (+surf)", Key = '1' },
-            new EditorBand { Z = 0.0006f, Label = "ground objects", Key = '2' },
+            new EditorBand { Z = float.NaN, Cls = "ground", Label = "surface-following (~-0.001)", Key = '1' },
+            new EditorBand { Z = 0.0006f, Label = "vehicles", Key = '2' },
             new EditorBand { Z = H("mid-under", 0.012f), Cls = "mid-under", Label = "mid-under", Key = '3' },
             new EditorBand { Z = 0.020f, Label = "clouds (lo)", Key = '4' },
             new EditorBand { Z = 0.025f, Label = "clouds (hi)", Key = '5' },
             new EditorBand { Z = H("platform-under", 0.0285f), Cls = "platform-under", Label = "platform-under", Key = '6' },
-            new EditorBand { Z = 0.030f, Label = "platforms", Key = '7' },
+            new EditorBand { Z = H("platform", BackgroundLayer.PlatformZ), Cls = "platform", Label = "platform-following", Key = '7' },
             new EditorBand { Z = 0.0315f, Label = "platform objects", Key = '8' },
             new EditorBand { Z = H("air-low", 0.033f), Cls = "air-low", Label = "air-low", Key = '\0' },
             new EditorBand { Z = H("air-mid", 0.0355f), Cls = "air-mid", Label = "air-mid", Key = '9' },
             new EditorBand { Z = H("air-high", 0.038f), Cls = "air-high", Label = "air-high", Key = '\0' },
             new EditorBand { Z = H("pickup", 0.040f), Cls = "pickup", Label = "player/pickup", Key = '0' },
-            new EditorBand { Z = 0.041f, Label = "shots", Key = '-' },
-            new EditorBand { Z = H("over-top", 0.075f), Cls = "over-top", Label = "over-top", Key = '=' },
+            new EditorBand { Z = 0.041f, Label = "shots", Key = '\0' },
+            new EditorBand { Z = H("over-top", 0.075f), Cls = "over-top", Label = "over-top", Key = '\0' },
             new EditorBand { Z = 0.090f, Label = "UI/text", Key = '\0' },
         };
     }
@@ -686,8 +827,8 @@ public partial class Main : Node3D
     }
 
     // Editor level select: PageUp/PageDown cycle the episode-1 playable
-    // sections via the v18 debug_section input (native honors it only in
-    // OTYR_INVULN ghost mode).
+    // sections via debug_section input (native honors it only in explicitly
+    // authorized editor/regression runs or via the in-headset debug menu).
     private static readonly (ushort Section, string Name)[] Ep1Levels =
     {
         (4, "TYRIAN"), (6, "ASTEROID1"), (7, "ASTEROID2"), (11, "SAVARA"),
@@ -697,9 +838,174 @@ public partial class Main : Node3D
         (42, "ALE"),
     };
     private int _editorLevelIndex = -1;
+    private bool _editorHistoryOwnsSuspension;
+    private int _editorPlaybackDirection = 1; // -1 reverse, 0 manual scrub, +1 forward/live
+    private int _editorPlaybackRateTenths = 10;
+    private double _editorPlaybackTickAccumulator;
+    private bool _editorReverseStartPending;
+    private OtyrNative.Buttons _editorSyntheticButtons;
+    private int _editorPendingInitialStepTicks = -1;
+
+    // JE_pauseGame resumes on any fresh non-modifier key. Space is deliberately
+    // neutral here: another P can be consumed by the pause loop yet remain
+    // latched as the next gameplay pause request, stalling at the live edge.
+    private void EditorPulseResume() => _editorSyntheticButtons |= OtyrNative.Buttons.UiSpace;
+
+    private void EditorReleaseSynthetic(OtyrNative.Buttons button) =>
+        _editorSyntheticButtons &= ~button;
+
+    private bool EditorSetSuspended(bool suspended)
+    {
+        int rc = OtyrNative.SetEditorSuspended(_session, suspended ? (byte)1 : (byte)0);
+        if (rc == OtyrNative.Ok)
+            return true;
+        GD.PushWarning($"OpenTyrianVR: editor suspension rejected ({rc}): {OtyrNative.LastError()}");
+        return false;
+    }
+
+    private void EditorStepTimeline(int direction)
+    {
+        if (_frame.InLevel == 0)
+            return;
+        _editorPlaybackDirection = 0;
+        _editorPlaybackTickAccumulator = 0;
+        int ticks = Input.IsKeyPressed(Key.Shift) ? 1 : 35;
+        bool entering = direction < 0 && !_snapshotLayer.EditorHistoryActive;
+        if (entering)
+        {
+            if (_frame.MenuPresent != 0)
+            {
+                EditorPulseResume();
+                _editorReverseStartPending = true;
+                _editorPendingInitialStepTicks = -ticks;
+                return;
+            }
+            EditorBeginReverse(-ticks);
+            return;
+        }
+        bool changed = _snapshotLayer.EditorStepHistory(_session, direction * ticks);
+        if (!_snapshotLayer.EditorHistoryActive && _editorHistoryOwnsSuspension)
+            EditorRequestResume();
+        if (!_snapshotLayer.EditorHistoryActive)
+        {
+            _editorPlaybackDirection = 1;
+            SetEditorPlaybackRate();
+        }
+    }
+
+    private void EditorResumeTimeline()
+    {
+        _snapshotLayer.EditorResumeHistory(_session);
+        if (_editorHistoryOwnsSuspension)
+            EditorRequestResume();
+        _editorPlaybackDirection = 1;
+        _editorPlaybackTickAccumulator = 0;
+        SetEditorPlaybackRate();
+    }
+
+    private void SetEditorPlaybackRate()
+    {
+        int rc = OtyrNative.SetPlaybackRate(_session, (uint)_editorPlaybackRateTenths);
+        if (rc != OtyrNative.Ok)
+            GD.PushWarning($"OpenTyrianVR: playback rate rejected ({rc}): {OtyrNative.LastError()}");
+    }
+
+    private void EditorAdjustPlaybackRate(int deltaTenths)
+    {
+        _editorPlaybackRateTenths = Math.Clamp(_editorPlaybackRateTenths + deltaTenths, 1, 100);
+        SetEditorPlaybackRate();
+        GD.Print($"OpenTyrianVR: editor playback {EditorPlaybackRateText()}");
+    }
+
+    private string EditorPlaybackRateText()
+    {
+        string direction = _editorPlaybackDirection < 0 ? "reverse " :
+                           _editorPlaybackDirection == 0 ? "scrub " : "";
+        return $"{direction}{_editorPlaybackRateTenths / 10f:0.0}x";
+    }
+
+    private void EditorTogglePlaybackDirection()
+    {
+        _editorPlaybackDirection = _editorPlaybackDirection < 0 ? 1 : -1;
+        _editorReverseStartPending = false;
+        _editorPlaybackRateTenths = 10;
+        _editorPlaybackTickAccumulator = 0;
+        SetEditorPlaybackRate();
+
+        if (_editorPlaybackDirection < 0 && !_snapshotLayer.EditorHistoryActive)
+        {
+            if (_frame.InLevel == 0)
+            {
+                _editorPlaybackDirection = 1;
+                return;
+            }
+            if (_frame.MenuPresent != 0)
+            {
+                // The legacy pause loop owns the native thread. Leave it and
+                // wait for a live publication before installing the editor's
+                // history pause; stacking both handshakes corrupts the
+                // history-to-live transition.
+                EditorPulseResume();
+                _editorReverseStartPending = true;
+                GD.Print("OpenTyrianVR: editor reverse waiting for pause release");
+                return;
+            }
+            EditorBeginReverse(-1);
+        }
+        GD.Print($"OpenTyrianVR: editor playback {EditorPlaybackRateText()}");
+    }
+
+    private void EditorBeginReverse(int initialStepTicks)
+    {
+        if (_snapshotLayer.EditorHistoryActive || _frame.InLevel == 0)
+            return;
+        if (!EditorSetSuspended(true))
+        {
+            _editorPlaybackDirection = 1;
+            return;
+        }
+        _editorHistoryOwnsSuspension = true;
+        GD.Print($"OpenTyrianVR: editor timeline suspended at tick {_frame.LevelTick}");
+        if (!_snapshotLayer.EditorStepHistory(_session, initialStepTicks))
+        {
+            _editorPlaybackDirection = 1;
+            EditorRequestResume();
+        }
+    }
+
+    private void EditorRequestResume()
+    {
+        if (!_editorHistoryOwnsSuspension)
+            return;
+        EditorSetSuspended(false);
+        _editorHistoryOwnsSuspension = false;
+        _editorPlaybackDirection = 1;
+        _editorPlaybackTickAccumulator = 0;
+        SetEditorPlaybackRate();
+        GD.Print("OpenTyrianVR: editor playback rejoined live simulation");
+    }
+
+    private void EditorAdvancePlayback(double delta)
+    {
+        if (_editorReverseStartPending || _editorPlaybackDirection == 0 ||
+            !_snapshotLayer.EditorHistoryActive)
+            return;
+
+        _editorPlaybackTickAccumulator += delta * 35.0 * _editorPlaybackRateTenths / 10.0;
+        int ticks = (int)_editorPlaybackTickAccumulator;
+        if (ticks == 0)
+            return;
+        _editorPlaybackTickAccumulator -= ticks;
+        _snapshotLayer.EditorStepHistory(_session, _editorPlaybackDirection * ticks);
+
+        if (!_snapshotLayer.EditorHistoryActive && _editorHistoryOwnsSuspension)
+            EditorRequestResume();
+    }
 
     private void EditorJumpLevel(int direction)
     {
+        EditorResumeTimeline();
+        _snapshotLayer.EditorClearHistory();
         if (_editorLevelIndex < 0)
         {
             // Seed from OTYR_START_SECTION so the first PageDown continues
@@ -771,6 +1077,20 @@ public partial class Main : Node3D
         return targets.ToArray();
     }
 
+    private static uint ParseUnsignedEnvironment(string name)
+    {
+        string value = System.Environment.GetEnvironmentVariable(name) ?? "";
+        return uint.TryParse(value, out uint parsed) ? parsed : 0;
+    }
+
+    private static string CapturePath(string fileName)
+    {
+        if (CaptureDirectory.Length == 0)
+            return $"user://{fileName}";
+        Directory.CreateDirectory(CaptureDirectory);
+        return Path.Combine(CaptureDirectory, fileName);
+    }
+
     public override void _Process(double delta)
     {
         if (_xrRefreshLogCountdown > 0 && --_xrRefreshLogCountdown == 0)
@@ -791,6 +1111,12 @@ public partial class Main : Node3D
         if (_xrStereoLogCountdown > 0 && --_xrStereoLogCountdown == 0)
             LogXrStereo("recentered");
 
+        if (_tutorialGateActive)
+        {
+            UpdatePreGameTutorial(delta);
+            return;
+        }
+
         if (!_sessionLive)
             return;
 
@@ -802,7 +1128,7 @@ public partial class Main : Node3D
             if (_captureAccumulator >= 2.0 && _captureIndex < CaptureCount)
             {
                 _captureAccumulator = 0;
-                CaptureViewport.GetTexture().GetImage().SavePng($"user://cap_{_captureIndex++:D3}.png");
+                CaptureViewport.GetTexture().GetImage().SavePng(CapturePath($"cap_{_captureIndex++:D3}.png"));
             }
         }
 
@@ -814,7 +1140,8 @@ public partial class Main : Node3D
         // alignment probe).
         while (_captureAtIndex < CaptureAt.Length && _frame.FrameNumber >= CaptureAt[_captureAtIndex])
         {
-            CaptureViewport.GetTexture().GetImage().SavePng($"user://cap_at_{CaptureAt[_captureAtIndex]}.png");
+            CaptureViewport.GetTexture().GetImage().SavePng(
+                CapturePath($"cap_at_{CaptureAt[_captureAtIndex]}.png"));
             GD.Print($"OpenTyrianVR: cap_at_{CaptureAt[_captureAtIndex]} level_tick={_frame.LevelTick}");
             ++_captureAtIndex;
         }
@@ -827,14 +1154,35 @@ public partial class Main : Node3D
                 _captureRunAccumulator = 0;
                 ++_captureRunCount;
                 var image = CaptureViewport.GetTexture().GetImage();
-                string path = $"user://cap_f{_frame.FrameNumber:D6}.jpg";
+                string path = CapturePath($"cap_f{_frame.FrameNumber:D6}.jpg");
                 System.Threading.Tasks.Task.Run(() => image.SaveJpg(path, 0.8f));
             }
         }
 
         PollFrame();
+        bool legacyFallback = _frame.LegacyFallback != 0;
+        if (!_loggedPresentationMode || legacyFallback != _lastLegacyFallback)
+        {
+            _loggedPresentationMode = true;
+            _lastLegacyFallback = legacyFallback;
+            _presentationTransitions++;
+            GD.Print($"OpenTyrianVR: presentation -> {(legacyFallback ? "complete legacy fallback" : "hybrid 3D")}" +
+                     $" tick={_frame.LevelTick} storm={_frame.StormWater} flip={_frame.FlipCode}");
+        }
+        _regressionHybridSeen |= !legacyFallback && _frame.InLevel != 0;
+        _regressionLegacySeen |= legacyFallback && _frame.InLevel != 0;
+        _regressionFlipSeen |= _frame.FlipCode == 1 && _frame.InLevel != 0;
+        _regressionStormSeen |= _frame.StormWater != 0 && _frame.InLevel != 0;
+        _regressionEffectsSeen |= _frame.EffectMask;
         PollPlayerState();
         _snapshotLayer.Poll(_session, _palette);
+        _regressionMaxShadows = Math.Max(_regressionMaxShadows, _snapshotLayer.VirtualShadowCount);
+        _regressionMaxMapShadows = Math.Max(_regressionMaxMapShadows, _snapshotLayer.MapCastShadowCount);
+        _regressionMaxReceiverLayers = Math.Max(_regressionMaxReceiverLayers,
+                                                _snapshotLayer.ElevatedReceiverLayerCount);
+        _regressionMaxCells = Math.Max(_regressionMaxCells, _snapshotLayer.CellCount);
+        _regressionMaxOpaqueHidden = Math.Max(_regressionMaxOpaqueHidden,
+            _snapshotLayer.OpaqueCoverHiddenCellCount);
         // Menus, pause, and quit-to-title stop gameplay ticks; the 3D scene
         // (sprites AND background layers) must not linger over them.  A
         // legacy-fallback level (smoothie warp) draws its complete frame
@@ -847,6 +1195,16 @@ public partial class Main : Node3D
             ? _frame.InLevel != 0 && _frame.LegacyFallback == 0
             : _inGameplay && _frame.LegacyFallback == 0 && _frame.MenuPresent == 0;
         _snapshotLayer.SetStorm(_frame.StormWater);
+        // The height-editor ghost parks outside the playfield, so Tyrian's
+        // player-following darkness cone would also sit offscreen and make
+        // ASSASSIN effectively black. Editing needs an unobscured scene;
+        // normal flat/Quest play still receives the authored searchlight.
+        byte presentationEffectMask = HeightEditor
+            ? (byte)(_frame.EffectMask & ~(byte)OtyrNative.Effects.Darkness)
+            : _frame.EffectMask;
+        _presentationEffects.Update(presentationEffectMask, _frame.LevelTick,
+            _playerState.X, _playerState.Y,
+            _snapshotLayer.Visible && _frame.MenuPresent == 0);
         // E1 HUD split follows the 3D scene: in-level the lane drops the
         // sidebar/bottom-bar regions and the floating quads show them;
         // menus/fallback restore the whole flat frame.
@@ -861,7 +1219,7 @@ public partial class Main : Node3D
         _flipScale = Mathf.MoveToward(_flipScale, flipTarget, 4f * (float)GetProcessDeltaTime());
         _flipRoot.Scale = new Vector3(1f, Mathf.Abs(_flipScale) < 0.02f ? 0.02f : _flipScale, 1f);
         if (HeightEditor)
-            UpdateHeightEditor();
+            UpdateHeightEditor(delta);
         else if (InvulnSession)
         {
             // Invulnerable VR sweep: level jump on the keyboard.
@@ -870,7 +1228,7 @@ public partial class Main : Node3D
             if (EditorKeyPressed(Key.Pageup))
                 EditorJumpLevel(-1);
         }
-        UpdateChecklistInput();
+        UpdateDebugAndChecklistInput();
         SubmitInput();
         UpdateDiagnostics(delta);
         RecordPerformance(hostWorkStartUsec, delta);
@@ -895,6 +1253,25 @@ public partial class Main : Node3D
         {
             _perfPlayerMinX = Math.Min(_perfPlayerMinX, _playerState.X);
             _perfPlayerMaxX = Math.Max(_perfPlayerMaxX, _playerState.X);
+        }
+
+        if (!_regressionFinished && RegressionFrameLimit > 0 &&
+            _frame.FrameNumber > RegressionFrameLimit && _captureAtIndex >= CaptureAt.Length)
+        {
+            _regressionFinished = true;
+            GD.Print("OpenTyrianVR: REGRESSION " +
+                     $"frames={_frame.FrameNumber} hybrid={(_regressionHybridSeen ? 1 : 0)} " +
+                     $"legacy={(_regressionLegacySeen ? 1 : 0)} " +
+                     $"flip={(_regressionFlipSeen ? 1 : 0)} storm={(_regressionStormSeen ? 1 : 0)} " +
+                     $"effects=0x{_regressionEffectsSeen:X2} " +
+                     $"transitions={_presentationTransitions} max_cells={_regressionMaxCells} " +
+                     $"max_cast_shadows={_regressionMaxShadows} " +
+                     $"max_map_cast_shadows={_regressionMaxMapShadows} " +
+                     $"max_receiver_layers={_regressionMaxReceiverLayers} " +
+                     $"opaque_hidden={_regressionMaxOpaqueHidden} captures={_captureAtIndex}");
+            ShutDown();
+            GetTree().Quit();
+            return;
         }
 
         if (_perfWindowStartUsec == 0)
@@ -923,7 +1300,8 @@ public partial class Main : Node3D
                  $"draws={drawCalls:0} objects={objects:0} prims={primitives:0} " +
                  $"video={videoMiB:0.0}MiB managed={managedMiB:0.0}MiB " +
                  $"cells={_snapshotLayer.CellCount} visible={_snapshotLayer.VisibleInstanceCount} " +
-                 $"assemblies={_snapshotLayer.RigidAssemblyCount}/{_snapshotLayer.SeamGuardCellCount}(groups/cells) " +
+                 $"cast_shadows={_snapshotLayer.VirtualShadowCount} " +
+                 $"assemblies={_snapshotLayer.RigidAssemblyCount}/{_snapshotLayer.SeamGuardCellCount}/{_snapshotLayer.RigidPlaneCellCount}(groups/cells/plane) " +
                  $"snapshot_gap={_snapshotLayer.LastTickGap}/{_snapshotLayer.MaxTickGap}(last/max) " +
                  $"missed={_snapshotLayer.SkippedTicksTotal}{rangeProbe}");
 
@@ -941,14 +1319,144 @@ public partial class Main : Node3D
         _perfTargetMaxX = float.NegativeInfinity;
     }
 
-    private void UpdateChecklistInput()
+    private void SetDebugMenuOpen(bool open)
     {
-        // Stick clicks are unused by the game, so they drive the checklist;
-        // C/V cover flat testing.  Edge-triggered.
-        bool check = Input.IsKeyPressed(Key.C) ||
-            (_xrActive && _rightHand != null && _rightHand.IsButtonPressed("primary_click"));
-        bool skip = Input.IsKeyPressed(Key.V) ||
-            (_xrActive && _leftHand != null && _leftHand.IsButtonPressed("primary_click"));
+        if (open == _debugMenu.IsOpen)
+            return;
+        if (open)
+        {
+            _debugMenu.Open(_snapshotLayer.CurrentEpisode, _debugInvulnerable);
+            if (_frame.InLevel != 0 && OtyrNative.SetEditorSuspended(_session, 1) == OtyrNative.Ok)
+                _debugOwnsSuspension = true;
+            GD.Print("OpenTyrianVR: debug menu opened");
+        }
+        else
+        {
+            _debugInvulnerable = _debugMenu.Invulnerable;
+            _debugMenu.Close();
+            if (_debugOwnsSuspension)
+            {
+                OtyrNative.SetEditorSuspended(_session, 0);
+                _debugOwnsSuspension = false;
+            }
+            GD.Print("OpenTyrianVR: debug menu closed");
+        }
+        // Do not let the chord, stick direction, or A/B press used by the
+        // host-side panel become native game input on the close frame. Keep
+        // suppressing until those controls have physically returned neutral.
+        _suppressNativeInputUntilDebugControlsReleased = true;
+        _lastButtons = (OtyrNative.Buttons)uint.MaxValue; // force a neutral/native update
+    }
+
+    private OtyrNative.DebugFlags DebugState(bool authorize = false)
+    {
+        var flags = (_debugInvulnerable || _debugMenu.Invulnerable)
+            ? OtyrNative.DebugFlags.Invulnerable : OtyrNative.DebugFlags.None;
+        if (authorize || flags != OtyrNative.DebugFlags.None)
+            flags |= OtyrNative.DebugFlags.Enable;
+        return flags;
+    }
+
+    private void DebugWarp()
+    {
+        if (_frame.InLevel == 0)
+        {
+            GD.Print("OpenTyrianVR: debug warp ignored outside a level");
+            return;
+        }
+        _debugInvulnerable = _debugMenu.Invulnerable;
+        DebugMenu.LevelTarget target = _debugMenu.Target;
+        var jump = OtyrNative.InputFrame.Create(OtyrNative.Buttons.None);
+        jump.DebugMode = DebugState(authorize: true);
+        jump.DebugEpisode = _debugMenu.Episode;
+        jump.DebugSection = target.Section;
+        OtyrNative.SubmitInput(_session, in jump, jump.StructSize);
+        jump.DebugSection = 0;
+        OtyrNative.SubmitInput(_session, in jump, jump.StructSize);
+        GD.Print($"OpenTyrianVR: debug warp -> episode {_debugMenu.Episode}, " +
+                 $"section {target.Section} ({target.Name})");
+        SetDebugMenuOpen(false);
+    }
+
+    private void HandleDebugCommand(DebugMenu.Command command)
+    {
+        switch (command)
+        {
+            case DebugMenu.Command.Warp:
+                DebugWarp();
+                break;
+            case DebugMenu.Command.KillHostiles:
+                _debugPulseButtons |= OtyrNative.Buttons.DebugKill;
+                SetDebugMenuOpen(false);
+                break;
+            case DebugMenu.Command.SkipLevel:
+                _debugPulseButtons |= OtyrNative.Buttons.DebugSkip;
+                SetDebugMenuOpen(false);
+                break;
+            case DebugMenu.Command.Close:
+                SetDebugMenuOpen(false);
+                break;
+        }
+    }
+
+    private void UpdateDebugAndChecklistInput()
+    {
+        if (!DeveloperTools)
+            return;
+
+        bool rightClick = _xrActive && _rightHand != null &&
+                          _rightHand.IsButtonPressed("primary_click");
+        bool leftClick = _xrActive && _leftHand != null &&
+                         _leftHand.IsButtonPressed("primary_click");
+        bool chord = Input.IsKeyPressed(Key.F1) || (rightClick && leftClick);
+        if (chord && !_lastDebugChord)
+            SetDebugMenuOpen(!_debugMenu.IsOpen);
+        _lastDebugChord = chord;
+
+        if (_debugMenu.IsOpen)
+        {
+            Vector2 stick = _xrActive && _rightHand != null
+                ? _rightHand.GetVector2("primary") : Vector2.Zero;
+            bool up = Input.IsKeyPressed(Key.Up) || stick.Y > 0.65f;
+            bool down = Input.IsKeyPressed(Key.Down) || stick.Y < -0.65f;
+            bool left = Input.IsKeyPressed(Key.Left) || stick.X < -0.65f;
+            bool right = Input.IsKeyPressed(Key.Right) || stick.X > 0.65f;
+            bool activate = Input.IsKeyPressed(Key.Enter) ||
+                (_xrActive && _rightHand != null && _rightHand.IsButtonPressed("ax_button"));
+            bool back = Input.IsKeyPressed(Key.Escape) ||
+                (_xrActive && _rightHand != null && _rightHand.IsButtonPressed("by_button"));
+            if (up && !_lastDebugUp) _debugMenu.Move(-1);
+            if (down && !_lastDebugDown) _debugMenu.Move(1);
+            if (left && !_lastDebugLeft) _debugMenu.Adjust(-1);
+            if (right && !_lastDebugRight) _debugMenu.Adjust(1);
+            if (activate && !_lastDebugActivate) HandleDebugCommand(_debugMenu.Activate());
+            if (back && !_lastDebugBack) SetDebugMenuOpen(false);
+            _lastDebugUp = up; _lastDebugDown = down;
+            _lastDebugLeft = left; _lastDebugRight = right;
+            _lastDebugActivate = activate; _lastDebugBack = back;
+            return;
+        }
+
+        _lastDebugUp = _lastDebugDown = _lastDebugLeft = _lastDebugRight = false;
+        _lastDebugActivate = _lastDebugBack = false;
+
+        if (_suppressNativeInputUntilDebugControlsReleased)
+        {
+            Vector2 debugStick = _xrActive && _rightHand != null
+                ? _rightHand.GetVector2("primary") : Vector2.Zero;
+            bool activate = Input.IsKeyPressed(Key.Enter) ||
+                (_xrActive && _rightHand != null && _rightHand.IsButtonPressed("ax_button"));
+            bool back = Input.IsKeyPressed(Key.Escape) ||
+                (_xrActive && _rightHand != null && _rightHand.IsButtonPressed("by_button"));
+            if (!chord && Math.Abs(debugStick.X) <= 0.65f && Math.Abs(debugStick.Y) <= 0.65f &&
+                !activate && !back)
+                _suppressNativeInputUntilDebugControlsReleased = false;
+        }
+
+        // Single stick clicks retain the checklist controls. The two-click
+        // chord above is consumed so opening debug cannot alter a result.
+        bool check = Input.IsKeyPressed(Key.C) || (rightClick && !leftClick);
+        bool skip = Input.IsKeyPressed(Key.V) || (leftClick && !rightClick);
 
         if (check && !_lastCheckPressed)
             _checklist.ToggleCurrent();
@@ -1000,9 +1508,23 @@ public partial class Main : Node3D
         _editorCamera.GlobalTransform = new Transform3D(rot, _editorPivot + back * _editorDist);
     }
 
-    private void UpdateHeightEditor()
+    private void UpdateHeightEditor(double delta)
     {
         UpdateEditorCamera();
+        // If rewind was requested from Tyrian's own P-key pause, first leave
+        // that UI, then install the invisible host-level editor suspension on
+        // the next complete gameplay publication.
+        if (_editorReverseStartPending && _frame.MenuPresent == 0)
+        {
+            EditorReleaseSynthetic(OtyrNative.Buttons.UiSpace);
+            _editorReverseStartPending = false;
+            EditorBeginReverse(_editorPendingInitialStepTicks);
+        }
+        // A level/asset boundary can invalidate retained history. Never leave
+        // the native worker suspended if that happens.
+        if (_editorHistoryOwnsSuspension && !_snapshotLayer.EditorHistoryActive)
+            EditorRequestResume();
+        EditorAdvancePlayback(delta);
 
         // Ctrl+click selects OBJECTS only; Alt+click selects fixed LAYERS
         // (clouds, platforms, ground).  Falling from object-pick through to
@@ -1047,12 +1569,28 @@ public partial class Main : Node3D
             _editorPitch = -42f;
         }
 
-        // PageUp/PageDown: cycle the playable level sections; B toggles the
+        // PageUp/PageDown cycle levels; [/] manually scrub one second (Shift
+        // = one simulation tick); Backspace toggles 1x reverse/forward.
+        // +/- adjusts the current playback magnitude by 0.1x. B toggles the
         // red hazard (collider) halos.
         if (EditorKeyPressed(Key.Pagedown))
             EditorJumpLevel(1);
         if (EditorKeyPressed(Key.Pageup))
             EditorJumpLevel(-1);
+        if (EditorKeyPressed(Key.Bracketleft))
+            EditorStepTimeline(-1);
+        if (EditorKeyPressed(Key.Bracketright))
+            EditorStepTimeline(1);
+        if (EditorKeyPressed(Key.Backspace))
+            EditorTogglePlaybackDirection();
+        bool speedUp = EditorKeyPressed(Key.Equal);
+        speedUp |= EditorKeyPressed(Key.KpAdd);
+        bool speedDown = EditorKeyPressed(Key.Minus);
+        speedDown |= EditorKeyPressed(Key.KpSubtract);
+        if (speedUp)
+            EditorAdjustPlaybackRate(1);
+        if (speedDown)
+            EditorAdjustPlaybackRate(-1);
         if (EditorKeyPressed(Key.B))
             _snapshotLayer.HazardMarkersEnabled = !_snapshotLayer.HazardMarkersEnabled;
         _snapshotLayer.EditorHazardMarkers();
@@ -1071,7 +1609,7 @@ public partial class Main : Node3D
                 _snapshotLayer.EditorSetHeight(_editorSelected,
                     (float.IsNaN(current) ? 0.004f : current) - step);
 
-            // Band assignment keys (1..9, 0, -, = -- height-ordered).
+            // Band assignment keys (1..9, 0 -- height-ordered).
             foreach (ref readonly EditorBand band in _editorBands.AsSpan())
             {
                 if (band.Key == '\0')
@@ -1079,34 +1617,22 @@ public partial class Main : Node3D
                 Key key = band.Key switch
                 {
                     '0' => Key.Key0,
-                    '-' => Key.Minus,
-                    '=' => Key.Equal,
                     _ => Key.Key1 + (band.Key - '1'),
                 };
                 if (EditorKeyPressed(key))
                     EditorAssignBand(in band);
             }
 
-            // Numpad +/-: step the selection through ALL bands, including
-            // the key-less ones (air-low/high, UI/text).
-            int dir = (EditorKeyPressed(Key.KpAdd) ? 1 : 0) - (EditorKeyPressed(Key.KpSubtract) ? 1 : 0);
-            if (dir != 0)
-            {
-                int index = EditorBandIndex(current);
-                int next = Math.Clamp(index + dir, 0, _editorBands.Length - 1);
-                if (next != index)
-                    EditorAssignBand(in _editorBands[next]);
-            }
         }
         else if (_editorSelectedLayer == 1 && _snapshotLayer.WaterCloudsSelectable &&
                  _frame.InLevel != 0)
         {
             // The lifted water-cloud layer is height-adjustable like an
-            // object: Up/Down (or numpad +/-) nudge, S persists it as
+            // object: Up/Down nudges, S persists it as
             // classes["water-clouds"].
             float step = Input.IsKeyPressed(Key.Shift) ? 0.01f : 0.002f;
-            int dir = ((EditorKeyPressed(Key.Up) || EditorKeyPressed(Key.KpAdd)) ? 1 : 0) -
-                      ((EditorKeyPressed(Key.Down) || EditorKeyPressed(Key.KpSubtract)) ? 1 : 0);
+            int dir = (EditorKeyPressed(Key.Up) ? 1 : 0) -
+                      (EditorKeyPressed(Key.Down) ? 1 : 0);
             if (dir != 0)
             {
                 _snapshotLayer.EditorSetWaterCloudHeight(
@@ -1188,14 +1714,18 @@ public partial class Main : Node3D
             Math.Abs(_editorBands[marked].Z - selectedHeight) > 0.0008f)
             marked = -1;
 
-        var sb = new System.Text.StringBuilder("HEIGHT BANDS   key\n");
+        string state = _snapshotLayer.EditorHistoryActive
+            ? $"{(_editorPlaybackDirection < 0 ? "REVERSE" : _editorPlaybackDirection > 0 ? "FORWARD" : "SCRUB")}  -{_snapshotLayer.EditorHistorySecondsBack:0.0}s / {_snapshotLayer.EditorHistorySecondsAvailable:0.0}s"
+            : "LIVE";
+        string timeline = $"{state}  {EditorPlaybackRateText()}  +/- 0.1x  Backspace reverse/forward  [/] scrub\n";
+        var sb = new System.Text.StringBuilder(timeline + "HEIGHT BANDS   key\n");
         for (int i = _editorBands.Length - 1; i >= 0; i--)
         {
             ref readonly EditorBand band = ref _editorBands[i];
             sb.Append(i == marked ? "> " : "  ")
               .Append((float.IsNaN(band.Z) ? "+surf" : band.Z.ToString("0.####")).PadRight(7))
               .Append(band.Label.PadRight(17))
-              .Append(band.Key == '\0' ? "+/-" : band.Key.ToString())
+              .Append(band.Key == '\0' ? "-" : band.Key.ToString())
               .Append('\n');
         }
         return sb.ToString();
@@ -1216,6 +1746,47 @@ public partial class Main : Node3D
         // Gameplay ticks run at ~35 Hz; if none arrived recently we are in a
         // menu (or paused) and hand steering must not emit direction input.
         _inGameplay = _lastLevelTickMs != 0 && now - _lastLevelTickMs < 250;
+    }
+
+    private void UpdatePreGameTutorial(double delta)
+    {
+        bool leftTracking = _leftHand != null && _leftHand.GetHasTrackingData();
+        bool rightTracking = _rightHand != null && _rightHand.GetHasTrackingData();
+        bool menu = leftTracking && _leftHand!.IsButtonPressed("menu_button");
+        if (menu)
+        {
+            XRServer.CenterOnHmd(XRServer.RotationMode.ResetButKeepTilt, true);
+            _xrStereoLogCountdown = 2;
+        }
+
+        Vector3 handLocal = leftTracking
+            ? _controlRect.ToLocal(_leftHand!.GlobalPosition) : Vector3.Zero;
+        var handNormalized = new Vector2(
+            Mathf.Clamp(handLocal.X / (ControlRectWidth * 0.5f), -1f, 1f),
+            Mathf.Clamp(handLocal.Y / (ControlRectHeight * 0.5f), -1f, 1f));
+
+        bool showGuide = _tutorial.NeedsHandGuide && leftTracking;
+        _controlRect.Visible = showGuide;
+        _targetReticle.Visible = false;
+        if (showGuide)
+        {
+            float lx = handNormalized.X * ControlRectWidth * 0.5f;
+            float ly = handNormalized.Y * ControlRectHeight * 0.5f;
+            _handMarker.Position = new Vector3(lx, ly, 0.002f);
+            _controlRectMaterial.AlbedoColor = new Color(0.3f, 0.6f, 1f, 0.12f);
+            _handMarkerMaterial.AlbedoColor = new Color(0.2f, 0.65f, 1f, 1f);
+        }
+
+        FirstRunTutorial.Result result = _tutorial.UpdatePreGame(
+            delta, _leftHand, leftTracking, _rightHand, rightTracking,
+            handNormalized, menu);
+        if (result == FirstRunTutorial.Result.LaunchGame)
+        {
+            _tutorialGateActive = false;
+            _controlRect.Visible = false;
+            _tutorial.Visible = false;
+            StartGame();
+        }
     }
 
     private unsafe void PollFrame()
@@ -1288,6 +1859,26 @@ public partial class Main : Node3D
 
     private void SubmitInput()
     {
+        // The host debug panel owns input while open. Keep the native game at
+        // a neutral state and publish invulnerability changes even though its
+        // simulation thread is suspended. The release latch also consumes the
+        // controls that closed the panel, preventing a queued A/B/stick action.
+        if (_debugMenu.IsOpen || _suppressNativeInputUntilDebugControlsReleased)
+        {
+            OtyrNative.DebugFlags debugFlags = DebugState(authorize: true);
+            if (_lastButtons == OtyrNative.Buttons.None &&
+                _lastDebugFlags == debugFlags && !_lastTargetActive)
+                return;
+            _lastButtons = OtyrNative.Buttons.None;
+            _lastDebugFlags = debugFlags;
+            _lastTargetActive = false;
+            _handTargetActive = false;
+            var neutral = OtyrNative.InputFrame.Create(OtyrNative.Buttons.None);
+            neutral.DebugMode = debugFlags;
+            OtyrNative.SubmitInput(_session, in neutral, neutral.StructSize);
+            return;
+        }
+
         var buttons = OtyrNative.Buttons.None;
 
         if (HeightEditor)
@@ -1298,9 +1889,11 @@ public partial class Main : Node3D
             if (Input.IsKeyPressed(Key.Enter)) buttons |= OtyrNative.Buttons.UiConfirm;
             if (Input.IsKeyPressed(Key.Escape)) buttons |= OtyrNative.Buttons.UiCancel;
             if (Input.IsKeyPressed(Key.Space)) buttons |= OtyrNative.Buttons.UiSpace;
-            if (Input.IsKeyPressed(Key.P)) buttons |= OtyrNative.Buttons.UiPause;
+            if (Input.IsKeyPressed(Key.P) && !_snapshotLayer.EditorHistoryActive)
+                buttons |= OtyrNative.Buttons.UiPause;
             if (Input.IsKeyPressed(Key.N)) buttons |= OtyrNative.Buttons.DebugSkip;
             if (Input.IsKeyPressed(Key.K)) buttons |= OtyrNative.Buttons.DebugKill;
+            buttons |= _editorSyntheticButtons;
             if (_frame.InLevel == 0)
             {
                 if (Input.IsKeyPressed(Key.Up)) buttons |= OtyrNative.Buttons.Up;
@@ -1342,10 +1935,23 @@ public partial class Main : Node3D
             // Either stick moves, either trigger fires.
             Vector2 stick = _leftHand.GetVector2("primary") + _rightHand.GetVector2("primary");
             const float deadzone = 0.4f;
-            if (stick.Y > deadzone) buttons |= OtyrNative.Buttons.Up;
-            if (stick.Y < -deadzone) buttons |= OtyrNative.Buttons.Down;
-            if (stick.X < -deadzone) buttons |= OtyrNative.Buttons.Left;
-            if (stick.X > deadzone) buttons |= OtyrNative.Buttons.Right;
+            bool menuNavigation = _frame.InLevel == 0 || _frame.MenuPresent != 0;
+            const float horizontalConeSlope = 0.57735027f; // tan(30°): 60° total cone
+            bool horizontalMenuIntent = menuNavigation && Mathf.Abs(stick.X) > deadzone &&
+                Mathf.Abs(stick.Y) <= Mathf.Abs(stick.X) * horizontalConeSlope;
+            if (horizontalMenuIntent)
+            {
+                if (stick.X < 0f) buttons |= OtyrNative.Buttons.Left;
+                else buttons |= OtyrNative.Buttons.Right;
+            }
+            else
+            {
+                if (stick.Y > deadzone) buttons |= OtyrNative.Buttons.Up;
+                if (stick.Y < -deadzone) buttons |= OtyrNative.Buttons.Down;
+                // Preserve unrestricted diagonals during gameplay.
+                if (!menuNavigation && stick.X < -deadzone) buttons |= OtyrNative.Buttons.Left;
+                if (!menuNavigation && stick.X > deadzone) buttons |= OtyrNative.Buttons.Right;
+            }
 
             if (Math.Max(_rightHand.GetFloat("trigger"), _leftHand.GetFloat("trigger")) > 0.55f)
                 buttons |= OtyrNative.Buttons.Fire;
@@ -1353,7 +1959,8 @@ public partial class Main : Node3D
             if (_leftHand.GetFloat("grip") > 0.6f) buttons |= OtyrNative.Buttons.LeftSidekick;
 
             if (_rightHand.IsButtonPressed("ax_button")) buttons |= OtyrNative.Buttons.UiConfirm;
-            if (_rightHand.IsButtonPressed("by_button")) buttons |= OtyrNative.Buttons.UiCancel;
+            if (_rightHand.IsButtonPressed("by_button"))
+                buttons |= OtyrNative.Buttons.UiCancel;
             if (_leftHand.IsButtonPressed("ax_button")) buttons |= OtyrNative.Buttons.UiSpace;
             if (_leftHand.IsButtonPressed("by_button")) buttons |= OtyrNative.Buttons.ChangeFire;
 
@@ -1368,8 +1975,12 @@ public partial class Main : Node3D
             HandSteering();
         }
 
+        bool debugPulse = _debugPulseButtons != OtyrNative.Buttons.None;
+        buttons |= _debugPulseButtons;
+        OtyrNative.DebugFlags debugState = DebugState(authorize: debugPulse);
         if (buttons == _lastButtons && _handTargetActive == _lastTargetActive &&
-            _handTargetX == _lastTargetX && _handTargetY == _lastTargetY)
+            _handTargetX == _lastTargetX && _handTargetY == _lastTargetY &&
+            debugState == _lastDebugFlags)
             return;
         if (buttons != _lastButtons)
             GD.Print($"OpenTyrianVR: input -> 0x{(uint)buttons:x3}");
@@ -1377,11 +1988,14 @@ public partial class Main : Node3D
         _lastTargetActive = _handTargetActive;
         _lastTargetX = _handTargetX;
         _lastTargetY = _handTargetY;
+        _lastDebugFlags = debugState;
 
         var input = _handTargetActive
             ? OtyrNative.InputFrame.CreateWithTarget(buttons, _handTargetX, _handTargetY, HandTargetSpeed)
             : OtyrNative.InputFrame.Create(buttons);
+        input.DebugMode = debugState;
         OtyrNative.SubmitInput(_session, in input, input.StructSize);
+        _debugPulseButtons = OtyrNative.Buttons.None;
     }
 
     private void LogXrStereo(string reason)
@@ -1421,12 +2035,31 @@ public partial class Main : Node3D
     /// </summary>
     private void HandSteering()
     {
-        // The rectangle stays visible whenever the hand tracks (TODO in plan:
-        // user setting to hide it or fade it out after level start); the lane
-        // reticle and steering only engage during gameplay.
+        // Steering remains active for the whole level, but its teaching aids
+        // fade from 8 to 10 seconds of simulation time. The first-run coach
+        // holds them visible until its controls lesson is complete.
         bool tracking = _leftHand != null && _leftHand.GetHasTrackingData();
-        _controlRect.Visible = tracking;
-        _targetReticle.Visible = tracking && _inGameplay;
+        const float fadeStartTick = 8f * 35f;
+        const float fadeEndTick = 10f * 35f;
+        if (_frame.InLevel == 0)
+            _guideLevelActive = false;
+        else if (!_guideLevelActive || _frame.LevelTick < _guideLastTick)
+        {
+            _guideLevelActive = true;
+            _guideLevelStartTick = _frame.LevelTick;
+        }
+        _guideLastTick = _frame.LevelTick;
+        uint guideElapsedTicks = _guideLevelActive ? _frame.LevelTick - _guideLevelStartTick : 0;
+        float guideAlpha = !_inGameplay || !_guideLevelActive ? 0f :
+            Mathf.Clamp((fadeEndTick - guideElapsedTicks) / (fadeEndTick - fadeStartTick), 0f, 1f);
+        if (_tutorial.NeedsHandGuide)
+            guideAlpha = 1f;
+        bool showGuide = tracking && _inGameplay && guideAlpha > 0.005f;
+        _controlRect.Visible = showGuide;
+        _targetReticle.Visible = showGuide;
+        _controlRectMaterial.AlbedoColor = new Color(0.3f, 0.6f, 1.0f, 0.14f * guideAlpha);
+        _handMarkerMaterial.AlbedoColor = new Color(0.2f, 0.5f, 1.0f, guideAlpha);
+        _targetReticleMaterial.AlbedoColor = new Color(0.2f, 0.8f, 1.0f, 0.65f * guideAlpha);
         _handTargetActive = false;
         if (!tracking)
             return;

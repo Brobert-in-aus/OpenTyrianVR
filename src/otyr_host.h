@@ -45,7 +45,14 @@ extern "C" {
 #define OTYR_API
 #endif
 
-#define OTYR_ABI_VERSION 25u
+#define OTYR_ABI_VERSION 30u
+
+#define OTYR_EFFECT_LAVA       (1u << 0)
+#define OTYR_EFFECT_WATER      (1u << 1)
+#define OTYR_EFFECT_ICED_A     (1u << 2)
+#define OTYR_EFFECT_BLUR       (1u << 3)
+#define OTYR_EFFECT_ICED_B     (1u << 4)
+#define OTYR_EFFECT_DARKNESS   (1u << 5)
 
 #define OTYR_FRAME_WIDTH  320u
 #define OTYR_FRAME_HEIGHT 200u
@@ -84,6 +91,10 @@ extern "C" {
                                                   release without skipping the
                                                   level (same OTYR_INVULN
                                                   arming as DEBUG_SKIP) (v19) */
+
+#define OTYR_DEBUG_ENABLE          (1u << 0) /* authorize runtime debug-menu
+                                                simulation controls (v30) */
+#define OTYR_DEBUG_INVULNERABLE    (1u << 1) /* ignore player damage (v30) */
 
 /* OtyrConfig.flags bits. */
 #define OTYR_CONFIG_ENABLE_AUDIO           (1u << 0)
@@ -155,6 +166,9 @@ typedef struct OtyrInputFrame
 	                           episode script to this section (height-editor
 	                           level select; ignored unless the OTYR_INVULN
 	                           ghost mode is active) (v18) */
+	uint8_t  debug_flags;   /* OTYR_DEBUG_* runtime debug-menu state (v30) */
+	uint8_t  debug_episode; /* 1..4 with debug_section; 0 = current (v30) */
+	uint16_t reserved;
 } OtyrInputFrame;
 
 typedef struct OtyrFrame
@@ -170,10 +184,9 @@ typedef struct OtyrFrame
 	                           gates the background color key: menus redraw
 	                           the frame fully and may legitimately use the
 	                           key index in art (v12) */
-	uint8_t  legacy_fallback; /* nonzero while the level's presentation fell
-	                             back to full legacy drawing (smoothie warp
-	                             filters); the frame is complete and opaque --
-	                             hide the 3D layers and show it flat (v14) */
+	uint8_t  legacy_fallback; /* nonzero only for an unsupported/unknown full-
+	                             frame effect; known campaign effects are host-
+	                             rendered and preserve hybrid 3D (v27) */
 	uint8_t  menu_present;  /* nonzero when this present came MID-TICK from a
 	                           pause/menu/dialog loop rather than the tick's
 	                           own present: the flat frame shows the menu, so
@@ -187,10 +200,11 @@ typedef struct OtyrFrame
 	uint8_t  flip_code;     /* starShowVGASpecialCode 1 (vertical mirror) is
 	                           active and HOST-rendered: the host plays the
 	                           card-flip and mirrors the play content; the
-	                           native flip blit and the fallback are skipped
-	                           under suppression.  Code 2 (darkness) still
-	                           falls back (v23) */
-	uint8_t  reserved[3];
+	                           native flip blit is skipped under suppression.
+	                           Code 2 is the host-rendered darkness cone (v27) */
+	uint8_t  effect_mask;    /* OTYR_EFFECT_* active this tick (v27) */
+	uint8_t  lava_data;      /* smoothie 1 placement selector (v27) */
+	uint8_t  reserved;
 } OtyrFrame;
 
 typedef struct OtyrPlayerState
@@ -256,11 +270,13 @@ typedef struct OtyrSnapshotSprite
 	uint8_t  aux;           /* per-category metadata; enemies: 1 = baked
 	                           terrain art (flat in the frame), 2 = platform
 	                           rider (render at the elevated platform map
-	                           layer's height) (v11) */
+	                           layer's height), 3 = legacy ground-explosion
+	                           palette signal (weak evidence, v26) */
 	uint16_t source_id;     /* stable entity id across ticks (0xffff none);
 	                           same-id records pair by emit order (v7) */
-	uint16_t entity_type;   /* enemies: eDat index (enemytype), keys authored
-	                           hover-height metadata; 0 otherwise (v16) */
+	uint16_t entity_type;   /* enemies: eDat index; high bit marks a temporary
+	                           type-zero spawn and low 15 bits carry its retained
+	                           base graphic for semantic placement (v27) */
 	uint8_t  assembly_id;   /* enemies: full linknum; 0 = standalone (v25) */
 	uint8_t  reserved;
 } OtyrSnapshotSprite;
@@ -283,7 +299,8 @@ typedef struct OtyrBackgroundDraw
 	                           enemies, 1 = over them (e.g. clouds); layer 2
 	                           (background3over): 0 = over sky enemies,
 	                           2 = under them */
-	uint8_t  reserved;
+	uint8_t  scroll_rate_ratio; /* high nibble pixels / low nibble ticks;
+	                              * exact delayed-scroll rate (v28) */
 	uint32_t hash;          /* standalone-raster FNV-1a; only filled when
 	                           OTYR_CONFIG_BACKGROUND_HASHES is set */
 } OtyrBackgroundDraw;
@@ -312,7 +329,9 @@ typedef struct OtyrSnapshot
 	 * background draws.  Sign: positive = drawn right of the fixed pose. */
 	int8_t band_parallax[4];
 	int8_t layer_parallax[OTYR_BG_LAYER_COUNT];
-	int8_t parallax_pad;
+	uint8_t episode;         /* active episode number, 1..4 (v26); enemy type
+	                           ids are episode-local and must never share one
+	                           authored semantic table */
 } OtyrSnapshot;
 
 /* Sprite sheet export: every cell is a 12x14 indexed-color bitmap (0 =
@@ -360,8 +379,19 @@ OTYR_API int32_t otyr_session_destroy(uint64_t session);
 /* Replaces the currently-held button state.  Applied atomically between
  * legacy frames. */
 OTYR_API int32_t otyr_session_submit_input(uint64_t session,
-                                           const OtyrInputFrame *input,
-                                           uint32_t input_size);
+                                            const OtyrInputFrame *input,
+                                            uint32_t input_size);
+
+/* Changes hosted simulation pacing. rate_tenths is 1..100, where 10 is
+ * normal speed. The game thread applies it at its next presentation point. */
+OTYR_API int32_t otyr_session_set_playback_rate(uint64_t session,
+                                                 uint32_t rate_tenths);
+
+/* Freezes/unfreezes the hosted game thread at a complete presentation tick.
+ * This is an editor timeline primitive: unlike the legacy P-key pause it does
+ * not draw a pause screen or consume gameplay input. */
+OTYR_API int32_t otyr_session_set_editor_suspended(uint64_t session,
+                                                   uint8_t suspended);
 
 /* Blocks until a frame newer than the last one delivered to the caller is
  * available (or timeout_ms elapses; 0 polls).  On OTYR_OK the frame, palette,
